@@ -1,12 +1,13 @@
 #include "String_Utils.h"
+#include "LJObject.h"
 
 char *String_Utils_concat(char *string_one, char *string_two, int parameter){
-    char *temp = malloc(strlen(string_one) + strlen(string_two));
+    char *temp = malloc(strlen(string_one) + strlen(string_two) + 2);
     strcat(temp, string_one);
     strcat(temp, string_two);
     // Based on parameters below, will modify the original screen, or just return the new string.
     if(parameter == MODIFY){
-        string_one = realloc(string_one, strlen(temp));
+        string_one = realloc(string_one, strlen(temp) + 1);
         strcpy(string_one, temp);
         return string_one;  
     } else return temp; // Not modifying the original string is the default, even if there was no valid parameter.
@@ -33,7 +34,7 @@ int String_Utils_contains(char *string, char *search, int parameter){ // FIX!
 }
 
 char *String_Utils_to_lowercase(char *string, int parameter){
-    char *temp = malloc(strlen(string));
+    char *temp = malloc(strlen(string) + 1);
     int i = 0;
     for(i; i < strlen(string); i++){
         temp[i] = tolower(string[i]);
@@ -53,6 +54,17 @@ unsigned int *String_Utils_get_bytes(char *string){
 
 int String_Utils_equals(char *string_one, char *string_two, int parameters){
     return String_Utils_compare(string_one, string_two, parameters) == 0 ? 1 : 0;
+}
+
+char *String_Utils_copy(char *string){
+    char *temp = malloc(strlen(string) + 1);
+    strcpy(temp, string);
+    return temp;
+}
+
+
+int String_Utils_length(char *string){
+    return strlen(string);
 }
 
 String_Utils *String_Utils_create(void){

@@ -1,5 +1,5 @@
 /* 
- * File:   LString.h
+ * File:   String_Utils.h
  * Author: theif519
  *
  * Created on April 8, 2015, 11:24 AM
@@ -8,10 +8,42 @@
 #ifndef LSTRING_H
 #define	LSTRING_H
 
+/**
+ * Explanation for definitions below:
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * String Comparisons:
+ * 
+ * NORMAL: Default mode. Comparisons are case sensitive.
+ * 
+ * IGNORE_CASE: Comparisons are not case sensitive.
+ * 
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * String Modifications:
+ * 
+ * MODIFY: Ensures that the first string will be modified as per use,
+ * I.E String_Utils_concat will concatenate string_two on string_one, changing string_one
+ * 
+ * NO_MODIFY: Ensures that the first string will NOT be modified by using a temporary string literal and returning it.
+ * I.E String_Utils_concat will not modify string_one and will return a concatenated string literal.
+ * 
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * String Searching: (Currently Unimplemented)
+ * 
+ * FIRST: While searching for a token in a string, the function will return the very first occurrence
+ * of the token it finds. 
+ * 
+ * LAST: While searching for a token in a string, the function will return the very last occurrence
+ * of the token it finds.
+ * 
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
 #define NORMAL 0
 #define IGNORE_CASE 1
 #define MODIFY 2
 #define NO_MODIFY 3
+#define FIRST 4
+#define LAST 5
 
 #include <stdlib.h>
 #include <string.h>
@@ -51,13 +83,24 @@ struct String_Utils {
     int (*compare)(char *string_one, char *string_two, int parameters);
     int (*contains)(char *string, char *search, int parameters);
     int (*equals)(char *string_one, char *string_two, int parameters);
-    int (*store)(String_Utils *self, char **string, int amount); // Stores array of strings into linked list
-    char** (*retrieve)(String_Utils *self, int start, int end); // Retrieves an array of strings from linked list
+    int (*length)(char *string);
+    int (*starts_with)(char *string, char *token); // Not Implemented
+    int (*ends_with)(char *string, char *token); // Not Implemented
+    int (*index_of)(char *string, char *token, int parameter); // Not implemented
+    int (*store)(String_Utils *self, char **string, unsigned int amount); // Stores array of strings into linked list; Not Implemented
+    char *(*substring)(char *string, unsigned int begin, unsigned int end); // Not Implemented
+    char *(*copy)(char *string); 
+    char *(*replace)(char *string, char *token, char *replacement, int parameter); // Not implemented
+    char *(*from)(char *string, unsigned int index); // Not Implemented
+    char *(*from_token)(char *string, char c); // Not implemented
+    char *(*to_lower)(char *string, int parameter); // Implemented but not in constructor
+    char *(*to_upper)(char *string, int parameter); // Not implemented
+    char **(*split)(char *string, char *token); // Not Implemented
+    char** (*retrieve)(String_Utils *self, unsigned int start, unsigned int end); // Retrieves an array of strings from linked list
     void * (*iterator)(String_Utils *self); // Returns an iterator for the user to use.
     unsigned int *(*get_bytes)(char *string);
     void (*update)(String_Utils *self);
-    // Update should be called every time you update the String_Utils's val without calling one of
-    // these callback functions for accuracy.
+    // Currently not implemented: LinkedList, retrieve, iterator, store.
 };
 
 /**
@@ -137,5 +180,8 @@ unsigned int *String_Utils_get_bytes(char *string);
  */
 int String_Utils_equals(char *string_one, char *string_two, int parameters);
 
+char *String_Utils_copy(char *string);
+
+int String_Utils_length(char *string);
 #endif	/* LSTRING_H */
 
