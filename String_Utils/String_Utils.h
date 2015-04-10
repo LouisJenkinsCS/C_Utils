@@ -38,15 +38,19 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#define NORMAL 0
-#define IGNORE_CASE 1
-#define MODIFY 2
-#define NO_MODIFY 3
-#define FIRST 4
-#define LAST 5
+#define NONE 1 << 0
+#define NORMAL 1 << 1
+#define IGNORE_CASE 1 << 2
+#define MODIFY  1 << 3
+#define NO_MODIFY 1 << 4
+#define FIRST 1 << 5
+#define LAST 1 << 6
+#define REVERSE 1 << 7
 
+#define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO)) // Bit masking for argument passing.
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <ctype.h>
 
 /**
@@ -89,13 +93,16 @@ struct String_Utils {
     int (*index_of)(char *string, char *token, int parameter); // Not implemented
     int (*store)(String_Utils *self, char **string, unsigned int amount); // Stores array of strings into linked list; Not Implemented
     char *(*substring)(char *string, unsigned int begin, unsigned int end); // Not Implemented
-    char *(*copy)(char *string); 
+    char *(*copy)(char *string);
+    char *(*set)(char *string_one, char *string_two, int parameter);
+    char *(*reverse)(char *string, int parameter);
+    char *(*concat_all)(char *string, int parameter, ...);
     char *(*replace)(char *string, char *token, char *replacement, int parameter); // Not implemented
-    char *(*from)(char *string, unsigned int index); // Not Implemented
-    char *(*from_token)(char *string, char c); // Not implemented
-    char *(*to_lower)(char *string, int parameter); // Implemented but not in constructor
-    char *(*to_upper)(char *string, int parameter); // Not implemented
-    char **(*split)(char *string, char *token); // Not Implemented
+    char *(*from)(char *string, unsigned int index, int parameter); // Add to constructor
+    char *(*from_token)(char *string, char *delimiter, int parameter); // Not implemented
+    char *(*to_lower)(char *string, int parameter); // Add to constructor
+    char *(*to_upper)(char *string, int parameter); // Add to constructor
+    char **(*split)(char *string, char *delimiter, size_t *size, int parameter); // Add to constructor
     char** (*retrieve)(String_Utils *self, unsigned int start, unsigned int end); // Retrieves an array of strings from linked list
     void * (*iterator)(String_Utils *self); // Returns an iterator for the user to use.
     unsigned int *(*get_bytes)(char *string);
@@ -138,7 +145,9 @@ String_Utils *String_Utils_create(void);
  * @param str string to be passed through
  * @return lowercase string.
  */
-char *String_Utils_to_lowercase(char *str);
+char *String_Utils_to_lowercase(char *string, int parameter);
+
+char *String_Utils_to_uppercase(char *string, int parameter);
 
 /**
  * Has basic bounds checking, will return the last char if the index surpasses the
@@ -155,7 +164,7 @@ char String_Utils_char_at(char *string, unsigned int index);
  * @param self This String_Utils
  * @param str String to be concatenated to the String_Utils.
  */
-void String_Utils_concat(char *string_one, char *string_two, int parameters);
+char *String_Utils_concat(char *string_one, char *string_two, int parameters);
 /**
  * This function should be called whenever you decide to manipulate the String_Utils's val without
  * using one of it's callback functions. It updates the String_Utils's size and length of it's string.
@@ -178,9 +187,21 @@ unsigned int *String_Utils_get_bytes(char *string);
  * @param parameters NORMAL, IGNORE_CASE and anything else defaults to NORMAL
  * @return 0 if false, 1 if true
  */
-int String_Utils_equals(char *string_one, char *string_two, int parameters);
+int String_Utils_equals(char *string_one, char *string_two, int parameter);
 
 char *String_Utils_copy(char *string);
+
+char **String_Utils_split(char *string, char *delimiter, size_t *size, int parameter);
+
+char *String_Utils_from(char *string, unsigned int index, int parameter);
+
+char *String_Utils_from_token(char *string, char *delimiter, int parameter);
+
+char *String_Utils_concat_all(char *string, int parameter, ...);
+
+char *String_Utils_set(char *string_one, char *string_two, int parameter);
+
+char *String_Utils_reverse(char *string, int parameter);
 
 int String_Utils_length(char *string);
 #endif	/* LSTRING_H */
