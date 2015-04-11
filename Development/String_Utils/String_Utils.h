@@ -50,6 +50,7 @@
 #define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO)) // Bit masking for argument passing.
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -82,7 +83,7 @@ typedef struct String_Utils String_Utils;
  */
 struct String_Utils {
     void *LinkedList; // List to hold all stored strings.
-    void (*concat)(char *string_one, char *string_two, int parameters);
+    char *(*concat)(char *string_one, char *string_two, int parameters);
     char (*char_at)(char *string, unsigned int index);
     int (*compare)(char *string_one, char *string_two, int parameters);
     int (*contains)(char *string, char *search, int parameters);
@@ -96,8 +97,8 @@ struct String_Utils {
     char *(*copy)(char *string);
     char *(*set)(char *string_one, char *string_two, int parameter);
     char *(*reverse)(char *string, int parameter);
-    char *(*concat_all)(char *string, int parameter, ...);
-    char *(*replace)(char *string, char *token, char *replacement, int parameter); // Not implemented
+    char *(*concat_all)(int parameter, int amount, char *string, ...);
+    char *(*replace)(char *string, char old_char, char new_char, int parameter); // Not implemented
     char *(*from)(char *string, unsigned int index, int parameter); // Add to constructor
     char *(*from_token)(char *string, char *delimiter, int parameter); // Not implemented
     char *(*to_lower)(char *string, int parameter); // Add to constructor
@@ -197,12 +198,13 @@ char *String_Utils_from(char *string, unsigned int index, int parameter);
 
 char *String_Utils_from_token(char *string, char *delimiter, int parameter);
 
-char *String_Utils_concat_all(char *string, int parameter, ...);
+char *String_Utils_concat_all(int parameter, int amount, char *string, ...);
 
 char *String_Utils_set(char *string_one, char *string_two, int parameter);
 
 char *String_Utils_reverse(char *string, int parameter);
 
+char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
 int String_Utils_length(char *string);
 #endif	/* LSTRING_H */
 

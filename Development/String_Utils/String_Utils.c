@@ -1,13 +1,14 @@
 #include "String_Utils.h"
 
 char *String_Utils_concat(char *string_one, char *string_two, int parameter) {
-    char *temp = malloc(strlen(string_one) + strlen(string_two) + 2);
+    char *temp = malloc(strlen(string_one) + strlen(string_two) + 1);
+    memset(temp, 0, strlen(string_one) + strlen(string_two) + 1);
     strcat(temp, string_one);
     strcat(temp, string_two);
     // Based on parameters below, will modify the original screen, or just return the new string.
-    if (parameter == MODIFY) {
-        string_one = realloc(string_one, strlen(temp) + 1);
-        strcpy(string_one, temp);
+    if (SELECTED(parameter, MODIFY)) {
+        String_Utils_set(string_one, temp, NONE);
+        free(temp);
         return string_one;
     } else return temp; // Not modifying the original string is the default, even if there was no valid parameter.
 }
@@ -133,19 +134,17 @@ char *String_Utils_set(char *string_one, char *string_two, int parameter) {
     return string_one;
 }
 
-char *String_Utils_concat_all(char *string, int parameter, ...) {
+char *String_Utils_concat_all(int parameter, int amount, char *string, ...) {
     va_list args;
     int i = 0;
-    size_t size = strlen(string) + 1;
-    va_start(args, parameter);
-    char *final_string = String_Utils_copy(string);
-    String_Utils_concat(final_string, string, MODIFY);
+    //size_t size = strlen(string) + 1;
+    va_start(args, string);
+    char *final_string = malloc(strlen(string));
+    final_string = String_Utils_concat(final_string, string, NONE);
     char *temp = va_arg(args, char *);
-    while (!String_Utils_equals(temp, "\0", IGNORE_CASE)) {
-        String_Utils_concat(final_string, temp, MODIFY);
+    for(i; i < amount; i++){
+        final_string = String_Utils_concat(final_string, temp, NONE);
         temp = va_arg(args, char *);
-        i++;
-        if(i < 1000) break;
     }
     if (parameter == MODIFY) {
         String_Utils_set(string, final_string, NONE);
@@ -161,6 +160,28 @@ char *String_Utils_reverse(char *string, int parameter) {
         temp[i] = string[strlen(string) - 1 - i];
     }
     if (SELECTED(parameter, MODIFY)) {
+        String_Utils_set(string, temp, NONE);
+        free(temp);
+        return string;
+    } else return temp;
+}
+
+char *String_Utils_replace(char *string, char old_char, char new_char, int parameter){
+    char *temp = malloc(strlen(string) + 1);
+    int i = 0;
+    if(SELECTED(parameter, IGNORE_CASE)){
+        for(i; i < strlen(string); i++){
+            if(tolower(string[i]) == tolower(old_char)) temp[i] = new_char;
+            else temp[i] = string[i];
+        }
+    }
+    else {
+        for(i; i < strlen(string); i++){
+            if(string[i] == old_char) temp[i] = new_char;
+            else temp[i] = string[i];
+        }
+    }
+    if(SELECTED(parameter, MODIFY)){
         String_Utils_set(string, temp, NONE);
         free(temp);
         return string;
