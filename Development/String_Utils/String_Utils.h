@@ -89,25 +89,29 @@ struct String_Utils {
     int (*contains)(char *string, char *search, int parameters);
     int (*equals)(char *string_one, char *string_two, int parameters);
     int (*length)(char *string);
+    int (*count)(char *string, char *delimiter, int parameter);
     int (*starts_with)(char *string, char *token); // Not Implemented
     int (*ends_with)(char *string, char *token); // Not Implemented
     int (*index_of)(char *string, char *token, int parameter); // Not implemented
     int (*store)(String_Utils *self, char **string, unsigned int amount); // Stores array of strings into linked list; Not Implemented
     char *(*substring)(char *string, unsigned int begin, unsigned int end); // Not Implemented
     char *(*copy)(char *string);
+    char *(*capitalize)(char *string, int parameter); // Not implemented
+    char *(*join)(char **array_of_strings, size_t size, int parameter); // Joins an array of strings to one.
+    char *(*trim)(char *string, int parameter); // Trims white spaces at beginning and end of string
     char *(*set)(char *string_one, char *string_two, int parameter);
     char *(*reverse)(char *string, int parameter);
-    char *(*concat_all)(int parameter, int amount, char *string, ...);
-    char *(*replace)(char *string, char old_char, char new_char, int parameter); // Not implemented
+    char *(*concat_all)(int parameter, unsigned int amount, char *string, ...);
+    char *(*replace)(char *string, char old_char, char new_char, int parameter); // Add to constructor
     char *(*from)(char *string, unsigned int index, int parameter); // Add to constructor
-    char *(*from_token)(char *string, char *delimiter, int parameter); // Not implemented
+    char *(*from_token)(char *string, char *delimiter, int parameter); // Testing...
     char *(*to_lower)(char *string, int parameter); // Add to constructor
     char *(*to_upper)(char *string, int parameter); // Add to constructor
     char **(*split)(char *string, char *delimiter, size_t *size, int parameter); // Add to constructor
     char** (*retrieve)(String_Utils *self, unsigned int start, unsigned int end); // Retrieves an array of strings from linked list
     void * (*iterator)(String_Utils *self); // Returns an iterator for the user to use.
     unsigned int *(*get_bytes)(char *string);
-    void (*update)(String_Utils *self);
+    void (*update)(String_Utils *self); // Remove or find a use for it!
     // Currently not implemented: LinkedList, retrieve, iterator, store.
 };
 
@@ -198,7 +202,7 @@ char *String_Utils_from(char *string, unsigned int index, int parameter);
 
 char *String_Utils_from_token(char *string, char *delimiter, int parameter);
 
-char *String_Utils_concat_all(int parameter, int amount, char *string, ...);
+char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...);
 
 char *String_Utils_set(char *string_one, char *string_two, int parameter);
 

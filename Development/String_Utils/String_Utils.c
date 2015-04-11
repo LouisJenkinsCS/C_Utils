@@ -27,18 +27,19 @@ char String_Utils_char_at(char *string, unsigned int index) {
 }
 
 int String_Utils_contains(char *string, char *search, int parameter) { // FIX!
-    if (parameter == IGNORE_CASE) return strstr(String_Utils_to_lowercase(string, NO_MODIFY), String_Utils_to_lowercase(search, NO_MODIFY)) == NULL ? 0 : 1;
+    if (SELECTED(parameter, IGNORE_CASE)) return strstr(String_Utils_to_lowercase(string, NO_MODIFY), String_Utils_to_lowercase(search, NO_MODIFY)) == NULL ? 0 : 1;
     else return strstr(string, search) == NULL ? 0 : 1;
 }
 
 char *String_Utils_to_lowercase(char *string, int parameter) {
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
-    for (i; i < strlen(string); i++) {
+    for (i; i <= strlen(string); i++) {
         temp[i] = tolower(string[i]);
     }
     if (SELECTED(parameter, MODIFY)) {
         strcpy(string, temp);
+        free(temp);
         return string;
     } else return temp;
 }
@@ -46,11 +47,12 @@ char *String_Utils_to_lowercase(char *string, int parameter) {
 char *String_Utils_to_uppercase(char *string, int parameter) {
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
-    for (i; i < strlen(string); i++) {
+    for (i; i <= strlen(string); i++) {
         temp[i] = toupper(string[i]);
     }
-    if (parameter = MODIFY) {
+    if (SELECTED(parameter, MODIFY)) {
         strcpy(string, temp);
+        free(temp);
         return string;
     } else return temp;
 }
@@ -92,29 +94,47 @@ int String_Utils_length(char *string) {
 char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
     char **tokens;
     char *temp;
-    size_t size;
-    if (SELECTED(parameter, NO_MODIFY)) tokens = String_Utils_split(string, delimiter, &size, NO_MODIFY);
-    else tokens = String_Utils_split(string, delimiter, &size, MODIFY);
+    size_t *size = malloc(sizeof(size_t));
+    if (SELECTED(parameter, MODIFY)) tokens = String_Utils_split(string, delimiter, size, MODIFY);
+    else tokens = String_Utils_split(string, delimiter, size, NO_MODIFY);
+    if(tokens == NULL) return NULL;
     if (SELECTED(parameter, FIRST)) {
-        // Continue here!
+        int i = 1;
+        for(i; i < *size; i++){
+            if(temp == NULL) temp = String_Utils_copy(tokens[i]);
+            else {
+                temp = String_Utils_concat(temp, delimiter, NONE); // Adds the delimiter back
+                temp = String_Utils_concat(temp, tokens[i], NONE);
+            }
+        }
     }
+    if(SELECTED(parameter, LAST)){
+        temp = String_Utils_copy(tokens[*size-1]);
+    }
+    // Free the array of strings
+    int i = 0;
+    for(i; i < *size; i++) free(tokens[i]);
+    free(tokens);
+    if(SELECTED(parameter, MODIFY)){
+        String_Utils_set(string, temp, NONE);
+        free(temp);
+        return string;
+    }
+    return temp;
 }
 
 char **String_Utils_split(char *string, char *delimiter, size_t *size, int parameter) {
     char **string_array = malloc(sizeof (char *));
     char *temp;
-    char *temp_string; // Used only if set to NO_MODIFY
-    if (parameter == NO_MODIFY) {
-        temp_string = String_Utils_copy(string);
-        temp = strtok(temp_string, delimiter);
-    } else temp = strtok(string, delimiter);
+    char *temp_string = String_Utils_copy(string);
+    temp = strtok(temp_string, delimiter);
     if (temp == NULL) return NULL;
-    int index = 0;
+    unsigned int index = 0;
     while (temp != NULL) {
         string_array[index] = malloc(strlen(temp) + 1);
         strcpy(string_array[index], temp);
-        string_array = realloc(string_array, (sizeof (char *) * (index + 1)));
         index++;
+        string_array = realloc(string_array, (sizeof (char *) * (index + 1))); 
         temp = strtok(NULL, delimiter);
     }
     free(temp);
@@ -134,17 +154,17 @@ char *String_Utils_set(char *string_one, char *string_two, int parameter) {
     return string_one;
 }
 
-char *String_Utils_concat_all(int parameter, int amount, char *string, ...) {
+char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...) {
     va_list args;
     int i = 0;
     //size_t size = strlen(string) + 1;
     va_start(args, string);
     char *final_string = malloc(strlen(string));
     final_string = String_Utils_concat(final_string, string, NONE);
-    char *temp = va_arg(args, char *);
+    char *temp;
     for(i; i < amount; i++){
-        final_string = String_Utils_concat(final_string, temp, NONE);
         temp = va_arg(args, char *);
+        final_string = String_Utils_concat(final_string, temp, NONE);
     }
     if (parameter == MODIFY) {
         String_Utils_set(string, final_string, NONE);
@@ -170,13 +190,13 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
     if(SELECTED(parameter, IGNORE_CASE)){
-        for(i; i < strlen(string); i++){
+        for(i; i <= strlen(string); i++){
             if(tolower(string[i]) == tolower(old_char)) temp[i] = new_char;
             else temp[i] = string[i];
         }
     }
     else {
-        for(i; i < strlen(string); i++){
+        for(i; i <= strlen(string); i++){
             if(string[i] == old_char) temp[i] = new_char;
             else temp[i] = string[i];
         }
