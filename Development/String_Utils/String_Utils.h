@@ -85,7 +85,7 @@ struct String_Utils {
     void *LinkedList; // List to hold all stored strings.
     char *(*concat)(char *string_one, char *string_two, int parameters);
     char (*char_at)(char *string, unsigned int index);
-    int (*compare)(char *string_one, char *string_two, int parameters);
+    int (*compare)(char *string_one, char *string_two, int parameters); // Compares two strings.
     int (*contains)(char *string, char *search, int parameters);
     int (*equals)(char *string_one, char *string_two, int parameters);
     int (*length)(char *string);
@@ -97,7 +97,7 @@ struct String_Utils {
     char *(*substring)(char *string, unsigned int begin, unsigned int end); // Not Implemented
     char *(*copy)(char *string);
     char *(*capitalize)(char *string, int parameter); // Not implemented
-    char *(*join)(char **array_of_strings, size_t size, int parameter); // Joins an array of strings to one.
+    char *(*join)(char **array_of_strings, size_t *size, int parameter); // Add to constructor
     char *(*trim)(char *string, int parameter); // Trims white spaces at beginning and end of string
     char *(*set)(char *string_one, char *string_two, int parameter);
     char *(*reverse)(char *string, int parameter);
@@ -110,7 +110,7 @@ struct String_Utils {
     char **(*split)(char *string, char *delimiter, size_t *size, int parameter); // Add to constructor
     char** (*retrieve)(String_Utils *self, unsigned int start, unsigned int end); // Retrieves an array of strings from linked list
     void * (*iterator)(String_Utils *self); // Returns an iterator for the user to use.
-    unsigned int *(*get_bytes)(char *string);
+    unsigned int *(*get_bytes)(char *string); 
     void (*update)(String_Utils *self); // Remove or find a use for it!
     // Currently not implemented: LinkedList, retrieve, iterator, store.
 };
@@ -207,6 +207,8 @@ char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, 
 char *String_Utils_set(char *string_one, char *string_two, int parameter);
 
 char *String_Utils_reverse(char *string, int parameter);
+
+char *String_Utils_join(char **array_of_strings, size_t *size, int parameter);
 
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
 int String_Utils_length(char *string);

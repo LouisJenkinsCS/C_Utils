@@ -18,7 +18,7 @@ void String_Utils_update(String_Utils *self) { // IMPLEMENT!
 }
 
 int String_Utils_compare(char *string_one, char *string_two, int parameter) {
-    if (parameter == IGNORE_CASE) return strcmp(String_Utils_to_lowercase(string_one, NO_MODIFY), String_Utils_to_lowercase(string_two, NO_MODIFY));
+    if (SELECTED(parameter, IGNORE_CASE)) return strcmp(String_Utils_to_lowercase(string_one, NO_MODIFY), String_Utils_to_lowercase(string_two, NO_MODIFY));
     else return strcmp(string_one, string_two);
 }
 
@@ -124,7 +124,7 @@ char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
 }
 
 char **String_Utils_split(char *string, char *delimiter, size_t *size, int parameter) {
-    char **string_array = malloc(sizeof (char *));
+    char **string_array = malloc(sizeof (char *)); // Inspect here if crash due to bad allocations!
     char *temp;
     char *temp_string = String_Utils_copy(string);
     temp = strtok(temp_string, delimiter);
@@ -206,6 +206,16 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
         free(temp);
         return string;
     } else return temp;
+}
+
+char *String_Utils_join(char **array_of_strings, size_t *size, int parameter){
+    char *temp;
+    int i = 0;
+    for(i; i < *size; i++){
+        if(temp == NULL) temp = String_Utils_copy(array_of_strings[i]);
+        else temp = String_Utils_concat(temp, array_of_strings[i], NONE);
+    }
+    return temp;
 }
 
 String_Utils *String_Utils_create(void) {
