@@ -218,6 +218,70 @@ char *String_Utils_join(char **array_of_strings, size_t *size, int parameter){
     return temp;
 }
 
+int String_Utils_starts_with(char *string, char *find, int parameter){
+    VALIDATE_PTR(string, 0); VALIDATE_PTR(find, 0); 
+    int i = 0;
+    for(i; i < strlen(find); i++) if(SELECTED(parameter, IGNORE_CASE)){
+        if(tolower(string[i]) != tolower(find[i])) return 0;
+    } else if(string[i] != find[i]) return 0;
+    return 1;
+}
+
+int String_Utils_ends_with(char *string, char *find, int parameter){
+    VALIDATE_PTR(string, 0); VALIDATE_PTR(find, 0);
+    int i = strlen(string) - strlen(find);
+    for(i; i < strlen(string); i++){
+        if(SELECTED(parameter, IGNORE_CASE)){
+            if(tolower(string[i]) != tolower(find[i - (strlen(string) - strlen(find))])) return 0; 
+        } else if(string[i] != find[i]) return 0;
+    }
+    return 1;
+}
+
+void String_Utils_free_array(char **array, size_t size){
+    VALIDATE_PTR(array, NULL);
+    int i = 0;
+    for(i; i < size; i++){
+        free(array[i]);
+    }
+    free(array);
+    array = NULL;
+}
+
+char *String_Utils_capitalize(char *string, int parameter){
+    char *temp = String_Utils_copy(string);
+    temp[0] = toupper(temp[0]);
+    if(SELECTED(parameter, MODIFY)) String_Utils_set(string, temp, NONE);
+    return temp;
+}
+
+char *String_Utils_trim(char *string, int parameter){
+    VALIDATE_PTR(string, NULL);
+    char *temp;
+    int i = 0;
+    int j = strlen(string);
+    for(i; i < strlen(string); i++){
+        if(!isspace(string[i])) break;
+    }
+    for(j; j > i ; j--){
+        if(!isspace(string[j])) break;
+    }
+    temp = String_Utils_substring(string, i, j, NONE);
+    if(SELECTED(parameter, MODIFY)){
+        String_Utils_set(string, temp, NONE);
+        free(temp);
+        return string;
+    }
+    return temp;
+}
+
+char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
+    char *temp = malloc(end - begin);
+    memcpy(temp, string + begin, end - begin);
+    if(SELECTED(parameter, REVERSE)) temp = String_Utils_reverse(temp, NONE);
+    return temp;
+}
+
 String_Utils *String_Utils_create(void) {
     String_Utils *string = malloc(sizeof (String_Utils));
     string->concat = String_Utils_concat;

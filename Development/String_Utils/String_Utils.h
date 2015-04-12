@@ -47,11 +47,16 @@
 #define LAST 1 << 6
 #define REVERSE 1 << 7
 
+#define DEBUG 1
+#define DEBUG_PRINT(MESSAGE, ...)(DEBUG ? fprintf(stderr, MESSAGE, __VA_ARGS__) : DEBUG)
 #define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO)) // Bit masking for argument passing.
+#define VALIDATE_PTR(PTR, RETURN_VAL) do { if(PTR == NULL){ \
+        DEBUG_PRINT("Error: %s == NULL\n", #PTR); return RETURN_VAL; }} while(0)
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 #include <ctype.h>
 
 /**
@@ -82,34 +87,55 @@ typedef struct String_Utils String_Utils;
  * 3) Callback functions for easy string manipulations without having to type arduously long function names.
  */
 struct String_Utils {
-    void *LinkedList; // List to hold all stored strings.
-    char *(*concat)(char *string_one, char *string_two, int parameters);
-    char (*char_at)(char *string, unsigned int index);
+    /*
+     *Functions which will either compare a string to another, determine if a condition
+     * is true, or return an index to where a condition is true.
+     */
+    //
     int (*compare)(char *string_one, char *string_two, int parameters); // Compares two strings.
     int (*contains)(char *string, char *search, int parameters);
     int (*equals)(char *string_one, char *string_two, int parameters);
     int (*length)(char *string);
-    int (*count)(char *string, char *delimiter, int parameter);
-    int (*starts_with)(char *string, char *token); // Not Implemented
-    int (*ends_with)(char *string, char *token); // Not Implemented
+    int (*count)(char *string, char *delimiter, int parameter); // Not implemented
+    int (*starts_with)(char *string, char *find, int parameter); // Add to constructor
+    int (*ends_with)(char *string, char *token); // Add to constructor
     int (*index_of)(char *string, char *token, int parameter); // Not implemented
-    int (*store)(String_Utils *self, char **string, unsigned int amount); // Stores array of strings into linked list; Not Implemented
-    char *(*substring)(char *string, unsigned int begin, unsigned int end); // Not Implemented
+    //
+    /*
+     * Below functions will return a string after it's purposes are done
+     */
+    //
+    char (*char_at)(char *string, unsigned int index);
+    char *(*substring)(char *string, unsigned int begin, unsigned int end); // Add to constructor
     char *(*copy)(char *string);
-    char *(*capitalize)(char *string, int parameter); // Not implemented
+    char *(*concat)(char *string_one, char *string_two, int parameters);
+    char *(*capitalize)(char *string, int parameter); // Add to Constructor
     char *(*join)(char **array_of_strings, size_t *size, int parameter); // Add to constructor
-    char *(*trim)(char *string, int parameter); // Trims white spaces at beginning and end of string
+    char *(*trim)(char *string, int parameter); // Trims white spaces at beginning and end of string; Not implemented
     char *(*set)(char *string_one, char *string_two, int parameter);
-    char *(*reverse)(char *string, int parameter);
-    char *(*concat_all)(int parameter, unsigned int amount, char *string, ...);
+    char *(*reverse)(char *string, int parameter); // Add to constructor
+    char *(*concat_all)(int parameter, unsigned int amount, char *string, ...); // Add to constructor
     char *(*replace)(char *string, char old_char, char new_char, int parameter); // Add to constructor
     char *(*from)(char *string, unsigned int index, int parameter); // Add to constructor
-    char *(*from_token)(char *string, char *delimiter, int parameter); // Testing...
+    char *(*from_token)(char *string, char *delimiter, int parameter); // Add to constructor
     char *(*to_lower)(char *string, int parameter); // Add to constructor
     char *(*to_upper)(char *string, int parameter); // Add to constructor
+    //
+    /*
+     * Below functions work with arrays of strings, or will turn a string into an array of strings.
+     */
+    //
     char **(*split)(char *string, char *delimiter, size_t *size, int parameter); // Add to constructor
-    char** (*retrieve)(String_Utils *self, unsigned int start, unsigned int end); // Retrieves an array of strings from linked list
-    void * (*iterator)(String_Utils *self); // Returns an iterator for the user to use.
+    char **(*combine)(char **array_one, size_t *array_one_size, char **array_two, size_t *array_two_size, int parameter); // Not implemented.
+    char **(*add_to)(char **array, char *string, size_t *size, int parameter); // Not implemented
+    char **(*remove_from)(char **array, char *string, size_t *size, int parameter); // Not implemented
+    char **(*sort)(char **array, size_t *size, int parameter); // Not implemented
+    //
+    /*
+     * Below functions do misc. operations on strings, array of strings, etc.
+     */
+    //
+    void (*free_array)(char **array, size_t *size); // Add to Constructor
     unsigned int *(*get_bytes)(char *string); 
     void (*update)(String_Utils *self); // Remove or find a use for it!
     // Currently not implemented: LinkedList, retrieve, iterator, store.
@@ -211,6 +237,19 @@ char *String_Utils_reverse(char *string, int parameter);
 char *String_Utils_join(char **array_of_strings, size_t *size, int parameter);
 
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
+
+int String_Utils_starts_with(char *string, char *find, int parameter);
+
+int String_Utils_ends_with(char *string, char *find, int parameter);
+
 int String_Utils_length(char *string);
+
+void String_Utils_free_array(char **array, size_t size);
+
+char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter);
+
+char *String_Utils_capitalize(char *string, int parameter);
+
+char *String_Utils_trim(char *string, int parameter);
 #endif	/* LSTRING_H */
 
