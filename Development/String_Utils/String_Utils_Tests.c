@@ -87,8 +87,17 @@ void test_String_Utils_count(void){
     int result = su->count(temp, su->copy("the", NONE), IGNORE_CASE);
    // printf("The amount of times 'the' appears in the sentence: '%s' is %d\n", temp, result);
 }
+
+void test_String_Utils_between(void){
+    char* string = "Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;</Parse_Me> BLAH BLAH BLAH USELESS INFO!";
+    char* delimiter = "<Parse_Me>";
+    char *end_delimiter = "</Parse_Me>";
+    int parameter = IGNORE_CASE;
+    char* result_one = su->between(string, delimiter, end_delimiter, parameter);
+    printf("Result One: %s\n", result_one);
+}
 int main(void){
     su = String_Utils_create();
-    TEST_ALL_FUNCTIONS;
+    //TEST_ALL_FUNCTIONS;
     return 0;
 }

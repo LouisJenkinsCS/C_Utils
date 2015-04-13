@@ -101,12 +101,13 @@ struct String_Utils {
     int (*index_of)(char *string, char *token, int parameter); // Returns start index of substring in string. (Options: IGNORE_CASE)
     char (*char_at)(char *string, unsigned int index); // Returns the character at index in string (or last char if out of bounds)
     char *(*substring)(char *string, unsigned int begin, unsigned int end, int parameter); // Returns a substring from beginning to end of a string. (Options: See Copy)
+    char *(*between)(char *string, char *start, char *end, int parameter); // Returns a substring between the first occurrences of the two substrings given. (Options: MODIFY, IGNORE_CASE)
     char *(*copy)(char *string, int parameter); // Returns a copy of the string (Options: LOWERCASE, UPPERCASE, REVERSE)
     char *(*concat)(char *string_one, char *string_two, int parameters); // Concatenates two strings. (Options: MODIFY)
     char *(*capitalize)(char *string, int parameter); // Capitalizes the first character in the first word. (Options: Modify)
-    char *(*join)(char **array_of_strings, size_t *size, int parameter); // Joins an array of strings into one string. (Options: NONE)
+    char *(*join)(char **array_of_strings, char *delimiter,  size_t *size, int parameter); // Joins an array of strings into one string. (Options: NONE)
     char *(*trim)(char *string, int parameter); // Trims white spaces at beginning and end of string. (Options: MODIFY)
-    char *(*set)(char *string_one, char *string_two, int parameter); // Sets first string to second string. (Options: See Copy)
+    char *(*set)(char **string_one, char *string_two, int parameter); // Sets first string to second string. (Options: See Copy)
     char *(*reverse)(char *string, int parameter); // Reverses the string. (Options: MODIFY);
     char *(*concat_all)(int parameter, unsigned int amount, char *string, ...); // Concatenates all strings passed to it into one. (Options: MODIFY)
     char *(*replace)(char *string, char old_char, char new_char, int parameter); // Replaces all of a char with another. (Options: MODIFY, IGNORE_CASE)
@@ -213,11 +214,11 @@ char *String_Utils_from_token(char *string, char *delimiter, int parameter);
 
 char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...);
 
-char *String_Utils_set(char *string_one, char *string_two, int parameter);
+char *String_Utils_set(char **string_one, char *string_two, int parameter);
 
 char *String_Utils_reverse(char *string, int parameter);
 
-char *String_Utils_join(char **array_of_strings, size_t *size, int parameter);
+char *String_Utils_join(char **array_of_strings, char *delimiter, size_t *size, int parameter);
 
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
 
@@ -238,5 +239,7 @@ char *String_Utils_trim(char *string, int parameter);
 int String_Utils_index_of(char *string, char *token, int parameter);
 
 int String_Utils_count(char *string, char *delimiter, int parameter);
+
+char *String_Utils_between(char *string, char *start, char *end, int parameter);
 #endif	/* LSTRING_H */
 

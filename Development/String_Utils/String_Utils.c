@@ -9,7 +9,7 @@ char *String_Utils_concat(char *string_one, char *string_two, int parameter) {
     strcat(temp, string_two);
     // Based on parameters below, will modify the original screen, or just return the new string.
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(string_one, temp, NONE);
+        String_Utils_set(&string_one, temp, NONE);
         free(temp);
         return string_one;
     } else return temp; // Not modifying the original string is the default, even if there was no valid parameter.
@@ -27,7 +27,7 @@ int String_Utils_compare(char *string_one, char *string_two, int parameter) {
 }
 
 char String_Utils_char_at(char *string, unsigned int index) {
-    VALIDATE_PTR(string, NULL);
+    VALIDATE_PTR(string, '\0');
     return string[index > strlen(string) ? strlen(string) - 1 : index];
 }
 
@@ -46,7 +46,7 @@ char *String_Utils_to_lowercase(char *string, int parameter) {
         temp[i] = tolower(string[i]);
     }
     if (SELECTED(parameter, MODIFY)) {
-        strcpy(string, temp);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     } else return temp;
@@ -60,7 +60,7 @@ char *String_Utils_to_uppercase(char *string, int parameter) {
         temp[i] = toupper(string[i]);
     }
     if (SELECTED(parameter, MODIFY)) {
-        strcpy(string, temp);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     } else return temp;
@@ -84,21 +84,23 @@ char *String_Utils_copy(char *string, int parameter) {
     VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     strcpy(temp, string);
-    if(SELECTED(parameter, LOWERCASE)) String_Utils_set(temp, String_Utils_to_lowercase(temp, NONE), NONE);
-    if(SELECTED(parameter, UPPERCASE)) String_Utils_set(temp, String_Utils_to_uppercase(temp, NONE), NONE);
-    if(SELECTED(parameter, REVERSE)) String_Utils_set(temp, temp, REVERSE);
+    if(SELECTED(parameter, LOWERCASE)) temp = String_Utils_to_lowercase(temp, NONE);
+    if(SELECTED(parameter, UPPERCASE)) temp = String_Utils_to_uppercase(temp, NONE);
+    if(SELECTED(parameter, REVERSE)) temp = String_Utils_reverse(temp, NONE);
     return temp;
 }
 
 char *String_Utils_from(char *string, unsigned int index, int parameter) {
     VALIDATE_PTR(string, NULL);
-    char *temp = malloc((strlen(string) + 1) - index);
-    int i = index;
+    int i = index > strlen(string) ? strlen(string)-1 : index ;
+    int j = i;
+    char *temp = malloc((strlen(string) + 1) - i);
+    
     for (i; i <= strlen(string); i++) {
-        temp[i - index] = string[i];
+        temp[i - j] = string[i];
     }
     if (parameter == MODIFY) {
-        String_Utils_set(string, temp, NONE);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     } else return temp;
@@ -112,31 +114,13 @@ int String_Utils_length(char *string) {
 char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
     VALIDATE_PTR(string, NULL);
     VALIDATE_PTR(delimiter, NULL);
-    char **tokens;
-    char *temp;
-    size_t *size = malloc(sizeof(size_t));
-    if (SELECTED(parameter, MODIFY)) tokens = String_Utils_split(string, delimiter, size, MODIFY);
-    else tokens = String_Utils_split(string, delimiter, size, NONE);
-    if(tokens == NULL) return NULL;
-    if (SELECTED(parameter, FIRST)) {
-        int i = 1;
-        for(i; i < *size; i++){
-            if(temp == NULL) temp = String_Utils_copy(tokens[i], NONE);
-            else {
-                temp = String_Utils_concat(temp, delimiter, NONE); // Adds the delimiter back
-                temp = String_Utils_concat(temp, tokens[i], NONE);
-            }
-        }
-    }
+    char *temp = strstr(string, delimiter);
+    if(temp == NULL) return NULL;
     if(SELECTED(parameter, LAST)){
-        temp = String_Utils_copy(tokens[*size-1], NONE);
+        while(temp != NULL) temp = strstr(string, delimiter);
     }
-    // Free the array of strings
-    int i = 0;
-    for(i; i < *size; i++) free(tokens[i]);
-    free(tokens);
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(string, temp, NONE);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     }
@@ -166,15 +150,17 @@ char **String_Utils_split(char *string, char *delimiter, size_t *size, int param
     return string_array;
 }
 
-char *String_Utils_set(char *string_one, char *string_two, int parameter) {
+char *String_Utils_set(char **string_one, char *string_two, int parameter) {
     VALIDATE_PTR(string_one, NULL);
+    VALIDATE_PTR(*string_one, NULL);
     VALIDATE_PTR(string_two, NULL);
     char *temp_string;
     temp_string = String_Utils_copy(string_two, parameter);
-    string_one = realloc(string_one, strlen(temp_string) + 1);
-    strcpy(string_one, temp_string);
+    *string_one = realloc(*string_one, strlen(temp_string) + 1);
+    memset(*string_one, '\0', strlen(temp_string)+1);
+    strcpy(*string_one, temp_string);
     free(temp_string);
-    return string_one;
+    return *string_one;
 }
 
 char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...) {
@@ -190,8 +176,8 @@ char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, 
         temp = va_arg(args, char *);
         final_string = String_Utils_concat(final_string, temp, NONE);
     }
-    if (parameter == MODIFY) {
-        String_Utils_set(string, final_string, NONE);
+    if (SELECTED(parameter, MODIFY)) {
+        String_Utils_set(&string, final_string, NONE);
         free(final_string);
         return string;
     } else return final_string;
@@ -201,11 +187,11 @@ char *String_Utils_reverse(char *string, int parameter) {
     VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
-    for (i; i < strlen(string); i++) {
+    for (i; i <= strlen(string); i++) {
         temp[i] = string[strlen(string) - 1 - i];
     }
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(string, temp, NONE);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     } else return temp;
@@ -228,20 +214,21 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
         }
     }
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(string, temp, NONE);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     } else return temp;
 }
 
-char *String_Utils_join(char **array_of_strings, size_t *size, int parameter){
+char *String_Utils_join(char **array_of_strings, char *delimiter, size_t *size, int parameter){
     VALIDATE_PTR(array_of_strings, NULL);
     VALIDATE_PTR(size, NULL);
-    char *temp;
+    VALIDATE_PTR(delimiter, NULL);
+    char *temp = NULL;
     int i = 0;
     for(i; i < *size; i++){
         if(temp == NULL) temp = String_Utils_copy(array_of_strings[i], NONE);
-        else temp = String_Utils_concat(temp, array_of_strings[i], NONE);
+        else temp = String_Utils_concat_all(NONE, 2, temp, delimiter, array_of_strings[i]);
     }
     return temp;
 }
@@ -261,7 +248,7 @@ int String_Utils_ends_with(char *string, char *find, int parameter){
     for(i; i < strlen(string); i++){
         if(SELECTED(parameter, IGNORE_CASE)){
             if(tolower(string[i]) != tolower(find[i - (strlen(string) - strlen(find))])) return 0; 
-        } else if(string[i] != find[i]) return 0;
+        } else if(string[i] != find[i - (strlen(string) - strlen(find))]) return 0;
     }
     return 1;
 }
@@ -272,15 +259,15 @@ void String_Utils_free_array(char **array, size_t size){
     for(i; i < size; i++){
         free(array[i]);
     }
-    free(array);
-    array = NULL;
+    //free(array);
+    //array = NULL;
 }
 
 char *String_Utils_capitalize(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = String_Utils_copy(string, NONE);
     temp[0] = toupper(temp[0]);
-    if(SELECTED(parameter, MODIFY)) String_Utils_set(string, temp, NONE);
+    if(SELECTED(parameter, MODIFY)) String_Utils_set(&string, temp, NONE);
     return temp;
 }
 
@@ -288,7 +275,7 @@ char *String_Utils_trim(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp;
     int i = 0;
-    int j = strlen(string);
+    int j = strlen(string) -1;
     for(i; i < strlen(string); i++){
         if(!isspace(string[i])) break;
     }
@@ -297,7 +284,7 @@ char *String_Utils_trim(char *string, int parameter){
     }
     temp = String_Utils_substring(string, i, j, NONE);
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(string, temp, NONE);
+        String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
     }
@@ -306,7 +293,7 @@ char *String_Utils_trim(char *string, int parameter){
 
 char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
     VALIDATE_PTR(string, NULL);
-    char *temp = malloc(end - begin);
+    char *temp = malloc((end - begin) + 1);
     memcpy(temp, string + begin, end < begin ? strlen(string) - begin : end - begin);
     temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
     return temp;
@@ -339,6 +326,15 @@ int String_Utils_count(char *string, char *substring, int parameter){
     return count;
 }
 
+char *String_Utils_between(char *string, char *start, char *end, int parameter){
+    char *temp; 
+    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_copy(string, LOWERCASE), String_Utils_copy(start, LOWERCASE)) + strlen(start);
+    else temp = strstr(string, start) + strlen(start);
+    size_t size = strlen(temp) - (strlen(strstr(string, end)));
+    temp = String_Utils_substring(temp, 0, size, NONE);
+    return temp;
+}
+
 String_Utils *String_Utils_create(void) {
     String_Utils *string = malloc(sizeof (String_Utils));
     string->get_bytes = INIT(get_bytes);
@@ -366,6 +362,7 @@ String_Utils *String_Utils_create(void) {
     string->ends_with = INIT(ends_with);
     string->from = INIT(from);
     string->from_token = INIT(from_token);
+    string->between = INIT(between);
     printf("String_Utils initialized!\n");
     return string;
 }
