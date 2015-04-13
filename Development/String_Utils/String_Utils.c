@@ -1,6 +1,8 @@
 #include "String_Utils.h"
 
 char *String_Utils_concat(char *string_one, char *string_two, int parameter) {
+    VALIDATE_PTR(string_one, NULL);
+    VALIDATE_PTR(string_two, NULL);
     char *temp = malloc(strlen(string_one) + strlen(string_two) + 1);
     memset(temp, 0, strlen(string_one) + strlen(string_two) + 1);
     strcat(temp, string_one);
@@ -18,20 +20,26 @@ void String_Utils_update(String_Utils *self) { // IMPLEMENT!
 }
 
 int String_Utils_compare(char *string_one, char *string_two, int parameter) {
-    if (SELECTED(parameter, IGNORE_CASE)) return strcmp(String_Utils_to_lowercase(string_one, NO_MODIFY), String_Utils_to_lowercase(string_two, NO_MODIFY));
+    VALIDATE_PTR(string_one, -1);
+    VALIDATE_PTR(string_two, -1);
+    if (SELECTED(parameter, IGNORE_CASE)) return strcmp(String_Utils_copy(string_one, LOWERCASE), String_Utils_copy(string_two, LOWERCASE));
     else return strcmp(string_one, string_two);
 }
 
 char String_Utils_char_at(char *string, unsigned int index) {
+    VALIDATE_PTR(string, NULL);
     return string[index > strlen(string) ? strlen(string) - 1 : index];
 }
 
 int String_Utils_contains(char *string, char *search, int parameter) { // FIX!
-    if (SELECTED(parameter, IGNORE_CASE)) return strstr(String_Utils_to_lowercase(string, NO_MODIFY), String_Utils_to_lowercase(search, NO_MODIFY)) == NULL ? 0 : 1;
+    VALIDATE_PTR(string, 0);
+    VALIDATE_PTR(search, 0);
+    if (SELECTED(parameter, IGNORE_CASE)) return strstr(String_Utils_copy(string, LOWERCASE), String_Utils_copy(search, LOWERCASE)) == NULL ? 0 : 1;
     else return strstr(string, search) == NULL ? 0 : 1;
 }
 
 char *String_Utils_to_lowercase(char *string, int parameter) {
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
     for (i; i <= strlen(string); i++) {
@@ -45,6 +53,7 @@ char *String_Utils_to_lowercase(char *string, int parameter) {
 }
 
 char *String_Utils_to_uppercase(char *string, int parameter) {
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
     for (i; i <= strlen(string); i++) {
@@ -58,6 +67,7 @@ char *String_Utils_to_uppercase(char *string, int parameter) {
 }
 
 unsigned int *String_Utils_get_bytes(char *string) {
+    VALIDATE_PTR(string, NULL);
     unsigned int *bytes = malloc(sizeof (unsigned int) * strlen(string));
     int i = 0;
     for (i; i < strlen(string); i++) bytes[i] = (unsigned int) ((unsigned char) string[i]);
@@ -65,16 +75,23 @@ unsigned int *String_Utils_get_bytes(char *string) {
 }
 
 int String_Utils_equals(char *string_one, char *string_two, int parameter) {
+    VALIDATE_PTR(string_one, 0);
+    VALIDATE_PTR(string_two, 0);
     return String_Utils_compare(string_one, string_two, parameter) == 0 ? 1 : 0;
 }
 
-char *String_Utils_copy(char *string) {
+char *String_Utils_copy(char *string, int parameter) {
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     strcpy(temp, string);
+    if(SELECTED(parameter, LOWERCASE)) String_Utils_set(temp, String_Utils_to_lowercase(temp, NONE), NONE);
+    if(SELECTED(parameter, UPPERCASE)) String_Utils_set(temp, String_Utils_to_uppercase(temp, NONE), NONE);
+    if(SELECTED(parameter, REVERSE)) String_Utils_set(temp, temp, REVERSE);
     return temp;
 }
 
 char *String_Utils_from(char *string, unsigned int index, int parameter) {
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc((strlen(string) + 1) - index);
     int i = index;
     for (i; i <= strlen(string); i++) {
@@ -88,20 +105,23 @@ char *String_Utils_from(char *string, unsigned int index, int parameter) {
 }
 
 int String_Utils_length(char *string) {
+    VALIDATE_PTR(string, 0);
     return strlen(string);
 }
 
 char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
+    VALIDATE_PTR(string, NULL);
+    VALIDATE_PTR(delimiter, NULL);
     char **tokens;
     char *temp;
     size_t *size = malloc(sizeof(size_t));
     if (SELECTED(parameter, MODIFY)) tokens = String_Utils_split(string, delimiter, size, MODIFY);
-    else tokens = String_Utils_split(string, delimiter, size, NO_MODIFY);
+    else tokens = String_Utils_split(string, delimiter, size, NONE);
     if(tokens == NULL) return NULL;
     if (SELECTED(parameter, FIRST)) {
         int i = 1;
         for(i; i < *size; i++){
-            if(temp == NULL) temp = String_Utils_copy(tokens[i]);
+            if(temp == NULL) temp = String_Utils_copy(tokens[i], NONE);
             else {
                 temp = String_Utils_concat(temp, delimiter, NONE); // Adds the delimiter back
                 temp = String_Utils_concat(temp, tokens[i], NONE);
@@ -109,7 +129,7 @@ char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
         }
     }
     if(SELECTED(parameter, LAST)){
-        temp = String_Utils_copy(tokens[*size-1]);
+        temp = String_Utils_copy(tokens[*size-1], NONE);
     }
     // Free the array of strings
     int i = 0;
@@ -124,9 +144,12 @@ char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
 }
 
 char **String_Utils_split(char *string, char *delimiter, size_t *size, int parameter) {
+    VALIDATE_PTR(string, NULL);
+    VALIDATE_PTR(delimiter, NULL);
+    VALIDATE_PTR(size, NULL);
     char **string_array = malloc(sizeof (char *)); // Inspect here if crash due to bad allocations!
     char *temp;
-    char *temp_string = String_Utils_copy(string);
+    char *temp_string = String_Utils_copy(string, NONE);
     temp = strtok(temp_string, delimiter);
     if (temp == NULL) return NULL;
     unsigned int index = 0;
@@ -144,10 +167,10 @@ char **String_Utils_split(char *string, char *delimiter, size_t *size, int param
 }
 
 char *String_Utils_set(char *string_one, char *string_two, int parameter) {
+    VALIDATE_PTR(string_one, NULL);
+    VALIDATE_PTR(string_two, NULL);
     char *temp_string;
-    if (SELECTED(parameter, REVERSE)) {
-        temp_string = String_Utils_reverse(string_two, NO_MODIFY);
-    } else temp_string = String_Utils_copy(string_two);
+    temp_string = String_Utils_copy(string_two, parameter);
     string_one = realloc(string_one, strlen(temp_string) + 1);
     strcpy(string_one, temp_string);
     free(temp_string);
@@ -155,6 +178,7 @@ char *String_Utils_set(char *string_one, char *string_two, int parameter) {
 }
 
 char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...) {
+    VALIDATE_PTR(string, NULL);
     va_list args;
     int i = 0;
     //size_t size = strlen(string) + 1;
@@ -174,6 +198,7 @@ char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, 
 }
 
 char *String_Utils_reverse(char *string, int parameter) {
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
     for (i; i < strlen(string); i++) {
@@ -187,6 +212,7 @@ char *String_Utils_reverse(char *string, int parameter) {
 }
 
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter){
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
     int i = 0;
     if(SELECTED(parameter, IGNORE_CASE)){
@@ -209,10 +235,12 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
 }
 
 char *String_Utils_join(char **array_of_strings, size_t *size, int parameter){
+    VALIDATE_PTR(array_of_strings, NULL);
+    VALIDATE_PTR(size, NULL);
     char *temp;
     int i = 0;
     for(i; i < *size; i++){
-        if(temp == NULL) temp = String_Utils_copy(array_of_strings[i]);
+        if(temp == NULL) temp = String_Utils_copy(array_of_strings[i], NONE);
         else temp = String_Utils_concat(temp, array_of_strings[i], NONE);
     }
     return temp;
@@ -239,7 +267,7 @@ int String_Utils_ends_with(char *string, char *find, int parameter){
 }
 
 void String_Utils_free_array(char **array, size_t size){
-    VALIDATE_PTR(array, NULL);
+    VALIDATE_PTR_VOID(array);
     int i = 0;
     for(i; i < size; i++){
         free(array[i]);
@@ -249,7 +277,8 @@ void String_Utils_free_array(char **array, size_t size){
 }
 
 char *String_Utils_capitalize(char *string, int parameter){
-    char *temp = String_Utils_copy(string);
+    VALIDATE_PTR(string, NULL);
+    char *temp = String_Utils_copy(string, NONE);
     temp[0] = toupper(temp[0]);
     if(SELECTED(parameter, MODIFY)) String_Utils_set(string, temp, NONE);
     return temp;
@@ -276,20 +305,67 @@ char *String_Utils_trim(char *string, int parameter){
 }
 
 char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
+    VALIDATE_PTR(string, NULL);
     char *temp = malloc(end - begin);
-    memcpy(temp, string + begin, end - begin);
-    if(SELECTED(parameter, REVERSE)) temp = String_Utils_reverse(temp, NONE);
+    memcpy(temp, string + begin, end < begin ? strlen(string) - begin : end - begin);
+    temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
     return temp;
+}
+
+int String_Utils_index_of(char *string, char *token, int parameter){
+    VALIDATE_PTR(string, -1);
+    VALIDATE_PTR(token, -1);
+    char *temp;
+    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_to_lowercase(string, NONE), String_Utils_to_lowercase(token, NONE));
+    else temp = strstr(string, token);
+    if(temp == NULL) { DEBUG_PRINT("NULL returned, returning negative number!\n"); return -1; }
+    return strlen(string) - strlen(temp);
+}
+
+int String_Utils_count(char *string, char *substring, int parameter){
+    VALIDATE_PTR(string, 0);
+    VALIDATE_PTR(substring, 0);
+    int count = 0;
+    char *temp; 
+    if(SELECTED(parameter, IGNORE_CASE)) temp = String_Utils_copy(string, LOWERCASE);
+    else temp = String_Utils_copy(string, NONE);
+    while(temp = strstr(temp, substring)){ // temp gets set to the next occurrence of the found substring 
+        count++;
+        //printf("Count is %d\nCurrent string being compared: %s\nString length = %d\nSubstring length: %d\n", count, string, strlen(string), strlen(substring));
+        if(strlen(temp) < strlen(substring)) temp = NULL;
+        else temp += strlen(substring);
+        //printf("New String: %s\nNew String Length: %d\n", temp, strlen(temp));
+    }
+    return count;
 }
 
 String_Utils *String_Utils_create(void) {
     String_Utils *string = malloc(sizeof (String_Utils));
-    string->concat = String_Utils_concat;
-    string->compare = String_Utils_compare;
-    string->update = String_Utils_update;
-    string->char_at = String_Utils_char_at;
-    string->contains = String_Utils_contains;
-    string->get_bytes = String_Utils_get_bytes;
-    string->equals = String_Utils_equals;
+    string->get_bytes = INIT(get_bytes);
+    string->length = INIT(length);
+    string->index_of = INIT(index_of);
+    string->free_array = INIT(free_array);
+    string->replace = INIT(replace);
+    string->join = INIT(join);
+    string->reverse = INIT(reverse);
+    string->set = INIT(set);
+    string->split = INIT(split);
+    string->starts_with = INIT(starts_with);
+    string->substring = INIT(substring);
+    string->to_uppercase = INIT(to_uppercase);
+    string->to_lowercase = INIT(to_lowercase);
+    string->trim = INIT(trim);
+    string->equals = INIT(equals);
+    string->capitalize =  INIT(capitalize);
+    string->copy = INIT(copy);
+    string->count = INIT(count);
+    string->compare = INIT(compare);
+    string->concat = INIT(concat);
+    string->concat_all = INIT(concat_all);
+    string->contains = INIT(contains);
+    string->ends_with = INIT(ends_with);
+    string->from = INIT(from);
+    string->from_token = INIT(from_token);
+    printf("String_Utils initialized!\n");
     return string;
 }
