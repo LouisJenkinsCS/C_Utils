@@ -164,9 +164,9 @@ void testString_Utils_equals() {
 }
 
 void testString_Utils_free_array() {
-    char** array = { "Hello World", "How are you today?", "BEAUTIFUL I KNOW RIGHT!", "MWAHAHA boring debug" };
-    size_t size;
-    String_Utils_free_array(array, size);
+   // char** array = { "Hello World", "How are you today?", "BEAUTIFUL I KNOW RIGHT!", "MWAHAHA boring debug" };
+   // size_t size;
+   // String_Utils_free_array(array, size);
     // Impossible to really test this in CUnit, the array's contents are freeds but the pointer is now undefined, not NULL.
     // Segfault = FAIL
 }
@@ -353,7 +353,7 @@ int main() {
         return CU_get_error();
 
     /* Add a suite to the registry */
-    pSuite = CU_add_suite("String_Utils_Unit_Test_2", init_suite, clean_suite);
+    pSuite = CU_add_suite("String_Utils_Unit_Test_Functions", init_suite, clean_suite);
     if (NULL == pSuite) {
         CU_cleanup_registry();
         return CU_get_error();
