@@ -99,7 +99,7 @@ char *String_Utils_from(char *string, unsigned int index, int parameter) {
     for (i; i <= strlen(string); i++) {
         temp[i - j] = string[i];
     }
-    if (parameter == MODIFY) {
+    if (SELECTED(parameter, MODIFY)) {
         String_Utils_set(&string, temp, NONE);
         free(temp);
         return string;
@@ -115,15 +115,22 @@ char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
     VALIDATE_PTR(string, NULL);
     VALIDATE_PTR(delimiter, NULL);
     char *temp = strstr(string, delimiter);
+    char *old_temp;
     if(temp == NULL) return NULL;
     if(SELECTED(parameter, LAST)){
-        while(temp != NULL) temp = strstr(string, delimiter);
+        while(temp != NULL) {
+            temp = strstr(string, delimiter); 
+            if(temp != NULL) old_temp = String_Utils_copy(temp, NONE); 
+        }
+        temp = String_Utils_copy(old_temp, NONE);
     }
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, old_temp, NONE);
         free(temp);
+        free(old_temp);
         return string;
     }
+    free(old_temp);
     return temp;
 }
 
@@ -273,16 +280,16 @@ char *String_Utils_capitalize(char *string, int parameter){
 
 char *String_Utils_trim(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
-    char *temp;
+    char *temp = NULL;
     int i = 0;
-    int j = strlen(string) -1;
+    int j = strlen(string)-1;
     for(i; i < strlen(string); i++){
         if(!isspace(string[i])) break;
     }
     for(j; j > i ; j--){
         if(!isspace(string[j])) break;
     }
-    temp = String_Utils_substring(string, i, j, NONE);
+    temp = String_Utils_substring(string, i, j+1, NONE); // ????????? 
     if(SELECTED(parameter, MODIFY)){
         String_Utils_set(&string, temp, NONE);
         free(temp);
@@ -294,6 +301,7 @@ char *String_Utils_trim(char *string, int parameter){
 char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = malloc((end - begin) + 1);
+    memset(temp, 0, (end-begin) + 1);
     memcpy(temp, string + begin, end < begin ? strlen(string) - begin : end - begin);
     temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
     return temp;
@@ -363,6 +371,7 @@ String_Utils *String_Utils_create(void) {
     string->from = INIT(from);
     string->from_token = INIT(from_token);
     string->between = INIT(between);
+    string->char_at = INIT(char_at);
     printf("String_Utils initialized!\n");
     return string;
 }

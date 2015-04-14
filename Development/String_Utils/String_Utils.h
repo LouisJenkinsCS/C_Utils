@@ -11,42 +11,71 @@
 /**
  * Explanation for definitions below:
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * String Comparisons:
+ * NONE: The default for a function. This is what you pass if you really don't need
+ * the other options for any given function.
  * 
- * NORMAL: Default mode. Comparisons are case sensitive.
+ * IGNORE_CASE: For functions that deal with string comparisons and manipulations. This will
+ * do just as the macro says, before comparison it will compare the lowercase of whatever
+ * it is comparing (without making any modifications) so as the original case doesn't matter.
+ * Note: The default is going to be case sensitive.
  * 
- * IGNORE_CASE: Comparisons are not case sensitive.
+ * MODIFY: For functions which deal with string manipulations, this sets the function
+ * to modify the string after it's operations are finished, although it will still return
+ * it. Note: The default is not going to modify the string.
  * 
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * String Modifications:
+ * LAST: For string searches, will attempt to find the last occurrence of whatever it is
+ * it will be searching for. Note: The default is going to return the first, there is no middle.
+ * (Author Note: Only one function uses this, although I'll be updating and adding more functionality,
+ * so there'll be more options for this in the future!)
  * 
- * MODIFY: Ensures that the first string will be modified as per use,
- * I.E String_Utils_concat will concatenate string_two on string_one, changing string_one
+ * REVERSE: For string manipulations, this will reverse the string after the function finishes it's operations.
+ * Note: The default is going to be normal, non-reversed (duh!)
  * 
- * NO_MODIFY: Ensures that the first string will NOT be modified by using a temporary string literal and returning it.
- * I.E String_Utils_concat will not modify string_one and will return a concatenated string literal.
+ * LOWERCASE: For string manipulations, will convert the string to lowercase.
+ * Note: The default is going to be normal.
  * 
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * String Searching: (Currently Unimplemented)
+ * UPPERCASE: For string manipulations, will convert the string to uppercase.
+ * Note: The default is going to be normal.
  * 
- * FIRST: While searching for a token in a string, the function will return the very first occurrence
- * of the token it finds. 
- * 
- * LAST: While searching for a token in a string, the function will return the very last occurrence
- * of the token it finds.
- * 
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * General Notes: More than one parameter can be passed to any given function, 
+ * but of course, they must make sense. If you pass a function which supports it both
+ * LOWERCASE and UPPERCASE it'll just be the same string you ended up with before
+ * passing the parameters. Also, passing nonsensical parameters aren't likely to do anything
+ * like NONE | REVERSE will just REVERSE as NONE does nothing. The parameters are
+ * very basic and bare bones, but they will be (most likely) developed into something
+ * more full fledged.
  */
 
 #define NONE 1 << 0
 #define IGNORE_CASE 1 << 1
 #define MODIFY  1 << 2
-#define FIRST 1 << 3
-#define LAST 1 << 4
-#define REVERSE 1 << 5
-#define LOWERCASE 1 << 6
-#define UPPERCASE 1 << 7
+#define LAST 1 << 3
+#define REVERSE 1 << 4
+#define LOWERCASE 1 << 5
+#define UPPERCASE 1 << 6
 
+/*
+ * DEBUG: Toggle for whether debug information prints or not
+ * 
+ * DEBUG_PRINT: Prints a message if Debug is enabled
+ * 
+ * DEBUG_PRINTF: Prints a formatted message if Debug is enabled (Like printf)
+ * 
+ * SELECTED: Used to determine whether or not a certain parameter was passed to it,
+ * works with more than one. (I.E IGNORE_CASE | IGNORE_CASE | MODIFY)
+ * 
+ * VALIDATE_PTR: Used to check whether or not a PTR is NULL or not; will print
+ * a debug message if debug is enabled informing that the name of the variable is NULL.
+ * Also, will return the value passed to it.
+ * 
+ * VALIDATE_PTR_VOID: Like VALIDATE_PTR, checks for NULL pointer, will print if debug is enabled,
+ * except this will return without returning a value.
+ * 
+ * INIT: Used to shorten the arduous task of initializing all of the callbacks in the constructor.
+ * All it does is append the argument passed to it on top of "String_Utils_" to make
+ * it a valid function.
+ */
 #define DEBUG 1
 #define DEBUG_PRINT(MESSAGE)(DEBUG ? fprintf(stderr, MESSAGE) : DEBUG)
 #define DEBUG_PRINTF(MESSAGE, ...)(DEBUG ? fprintf(stderr, MESSAGE, __VA_ARGS__) : DEBUG)
@@ -64,31 +93,47 @@
 #include <ctype.h>
 
 /**
- * It should be noted that String_Utils's "methods" of course, require you to pass a pointer to itself, as
- * C lacks any reflection and a 'this' operator. Secondly, majority of the String_Utils functions that use
- * comparisons use string literals. This is because, returning a new struct would be rather inefficient
- * and comparing two structs is also do-able, but due to the lack of overloading of functions, it'd be
- * much smarter to use string literals as they're much more widely used. 
+ * What is String_Utils? String_Utils is basically an attempt at implementing a
+ * very useful, somewhat efficient String library with basic string manipulations
+ * comparators, and utilities offered in object oriented languages. In fact, this
+ * is based on Java's String object's methods, hence the name of most of the functions.
  * 
- * On this note, I suppose I should state the actual objective of this 'Object'. Unlike in other languages, 
- * String_Utils is not going to be an actual string (obviously) nor have it's benefits as if it were built in. 
- * What it does boast is the ability of having commonly used functions and operations on strings, even a few
- * that aren't currently available in the normal string.h library, or those that are overly complicated
- * that are simplified. So...
+ * My reason for creating this is, not just for fun, and boy was it ever, but 
+ * also because I haven't found any attempt at creating a string library the way
+ * I did. I rather dislike the way C's String library handles thing, it's too
+ * minimal with how it abstracts and encapsulates it's functions, and plus it 
+ * doesn't even have the basic functions that most people use day-to-day, but they
+ * do however give you the tools to do it yourself, so I decided to. 
  * 
- * 1) String_Utils is not intended to be used as a normal string in other classes...
- * 1A) String_Utils does however give access to functions to manipulate strings easily.
- * 1B) Easier to use than normal string.h library for beginners (Not like they're ever use it)
- * 2) String_Utils will, at some point, inherit from LJObject, as will other LJObject 'subclasses' 
+ * String_Utils has a plethora of well-tested (as well as you can with one person
+ * writing this in one week) functions that you've grown to love in OOP languages
+ * like Java, I.E Substring, Index_OF, Split/Join, etc. I attempted to implement
+ * them as closely as they would be in Java, although of course since C and Java
+ * are vastly different languages, with different paradigms, it's impossible
+ * to make it exactly like so. 
+ * 
+ * Another thing String_Utils offers is a super-cool (IMO, as the creator) idea
+ * of using a mega-struct which serves as a callback-machine, WITH basic documentation.
+ * If contains a callback function to every single function created here, and makes it a lot
+ * easier to call my functions too. For example, lets say you want to concat two strings.
+ * Normally you'd have to call String_Utils_concat(...), which can be rather long if you're
+ * calling it String_Utils_* over and over, even nested in a statement, so a solution
+ * I devised was, lets say you have an instnace of the struct called su, then
+ * it's a lot easier to call su->concat than it is to call String_Utils_concat. 
+ * The next cool part is the documentation! At least in NetBeans, when you 
+ * dereference the struct (or just access the member variable if you prefer that)
+ * you can easily see an alphabetically sorted list of all of the functions as
+ * well a short 1 - 2 sentence description of each function.
+ * 
+ * I hope you enjoy my first project as much as I will, I worked very hard on it.
+ * Hope it shows! Enjoy!
  */
 
 typedef struct String_Utils String_Utils;
 
 /*
- String_Utils is a structure which holds all of the following:
- * 1) The char literal, A.K.A string.
- * 2) The Size and Length of the string.
- * 3) Callback functions for easy string manipulations without having to type arduously long function names.
+ * String_Utils contains a collection of callbacks for every function with minimal documentation
+ * to describe what each does, enough to give a gist of what it does if it's not entirely clear.
  */
 struct String_Utils {
     int (*compare)(char *string_one, char *string_two, int parameters); // Compares two strings. (string_one - string_two) (Options: IGNORE_CASE)
@@ -126,82 +171,39 @@ struct String_Utils {
 };
 
 /**
- * Why reinvent the wheel? Simple function that calls strcmp to compare two strings
- * and returns it's result. Takes two parameters, NORMAL or IGNORE_CASE, will default to NORMAL if no
- * valid parameter has been given.
- * @param self This String_Utils, could also be any string, so long as it's another String_Utils.
- * @param str The opposing char literal to compare to.
- * @param parameters NORMAL (0) = Case Sensitive, IGNORE_CASE (1) = Not Case Sensitive
- * @return Returns what strcmp returns.
+ * Compares two functions. If string_one > string_two, then returns > 0; 
+ * If string_one < string_two, returns < 0;
+ * If string_one == string_two, returns 0;
+ * @param string_one First string to compare with
+ * @param string_two Second string to compare with
+ * @param parameters NONE - nothing
+ * @return (string_one - string_two) (Read above)
  */
 int String_Utils_compare(char *string_one, char *string_two, int parameters);
 
-/**
- * Also not re-inventing the wheel, basically returns what strcmp returns. Takes two
- * parameters, NORMAL (Case sensitive) and IGNORE_CASE (Case insensitive) for comparisons.
- * @param self This String_Utils
- * @param str The string to check if the String_Utils contains.
- * @param parameters NORMAL (0) = Case Sensitive, IGNORE_CASE (1) = Not Case Sensitive
- * @return Returns what strstr returns.
- */
+
 int String_Utils_contains(char *string, char *search, int parameters);
 
-/**
- * Basic constructor for String_Utils, allocates memory, assigns the passed str as it's value,
- * and initializes it's attributes and callback functions.
- * @param str The string to be given as the initial value.
- * @return The allocated pointer to the String_Utils.
- */
+
 String_Utils *String_Utils_create(void);
 
-/**
- * Used to set a string to lower case, basically used for other String_Utils functions, would be
- * private if it were possible.
- * @param str string to be passed through
- * @return lowercase string.
- */
+
 char *String_Utils_to_lowercase(char *string, int parameter);
 
 char *String_Utils_to_uppercase(char *string, int parameter);
 
-/**
- * Has basic bounds checking, will return the last char if the index surpasses the
- * the String's length, otherwise will return the char at the index. If the the user
- * has changed the String's value directly, errors may occur unless they call the update callback.
- * @param self The String_Utils to be manipulated
- * @param index The index at which to retrieve the character.
- * @return The character at the given index, or the last index of the val.
- */
+
 char String_Utils_char_at(char *string, unsigned int index);
 
-/**
- * Concatenates the String_Utils's value with the passed through string literal.
- * @param self This String_Utils
- * @param str String to be concatenated to the String_Utils.
- */
+
 char *String_Utils_concat(char *string_one, char *string_two, int parameters);
-/**
- * This function should be called whenever you decide to manipulate the String_Utils's val without
- * using one of it's callback functions. It updates the String_Utils's size and length of it's string.
- * @param self This String_Utils
- */
+
 void String_Utils_update(String_Utils *self);
 
-/**
- * Converts the current char literal to an unsigned char literal, then converts it
- * to a unsigned int and returns that, which is the equivalent to a byte;
- * @param self This string
- * @return A byte-representation of the String.
- */
+
 unsigned int *String_Utils_get_bytes(char *string);
 
-/**
- * Function that checks whether or not this string is equal to another string literal.
- * @param self This string
- * @param string string literal to compare to
- * @param parameters NORMAL, IGNORE_CASE and anything else defaults to NORMAL
- * @return 0 if false, 1 if true
- */
+
 int String_Utils_equals(char *string_one, char *string_two, int parameter);
 
 char *String_Utils_copy(char *string, int parameter);
