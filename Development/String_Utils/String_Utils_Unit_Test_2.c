@@ -269,7 +269,6 @@ void testString_Utils_reverse() {
     char* result_one = String_Utils_reverse(string, parameter);
     char *result_two = String_Utils_reverse(null_string, parameter);
     String_Utils_reverse(modify_this, MODIFY);
-    printf("modify_this: %s", modify_this);
     if (strcmp(result_one, "desserts") != 0 || strcmp(modify_this, "desserts") != 0 || result_two != NULL) {
         CU_ASSERT(0);
     }
@@ -286,60 +285,62 @@ void testString_Utils_set() {
 }
 
 void testString_Utils_split() {
-    char* string;
-    char* delimiter;
-    size_t* size;
-    int parameter;
+    char* string = "How else, says the Guard, does one continue along the path of righteousness, except by destroying all that is not righteous?";
+    char* delimiter = ",";
+    size_t* size = malloc(sizeof(size_t));
+    int parameter = NONE;
     char** result = String_Utils_split(string, delimiter, size, parameter);
-    if (1 /*check result*/) {
+    int i = 0;
+    if (strcmp(result[0], "How else") != 0 || strcmp(result[1], " says the Guard") != 0 || strcmp(result[2], " does one continue along the path of righteousness") != 0
+            || strcmp(result[3], " except by destroying all that is not righteous?") != 0) {
         CU_ASSERT(0);
     }
 }
 
 void testString_Utils_starts_with() {
-    char* string;
-    char* find;
-    int parameter;
+    char* string = "Is it me? Who else would it be, fool!";
+    char* find = "is it me?";
+    int parameter = IGNORE_CASE;
     int result = String_Utils_starts_with(string, find, parameter);
-    if (1 /*check result*/) {
+    if (result != 1) {
         CU_ASSERT(0);
     }
 }
 
 void testString_Utils_substring() {
-    char* string;
-    unsigned int begin;
-    unsigned int end;
-    int parameter;
+    char* string = "Below me lies the dragon... not just any dragon, the dragon called *gasp* *chokes* *dies*"; // Got bored debugging
+    unsigned int begin = 28;
+    unsigned int end = 9001; // Out of bounds... or is it?
+    int parameter = NONE;
     char* result = String_Utils_substring(string, begin, end, parameter);
-    if (1 /*check result*/) {
+    if (strcmp(result, "not just any dragon, the dragon called *gasp* *chokes* *dies*") != 0) {
         CU_ASSERT(0);
     }
 }
 
 void testString_Utils_to_lowercase() {
-    char* string;
-    int parameter;
+    char* string = "HELLO WORLD";
+    int parameter = NONE;
     char* result = String_Utils_to_lowercase(string, parameter);
-    if (1 /*check result*/) {
+    if (strcmp(result, "hello world") != 0) {
         CU_ASSERT(0);
     }
 }
 
 void testString_Utils_to_uppercase() {
-    char* string;
-    int parameter;
+    char* string = "hello world";
+    int parameter = NONE;
     char* result = String_Utils_to_uppercase(string, parameter);
-    if (1 /*check result*/) {
+    if (strcmp(result, "HELLO WORLD") != 0) {
         CU_ASSERT(0);
     }
 }
 
 void testString_Utils_trim() {
-    char* string;
-    int parameter;
+    char* string = "        asdadadasd      ";
+    int parameter = NONE;
     char* result = String_Utils_trim(string, parameter);
-    if (1 /*check result*/) {
+    if (strcmp(result, "asdadadasd") != 0) { // This guy...
         CU_ASSERT(0);
     }
 }
