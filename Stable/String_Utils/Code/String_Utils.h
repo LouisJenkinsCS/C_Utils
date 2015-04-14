@@ -143,7 +143,7 @@ struct String_Utils {
     int (*count)(char *string, char *substring, int parameter); // Returns occurrences of substring in string. (Options: IGNORE_CASE)
     int (*starts_with)(char *string, char *substring, int parameter); // Checks if string starts with substring (Options: IGNORE_CASE)
     int (*ends_with)(char *string, char *token, int parameter); // Checks if string ends with substring (Options: IGNORE_CASE)
-    int (*index_of)(char *string, char *token, int parameter); // Returns start index of substring in string. (Options: IGNORE_CASE)
+    int (*index_of)(char *string, char *substring, int parameter); // Returns start index of substring in string. (Options: IGNORE_CASE)
     char (*char_at)(char *string, unsigned int index); // Returns the character at index in string (or last char if out of bounds)
     char *(*substring)(char *string, unsigned int begin, unsigned int end, int parameter); // Returns a substring from beginning to end of a string. (Options: See Copy)
     char *(*between)(char *string, char *start, char *end, int parameter); // Returns a substring between the first occurrences of the two substrings given. (Options: MODIFY, IGNORE_CASE)
@@ -176,72 +176,262 @@ struct String_Utils {
  * If string_one == string_two, returns 0;
  * @param string_one First string to compare with
  * @param string_two Second string to compare with
- * @param parameters NONE - nothing
+ * @param parameters NONE
  * @return (string_one - string_two) (Read above)
  */
 int String_Utils_compare(char *string_one, char *string_two, int parameters);
 
-
+/**
+ * Checks to see if the string contains the substring. 
+ * @param string The string
+ * @param search Substring to find
+ * @param parameters NONE | IGNORE_CASE
+ * @return 1 if found, 0 if not found or 0 if a NULL string is passed.
+ */
 int String_Utils_contains(char *string, char *search, int parameters);
 
-
+/**
+ * Creates the mega-struct Struct_Utils and initializes all implemented callbacks.
+ * @return Pointer to the initialized struct or NULL if could not initialize.
+ */
 String_Utils *String_Utils_create(void);
 
-
+/**
+ * Creates a copy of the string and converts it to lowercase. Either returns the copy
+ * or modifies the original string depending on the parameter passed.
+ * @param string String to be manipulated
+ * @param parameter NONE | MODIFY
+ * @return Lowercase string, or NULL if passed a NULL string.
+ */
 char *String_Utils_to_lowercase(char *string, int parameter);
 
+/**
+ * Creates a copy of the string and converts it to uppercase. Either returns the copy
+ * or modifies the original string depending on the parameter passed.
+ * @param string String to be modified
+ * @param parameter NONE | MODIFY
+ * @return Uppercase string, or NULL if passed a NULL string.
+ */
 char *String_Utils_to_uppercase(char *string, int parameter);
 
-
+/**
+ * Returns the char at the position, but if the index is greater than the overall
+ * length of the string, the index is set to be the very last character in the string.
+ * @param string String to retrieve character from.
+ * @param index Index of the char.
+ * @return The char at the requested index or the last index if index > strlen(string) - 1 or NULL if NULL string passed.
+ */
 char String_Utils_char_at(char *string, unsigned int index);
 
-
+/**
+ * Concatenates two strings together. Depending on parameters, it will modify the
+ * the first string as it's destination, or it will return a separate string.
+ * @param string_one The string the second string is going to be concatenated onto.
+ * @param string_two The string which will be concatenated on the first string.
+ * @param parameters NONE | MODIFY
+ * @return Returns the concatenated string or NULL if NULL string passed.
+ */
 char *String_Utils_concat(char *string_one, char *string_two, int parameters);
 
+/**
+ * Unused, will remove at later date if no use has been found.
+ * @param self The String_Utils struct.
+ */
 void String_Utils_update(String_Utils *self);
 
-
+/**
+ * Returns an array of bytes of the string passed. 
+ * Note: A char is a byte, but this will return the number representation of
+ * said bytes, an array of them for each character in the string.
+ * Author's Note: A bytes_to_string method may be added at a later
+ * date if I ever find a use for this. Was added because Java has one like this.
+ * @param string The string to turn into an array of bytes.
+ * @return Array of bytes (unsigned int *) or NULL if NULL string passed.
+ */
 unsigned int *String_Utils_get_bytes(char *string);
 
-
+/**
+ * Checks to see if two strings are equal.
+ * @param string_one First string to compare
+ * @param string_two Second string to compare
+ * @param parameter NONE | IGNORE_CASE
+ * @return 1 if equal, 0 if not or NULL string passed. 
+ */
 int String_Utils_equals(char *string_one, char *string_two, int parameter);
 
+/**
+ * Creates a copy of the given string. Depending on parameters, it can return
+ * a variant of the string, I.E REVERSE returns a copy of the string in REVERSE.
+ * @param string String to return a copy of.
+ * @param parameter NONE | REVERSE | LOWERCASE | UPPERCASE
+ * @return A copy of the string, differs based on parameter passed, or NULL if NULL string passed.
+ */
 char *String_Utils_copy(char *string, int parameter);
 
+/**
+ * Splits a string into an array of strings based on delimiter passed. It should
+ * be noted that size must be initialized, because the size of the new string array
+ * is recorded in the passed size_t pointer.
+ * @param string String to be split.
+ * @param delimiter Delimiter to look for when splitting.
+ * @param size Records size of the string array
+ * @param parameter NONE
+ * @return The array of strings, plus sets size to record the size of the array; or NULL if NULL string passed (or size if NULL).
+ */
 char **String_Utils_split(char *string, char *delimiter, size_t *size, int parameter);
 
+/**
+ * Returns a copy of the string from the given index, or the last index of the string
+ * if index > strlen(string) - 1.
+ * @param string String to be operated on.
+ * @param index The start of where in the string you want return.
+ * @param parameter NONE | MODIFY
+ * @return A copy of the string starting at the position, or NULL if NULL string passed.
+ */
 char *String_Utils_from(char *string, unsigned int index, int parameter);
 
-char *String_Utils_from_token(char *string, char *delimiter, int parameter);
+/**
+ * Returns a copy of the string from the first (or last) substring is found.
+ * @param string String to search
+ * @param substring Substring to search for
+ * @param parameter NONE | MODIFY | LAST
+ * @return A copy of the string from where the substring is found, NULL if not found or if NULL string passed.
+ */
+char *String_Utils_from_token(char *string, char *substring, int parameter);
 
+/**
+ * Concatenates all strings passed to it.
+ * @param parameter NONE | MODIFY
+ * @param amount Amount of strings to be concatenated
+ * @param string The first string to be passed to it
+ * @param ... The rest of the strings to be passed.
+ * @return The concatenated string, or NULL if NULL string passed.
+ */
 char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...);
 
+/**
+ * Sets one equal to another string.
+ * @param string_one The reference to the string to be changed (Use & operator)
+ * @param string_two The second string it is going be set to.
+ * @param parameter NONE | REVERSE | LOWERCASE | UPPERCASE
+ * @return string_one which it sets, or NULL if NULL string passed.
+ */
 char *String_Utils_set(char **string_one, char *string_two, int parameter);
 
+/**
+ * Reverses the given string.
+ * @param string String to be operated on.
+ * @param parameter NONE | MODIFY
+ * @return The reversed string or NULL if NULL string passed.
+ */
 char *String_Utils_reverse(char *string, int parameter);
 
+/**
+ * Joins an array of strings together into one big string with the delimiter prepended to each string.
+ * @param array_of_strings The array of strings to be joined.
+ * @param delimiter Delimiter to be prepended to each string after the first
+ * @param size The size of the array
+ * @param parameter NONE
+ * @return The new string that was joined, or NULL if NULL string or array of strings passed.
+ */
 char *String_Utils_join(char **array_of_strings, char *delimiter, size_t *size, int parameter);
 
+/**
+ * Replaces all of one character in a string with another character.
+ * @param string The string the characters are to be replaced
+ * @param old_char The characters to be found
+ * @param new_char The characters that will replace the old_char
+ * @param parameter NONE | IGNORE_CASE | MODIFY
+ * @return The new string with replaced characters.
+ */
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
 
+/**
+ * Checks to see if a string starts with a substring
+ * @param string The string to check
+ * @param find The substring to check for.
+ * @param parameter NONE | IGNORE_CASE
+ * @return 1 if true, 0 if false or if NULL string passed.
+ */
 int String_Utils_starts_with(char *string, char *find, int parameter);
 
+/**
+ * Checks to see if a string ends with a substring.
+ * @param string The string to check.
+ * @param find The substring to check for.
+ * @param parameter NONE | IGNORE_CASE
+ * @return  1 if true, 0 if false or if NULL string passed
+ */
 int String_Utils_ends_with(char *string, char *find, int parameter);
 
+/**
+ * Returns the length of the string passed.
+ * @param string String to get the length of
+ * @return strlen(string) or 0 if NULL_STRING
+ */
 int String_Utils_length(char *string);
 
+/**
+ * Experimental Function: Frees all contents of the array
+ * NOTE: Does not NULL the pointer to the array, hence accessing the array after
+ * leads to undefined behavior.
+ * @param array The array of free memory of
+ * @param size Size of the array.
+ */
 void String_Utils_free_array(char **array, size_t size);
 
+/**
+ * Returns a substring of the string.
+ * @param string String to get a substring of.
+ * @param begin The beginning index.
+ * @param end The end index.
+ * @param parameter NONE | MODIFY | REVERSE | LOWERCASE | UPPERCASE
+ * @return The substring of the string, or NULL if NULL string passed.
+ */
 char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter);
 
+/**
+ * Capitalizes the first character in the string.
+ * @param string The string to capitalize.
+ * @param parameter NONE | MODIFY
+ * @return The capitalized string or NULL if NULL string passed..
+ */
 char *String_Utils_capitalize(char *string, int parameter);
 
+/**
+ * Trims the string of all leading and trailing spaces.
+ * @param string String to be trimmed.
+ * @param parameter NONE | MODIFY
+ * @return Trimmed string or NULL if NULL string passed..
+ */
 char *String_Utils_trim(char *string, int parameter);
 
-int String_Utils_index_of(char *string, char *token, int parameter);
+/**
+ * Finds the index of the first or the last index of a given substring.
+ * @param string String to be searched for
+ * @param substring Substring to be searched for.
+ * @param parameter NONE | IGNORE_CASE
+ * @return Index of the starting position of the found substring, or -1 if not found or NULL string passed.
+ */
+int String_Utils_index_of(char *string, char *substring, int parameter);
 
+/**
+ * Counts occurrences that the delimiter (or substring) occurs in a string.
+ * @param string String to search
+ * @param delimiter Delimiter or Substring to search for
+ * @param parameter NONE | IGNORE_CASE
+ * @return Amount of times the delimiter appears in your string, or 0 if NULL string passed
+ */
 int String_Utils_count(char *string, char *delimiter, int parameter);
 
+/**
+ * Returns a substring from between a start and end substring or delimiter in a string.
+ * @param string String to be searched.
+ * @param start The first substring or delimiter to search for
+ * @param end The last substring or delimiter to search for.
+ * @param parameter NONE | IGNORE_CASE
+ * @return The substring of what is between start and end, or NULL if NULL string is passed.
+ */
 char *String_Utils_between(char *string, char *start, char *end, int parameter);
 #endif	/* LSTRING_H */
 

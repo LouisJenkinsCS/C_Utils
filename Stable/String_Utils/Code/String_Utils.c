@@ -28,7 +28,7 @@ int String_Utils_compare(char *string_one, char *string_two, int parameter) {
 
 char String_Utils_char_at(char *string, unsigned int index) {
     VALIDATE_PTR(string, '\0');
-    return string[index > strlen(string) ? strlen(string) - 1 : index];
+    return string[index > strlen(string) - 1 ? strlen(string) - 1 : index];
 }
 
 int String_Utils_contains(char *string, char *search, int parameter) { // FIX!
@@ -92,7 +92,7 @@ char *String_Utils_copy(char *string, int parameter) {
 
 char *String_Utils_from(char *string, unsigned int index, int parameter) {
     VALIDATE_PTR(string, NULL);
-    int i = index > strlen(string) ? strlen(string)-1 : index ;
+    int i = index > strlen(string)-1 ? strlen(string)-1 : index ;
     int j = i;
     char *temp = malloc((strlen(string) + 1) - i);
     
@@ -111,15 +111,15 @@ int String_Utils_length(char *string) {
     return strlen(string);
 }
 
-char *String_Utils_from_token(char *string, char *delimiter, int parameter) {
+char *String_Utils_from_token(char *string, char *substring, int parameter) {
     VALIDATE_PTR(string, NULL);
-    VALIDATE_PTR(delimiter, NULL);
-    char *temp = strstr(string, delimiter);
+    VALIDATE_PTR(substring, NULL);
+    char *temp = strstr(string, substring);
     char *old_temp;
     if(temp == NULL) return NULL;
     if(SELECTED(parameter, LAST)){
         while(temp != NULL) {
-            temp = strstr(string, delimiter); 
+            temp = strstr(string, substring); 
             if(temp != NULL) old_temp = String_Utils_copy(temp, NONE); 
         }
         temp = String_Utils_copy(old_temp, NONE);
@@ -274,7 +274,7 @@ char *String_Utils_capitalize(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = String_Utils_copy(string, NONE);
     temp[0] = toupper(temp[0]);
-    if(SELECTED(parameter, MODIFY)) String_Utils_set(&string, temp, NONE);
+    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, temp, NONE); free(temp); return string; }
     return temp;
 }
 
@@ -304,16 +304,26 @@ char *String_Utils_substring(char *string, unsigned int begin, unsigned int end,
     memset(temp, 0, (end-begin) + 1);
     memcpy(temp, string + begin, end < begin ? strlen(string) - begin : end - begin);
     temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
+    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, temp, NONE); free(temp); return string; }
     return temp;
 }
 
-int String_Utils_index_of(char *string, char *token, int parameter){
+int String_Utils_index_of(char *string, char *substring, int parameter){
     VALIDATE_PTR(string, -1);
-    VALIDATE_PTR(token, -1);
-    char *temp;
-    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_to_lowercase(string, NONE), String_Utils_to_lowercase(token, NONE));
-    else temp = strstr(string, token);
+    VALIDATE_PTR(substring, -1);
+    char *temp = NULL;
+    char *old_temp = NULL;
+    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_to_lowercase(string, NONE), String_Utils_to_lowercase(substring, NONE));
+    else temp = strstr(string, substring);
     if(temp == NULL) { DEBUG_PRINT("NULL returned, returning negative number!\n"); return -1; }
+    if(SELECTED(parameter, LAST)){
+        while(temp != NULL) {
+            temp = strstr(string, substring); 
+            if(temp != NULL) old_temp = String_Utils_copy(temp, NONE); 
+        }
+        temp = String_Utils_copy(old_temp, NONE);
+    }
+    free(old_temp);
     return strlen(string) - strlen(temp);
 }
 
@@ -345,6 +355,7 @@ char *String_Utils_between(char *string, char *start, char *end, int parameter){
 
 String_Utils *String_Utils_create(void) {
     String_Utils *string = malloc(sizeof (String_Utils));
+    if(string == NULL){ DEBUG_PRINT("Unable to create String_Utils; Unable to allocate memory!\n"); return NULL; }
     string->get_bytes = INIT(get_bytes);
     string->length = INIT(length);
     string->index_of = INIT(index_of);
@@ -372,6 +383,6 @@ String_Utils *String_Utils_create(void) {
     string->from_token = INIT(from_token);
     string->between = INIT(between);
     string->char_at = INIT(char_at);
-    printf("String_Utils initialized!\n");
+    DEBUG_PRINT("String_Utils initialized!\n");
     return string;
 }
