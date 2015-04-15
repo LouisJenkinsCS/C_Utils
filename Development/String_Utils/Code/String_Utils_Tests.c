@@ -24,7 +24,7 @@
 	testString_Utils_to_lowercase();\
 	testString_Utils_to_uppercase();\
 	testString_Utils_trim();
-/*void testString_Utils_capitalize() {
+void testString_Utils_capitalize() {
     char* string = "hello World";
     char *null_string = NULL; // Tests null pointer as argument
     int parameter = NONE;
@@ -35,7 +35,7 @@
     }
     if(result_two != NULL) assert(0);
     printf("Passed test: Capitalize!\n");
-    getchar();
+    
 }
 
 void testString_Utils_char_at() {
@@ -51,7 +51,7 @@ void testString_Utils_char_at() {
     }
     if(string[5] != result_two) assert(0); // Tests in-bounds index
     if(result_three != '\0') assert(0);
-    printf("Passed test: Char_At!\n"); getchar();
+    printf("Passed test: Char_At!\n"); 
 }
 
 void testString_Utils_compare() {
@@ -70,7 +70,7 @@ void testString_Utils_compare() {
     if(result_two != -1) assert(0);
     if(result_three != 0) assert(0);
     if(result_four != 0) assert(0);
-    printf("Passed test: Compare!\n"); getchar();
+    printf("Passed test: Compare!\n"); 
 }
 
 void testString_Utils_concat() {
@@ -83,14 +83,14 @@ void testString_Utils_concat() {
     char* result_one = String_Utils_concat(string_one, string_two, parameter_one);
     char *result_two = String_Utils_concat(string_one, null_string, parameter_one);
     String_Utils_concat(string_three, result_one, parameter_two); // Modifies string_three
-    printf("Result_one: %s\n", result_one); getchar();
-    getchar();
+    printf("Result_one: %s\n", result_one); 
+    
     if (strcmp(result_one, "Hello World") != 0) {
         //assert(0);
     }
     if(result_two != NULL) assert(0);
     if(strcmp(result_one, string_three) != 0) assert(0);
-    //printf("Passed test: Concat!\n");getchar();
+    //printf("Passed test: Concat!\n");
 }
 
 void testString_Utils_contains() {
@@ -104,7 +104,7 @@ void testString_Utils_contains() {
         assert(0);
     }
     if(result_two != 0) assert(0);
-    printf("Passed test: Contains!\n");getchar();
+    printf("Passed test: Contains!\n");
 }
 
 void testString_Utils_copy() {
@@ -124,7 +124,7 @@ void testString_Utils_copy() {
     if(strcmp(palindrome_string, result_two) != 0) assert(0);
     if(strcmp(result_three, "desserts") != 0) assert(0); // Special string indeed!
     if(result_four != NULL) assert(0);
-    printf("Passed test: Copy!\n");getchar();
+    printf("Passed test: Copy!\n");
 }
 
 void testString_Utils_count() {
@@ -138,7 +138,7 @@ void testString_Utils_count() {
         assert(0);
     }
     if(result_two != 0) assert(0);
-    printf("Passed test: Count!\n");getchar();
+    printf("Passed test: Count!\n");
 }
 
 void testString_Utils_create() {
@@ -146,7 +146,7 @@ void testString_Utils_create() {
     if (result == NULL) {
         assert(0);
     }
-    printf("Passed test: Create!\n");getchar();
+    printf("Passed test: Create!\n");
 }
 
 void testString_Utils_ends_with() {
@@ -161,7 +161,7 @@ void testString_Utils_ends_with() {
     if (result_one != 1 || result_two != 1 || result_three != 0) {
         assert(0);
     }
-    printf("Passed test: Ends_With!\n");getchar();
+    printf("Passed test: Ends_With!\n");
 }
 
 void testString_Utils_equals() {
@@ -176,7 +176,7 @@ void testString_Utils_equals() {
     if (result_one != 1 || result_two != 0 || result_three != 0) {
         assert(0);
     }
-    printf("Passed test: Equals!\n");getchar();
+    printf("Passed test: Equals!\n");
 }
 
 void testString_Utils_free_array() {
@@ -198,22 +198,22 @@ void testString_Utils_from() {
     if (strcmp(result_one, "I am an idiot!") != 0 || result_two != NULL || strcmp(result_three, "!") != 0) {
         assert(0);
     }
-    printf("Passed test: From!\n");getchar();
+    printf("Passed test: From!\n");
 }
 
 void testString_Utils_from_token() {
     char* string = "Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;</Parse_Me> BLAH BLAH BLAH USELESS INFO!";
     char* delimiter = "<Parse_Me>";
     char *null_string = NULL;
-    int parameter = IGNORE_CASE;
+    int parameter = NONE;
     char* result_one = String_Utils_from_token(string, delimiter, parameter);
     char *result_two = String_Utils_from_token(string, null_string, parameter);
-    printf("Result_One: %s\nResult_Two: %s\n", result_one, result_two); getchar();
+    printf("Result_One: %s\nResult_Two: %s\n", result_one, result_two); 
     if (strcmp(result_one, "<Parse_Me>int:32;char*:'Hello World';void*:NULL;</Parse_Me> BLAH BLAH BLAH USELESS INFO!") != 0) {
         assert(0);
     }
     if(result_two != NULL) assert(0);
-    printf("Passed test: From_Token!\n");getchar();
+    printf("Passed test: From_Token!\n");
 }
 
 void testString_Utils_get_bytes() {
@@ -228,7 +228,7 @@ void testString_Utils_get_bytes() {
     if (result_two !=  NULL) {
         assert(0);
     }
-    printf("Passed test: Get_Bytes!\n");getchar();
+    printf("Passed test: Get_Bytes!\n");
 }
 
 void testString_Utils_index_of() {
@@ -241,7 +241,7 @@ void testString_Utils_index_of() {
     if (string[result_one] != 'A' || result_two != -1) {
         assert(0);
     }
-    printf("Passed test: Index_Of!\n");getchar();
+    printf("Passed test: Index_Of!\n");
 }
 
 void testString_Utils_join() {
@@ -257,7 +257,7 @@ void testString_Utils_join() {
     if (strcmp(result_one, "One prison, One person, One bond, One Power!") != 0 || result_two != NULL) {
         assert(0);
     }
-    printf("Passed test: Join!\n");getchar();
+    printf("Passed test: Join!\n");
 }
 
 void testString_Utils_length() {
@@ -268,7 +268,7 @@ void testString_Utils_length() {
     if (result_one != strlen(string) || result_two != 0) {
         assert(0);
     }
-    printf("Passed test: Length!\n");getchar();
+    printf("Passed test: Length!\n");
 }
 
 void testString_Utils_replace() {
@@ -282,7 +282,7 @@ void testString_Utils_replace() {
     if (strcmp(result_one, "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli") != 0 || result_two != NULL) {
         assert(0);
     }
-    printf("Passed test: Replace!\n");getchar();
+    printf("Passed test: Replace!\n");
 }
 
 void testString_Utils_reverse() {
@@ -296,7 +296,7 @@ void testString_Utils_reverse() {
     if (strcmp(result_one, "desserts") != 0 || strcmp(modify_this, "desserts") != 0 || result_two != NULL) {
         assert(0);
     }
-    printf("Passed test: Reverse!\n");getchar();
+    printf("Passed test: Reverse!\n");
 }
 
 void testString_Utils_set() {
@@ -307,7 +307,7 @@ void testString_Utils_set() {
     if (strcmp(string_one, string_two) != 0) {
         assert(0);
     }
-    printf("Passed test: Set!\n");getchar();
+    printf("Passed test: Set!\n");
 }
 
 void testString_Utils_split() {
@@ -321,7 +321,7 @@ void testString_Utils_split() {
             || strcmp(result[3], " except by destroying all that is not righteous?") != 0) {
         assert(0);
     }
-    printf("Passed test: Split!\n");getchar();
+    printf("Passed test: Split!\n");
 }
 
 void testString_Utils_starts_with() {
@@ -332,7 +332,7 @@ void testString_Utils_starts_with() {
     if (result != 1) {
         assert(0);
     }
-    printf("Passed test: Starts_With!\n");getchar();
+    printf("Passed test: Starts_With!\n");
 }
 
 void testString_Utils_substring() {
@@ -344,7 +344,7 @@ void testString_Utils_substring() {
     if (strcmp(result, "not just any dragon, the dragon called *gasp* *chokes* *dies*") != 0) {
         assert(0);
     }
-    printf("Passed test: Substring!\n");getchar();
+    printf("Passed test: Substring!\n");
 }
 
 void testString_Utils_to_lowercase() {
@@ -354,7 +354,7 @@ void testString_Utils_to_lowercase() {
     if (strcmp(result, "hello world") != 0) {
         assert(0);
     }
-    printf("Passed test: To_Lowercase!\n");getchar();
+    printf("Passed test: To_Lowercase!\n");
 }
 
 void testString_Utils_to_uppercase() {
@@ -364,7 +364,7 @@ void testString_Utils_to_uppercase() {
     if (strcmp(result, "HELLO WORLD") != 0) {
         assert(0);
     }
-    printf("Passed test: To_uppercase!\n");getchar();
+    printf("Passed test: To_uppercase!\n");
 }
 
 void testString_Utils_trim() {
@@ -374,9 +374,10 @@ void testString_Utils_trim() {
     if (strcmp(result, "asdadadasd") != 0) { // This guy...
         assert(0);
     }
-    printf("Passed test: Trim!\n");getchar();
+    printf("Passed test: Trim!\n");
 }
-*/
+
 int main(void){
+    TEST_ALL_FUNCTIONS;
     return 0;
 }

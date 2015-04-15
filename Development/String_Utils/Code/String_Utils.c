@@ -185,18 +185,21 @@ int String_Utils_length(char *string) {
  * complicated than it should be. Hence, I'll leave a note here.
  * Note: This function, while should no longer produce a memory leak, should be
  * optimized/simplified in the future!
+ * 
+ * Note: IGNORE_CASE is broken, please fix!
  */
 char *String_Utils_from_token(char *string, char *substring, int parameter) {
     VALIDATE_PTR(string, NULL);
     VALIDATE_PTR(substring, NULL);
     // Allocates a temporary copy of substring depending on parameter passed.
+    char *temp_string = String_Utils_copy(string, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
     char *temp_substring = String_Utils_copy(substring, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
-    char *temp = strstr(string, temp_substring);
+    char *temp = strstr(temp_string, temp_substring);
     char *old_temp = NULL;
     if(temp == NULL) return NULL;
     if(SELECTED(parameter, LAST)){
         while(temp != NULL) {
-            temp = strstr(string, temp_substring); 
+            temp = strstr(temp_string, temp_substring); 
             if(temp != NULL) {
                 // Frees the previous copy of old_temp.
                 if(old_temp != NULL) free(old_temp); 
@@ -210,6 +213,7 @@ char *String_Utils_from_token(char *string, char *substring, int parameter) {
         String_Utils_set(&string, old_temp, NONE);
         //free everything
         free(temp_substring);
+        free(temp_string);
         free(temp);
         free(old_temp);
         return string;
@@ -293,13 +297,17 @@ char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, 
     } else return final_string;
 }
 
+/*
+ * For loop should correctly reverse the string without underflowing like before.
+ */
 char *String_Utils_reverse(char *string, int parameter) {
     VALIDATE_PTR(string, NULL);
-    char *temp = (char *) malloc(strlen(string) + 1);
-    int i = 0;
-    for (i; i <= strlen(string); i++) {
-        temp[i] = string[strlen(string) - 1 - i];
+    char *temp = malloc(strlen(string) + 1);
+    int i, j;
+    for (i = 0, j = strlen(string) - 1; i < strlen(string); i++, j--) {
+        temp[i] = string[j];
     }
+    temp[strlen(string)] = '\0';
     if (SELECTED(parameter, MODIFY)) {
         String_Utils_set(&string, temp, NONE);
         free(temp);
@@ -307,6 +315,9 @@ char *String_Utils_reverse(char *string, int parameter) {
     } else return temp;
 }
 
+/*
+ * Correctly allocates and deallocates memory.
+ */
 char *String_Utils_replace(char *string, char old_char, char new_char, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = malloc(strlen(string) + 1);
@@ -330,6 +341,10 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
     } else return temp;
 }
 
+/*
+ * Join now passes the MODIFY parameter so as not to create an arbitrary amount
+ * of strings.
+ */
 char *String_Utils_join(char **array_of_strings, char *delimiter, size_t *size, int parameter){
     VALIDATE_PTR(array_of_strings, NULL);
     VALIDATE_PTR(size, NULL);
@@ -338,11 +353,14 @@ char *String_Utils_join(char **array_of_strings, char *delimiter, size_t *size, 
     int i = 0;
     for(i; i < *size; i++){
         if(temp == NULL) temp = String_Utils_copy(array_of_strings[i], NONE);
-        else temp = String_Utils_concat_all(NONE, 2, temp, delimiter, array_of_strings[i]);
+        else temp = String_Utils_concat_all(MODIFY, 2, temp, delimiter, array_of_strings[i]);
     }
     return temp;
 }
 
+/*
+ * Does not allocate any memory.
+ */
 int String_Utils_starts_with(char *string, char *find, int parameter){
     VALIDATE_PTR(string, 0); VALIDATE_PTR(find, 0); 
     int i = 0;
@@ -352,17 +370,24 @@ int String_Utils_starts_with(char *string, char *find, int parameter){
     return 1;
 }
 
+/*
+ * Does not allocate any memory.
+ * Note: Modified for loop to keep track of variables i and j instead of just j.
+ */
 int String_Utils_ends_with(char *string, char *find, int parameter){
     VALIDATE_PTR(string, 0); VALIDATE_PTR(find, 0);
-    int i = strlen(string) - strlen(find);
-    for(i; i < strlen(string); i++){
+    int i, j;
+    for(i = strlen(string) - strlen(find), j = 0; i < strlen(string); i++, j++){
         if(SELECTED(parameter, IGNORE_CASE)){
-            if(tolower(string[i]) != tolower(find[i - (strlen(string) - strlen(find))])) return 0; 
-        } else if(string[i] != find[i - (strlen(string) - strlen(find))]) return 0;
+            if(tolower(string[i]) != tolower(find[j])) return 0; 
+        } else if(string[i] != find[j]) return 0;
     }
     return 1;
 }
 
+/*
+ * Note: Might want to make it a char ***array instead to correctly destroy it.
+ */
 void String_Utils_free_array(char **array, size_t size){
     VALIDATE_PTR_VOID(array);
     int i = 0;
@@ -373,6 +398,9 @@ void String_Utils_free_array(char **array, size_t size){
     //array = NULL;
 }
 
+/*
+ * Should work as intended without memory leaks. 
+ */
 char *String_Utils_capitalize(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = String_Utils_copy(string, NONE);
@@ -381,6 +409,9 @@ char *String_Utils_capitalize(char *string, int parameter){
     return temp;
 }
 
+/*
+ * Correctly allocates and deallocates memory.
+ */
 char *String_Utils_trim(char *string, int parameter){
     VALIDATE_PTR(string, NULL);
     char *temp = NULL;
@@ -389,10 +420,10 @@ char *String_Utils_trim(char *string, int parameter){
     for(i; i < strlen(string); i++){
         if(!isspace(string[i])) break;
     }
-    for(j; j > i ; j--){
+    for(j; j > i ; --j){
         if(!isspace(string[j])) break;
     }
-    temp = String_Utils_substring(string, i, j+1, NONE); // ????????? 
+    temp = String_Utils_substring(string, i, j-1, NONE); // ????????? 
     if(SELECTED(parameter, MODIFY)){
         String_Utils_set(&string, temp, NONE);
         free(temp);
@@ -401,42 +432,73 @@ char *String_Utils_trim(char *string, int parameter){
     return temp;
 }
 
+/*
+ * Should correctly allocate and deallocate memory without causing leaks.
+ */
 char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
     VALIDATE_PTR(string, NULL);
-    char *temp = malloc((end - begin) + 1);
+    size_t size = end < begin ? strlen(string) - begin : (end - begin) + 1;
+    char *temp = malloc(size + 1);
+    char *new_temp = NULL;
     memset(temp, 0, (end-begin) + 1);
-    memcpy(temp, string + begin, end < begin ? strlen(string) - begin : end - begin);
-    temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
-    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, temp, NONE); free(temp); return string; }
-    return temp;
+    memcpy(temp, string + begin, size + 1);
+    temp[size + 1] = '\0';
+    new_temp = String_Utils_copy(temp, parameter); // Forwards parameter to copy
+    free(temp);
+    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, new_temp, NONE); free(new_temp); return string; }
+    return new_temp;
 }
 
+/*
+ * Overly complicated this function. Most likely it's extremely inefficient and more
+ * complicated than it needs to be. Marking a note here for later.
+ * Note: Please revise this function? It's awful D:
+ */
 int String_Utils_index_of(char *string, char *substring, int parameter){
     VALIDATE_PTR(string, -1);
     VALIDATE_PTR(substring, -1);
     char *temp = NULL;
+    char *temp_string = String_Utils_copy(string, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
+    char *temp_substring = String_Utils_copy(substring, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
     char *old_temp = NULL;
-    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_to_lowercase(string, NONE), String_Utils_to_lowercase(substring, NONE));
-    else temp = strstr(string, substring);
-    if(temp == NULL) { DEBUG_PRINT("NULL returned, returning negative number!\n"); return -1; }
+    temp = strstr(temp_string, temp_substring);
+    if(temp == NULL) { 
+        DEBUG_PRINT("NULL returned, returning negative number!\n"); 
+        // Free memory
+        free(temp_string);
+        free(temp_substring);
+        return -1; 
+    }
     if(SELECTED(parameter, LAST)){
         while(temp != NULL) {
-            temp = strstr(string, substring); 
-            if(temp != NULL) old_temp = String_Utils_copy(temp, NONE); 
+            temp = strstr(temp_string, temp_substring);
+            if(temp != NULL){
+                // Free old_temp before assigning it to copy of temp.
+                if(old_temp == NULL) free(old_temp);
+                old_temp = String_Utils_copy(temp, NONE); 
+            }
         }
         temp = String_Utils_copy(old_temp, NONE);
     }
-    free(old_temp);
-    return strlen(string) - strlen(temp);
+    free(old_temp); 
+    int result = strlen(string) - strlen(temp);
+    free(temp_string);
+    free(temp_substring);
+    //free(temp);
+    return result;
 }
 
+/*
+ * Should work correctly without memory leakage.
+ */
 int String_Utils_count(char *string, char *substring, int parameter){
     VALIDATE_PTR(string, 0);
     VALIDATE_PTR(substring, 0);
     int count = 0;
     char *temp = NULL; 
-    if(SELECTED(parameter, IGNORE_CASE)) temp = String_Utils_copy(string, LOWERCASE);
-    else temp = String_Utils_copy(string, NONE);
+    char *temp_ptr = NULL;
+    temp = String_Utils_copy(string, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
+    temp_ptr = temp; // For when temp gets set to NULL, will be able to keep track of it to be freed later.
     while(temp = strstr(temp, substring)){ // temp gets set to the next occurrence of the found substring 
         count++;
         //printf("Count is %d\nCurrent string being compared: %s\nString length = %d\nSubstring length: %d\n", count, string, strlen(string), strlen(substring));
@@ -444,16 +506,34 @@ int String_Utils_count(char *string, char *substring, int parameter){
         else temp += strlen(substring);
         //printf("New String: %s\nNew String Length: %d\n", temp, strlen(temp));
     }
+    free(temp_ptr);
     return count;
 }
 
+/*
+ * Uggghhh, this function bad. Even if it works, it forces so many temporary
+ * variables that it should be a crime to do so. I had to add aforementioned 
+ * temporary variables to replace all of the copies of the string I made without
+ * deallocating them.
+ */
 char *String_Utils_between(char *string, char *start, char *end, int parameter){
+    VALIDATE_PTR(string, NULL);
+    VALIDATE_PTR(start, NULL);
+    VALIDATE_PTR(end, NULL);
     char *temp = NULL; 
-    if(SELECTED(parameter, IGNORE_CASE)) temp = strstr(String_Utils_copy(string, LOWERCASE), String_Utils_copy(start, LOWERCASE)) + strlen(start);
-    else temp = strstr(string, start) + strlen(start);
-    size_t size = strlen(temp) - (strlen(strstr(string, end)));
-    temp = String_Utils_substring(temp, 0, size, NONE);
-    return temp;
+    char *new_temp = NULL;
+    char *temp_string = String_Utils_copy(string, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
+    char *temp_start = String_Utils_copy(start, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
+    char *temp_end = String_Utils_copy(end, SELECTED(parameter, IGNORE_CASE) ? LOWERCASE : NONE);
+    temp = strstr(temp_string, temp_start) + strlen(temp_start);
+    if(temp == NULL) return NULL;
+    size_t size = strlen(temp) - (strlen(strstr(temp_string, temp_end)));
+    new_temp = String_Utils_substring(temp, 0, size, NONE);
+    free(temp);
+    free(temp_string);
+    free(temp_start);
+    free(temp_end);
+    return new_temp;
 }
 
 String_Utils *String_Utils_create(void) {
