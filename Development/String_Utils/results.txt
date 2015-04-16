@@ -1,0 +1,341 @@
+==9898== Memcheck, a memory error detector
+==9898== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+==9898== Using Valgrind-3.10.0 and LibVEX; rerun with -h for copyright info
+==9898== Command: ./String_Utils
+==9898== Parent PID: 9896
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402D80: testString_Utils_char_at (String_Utils_Tests.c:54)
+==9898==    by 0x403FFA: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40427c is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402EB3: testString_Utils_compare (String_Utils_Tests.c:75)
+==9898==    by 0x404004: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40427c is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402EBF: testString_Utils_compare (String_Utils_Tests.c:76)
+==9898==    by 0x404004: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4042ce is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402ECB: testString_Utils_compare (String_Utils_Tests.c:77)
+==9898==    by 0x404004: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4042da is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402FA9: testString_Utils_concat (String_Utils_Tests.c:100)
+==9898==    by 0x40400E: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4042fc is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402FB5: testString_Utils_concat (String_Utils_Tests.c:101)
+==9898==    by 0x40400E: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404303 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x402FC1: testString_Utils_concat (String_Utils_Tests.c:102)
+==9898==    by 0x40400E: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dd810 is 0 bytes inside a block of size 1 free'd
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4018DC: String_Utils_set (String_Utils.c:269)
+==9898==    by 0x400CA1: String_Utils_concat (String_Utils.c:28)
+==9898==    by 0x402F62: testString_Utils_concat (String_Utils_Tests.c:91)
+==9898==    by 0x40400E: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4031E4: testString_Utils_copy (String_Utils_Tests.c:141)
+==9898==    by 0x404018: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40427c is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4031F0: testString_Utils_copy (String_Utils_Tests.c:142)
+==9898==    by 0x404018: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40436d is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4031FC: testString_Utils_copy (String_Utils_Tests.c:143)
+==9898==    by 0x404018: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404375 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4032DB: testString_Utils_count (String_Utils_Tests.c:162)
+==9898==    by 0x404022: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4043a0 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4032E7: testString_Utils_count (String_Utils_Tests.c:163)
+==9898==    by 0x404022: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404352 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4033AA: testString_Utils_ends_with (String_Utils_Tests.c:188)
+==9898==    by 0x404036: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404421 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4033B6: testString_Utils_ends_with (String_Utils_Tests.c:189)
+==9898==    by 0x404036: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40443e is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4033C2: testString_Utils_ends_with (String_Utils_Tests.c:190)
+==9898==    by 0x404036: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404445 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40347E: testString_Utils_equals (String_Utils_Tests.c:206)
+==9898==    by 0x404040: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404470 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40348A: testString_Utils_equals (String_Utils_Tests.c:207)
+==9898==    by 0x404040: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4044a0 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403556: testString_Utils_from (String_Utils_Tests.c:229)
+==9898==    by 0x40404A: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4044e8 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40365F: testString_Utils_from_token (String_Utils_Tests.c:249)
+==9898==    by 0x404054: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404540 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40366B: testString_Utils_from_token (String_Utils_Tests.c:250)
+==9898==    by 0x404054: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4045c9 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403677: testString_Utils_from_token (String_Utils_Tests.c:251)
+==9898==    by 0x404054: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51de460 is 48 bytes inside a block of size 137 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x401293: String_Utils_copy (String_Utils.c:146)
+==9898==    by 0x401509: String_Utils_from_token (String_Utils.c:195)
+==9898==    by 0x4035C3: testString_Utils_from_token (String_Utils_Tests.c:241)
+==9898==    by 0x404054: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403761: testString_Utils_get_bytes (String_Utils_Tests.c:268)
+==9898==    by 0x40405E: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40427c is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403822: testString_Utils_index_of (String_Utils_Tests.c:284)
+==9898==    by 0x404068: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404688 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40382E: testString_Utils_index_of (String_Utils_Tests.c:285)
+==9898==    by 0x404068: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4046c5 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40393A: testString_Utils_join (String_Utils_Tests.c:303)
+==9898==    by 0x404072: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4046ee is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403965: testString_Utils_join (String_Utils_Tests.c:305)
+==9898==    by 0x404072: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404718 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403A02: testString_Utils_length (String_Utils_Tests.c:319)
+==9898==    by 0x40407C: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404760 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403AB1: testString_Utils_replace (String_Utils_Tests.c:334)
+==9898==    by 0x404086: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404798 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403B58: testString_Utils_reverse (String_Utils_Tests.c:351)
+==9898==    by 0x404090: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404375 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403C08: testString_Utils_set (String_Utils_Tests.c:366)
+==9898==    by 0x40409A: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404868 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403C14: testString_Utils_set (String_Utils_Tests.c:367)
+==9898==    by 0x40409A: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51df6a0 is 0 bytes inside a block of size 115 free'd
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403BFC: testString_Utils_set (String_Utils_Tests.c:365)
+==9898==    by 0x40409A: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403D00: testString_Utils_split (String_Utils_Tests.c:382)
+==9898==    by 0x4040A4: main (String_Utils_Tests.c:453)
+==9898==  Address 0x4048f0 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403D0C: testString_Utils_split (String_Utils_Tests.c:383)
+==9898==    by 0x4040A4: main (String_Utils_Tests.c:453)
+==9898==  Address 0x40496d is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403DCA: testString_Utils_starts_with (String_Utils_Tests.c:398)
+==9898==    by 0x4040AE: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404a08 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403DD6: testString_Utils_starts_with (String_Utils_Tests.c:399)
+==9898==    by 0x4040AE: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404a2e is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid write of size 1
+==9898==    at 0x4024B0: String_Utils_substring (String_Utils.c:452)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfc1d is 0 bytes after a block of size 61 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid read of size 1
+==9898==    at 0x4C2C684: strlen (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x401287: String_Utils_copy (String_Utils.c:146)
+==9898==    by 0x4024C3: String_Utils_substring (String_Utils.c:453)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfc1d is 0 bytes after a block of size 61 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid read of size 1
+==9898==    at 0x4C2C854: __GI_strcpy (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4012AA: String_Utils_copy (String_Utils.c:147)
+==9898==    by 0x4024C3: String_Utils_substring (String_Utils.c:453)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfc1d is 0 bytes after a block of size 61 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x403E12: testString_Utils_substring (String_Utils_Tests.c:407)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403E5A: testString_Utils_substring (String_Utils_Tests.c:412)
+==9898==    by 0x4040B8: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404a58 is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403ED8: testString_Utils_to_lowercase (String_Utils_Tests.c:424)
+==9898==    by 0x4040C2: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404b0e is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403F56: testString_Utils_to_uppercase (String_Utils_Tests.c:436)
+==9898==    by 0x4040CC: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404b1a is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== Invalid write of size 1
+==9898==    at 0x4024B0: String_Utils_substring (String_Utils.c:452)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfd8a is 0 bytes after a block of size 10 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid read of size 1
+==9898==    at 0x4C2C684: strlen (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x401287: String_Utils_copy (String_Utils.c:146)
+==9898==    by 0x4024C3: String_Utils_substring (String_Utils.c:453)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfd8a is 0 bytes after a block of size 10 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid read of size 1
+==9898==    at 0x4C2C854: __GI_strcpy (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x4012AA: String_Utils_copy (String_Utils.c:147)
+==9898==    by 0x4024C3: String_Utils_substring (String_Utils.c:453)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898==  Address 0x51dfd8a is 0 bytes after a block of size 10 alloc'd
+==9898==    at 0x4C29110: malloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x40245A: String_Utils_substring (String_Utils.c:448)
+==9898==    by 0x402370: String_Utils_trim (String_Utils.c:429)
+==9898==    by 0x403F8C: testString_Utils_trim (String_Utils_Tests.c:443)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898== 
+==9898== Invalid free() / delete / delete[] / realloc()
+==9898==    at 0x4C2A37C: free (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==9898==    by 0x403FD4: testString_Utils_trim (String_Utils_Tests.c:448)
+==9898==    by 0x4040D6: main (String_Utils_Tests.c:453)
+==9898==  Address 0x404b5c is not stack'd, malloc'd or (recently) free'd
+==9898== 
+==9898== 
+==9898== HEAP SUMMARY:
+==9898==     in use at exit: 161 bytes in 3 blocks
+==9898==   total heap usage: 117 allocs, 156 frees, 3,527 bytes allocated
+==9898== 
+==9898== LEAK SUMMARY:
+==9898==    definitely lost: 161 bytes in 3 blocks
+==9898==    indirectly lost: 0 bytes in 0 blocks
+==9898==      possibly lost: 0 bytes in 0 blocks
+==9898==    still reachable: 0 bytes in 0 blocks
+==9898==         suppressed: 0 bytes in 0 blocks
+==9898== 
+==9898== For counts of detected and suppressed errors, rerun with: -v
+==9898== ERROR SUMMARY: 51 errors from 48 contexts (suppressed: 0 from 0)
