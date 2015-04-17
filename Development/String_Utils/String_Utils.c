@@ -263,7 +263,7 @@ char *String_Utils_set(char **string_one, char *string_two, int parameter) {
     VALIDATE_PTR(string_one, NULL);
     VALIDATE_PTR(*string_one, NULL);
     VALIDATE_PTR(string_two, NULL);
-    //printf("Value of *string_one = %s\nMemory Address of *String_one = %p\n String_two = %s\n", *string_one, *string_one, string_two);
+    printf("Value of *string_one = %s\nMemory Address of *String_one = %p\n String_two = %s\n", *string_one, *string_one, string_two);
     char *temp_string_two = String_Utils_copy(string_two, parameter);
     // Reallocates the size of the string.
     free(*string_one);
@@ -273,7 +273,7 @@ char *String_Utils_set(char **string_one, char *string_two, int parameter) {
     // Copy string_two into string_one
     strcpy(*string_one, temp_string_two);
     free(temp_string_two);
-    //printf("Final result of *String_one = %s\nFinal Memory Address of *String_one = %p\n", *string_one, *string_one);
+    printf("Final result of *String_one = %s\nFinal Memory Address of *String_one = %p\n", *string_one, *string_one);
     return *string_one;
 }
 

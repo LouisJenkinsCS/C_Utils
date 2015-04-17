@@ -82,18 +82,19 @@ void testString_Utils_concat() {
     char* string_one = "Hello ";
     char* string_two = "World";
     char *string_three = String_Utils_copy("", NONE); // In order to change this value, a copy of the string is returned
-    //printf("\n\n\nString_Three's value: %s\nString_Three's memory address: %p\n", string_three, string_three);
+    printf("\n\n\nString_Three's value: %s\nString_Three's memory address: %p\n", string_three, string_three);
     char *null_string = NULL;
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char* result_one = String_Utils_concat(string_one, string_two, parameter_one);
     char *result_two = String_Utils_concat(string_one, null_string, parameter_one);
     String_Utils_concat(string_three, result_one, parameter_two); // Modifies string_three
-    //printf("String_Three's value: %s\nString_Three's memory address: %p\n", string_three, string_three);
-    
+    printf("String_Three's value: %s\nString_Three's memory address: %p\n", string_three, string_three);
+    //printf("Result_One's val: %s\n", result_one);
     if (strcmp(result_one, "Hello World") != 0) {
-        //assert(0);
+        assert(0);
     }
+
     if(result_two != NULL) assert(0);
     //if(strcmp(result_one, string_three) != 0) assert(0);
     printf("Passed test: Concat!\n");
