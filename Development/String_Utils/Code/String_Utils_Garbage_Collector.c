@@ -11,34 +11,35 @@ SU_VM *SU_VM_Create(){
 	return vm;
 }
 
+SU_VM *vm = NULL;
+
 /* Pushes the String object onto the stack. */
-void push(SU_VM *vm, String_t *string){
-	assert(vm->stack_size < STACK_MAX, "Stack Overflow!\n");
+void push(SU_VM *vm, String_T *string){
+	assert(vm->stack_size < MAX_SIZE);
 	vm->stack[vm->stack_size++] = string;
 }
 
 /* Pops the String object off the stack. */
 String_T *pop(SU_VM *vm){
-	assert(vm->stack_size > 0, "Stack Underflow!\n");
+	assert(vm->stack_size > 0);
 	return vm->stack[--vm->stack_size];
 }
 
 /* Constructor for the String Object */
-String_T *String_Create(SU_VM *vm, String_Type type){
+String_T *String_Create(SU_VM *vm){
 	if(vm->number_of_strings == vm->max_to_trigger) SU_GC(vm);
 	String_T *string = malloc(sizeof(String_T));
-	string->type = type;
 	string->marked = 0;
-	string->next = vm->firstObject;
+	string->next = vm->first;
 	vm->first = string; // Since it's a stack, the first is always the newest one.
 	vm->number_of_strings++;
 	return string;
 }
 
 /* Push the passed string on the stack. */
-void push_string(SU_VM *vm, const char *str){
+void push_string(SU_VM *vm, char *str){
 	/* Initialized relevant fields in String_T */
-	String_T *string = String_Create(vm, STRING);
+	String_T *string = String_Create(vm);
 	string->string = str;
 	/* Push newly initialized String_T on stack */
 	push(vm, string);
@@ -68,13 +69,14 @@ void mark(String_T *string){
 }
 
 void sweep(SU_VM *vm){
-	String_T **string = &vm->firstObject; // Array of string_t objects.
+	String_T **string = &vm->first; // Array of string_t objects.
 	while(*string){ // While the current string is not NULL
 		if(!(*string)->marked) { // If the current string is not marked...
 			String_T *unreached = *string; // No longer contains a reference to it.
 			*string = unreached->next; // Sets the current string to the next node.
 			free(unreached->string); // Free the object's string.
 			free(unreached); // Free this string object.
+			--vm->number_of_strings;
 		} else {
 			// Of course, if it's still marked, it's still in used. So we unmark it for the next 
 			// Garbage collection cycle.
@@ -88,12 +90,12 @@ void SU_GC(SU_VM *vm){
 	int number_of_strings = vm->number_of_strings;
 	markAll(vm);
 	sweep(vm);
-	vm->max_to_trigger = vm->number_of_strings * 2;
+	vm->max_to_trigger = vm->number_of_strings * 1.5;
 	printf("Collected %d objects, %d remaining.\n", number_of_strings - vm->number_of_strings, vm->number_of_strings);
 }
 
-void SU_VM_Destroy(SU_VM, *vm){
+void SU_VM_Destroy(SU_VM *vm){
 	vm->stack_size = 0;
-	gc(vm);
+	SU_GC(vm);
 	free(vm);
 }

@@ -1,6 +1,9 @@
 #ifndef SU_GC_H
 #define SU_GC_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 typedef struct String_Pointer {
 	struct String_Pointer *next; // Node that points to the next object.
 	unsigned char marked; // Marked bit
@@ -19,20 +22,21 @@ typedef struct {
 	int stack_size;
 } SU_VM; // String_Utils_Virtual_Machine
 
+extern SU_VM *vm;
 /* Virtual Machine constructor */
 SU_VM *SU_VM_Create();
 
 /* Pushes the String object onto the stack. */
-void push(SU_VM *vm, String_t *string);
+void push(SU_VM *vm, String_T *string);
 
 /* Pops the String object off the stack. */
 String_T *pop(SU_VM *vm);
 
 /* Constructor for the String Object */
-String_T *String_Create(SU_VM *vm, String_Type type);
+String_T *String_Create(SU_VM *vm);
 
 /* Push the passed string on the stack. */
-void push_string(SU_VM *vm, const char *str);
+void push_string(SU_VM *vm, char *str);
 
 /* Marks all String_T objects in the stack (virtual machine) */
 void markAll(SU_VM *vm);
@@ -46,5 +50,5 @@ void sweep(SU_VM *vm);
 /* Garbage Collector for String_Utils */
 void SU_GC(SU_VM *vm);
 
-void SU_VM_Destroy(SU_VM, *vm);
+void SU_VM_Destroy(SU_VM *vm);
 #endif /* SU_GC_H */
