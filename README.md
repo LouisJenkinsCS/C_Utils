@@ -1,9 +1,9 @@
 # C_Utils
 Utilities for C projects
 
-C_Utils, in essence, is my attempts at implementing of what I feel is missing, or was overlooked in C. Coming from Java, I've grown so used to having everything done for me, that I was rather astounded and even dishearted at first by how much work you have to do to make something even relatively simple, and how fast things can go wrong with the language not holding your hand. So, this project not only forces me to overcome such problems, it even allows me to solve them in a reusable manor that anyone can use. 
+As my mind seems to be as fickle as my luck, C_Utils doesn't really have a set goal of what I want it to be. At first it was a vast library of all possible things I would ever want to use in future projects, but seeing as literally of them actually exist in one way or another, this is going to be my experimentation and person projects in C. They are in essence going to be utilities, but they are not going to be the most efficient. 
 
-In summar, C_Utils is a personal side project, for future side projects. This is a library that will be, when completed, able to just inject into any project, big or small, and use. It is a one-man project, it can be rather lengthly, but it sure won't stop me from trying.
+C_Utils is going to be a personal side project that I will want to implement as libraries in future side projects. They're not for anyone else to use, just my own.
 
 ## *Completed Projects*
 
@@ -32,18 +32,14 @@ them as closely as they would be in Java, although of course since C and Java
 are vastly different languages, with different paradigms, it's impossible
 to make it exactly like so. 
 
-Another thing String_Utils offers is a super-cool (IMO, as the creator) idea
-of using a mega-struct which serves as a callback-machine, WITH basic documentation.
-If contains a callback function to every single function created here, and makes it a lot
-easier to call my functions too. For example, lets say you want to concat two strings.
-Normally you'd have to call String_Utils_concat(...), which can be rather long if you're
-calling it String_Utils_* over and over, even nested in a statement, so a solution
-I devised was, lets say you have an instnace of the struct called su, then
-it's a lot easier to call su->concat than it is to call String_Utils_concat. 
-The next cool part is the documentation! At least in NetBeans, when you 
-dereference the struct (or just access the member variable if you prefer that)
-you can easily see an alphabetically sorted list of all of the functions as
-well a short 1 - 2 sentence description of each function.
+Another nice feature is the passing of parameters to tailor the operation the way you want
+it if the library function supports it. For instance, one of the problems I had with the standard
+C library was that strcat modifies the original string AND returns the pointer to the same
+string it modified. I figured, why not just have an option to modify the string passed or not? 
+What if I want to work with a string literal? Then with strcat, it would segfault. With my 
+concat implementation, you can pass a string literal and not have it attempt to modify it, instead
+create a copy of the string for you. In some functions, multiple parameter passing can be passed
+with the | operator, I.E 'MODIFY | IGNORE_CASE'
 
 I hope you enjoy my first project as much as I will, I worked very hard on it. Hope it shows! Enjoy!
 
@@ -51,13 +47,30 @@ I hope you enjoy my first project as much as I will, I worked very hard on it. H
 
 ## Network_Utils
 
-### Coming soon!
+### Summary
+
+Basic networking. Basically, creating sockets, basic server-client basic structs, send and receiving information over the network. I might also try to attempt serialization, or at the very least send string-representation of objects (might have to work in unison with File and String Utils).
 
 ## File_Utils
 
-### Coming soon!
+### Summary
+
+In essence, going to be some basic file reading utilities. I might dabble in parsing files, like XML and JSON, might see if I can make something like JFileChooser where a GUI pops up for you to select your file from (that'd be awesome!). Got a lot on my plate as is though.
 
 ## Data_Structures
 
-### Coming soon!
+### Summary
 
+Basic data structures like Linked Lists (& Doubly Linked Lists) , Array List, Sets, Hashmaps, Binary trees, Stacks, Queues, etc. Hopefully I get around to this.
+
+## Memory_Utils
+
+### Summary
+
+This is a theoretical and most likely not going to be finished at all, but as of yet, I've been experimenting with memory management and, in particular, garbage collection. I've already implemented my own simple garbage collector, thanks to a kind blogger who gave out his template, as I'll be trying to improve it as implement it in the other utilities as well.
+
+## Concurrency_Utils
+
+### Summary
+
+Biting off more than I can chew, I know, but I want to learn, and what better way than to create my library to interact with threads. It MIGHT end up abstracting and/or wrapping the POSIX threads library, or I might make my own. Who knows?
