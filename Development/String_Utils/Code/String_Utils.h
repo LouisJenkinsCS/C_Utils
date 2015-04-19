@@ -105,12 +105,12 @@
  */
 #define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO))
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <ctype.h>
+#include <stdlib.h> /* Can't malloc without it */
+#include <string.h> /* Overly obvious reasons */
+#include <stdio.h> /* Obvious reasons */
+#include <stdarg.h> /* For variadic function concat_all */
+#include <assert.h> /* Asserts NULL parameters */
+#include <ctype.h> /* To trim strings and check isspace(...). */
 
 
 /**
@@ -183,13 +183,6 @@ unsigned int *String_Utils_get_bytes(const char *string);
  * @return 1 if equal, 0 if not.
  */
 int String_Utils_equals(const char *string_one, const char *string_two, int parameter);
-
-/**
- * Creates a copy of the given string.
- * @param string String to return a copy of.
- * @return A copy of the string, differs based on parameter passed.
- */
-char *String_Utils_copy(const char *string);
 
 /**
  * Splits a string into an array of strings based on delimiter passed. It should
@@ -285,13 +278,6 @@ int String_Utils_starts_with(const char *string, const char *find, int parameter
 int String_Utils_ends_with(const char *string, const char *find, int parameter);
 
 /**
- * Returns the length of the string passed.
- * @param string String to get the length of
- * @return strlen(string)
- */
-int String_Utils_length(const char *string);
-
-/**
  * Returns a substring of the string.
  * @param string String to get a substring of.
  * @param begin The beginning index.
@@ -344,5 +330,15 @@ int String_Utils_count(const char *string, const char *substring, int parameter)
  * @return The substring of what is between start and end, or NULL if NULL string is passed.
  */
 char *String_Utils_between(const char *string, const char *start, const char *end, int parameter);
+
+/**
+ * Initialize the garbage collector for functions.
+ */
+void String_Utils_Init_GC(void);
+
+/**
+ * Destroys the garbage collector.
+ */
+void String_Utils_Destroy_GC(void);
 #endif	/* STRING_UTILS_H */
 

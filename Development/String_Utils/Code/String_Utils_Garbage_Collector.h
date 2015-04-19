@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdarg.h>
 typedef struct String_Pointer {
 	struct String_Pointer *next; // Node that points to the next object.
 	unsigned char marked; // Marked bit
@@ -32,11 +33,20 @@ void push(SU_VM *vm, String_T *string);
 /* Pops the String object off the stack. */
 String_T *pop(SU_VM *vm);
 
+/* Pop multiple Strings off of the stack */
+String_T **pop_n(SU_VM *vm, size_t size);
+
+/* The void variant of pop, if I don't want to worry about a return type;. */
+void pop_vn(SU_VM *vm, size_t size);
+
 /* Constructor for the String Object */
 String_T *String_Create(SU_VM *vm);
 
 /* Push the passed string on the stack. */
 void push_string(SU_VM *vm, char *str);
+
+/* Variadic variant of push_string */
+void push_strings(SU_VM *vm, char *str, ...);
 
 /* Marks all String_T objects in the stack (virtual machine) */
 void markAll(SU_VM *vm);

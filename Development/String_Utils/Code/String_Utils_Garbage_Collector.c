@@ -25,6 +25,20 @@ String_T *pop(SU_VM *vm){
 	return vm->stack[--vm->stack_size];
 }
 
+String_T **pop_n(SU_VM *vm, size_t size){
+	String_T **array = malloc(sizeof(String_T *) * size); // Initialize the array of strings
+	int i = 0;
+	for(;i < size; i++){
+		array[i] = pop(vm);
+	}
+	return array;
+}
+
+void pop_vn(SU_VM *vm, size_t size){
+	String_T **array = pop_n(vm, size); // Retrieves the value of pop_n
+	free(array);
+}
+
 /* Constructor for the String Object */
 String_T *String_Create(SU_VM *vm){
 	if(vm->number_of_strings == vm->max_to_trigger) SU_GC(vm);
@@ -43,6 +57,17 @@ void push_string(SU_VM *vm, char *str){
 	string->string = str;
 	/* Push newly initialized String_T on stack */
 	push(vm, string);
+}
+
+void push_strings(SU_VM *vm, size_t size, char *str, ...){
+	va_list args;
+	va_start(arg, str);
+	push_string(vm, str); // Push the very first string on the stack.
+	int i = 1;
+	for(;i<size;i++){ // Loop for passed size - 1
+		push_string(vm, va_arg(arg, char *)); // Push the next string on the stack.
+	}
+	va_end(arg); // Deallocate arg
 }
 
 /* Push the array of strings and it's size on the stack. */
