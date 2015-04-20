@@ -29,6 +29,10 @@
  * concat implementation, you can pass a string literal and not have it attempt to modify it, instead
  * create a copy of the string for you. In some functions, multiple parameter passing can be passed
  * with the | operator, I.E 'MODIFY | IGNORE_CASE'
+ *
+ * Another note, to keep the feature of being able to modify the string, all functions that can modify,
+ * even if you do not modify it directly, must pass the address of the string (& operator). For exmaple,
+ * String_Utils_concat(&string_one, string_two, MODIFY). A minor inconvenience.
  * 
  * I hope you enjoy my first project as much as I will, I worked very hard on it.
  * Hope it shows! Enjoy!
@@ -137,7 +141,7 @@ int String_Utils_contains(const char *string, const char *search, int parameters
  * @param parameter NONE | MODIFY
  * @return Lowercase string.
  */
-char *String_Utils_to_lowercase(char *string, int parameter);
+char *String_Utils_to_lowercase(char **string, int parameter);
 
 /**
  * Creates a copy of the string and converts it to uppercase. Either returns the copy
@@ -146,7 +150,7 @@ char *String_Utils_to_lowercase(char *string, int parameter);
  * @param parameter NONE | MODIFY
  * @return Uppercase string.
  */
-char *String_Utils_to_uppercase(char *string, int parameter);
+char *String_Utils_to_uppercase(char **string, int parameter);
 
 /**
  * Returns the char at the position. If the index is greater than the overall
@@ -164,7 +168,7 @@ char String_Utils_char_at(const char *string, unsigned int index);
  * @param parameters NONE | MODIFY
  * @return Returns the concatenated string.
  */
-char *String_Utils_concat(char *string_one, const char *string_two, int parameters);
+char *String_Utils_concat(char **string_one, const char *string_two, int parameters);
 
 /**
  * Returns the string in byte representation.
@@ -203,7 +207,7 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
  * @param parameter NONE | MODIFY
  * @return A copy of the string starting at the position, or NULL if potential overflow.
  */
-char *String_Utils_from(char *string, unsigned int index, int parameter);
+char *String_Utils_from(char **string, unsigned int index, int parameter);
 
 /**
  * Returns a copy of the string from the first (or last) substring is found.
@@ -212,7 +216,7 @@ char *String_Utils_from(char *string, unsigned int index, int parameter);
  * @param parameter NONE | IGNORE_CASE |  MODIFY | LAST
  * @return A copy of the string from where the substring is found, NULL if not found.
  */
-char *String_Utils_from_token(char *string, const char *substring, int parameter);
+char *String_Utils_from_token(char **string, const char *substring, int parameter);
 
 /**
  * Concatenates all strings passed to it.
@@ -222,7 +226,7 @@ char *String_Utils_from_token(char *string, const char *substring, int parameter
  * @param ... The rest of the strings to be passed.
  * @return The concatenated string.
  */
-char *String_Utils_concat_all(int parameter, size_t amount, char *string, ...);
+char *String_Utils_concat_all(int parameter, size_t amount, char **string, ...);
 
 /**
  * Sets one equal to another string.
@@ -238,7 +242,7 @@ char *String_Utils_set(char **string_one, const char *string_two);
  * @param parameter NONE | MODIFY
  * @return The reversed string.
  */
-char *String_Utils_reverse(char *string, int parameter);
+char *String_Utils_reverse(char **string, int parameter);
 
 /**
  * Joins an array of strings together into one big string with the delimiter prepended to each string after the first.
@@ -257,7 +261,7 @@ char *String_Utils_join(const char **array_of_strings, const char *delimiter, si
  * @param parameter NONE | IGNORE_CASE | MODIFY
  * @return The new string with replaced characters.
  */
-char *String_Utils_replace(char *string, char old_char, char new_char, int parameter);
+char *String_Utils_replace(char **string, char old_char, char new_char, int parameter);
 
 /**
  * Checks to see if a string starts with a substring
@@ -285,7 +289,7 @@ int String_Utils_ends_with(const char *string, const char *find, int parameter);
  * @param parameter NONE | MODIFY
  * @return The substring of the string.
  */
-char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter);
+char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int parameter);
 
 /**
  * Capitalizes the first character in the string.
@@ -293,7 +297,7 @@ char *String_Utils_substring(char *string, unsigned int begin, unsigned int end,
  * @param parameter NONE | MODIFY
  * @return The capitalized string.
  */
-char *String_Utils_capitalize(char *string, int parameter);
+char *String_Utils_capitalize(char **string, int parameter);
 
 /**
  * Trims the string of all leading and trailing spaces.
@@ -301,7 +305,7 @@ char *String_Utils_capitalize(char *string, int parameter);
  * @param parameter NONE | MODIFY
  * @return Trimmed string.
  */
-char *String_Utils_trim(char *string, int parameter);
+char *String_Utils_trim(char **string, int parameter);
 
 /**
  * Finds the index of the first or the last index of a given substring.
