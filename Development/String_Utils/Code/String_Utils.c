@@ -396,7 +396,7 @@ char *String_Utils_trim(char *string, int parameter){
 /*
  * Removed old_temp as it's useless now that copy is gone.
  */
-char *String_Utils_substring(char *string, unsigned int begin, unsigned int end){
+char *String_Utils_substring(char *string, unsigned int begin, unsigned int end, int parameter){
     assert(string);
     // If begin is greater than the end, set new_begin to 0, else equal to begin
     unsigned int new_begin = begin > end ? 0 : begin; // Bounds checking for begin
