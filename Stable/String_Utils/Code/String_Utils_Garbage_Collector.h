@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-/**
+/*
  * @Author: Louis Jenkins
  * @Version: 1.0
  * @Brief: String_Utils Garbage Collector
@@ -48,7 +48,6 @@
  *      but it is, needless to say, a very educational experience.
  */
 
-
 /**
  * String_Pointer, aliased as String_T is the structure which acts as both a container
  * for the string (char *) inside of it, but also as a linked list which points to the next
@@ -61,9 +60,12 @@
  * automatic way, but as is, all of this is abstracted through String_Utils functions.
  */
 typedef struct String_Pointer {
-	struct String_Pointer *next; // Node that points to the next object.
-	unsigned char marked; // Marked bit
-	char *string; // The string to be stored when allocated.
+    /// Node that points to the next object.
+    struct String_Pointer *next;
+    /// Marked bit
+    unsigned char marked;
+    /// The string to be stored when allocated.
+    char *string;
 } String_T;
 
 /**
@@ -85,12 +87,17 @@ typedef struct String_Pointer {
  * to trigger, and size of the current stack.
  */
 typedef struct {
-	String_T *first; // The pointer to the very first node in the stack.
-	String_T *stack[MAX_SIZE]; // The stack of all allocated String_T
-	int number_of_strings; // Current number of strings allocated on the stack.
-	int max_to_trigger; // The number needed to trigger the Garbage Collector.
-	int stack_size;
-} SU_VM; // String_Utils_Virtual_Machine
+    /// The pointer to the very first node in the stack.
+    String_T *first;
+    /// The stack of all allocated String_T
+    String_T *stack[MAX_SIZE];
+    /// Current number of strings allocated on the stack.
+    int number_of_strings;
+    /// The number needed to trigger the Garbage Collector.
+    int max_to_trigger;
+    /// The current size of the stack.
+    int stack_size;
+} SU_VM;
 
 /**
  * Extremely experimental purposes. This is a global variable that was used for the testing phase.
