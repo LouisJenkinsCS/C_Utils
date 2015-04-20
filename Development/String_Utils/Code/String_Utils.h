@@ -137,7 +137,7 @@ int String_Utils_contains(const char *string, const char *search, int parameters
 
 /**
  * Creates a copy of the string and converts it to lowercase.
- * @param string String to be manipulated
+ * @param string Pointer to the String to be manipulated
  * @param parameter NONE | MODIFY
  * @return Lowercase string.
  */
@@ -146,7 +146,7 @@ char *String_Utils_to_lowercase(char **string, int parameter);
 /**
  * Creates a copy of the string and converts it to uppercase. Either returns the copy
  * or modifies the original string depending on the parameter passed.
- * @param string String to be modified
+ * @param string Pointer to the String to be modified
  * @param parameter NONE | MODIFY
  * @return Uppercase string.
  */
@@ -163,7 +163,7 @@ char String_Utils_char_at(const char *string, unsigned int index);
 
 /**
  * Concatenates two strings together.
- * @param string_one The first string.
+ * @param string_one Pointer to the The first string.
  * @param string_two The second string.
  * @param parameters NONE | MODIFY
  * @return Returns the concatenated string.
@@ -202,7 +202,7 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
 /**
  * Returns a copy of the string from the given index. Index must be less than
  * the size of the string, else will return NULL to prevent overflow.
- * @param string String to be operated on.
+ * @param string Pointer to the String to be operated on.
  * @param index The start of where in the string you want return.
  * @param parameter NONE | MODIFY
  * @return A copy of the string starting at the position, or NULL if potential overflow.
@@ -211,7 +211,7 @@ char *String_Utils_from(char **string, unsigned int index, int parameter);
 
 /**
  * Returns a copy of the string from the first (or last) substring is found.
- * @param string String to search
+ * @param string Pointer to the String to search
  * @param substring Substring to search for
  * @param parameter NONE | IGNORE_CASE |  MODIFY | LAST
  * @return A copy of the string from where the substring is found, NULL if not found.
@@ -222,7 +222,7 @@ char *String_Utils_from_token(char **string, const char *substring, int paramete
  * Concatenates all strings passed to it.
  * @param parameter NONE | MODIFY
  * @param amount Amount of strings to be concatenated
- * @param string The first string to be passed to it
+ * @param string Pointer to the The first string to be passed to it
  * @param ... The rest of the strings to be passed.
  * @return The concatenated string.
  */
@@ -238,7 +238,7 @@ char *String_Utils_set(char **string_one, const char *string_two);
 
 /**
  * Reverses the given string.
- * @param string String to be operated on.
+ * @param string Pointer to the String to be operated on.
  * @param parameter NONE | MODIFY
  * @return The reversed string.
  */
@@ -255,7 +255,7 @@ char *String_Utils_join(const char **array_of_strings, const char *delimiter, si
 
 /**
  * Replaces all of one character in a string with another character.
- * @param string The string the characters are to be replaced
+ * @param string Pointer to the The string the characters are to be replaced
  * @param old_char The characters to be found
  * @param new_char The characters that will replace the old_char
  * @param parameter NONE | IGNORE_CASE | MODIFY
@@ -265,7 +265,7 @@ char *String_Utils_replace(char **string, char old_char, char new_char, int para
 
 /**
  * Checks to see if a string starts with a substring
- * @param string The string to check.
+ * @param string he string to check.
  * @param find The substring to check for.
  * @param parameter NONE | IGNORE_CASE
  * @return 1 if true, 0 if false.
@@ -283,7 +283,7 @@ int String_Utils_ends_with(const char *string, const char *find, int parameter);
 
 /**
  * Returns a substring of the string.
- * @param string String to get a substring of.
+ * @param string Pointer to the String to get a substring of.
  * @param begin The beginning index.
  * @param end The end index.
  * @param parameter NONE | MODIFY
@@ -293,7 +293,7 @@ char *String_Utils_substring(char **string, unsigned int begin, unsigned int end
 
 /**
  * Capitalizes the first character in the string.
- * @param string The string to capitalize.
+ * @param string Pointer to the string to capitalize.
  * @param parameter NONE | MODIFY
  * @return The capitalized string.
  */
@@ -301,7 +301,7 @@ char *String_Utils_capitalize(char **string, int parameter);
 
 /**
  * Trims the string of all leading and trailing spaces.
- * @param string String to be trimmed.
+ * @param string Pointer to the String to be trimmed.
  * @param parameter NONE | MODIFY
  * @return Trimmed string.
  */
