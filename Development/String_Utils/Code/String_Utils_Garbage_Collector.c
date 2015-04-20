@@ -61,13 +61,13 @@ void push_string(SU_VM *vm, char *str){
 
 void push_strings(SU_VM *vm, size_t size, char *str, ...){
 	va_list args;
-	va_start(arg, str);
+	va_start(args, str);
 	push_string(vm, str); // Push the very first string on the stack.
 	int i = 1;
 	for(;i<size;i++){ // Loop for passed size - 1
-		push_string(vm, va_arg(arg, char *)); // Push the next string on the stack.
+		push_string(vm, va_arg(args, char *)); // Push the next string on the stack.
 	}
-	va_end(arg); // Deallocate arg
+	va_end(args); // Deallocate arg
 }
 
 /* Push the array of strings and it's size on the stack. */

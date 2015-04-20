@@ -47,9 +47,9 @@ int String_Utils_compare(const char *string_one, const char *string_two, int par
     int result = 0;
     // Allocate two temporary strings
     if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string_one = strdup(string_one);
-        char *temp_string_two = strdup(string_two);
-        put_strings(vm, 2, temp_string_one, temp_string_two); // Puts both elements on stack.
+        char *temp_string_one = String_Utils_to_lowercase(string_one, NONE);
+        char *temp_string_two = String_Utils_to_lowercase(string_two, NONE);
+        push_strings(vm, 2, temp_string_one, temp_string_two); // Puts both elements on stack.
         result = strcmp(temp_string_one, temp_string_two);
         pop_vn(vm, 2); // Pops both elements off of stack
     } else result = strcmp(string_one, string_two);
@@ -73,9 +73,9 @@ int String_Utils_contains(const char *string, const char *search, int parameter)
     int result = 0;
     // Allocates temporary variables to hold copy of the passed strings.
     if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string_one = strdup(string);
-        char *temp_string_two = strdup(search);
-        put_strings(vm, 2, temp_string_one, temp_string_two); // Puts both elements on stack.
+        char *temp_string = strdup(string);
+        char *temp_search = strdup(search);
+        push_strings(vm, 2, temp_string, temp_search); // Puts both elements on stack.
         result = strstr(temp_string, temp_search) == NULL ? 0 : 1;
         pop_vn(vm, 2); // Pops both elements off of stack
     } else result = strstr(string, search) == NULL ? 0 : 1;
@@ -93,7 +93,7 @@ char *String_Utils_to_lowercase(char *string, int parameter) {
         temp[i] = tolower(string[i]);
     }
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     } else return temp; // If the heap existed, temp would be added to it before return.
@@ -110,7 +110,7 @@ char *String_Utils_to_uppercase(char *string, int parameter) {
         temp[i] = toupper(string[i]);
     }
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     } else return temp;
@@ -150,7 +150,7 @@ char *String_Utils_from(char *string, unsigned int index, int parameter) {
         temp[j] = string[i];
     }
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     } else return temp;
@@ -173,8 +173,8 @@ char *String_Utils_from_token(char *string, const char *substring, int parameter
     char *old_temp = NULL;
     // Allocates a temporary copy of substring depending on parameter passed.
     if(SELECTED(parameter, IGNORE_CASE)){
-        temp_string = String_Utils_to_lowercase(string);
-        temp_substring = String_Utils_to_lowercase(substring);
+        temp_string = String_Utils_to_lowercase(string, NONE);
+        temp_substring = String_Utils_to_lowercase(substring, NONE);
         push_strings(vm, 2, temp_string, temp_substring);
         temp = strstr(temp_string, temp_substring);
     } else temp = strstr(string, substring);
@@ -182,22 +182,24 @@ char *String_Utils_from_token(char *string, const char *substring, int parameter
     // here comes the complicated part
     if(SELECTED(parameter, LAST)){
         while(temp != NULL) {
-            temp = strstr(temp_string == NULL ? string : temp_string, temp_substring == NULL ? substring, temp_substring);
+            temp = strstr(temp, temp_substring == NULL ? substring : temp_substring);
             // Only time temp_* is NULL is if IGNORE_CASE wasn't passed, hence a check is needed here.
             if(temp != NULL) { // If there is another token, then clearly the previous doesn't count as the last, so...
                 // Assigns old_temp to temp
                 old_temp = temp; // Set old_temp to the new temp, as it becomes the new 'last'
+                if(strlen(temp) <= strlen(substring)) temp = NULL;
+                else temp += strlen(substring);
             }
         }
         temp = old_temp; // Simple, sets temp to old temp.
     }
     temp = String_Utils_substring(string, strlen(string) - strlen(temp), strlen(string), NONE); // Sets temp equal to the same substring except guaranteed to not be lowercase.
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(&string, old_temp, NONE);
+        String_Utils_set(&string, old_temp);
         //free everything
         if(temp_string != NULL || temp_substring != NULL) pop_vn(vm, 2);
         free(temp);
-        free(old_temp);
+        //free(old_temp);
         return string;
     }
     // If either temp_* are not null, then IGNORE_CASE was passed, hence pop them from the stack.
@@ -207,6 +209,7 @@ char *String_Utils_from_token(char *string, const char *substring, int parameter
 
 /*
  * Should be optimized so as to not allocate an extra cell in the array. Also, edged in another GC.
+ * Should no longer attempt to free twice!
  */
 char **String_Utils_split(const char *string, const char *delimiter, size_t *size) {
     assert(string);
@@ -219,7 +222,7 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
     char *temp_string = strdup(string);
     temp = strtok(temp_string, delimiter); // So strtok does not mess with the original string.
     if (temp == NULL) { free(temp_string); return NULL; } // If temp does not contain the delimiter, then free the tmep_string and return NULL.
-    push_strings(vm, 2, temp_string, temp); // Push both temp and temp_string on the stack.
+    push_strings(vm, 1, temp_string); // Push both temp and temp_string on the stack.
     unsigned int index = 0; // Used to record the size of the array.
     while (temp != NULL) {
         // If the index is not 0, a simple check so as to not waste an extra allocation, then reallocate the array to be the
@@ -232,7 +235,7 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
         // Reallocates the array so it can hold another array.
         temp = strtok(NULL, delimiter);
     }
-    pop_vn(vm, 2);
+    pop_vn(vm, 1);
     *size = index;
     return string_array;
 }
@@ -240,12 +243,13 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
 /*
  * Majorly optimized down to a two-step operation (besides for assertions for null).
  */
-char *String_Utils_set(char **string_one, const char *string_two, int parameter) {
+char *String_Utils_set(char **string_one, const char *string_two) {
     assert(string_one);
     assert(*string_one);
     assert(string_two);
     free(*string_one); // Will crash on a string literal.
-    return *string_one = strdup(string_two);
+    *string_one = strdup(string_two);
+    return *string_one;
 }
 
 /*
@@ -260,13 +264,13 @@ char *String_Utils_concat_all(int parameter, size_t amount, char *string, ...) {
     char *final_string = strdup(string); // final_string starts with the very first string.
     char *temp = NULL;
     for(i; i < amount; i++){
-        temp = va_arg(args, char *); // This loses the old value of temp, so temp's value is kept on the stack to be deallocated.
+        temp = strdup(va_arg(args, char *)); // This loses the old value of temp, so temp's value is kept on the stack to be deallocated.
         push_string(vm, temp); // Push new string on stack.
         final_string = String_Utils_concat(final_string, temp, MODIFY);
     }
     va_end(args);
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(&string, final_string, NONE);
+        String_Utils_set(&string, final_string);
         free(final_string);
         pop_vn(vm, amount);
         return string;
@@ -285,7 +289,7 @@ char *String_Utils_reverse(char *string, int parameter) {
     }
     temp[strlen(string)] = '\0';
     if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     } else return temp;
@@ -306,7 +310,7 @@ char *String_Utils_replace(char *string, char old_char, char new_char, int param
         else temp[i] = string[i];
     }
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     } else return temp;
@@ -366,7 +370,7 @@ char *String_Utils_capitalize(char *string, int parameter){
     assert(string);
     char *temp = strdup(string);
     temp[0] = toupper(temp[0]);
-    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, temp, NONE); free(temp); return string; }
+    if(SELECTED(parameter, MODIFY)) { String_Utils_set(&string, temp); free(temp); return string; }
     return temp;
 }
 
@@ -386,7 +390,7 @@ char *String_Utils_trim(char *string, int parameter){
     }
     temp = String_Utils_substring(string, i, j, NONE);
     if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp);
         return string;
     }
@@ -408,7 +412,7 @@ char *String_Utils_substring(char *string, unsigned int begin, unsigned int end,
     memcpy(temp, string + begin, size + 1); // Copy into temp (destination), the contents of string[begin] size bytes.
     temp[size + 1] = '\0'; // Append a null terminator to the temporary string.
     if(SELECTED(parameter, MODIFY)) { // Modifies the original string is parameter is passed.
-        String_Utils_set(&string, temp, NONE);
+        String_Utils_set(&string, temp);
         free(temp); 
         return string; 
     }

@@ -46,7 +46,7 @@ String_T *String_Create(SU_VM *vm);
 void push_string(SU_VM *vm, char *str);
 
 /* Variadic variant of push_string */
-void push_strings(SU_VM *vm, char *str, ...);
+void push_strings(SU_VM *vm, size_t size, char *str, ...);
 
 /* Marks all String_T objects in the stack (virtual machine) */
 void markAll(SU_VM *vm);

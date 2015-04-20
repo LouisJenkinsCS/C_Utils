@@ -222,7 +222,7 @@ char *String_Utils_from_token(char *string, const char *substring, int parameter
  * @param ... The rest of the strings to be passed.
  * @return The concatenated string.
  */
-char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, ...);
+char *String_Utils_concat_all(int parameter, size_t amount, char *string, ...);
 
 /**
  * Sets one equal to another string.
@@ -230,7 +230,7 @@ char *String_Utils_concat_all(int parameter, unsigned int amount, char *string, 
  * @param string_two The second string it is going be set to.
  * @return string_one which it sets.
  */
-char *String_Utils_set(const char **string_one, const char *string_two);
+char *String_Utils_set(char **string_one, const char *string_two);
 
 /**
  * Reverses the given string.

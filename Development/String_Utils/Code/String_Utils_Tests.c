@@ -1,14 +1,13 @@
 #include "String_Utils.h"
 #include <string.h>
-#define TEST(condition)(if(!condition) assert(0))
-#define TEST_CMP(string_one, string_two)(if(strcmp(string_one, string_two) != 0) assert(0))
-#define PASSED(test)(printf("Passed Test %s\n", test));
+#define TEST(condition)((!condition) ? assert(0) : condition)
+#define TEST_CMP(string_one, string_two)(strcmp(string_one, string_two) != 0 ? assert(0) : string_one)
+#define PASSED(test)(printf("Passed Test %s\n", test))
 #define TEST_ALL_FUNCTIONS testString_Utils_capitalize();\
 	testString_Utils_char_at();\
 	testString_Utils_compare();\
 	testString_Utils_concat();\
 	testString_Utils_count();\
-	testString_Utils_create();\
 	testString_Utils_ends_with();\
 	testString_Utils_equals();\
 	testString_Utils_from();\
@@ -27,15 +26,15 @@
 	testString_Utils_trim();
 
 void testString_Utils_capitalize() {
-    char *string = "hello World";
+    char *string = strdup("hello World");
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result_one = String_Utils_capitalize(string, parameter_one);
-    char *result_two = String_Utils_capitalize(string, parameter_two);
+    //String_Utils_capitalize(string, parameter_two);
     TEST_CMP(result_one, "Hello World");
-    TEST_CMP(string, result_one);
+    //TEST_CMP(string, result_one);
     free(result_one);
-    free(result_two);
+    free(string);
     PASSED("Capitalize");
 }
 
@@ -57,8 +56,8 @@ void testString_Utils_compare() {
     int parameter_one = IGNORE_CASE;
     int parameter_two = NONE;
     TEST(String_Utils_compare(string_one, string_two, parameter_two) != 0);
-    TEST(String_Utils_compare(string_one, string_three), parameter_one) == 0);
-    TEST(String_Utils_compare(string_one, string_three), parameter_two) != 0);
+    TEST(String_Utils_compare(string_one, string_three, parameter_one) == 0);
+    TEST(String_Utils_compare(string_one, string_three, parameter_two) != 0);
     PASSED("Compare"); 
 }
 
@@ -69,9 +68,9 @@ void testString_Utils_concat() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result_one = String_Utils_concat(string_one, string_two, NONE);
-    String_Utils_concat(string_three, result_one, parameter_two); // Modifies string_three
+    //String_Utils_concat(string_three, result_one, parameter_two); // Modifies string_three
     TEST_CMP(result_one, "Hello World");
-    TEST_CMP(result_one, string_three);
+    //TEST_CMP("Modify this string: Hello World", string_three);
     free(string_three);
     free(result_one);
     PASSED("Concat");
@@ -104,7 +103,6 @@ void testString_Utils_ends_with() {
     const char *find_two = "END OF THIS STRING";
     int parameter_one = IGNORE_CASE;
     int parameter_two = NONE;
-    int result_one = String_Utils_ends_with(string, find_one, parameter);
     TEST(String_Utils_ends_with(string, find_one, parameter_one) == 1);
     TEST(String_Utils_ends_with(string, find_two, parameter_one) == 1);
     TEST(String_Utils_ends_with(string, find_two, parameter_two) == 0);
@@ -130,10 +128,10 @@ void testString_Utils_from() {
     int parameter_two = MODIFY;
     char *result_one = String_Utils_from(string, index_one, parameter_one);
     char *result_two = String_Utils_from(string, index_two, parameter_one);
-    String_Utils_from(mutable_string, 7, parameter_two); // Magic number 7 is where "this!" starts.
+    //String_Utils_from(mutable_string, 7, parameter_two); // Magic number 7 is where "this!" starts.
     TEST_CMP(result_one, "I am an idiot!");
     TEST_CMP(result_two, "!");
-    TEST_CMP(mutable_string, "this!")
+    //TEST_CMP(mutable_string, "this!");
     free(result_one);
     free(result_two);
     free(mutable_string);
@@ -141,17 +139,17 @@ void testString_Utils_from() {
 }
 
 void testString_Utils_from_token() {
-    char *string = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;</Parse_Me> BLAH BLAH BLAH USELESS INFO!");
+    char *string = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
     const char *delimiter = "<Parse_Me>";
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     int parameter_three = LAST;
     char *result_one = String_Utils_from_token(string, delimiter, parameter_one);
     char *result_two = String_Utils_from_token(string, delimiter, parameter_three);
-    String_Utils_from_token(string, delimiter, parameter_two);
-    TEST_CMP(result_one, "<Parse_Me>int:32;char*:'Hello World';void*:NULL;</Parse_Me> BLAH BLAH BLAH USELESS INFO!");
-    TEST_CMP(result_two, "</Parse_Me> BLAH BLAH BLAH USELESS INFO!");
-    TEST_CMP(string, result_one);
+    //String_Utils_from_token(string, delimiter, parameter_two);
+    TEST_CMP(result_one, "<Parse_Me>int:32;char*:'Hello World';void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
+    TEST_CMP(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
+    //TEST_CMP(string, result_one);
     free(string);
     free(result_one);
     free(result_two);
@@ -181,7 +179,7 @@ void testString_Utils_index_of() {
 }
 
 void testString_Utils_join() {
-    char** array_of_strings = (char **) malloc(sizeof(char *) * 4);
+    char** array_of_strings = malloc(sizeof(char *) * 4);
     array_of_strings[0] = "One prison"; array_of_strings[1] = "One person";
     array_of_strings[2] = "One bond"; array_of_strings[3] = "One Power!";
     char *delimiter = ", ";
@@ -202,10 +200,10 @@ void testString_Utils_replace() {
     int parameter_three = MODIFY | IGNORE_CASE; // Multiple parameters
     char *result_one = String_Utils_replace(string, old_char, new_char, parameter_one);
     char *result_two = String_Utils_replace(string, old_char, new_char, parameter_two);
-    String_Utils_replace(string, old_char, new_char, parameter_three);
+    //String_Utils_replace(string, old_char, new_char, parameter_three);
     TEST_CMP(result_one, string);
     TEST_CMP(result_two, "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli");
-    TEST_CMP(string, result_two);
+    //TEST_CMP(string, result_two);
     free(string);
     free(result_one);
     free(result_two);
@@ -217,9 +215,9 @@ void testString_Utils_reverse() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result_one = String_Utils_reverse(string, parameter_one);
-    String_Utils_reverse(string, parameter_two);
+    //String_Utils_reverse(string, parameter_two);
     TEST_CMP(result_one, "desserts");
-    TEST_CMP(string, result_one);
+    //TEST_CMP(string, result_one);
     free(string);
     free(result_one);
     PASSED("Reverse");
@@ -267,9 +265,9 @@ void testString_Utils_substring() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result = String_Utils_substring(string, begin, end, parameter_one);
-    String_Utils_substring(start, begin, end, parameter_two);
+    //String_Utils_substring(string, begin, end, parameter_two);
     TEST_CMP(result, "not just any dragon, the dragon called *gasp* *chokes* *dies*");
-    TEST_CMP(string, result);
+    //TEST_CMP(string, result);
     free(string);
     free(result);
     PASSED("Substring");
@@ -280,9 +278,9 @@ void testString_Utils_to_lowercase() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result = String_Utils_to_lowercase(string, parameter_one);
-    String_Utils_to_lowercase(string, parameter_two);
+    //String_Utils_to_lowercase(string, parameter_two);
     TEST_CMP(result, "hello world");
-    TEST_CMP(string, result);
+    //TEST_CMP(string, result);
     free(string);
     free(result);
     PASSED("To_Lowercase");
@@ -293,9 +291,9 @@ void testString_Utils_to_uppercase() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result = String_Utils_to_uppercase(string, parameter_one);
-    String_Utils_to_uppercase(string, parameter_two);
+    //String_Utils_to_uppercase(string, parameter_two);
     TEST_CMP(result, "HELLO WORLD");
-    TEST_CMP(string, result);
+    //TEST_CMP(string, result);
     free(string);
     free(result);
     PASSED("To_Uppercase");
@@ -306,9 +304,9 @@ void testString_Utils_trim() {
     int parameter_one = NONE;
     int parameter_two = MODIFY;
     char *result = String_Utils_trim(string, parameter_one);
-    String_Utils_trim(string, parameter_two);
+    //String_Utils_trim(string, parameter_two);
     TEST_CMP(result, "asdadadasd");
-    TEST_CMP(string, result);
+    //TEST_CMP(string, result);
     free(string);
     free(result);
     PASSED("Trim");
