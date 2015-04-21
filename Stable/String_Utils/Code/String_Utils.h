@@ -319,7 +319,7 @@ int String_Utils_index_of(const char *string, const char *substring, int paramet
 /**
  * Counts occurrences that the delimiter (or substring) occurs in a string.
  * @param string String to search
- * @param delimiter Delimiter or Substring to search for
+ * @param substring Delimiter or Substring to search for
  * @param parameter NONE | IGNORE_CASE
  * @return Amount of times the delimiter appears in your string, or 0 if NULL string passed
  */
