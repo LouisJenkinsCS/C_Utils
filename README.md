@@ -13,6 +13,10 @@ C_Utils is going to be a personal side project that I will want to implement as 
 
 Documentation for String_Utils can be found [here](http://theif519.github.io/String_Utils_Documentation/)
 
+Current version: 1.1
+
+View Documentation for a more up to date summary!
+
 What is String_Utils? String_Utils is basically an attempt at implementing a
 very useful, somewhat efficient String library with basic string manipulations
 comparators, and utilities offered in object oriented languages. In fact, this
@@ -61,7 +65,13 @@ In essence, going to be some basic file reading utilities. I might dabble in par
 
 ### Summary
 
-Basic data structures like Linked Lists (& Doubly Linked Lists) , Array List, Sets, Hashmaps, Binary trees, Stacks, Queues, etc. Hopefully I get around to this.
+The basic idea behind this is that, since C is missing any type of dynamic data structure, barring arrays (both examples such as int[] and int **), I took the liberty to do it myself in as much of a reusable way as possible. At the time I am writing this, Data Strctures is still in it's planning phase, however the the current plan goes like. Everything starts with something, and in this project, it begins with a Linked List. An array is too unreliable of a data structure to work with dynamically and generically. Stacks, while an array is a very valid option and easy to implement, can be done in a Linked List. Queues can be done with a Linked List. More complex data structures such as Hash Maps and Binary Trees can also be done with a Linked List. So, the Linked List will be the most important data structure, and will be the most worked on to ensure that it is completely reusable with all implemented data types. 
+
+So far, the Linked List accepts callback functions for special insertions, deletions and comparisons, however to make this feature less of a drag (I.E having to make 3 callback functions just to use a simple Linked List when you may not even need them), default alternatives will also be provided as well in this case. Before expanding on that, it should also be noted that by using a tagged union, the Linked Lists doubles as a single and doubly linked list.
+
+The Linked List's constructor method is planned so that it will take callback functions as arguments, as well as the enumeration depicting whether it's a single or doubly linked list that needs to be created. If any of the callback functions are left as NULL, then default implementations will be used instead, allowing ease of use and also tailoring for specific operations. Linked List also features an iterator which will utilize these callbacks. 
+
+Linked List, insofar is not type safe, so you it is strongly advised that only a single data type be used for each instance of the Linked List.
 
 ## Memory_Utils
 
