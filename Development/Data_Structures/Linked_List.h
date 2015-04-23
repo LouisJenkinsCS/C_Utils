@@ -49,7 +49,9 @@ enum Node_T {
 	/// Obviously, for singly linked lists.
 	SINGLE,
 	/// For doubly linked lists.
-	DOUBLE
+	DOUBLE,
+	/// For Tree-like data structures (I.E Binary Tree)
+	TREE
 }
 
 /* The Linked List structure which holds the basic information, the first and last node, and

@@ -57,17 +57,47 @@ int Linked_List_default_add(Linked_List *this, void *item){
 /* Below are static private functions that can ease the process along without
    being exposed to the user. */
 
-static void single_remove_head(Linked_List *list, Node *node);
+static int single_remove_only(Linked_List *list, Node *node){
+	// list->first = NULL;
+	// list->last = NULL;
+	// list->delete(node->item);
+	// free(node);
+	// return 1 on success.
+}
 
-static void single_remove_tail(Linked_List *list, Node *node);
+static int single_remove_first(Linked_List *list, Node *node){
+	// list->first = node->next;
+	// list->delete(node->item);
+	// free(node);
+	// return 1 on success.
+}
 
-static void single_remove_normal(Linked_List *list, Node *node);
+static int single_remove_last(Linked_List *list, Node *node){
+	// Iterate through list to get node before this node. Assign to var previous_node.
+	// list->last = previous_node.
+	// previous_node->next = NULL.
+	// list->delete(node->item);
+	// free(node);
+	// return 1 on success.
+}
 
-static void double_remove_head(Linked_List *list, Node *node);
+static int single_remove_normal(Linked_List *list, Node *node){
+	// Iterate through list to get node before this node. Assign to var previous_node.
+	// previous_node->next = node->next;
+	// list->delete(node->item);
+	// free(node);
+	// return 1 on success.
+}
 
-static void double_remove_tail(Linked_List *list, Node *node);
+static int double_remove_first(Linked_List *list, Node *node);
 
-static void double_remove_normal(Linked_List *list, Node *node);
+static int double_remove_last(Linked_List *list, Node *node);
+
+static int double_remove_normal(Linked_List *list, Node *node);
+
+static int tree_remove_root(Linked_List *list, Node *node);
+
+static int tree_remove_leaf(Linked_List *list, NOde *node);
 
 /* End of private functions. */
 
@@ -76,7 +106,8 @@ int Linked_List_default_delete(Linked_List *this, Node *node){
 	assert(this);
 	assert(node);
 	if(this->node_type == SINGLE){
-		if(node->single_next == NULL){ // If this node is the head of the list...
+		if(node->single_next == NULL){ // If this node is the tail of the list...
+			return single_remove_last(list, node);
 			// Check if the first of the list is this node...
 			// If so, then just remove it.
 			// Else, then remove it, iterate through the list, and set the one before this one to be the List's Last.
