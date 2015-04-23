@@ -54,6 +54,23 @@ int Linked_List_default_add(Linked_List *this, void *item){
 	return 1; // Returns 1 on success.
 }
 
+/* Below are static private functions that can ease the process along without
+   being exposed to the user. */
+
+static void single_remove_head(Linked_List *list, Node *node);
+
+static void single_remove_tail(Linked_List *list, Node *node);
+
+static void single_remove_normal(Linked_List *list, Node *node);
+
+static void double_remove_head(Linked_List *list, Node *node);
+
+static void double_remove_tail(Linked_List *list, Node *node);
+
+static void double_remove_normal(Linked_List *list, Node *node);
+
+/* End of private functions. */
+
 /* The standard, default callback in place of a null Delete_Callback parameter */
 int Linked_List_default_delete(Linked_List *this, Node *node){
 	assert(this);
