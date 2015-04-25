@@ -1,6 +1,6 @@
 #include "Linked_List.h"
 
-Linked_List *Linked_List_create(Linked_List_Add_Callback add, Linked_List_Delete_Callback del, Linked_List_Compare_Callback cmp, Node_T node_type){
+Linked_List *Linked_List_create(Add_Callback add, Delete_Callback delete, Compare_Callback compare, Node_T node_type){
 	Linked_List *list = malloc(sizeof(Linked_List));
 	// The first and last nodes are initialized to zero.
 	list->first = NULL;
@@ -9,9 +9,9 @@ Linked_List *Linked_List_create(Linked_List_Add_Callback add, Linked_List_Delete
 	list->node_type = node_type;
 	// If any of the callbacks are null, the below checks for them and sets their behaviour to an already existing default
 	// callback respectively.
-	list->Linked_List_Add_Callback = Linked_List_Add_Callback == NULL ? &Linked_List_default_add : Linked_List_Add_Callback;
-	list->Linked_List_Delete_Callback = Linked_List_Delete_Callback == NULL ? &Linked_List_default_delete : Linked_List_Delete_Callback;
-	list->Linked_List_Compare_Callback = Linked_List_Compare_Callback == NULL ? &Linked_List_default_compare : Linked_List_Compare_Callback;
+	list->add = (add == NULL) ? (&Linked_List_default_add : add);
+	list->delete = (delete == NULL) ? (&Linked_List_default_delete : delete);
+	list->compare = (compare == NULL) ? (&Linked_List_default_compare : compare);
 	return list;
 }
 
@@ -57,6 +57,9 @@ int Linked_List_default_add(Linked_List *this, void *item){
 /* Below are static private functions that can ease the process along without
    being exposed to the user. */
 
+#define type_of_node(type, function, arg1, arg2)(type ##_ ## function (arg1, arg2)) // not sure if this would work?
+
+/* Removes the node as if it is the only node in the linked list. */
 static int single_remove_only(Linked_List *list, Node *node){
 	// list->first = NULL;
 	// list->last = NULL;
@@ -65,6 +68,7 @@ static int single_remove_only(Linked_List *list, Node *node){
 	// return 1 on success.
 }
 
+/* Removes the node as if it is the first node in the linked list. */
 static int single_remove_first(Linked_List *list, Node *node){
 	// list->first = node->next;
 	// list->delete(node->item);
@@ -72,6 +76,7 @@ static int single_remove_first(Linked_List *list, Node *node){
 	// return 1 on success.
 }
 
+/* Removes the node as if it is the last node in the linked list. */
 static int single_remove_last(Linked_List *list, Node *node){
 	// Iterate through list to get node before this node. Assign to var previous_node.
 	// list->last = previous_node.
@@ -81,6 +86,7 @@ static int single_remove_last(Linked_List *list, Node *node){
 	// return 1 on success.
 }
 
+/* Remove the node as if it were normal (I.E Has a node before and after it, is not head/first or tail/last) */
 static int single_remove_normal(Linked_List *list, Node *node){
 	// Iterate through list to get node before this node. Assign to var previous_node.
 	// previous_node->next = node->next;
@@ -97,24 +103,28 @@ static int double_remove_normal(Linked_List *list, Node *node);
 
 static int tree_remove_root(Linked_List *list, Node *node);
 
-static int tree_remove_leaf(Linked_List *list, NOde *node);
+static int tree_remove_leaf(Linked_List *list, Node *node);
 
 /* End of private functions. */
+
 
 /* The standard, default callback in place of a null Delete_Callback parameter */
 int Linked_List_default_delete(Linked_List *this, Node *node){
 	assert(this);
 	assert(node);
-	if(this->node_type == SINGLE){
-		if(node->single_next == NULL){ // If this node is the tail of the list...
-			return single_remove_last(list, node);
-			// Check if the first of the list is this node...
-			// If so, then just remove it.
-			// Else, then remove it, iterate through the list, and set the one before this one to be the List's Last.
-		} else { // Else if this node is not the head of the list.
-			// Continue here!
-		}
-	}
+	// If the first and last of the linked list is this node, then it's the only node in the list.
+	if(this->first == node && this->last == node) return type_of_node((this->node_type == SINGLE) ? (SINGLE : this->node_type == DOUBLE) ? (DOUBLE, TREE),
+		 remove_only, this, node);
+	// Else if the last is this node, then it is the last in the list.
+	else if(this->last == node) return type_of_node((this->node_type == SINGLE) ? (SINGLE : this->node_type == DOUBLE) ? (DOUBLE, TREE),
+		 remove_last, this, node);
+	// Else if the first is this node, then it is the first in the list.
+	else if(this->first == node) return type_of_node(
+		(this->node_type == SINGLE) ? (SINGLE : this->node_type == DOUBLE) ? (DOUBLE, TREE),
+		 remove_first, this, node);
+	// Else, this is a node between first and last and should be treated as such.
+	else return type_of_node((this->node_type == SINGLE) ? (SINGLE : this->node_type == DOUBLE) ? (DOUBLE, TREE),
+		 remove_normal, this, node);
 	return 1;
 }
 
@@ -142,11 +152,8 @@ void * Iterator_get_first(Iterator *iterator);
 /* Deletes the current node from the list. */
 int Iterator_delete_current(Iterator *iterator);
 
-/* Appends the item to the current node (as a node) */
-int Iterator_append_current(Iterator *iterator, void *item);
-
-/* Prepends the item to the current node (as a node) */
-int Iterator_prepend_current(Iterator *iterator, void *item);
+/* Add before or after current node depending on the parameter */
+int Iterator_add(Iterator *iterator, int parameter);
 
 /* Deletes this iterator. Does not destroy the linked list along with it. */
 void Iterator_destroy(Iterator *iterator);
