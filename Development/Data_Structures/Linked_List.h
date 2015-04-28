@@ -16,6 +16,8 @@
 #define REMOVE 1 << 3
 /// Sorts in descending order. Default is in ascending order.
 #define DESCENDING 1 << 4
+/// For getting macros passed as parameter.
+#define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO))
 
 /* Typedef for the structs */
 typedef struct Node Node;
@@ -24,7 +26,7 @@ typedef struct Iterator Iterator;
 
 /* Typedef for Linked_List function pointers */
 /// This one should be callback used on an item to delete it.
-typedef int (*Linked_List_Delete)(void *item);
+typedef int (*Linked_List_Delete)(void **item);
 /// This should be used on two items to compare the two, for sorting.
 typedef int (*Linked_List_Compare)(void *item_one, void *item_two);
 /// Function pointer for remove...
@@ -44,13 +46,13 @@ typedef int (*Linked_List_Sort)(Linked_List *this, int parameter);
 /// Gets the next item... unfortunately, can't forward the node to the next.
 /// #define Iterator_Get_Current(this, type)((type *)((this)->(current)->item))
 
-typedef void *(*Iterator_next)(Iterator *iterator);
-typedef void *(*Iterator_previous)(Iterator *iterator);
-typedef void *(*Iterator_last)(Iterator *iterator);
-typedef void *(*Iterator_first)(Iterator *iterator);
+typedef void *(*Iterator_Next)(Iterator *iterator);
+typedef void *(*Iterator_Previous)(Iterator *iterator);
+typedef void *(*Iterator_Last)(Iterator *iterator);
+typedef void *(*Iterator_First)(Iterator *iterator);
 
-typedef int (*Iterator_remove)(Iterator *iterator);
-typedef int (*Iterator_add)(Iterator *iterator, void *item, int parameter);
+typedef int (*Iterator_Remove)(Iterator *iterator);
+typedef int (*Iterator_Add)(Iterator *iterator, void *item, int parameter);
 
 /* The struct that holds the next and previous pointers. The type of node,
    A.K.A Node_T, will determine which struct in the union will be used. */
@@ -79,7 +81,8 @@ struct Linked_List{
 	Linked_List_Clear clear;
 	/// Gets the item at the specified location.
 	Linked_List_Get_At get;
-	/// 
+	/// Gets an iterator for this instance
+	Linked_List_Get_Iterator get_iterator;
 };
 
 /* A barebones iterator */
@@ -89,25 +92,25 @@ struct Iterator {
 	/// The current node in the list the iterator is on.
 	Node *current;
 	/// Gets the next node in the linked list.
-	Iterator_next next;
+	Iterator_Next next;
 	/// Sets Iterator back one.
-	Iterator_previous prev;
+	Iterator_Previous prev;
 	/// Function pointer to set current to the very last node.
-	Iterator_last last;
+	Iterator_Last last;
 	/// Function pointer to set current to the very first in the linked list.
-	Iterator_first first;
+	Iterator_First first;
 	/// Function pointer to remove the current item from the list.
-	Iterator_remove remove;
+	Iterator_Remove remove;
 	/// Function pointer to add item to the linked list, before or after.
-	Iterator_add add;
+	Iterator_Add add;
 };
 
 /* Create the Linked List with the the supplied callbacks. If NULL is passed for any, the default implementation 
    for the callback will be used in it's place. */
-Linked_List *Linked_List_create(Linked_List_Delete del, Linked_List_Compare compare);
+Linked_List *Linked_List_create(Linked_List_Delete delete_item, Linked_List_Compare compare);
 
 /* The standard, default callback used in place of a null Add_Callback parameter. */
-int Linked_List_Add(Linked_List *this, void *item);
+int Linked_List_add(Linked_List *this, void *item);
 
 /* The standard, default callback in place of a null Delete_Callback parameter. Just frees the pointer. */
 int Linked_List_default_delete(void *item);
@@ -116,13 +119,19 @@ int Linked_List_default_delete(void *item);
 int Linked_List_default_compare(Linked_List *this, void *item_one, void *item_two);
 
 /* Returns an iterator for the linked list. This function will also set the required callbacks as well. */
-Iterator *Linked_List_Get_Iterator(Linked_List *this);
+Iterator *Linked_List_get_iterator(Linked_List *this);
 
 /* Returns the void * at the given index's node. Can remove it from the list entirely. */
-void *Linked_List_Get_At(Linked_List *this, unsigned int index, int parameter);
+void *Linked_List_get_at(Linked_List *this, unsigned int index, int parameter);
 
 /* Sorts the given linked list in either ascending (default) or descending order. Uses Merge Sort. */
-int Linked_List_Sort(Linked_List *this, int parameter);
+int Linked_List_sort(Linked_List *this, int parameter);
+
+/* Removes the Node from the list. */
+int Linked_List_remove_node(Linked_List *this, Node *node, int parameter);
+
+/* Removes the item from the list by scanning through all nodes. */
+int Linked_List_remove_item(Linked_List *this, void *item, int parameter);
 
 /* Returns the next object in the iterator. */
 void *Iterator_next(Iterator *iterator);
