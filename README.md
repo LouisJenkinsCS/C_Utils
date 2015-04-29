@@ -83,4 +83,6 @@ This is a theoretical and most likely not going to be finished at all, but as of
 
 ### Summary
 
-Biting off more than I can chew, I know, but I want to learn, and what better way than to create my library to interact with threads. It MIGHT end up abstracting and/or wrapping the POSIX threads library, or I might make my own. Who knows?
+A great way to take the opportunity to learn something new, especially in today's day and age, concurrency is king, without a doubt. Single-Threaded applications are a thing of the past, and I've only ever had to work with concurrency once, and while I've learned quite a bit, I don't know nearly enough. Concurrency_Utils be my attempt at implementing a nice and easy abstraction for creating threads, with the goal being that it'll be so easy you don't even have to know what the hell a thread is and be able create and use threads with my library.
+
+Another thing I plan on implementing, which gets me excited, is a thread pool. While others do exist, mine may not be as good, but I plan on making it usable and viable, and of course, easy to use. This way you do not have to deal with threads at all. Just add it to the thread pool's job queue and let it do it's thing. So much stuff to do, so little time.
