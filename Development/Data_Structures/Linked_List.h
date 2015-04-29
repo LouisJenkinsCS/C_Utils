@@ -26,7 +26,7 @@ typedef struct Iterator Iterator;
 
 /* Typedef for Linked_List function pointers */
 /// This one should be callback used on an item to delete it.
-typedef int (*Linked_List_Delete)(void **item);
+typedef int (*Linked_List_Delete)(void *item);
 /// This should be used on two items to compare the two, for sorting.
 typedef int (*Linked_List_Compare)(void *item_one, void *item_two);
 /// Function pointer for remove...
@@ -156,9 +156,8 @@ int Iterator_add(Iterator *iterator, void *item, int parameter);
 /* Deletes this iterator. Does not destroy the linked list along with it. */
 void Iterator_destroy(Iterator *iterator);
 
-/* Destroys the linked list along with all of it's contents. Make sure you get everything from the linked list before
-   calling this! */
-void Linked_List_destroy(Linked_List *list);
+/* Destroys the linked list. Depending on parameter, it can delete all items along with it.*/
+void Linked_List_destroy(Linked_List *list, int parameter);
 
 
 

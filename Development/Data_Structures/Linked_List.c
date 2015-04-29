@@ -56,7 +56,7 @@ static int find_node(Linked_List *list, Node *node, int parameter){
 		index++;
 		if(node == temp_node){
 			if(SELECTED(parameter, DELETE)){
-				list->delete_item(&(node->item));
+				list->delete_item(node->item);
 			}
 			return index;
 		}
@@ -68,14 +68,14 @@ static int find_node(Linked_List *list, Node *node, int parameter){
 /* Finds the index the item is at. Note: Find a way to integrate this with find_node. */
 static int find_item(Linked_List *list, void *item, int parameter){
 	int index = 0;
-	Node *temp_node = NULL;
+	Node *node = NULL;
 	// Loops until the node is NULL or node is found.
-	while((temp_node = list->next)){
+	while((node = list->next)){
 		// If node is found, return 1.
 		index++;
-		if(item == temp_node->item){
+		if(item == node->item){
 			if(SELECTED(parameter, DELETE)){
-				list->delete_item(&(temp_node->item));
+				list->delete_item(node->item);
 			}
 			return index;
 		}
@@ -86,10 +86,25 @@ static int find_item(Linked_List *list, void *item, int parameter){
 
 static Node *index_to_node(Linked_List *list, unsigned int index){
 	int i = 0;
-	Node *temp_node = NULL;
-	for(;temp_node = list->next && i < index; i++){} // Advance linked list up to index.
+	Node *node = NULL;
+	for(;node = list->next && i < index; i++); // Advance linked list up to index.
 	if(i != index) return NULL; // Out of bounds.
-	return temp_node; // Else return the node.
+	return node; // Else return the node.
+}
+
+/* Loops through each node, and performs the the passed callback on each item in the list. 
+   Return statement should be an integer, so as to add up the amount of successes in proportion to 
+   the max size of the array. I.E, if there are 20 nodes, and only 15 of them pass the callback, then
+   the result returned will be 15.*/
+static int for_each_item(Linked_List *list, int (*callback)(void *item)){
+	assert(list);
+	int result = 0;
+	Node *node = list->first;
+	if(!node) return 0;
+	result += callback(node->item);
+	int i = 0;
+	for(;node = node->next && i < list->size;i++)result += callback(node->item);
+	return result;
 }
 
 /* Removes as if node is only one in list. */
@@ -132,12 +147,24 @@ static int remove_normal(Linked_List *list, Node *node, int parameter){
 	if(find_node(list, node, NONE) == 0) return 0;
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
-	if(SELECTED(parameter, DELETE)) list->delete_item(&(node->item));
+	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
 	free(node);
 	return 1;
 }
 
-
+/* For each node, it will free each node in the list. */
+static int delete_all_nodes(Linked_List *list, int parameter){
+	assert(list);
+	int result = 0;
+	Node *node = NULL;
+	int i = 0;
+	// Will set the node to the first in the linked list, remove the first node,
+	// and since remove_first sets the node after it as the first, or NULL if there is
+	// no next node, then I can keep reassigning node as the new first item.
+	// Depending on parameter passed, it can even delete each node as well.
+	for(;node = list->first;i++) remove_first(list, node, parameter);
+	return 1;
+}
 
 /* End of private functions. */
 
@@ -159,16 +186,16 @@ int Linked_List_remove_node(Linked_List *this, Node *node, int parameter){
 
 
 /* The standard, default callback in place of a null delete callback. Just frees the pointer and sets it to null. */
-int Linked_List_default_delete(void **item){
+int Linked_List_default_delete(void *item){
 	assert(item);
-	free(*item);
-	*item = NULL;
+	free(item);
 	return 1;
 }
 
-/* The standard, default callback in place of a null Delete_Callback parameter. Does nothing and returns 1 (NOP) */
+/* The standard compare function. Literally does nothing worthwhile, it will subtract the two memory addresses, so
+   the one declared last in memory will be before the one declared before it. */
 int Linked_List_default_compare(Linked_List *this, void *item_one, void *item_two){
-	return 0; // Does nothing, a no-operation.
+	return item_one - item_two; // Memory address subtraction (lol).
 }
 
 /* Returns an iterator for the linked list. This function will also set the required callbacks as well. */
@@ -248,4 +275,18 @@ void Iterator_destroy(Iterator *iterator);
 
 /* Destroys the linked list along with all of it's contents. Make sure you get everything from the linked list before
    calling this! */
-void Linked_List_destroy(Linked_List *list);
+void Linked_List_destroy(Linked_List *list, int parameter){
+	assert(list);
+	// Free all function pointers and callbacks.
+	free(list->remove);
+	free(list->add);
+	free(list->delete_item);
+	free(list->compare);
+	free(list->clear);
+	free(list->get);
+	free(list->get_iterator);
+	// Free all nodes.
+	// Will delete every node, and also with the possibility of deleting all items.
+	delete_all_nodes(list, parameter);
+	free(list); // finally, free the list.
+}
