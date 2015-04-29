@@ -133,6 +133,8 @@ int Linked_List_remove_node(Linked_List *this, Node *node, int parameter);
 /* Removes the item from the list by scanning through all nodes. */
 int Linked_List_remove_item(Linked_List *this, void *item, int parameter);
 
+int Linked_List_remove_at(Linked_List *this, unsigned int index, int parameter);
+
 /* Returns the next object in the iterator. */
 void *Iterator_next(Iterator *iterator);
 
