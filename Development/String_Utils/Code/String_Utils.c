@@ -1,5 +1,4 @@
 #include "String_Utils.h"
-#include "String_Utils_Garbage_Collector.h"
 /*
  * I decided to use String_Utils to test my new garbage collector. Not all functions use it,
  * only ones that allocated 2 or more temporary variables. This is more of a trial run, there
@@ -37,10 +36,7 @@ char *String_Utils_concat(char **string_one, const char *string_two, int paramet
 
 
 /*
- * Uses my new basic garbage collector. Honestly, it's not really anything special, and it could be done easily 
- * with basic frees over pushing and popping them from the stack, but this is a trial run. Also decided to
- * get rid of my copy function for strdup, which does it a lot better than I ever could anyway. It didn't
- * serve any different purpose in the end.
+ * Removed the experimental garbage collector.
  */
 int String_Utils_compare(const char *string_one, const char *string_two, int parameter) {
     assert(string_one);
@@ -48,11 +44,9 @@ int String_Utils_compare(const char *string_one, const char *string_two, int par
     int result = 0;
     // Allocate two temporary strings
     if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string_one = String_Utils_to_lowercase(&string_one, NONE);
-        char *temp_string_two = String_Utils_to_lowercase(&string_two, NONE);
-        push_strings(vm, 2, temp_string_one, temp_string_two); // Puts both elements on stack.
+        char *temp_string_one TEMP = String_Utils_to_lowercase(&string_one, NONE);
+        char *temp_string_two TEMP = String_Utils_to_lowercase(&string_two, NONE);
         result = strcmp(temp_string_one, temp_string_two);
-        pop_vn(vm, 2); // Pops both elements off of stack
     } else result = strcmp(string_one, string_two);
     return result;
 }
@@ -66,7 +60,7 @@ char String_Utils_char_at(const char *string, unsigned int index) {
 }
 
 /*
- * Like Compare, uses GC. Not much new.
+ * Removed GC calls, added macro TEMP.
  */
 int String_Utils_contains(const char *string, const char *search, int parameter) { 
     assert(string);
@@ -74,11 +68,9 @@ int String_Utils_contains(const char *string, const char *search, int parameter)
     int result = 0;
     // Allocates temporary variables to hold copy of the passed strings.
     if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string = strdup(string);
-        char *temp_search = strdup(search);
-        push_strings(vm, 2, temp_string, temp_search); // Puts both elements on stack.
+        char *temp_string TEMP = strdup(string);
+        char *temp_search TEMP = strdup(search);
         result = strstr(temp_string, temp_search) == NULL ? 0 : 1;
-        pop_vn(vm, 2); // Pops both elements off of stack
     } else result = strstr(string, search) == NULL ? 0 : 1;
     return result;
 }
@@ -172,15 +164,14 @@ char *String_Utils_from_token(char **string, const char *substring, int paramete
     assert(string);
     assert(*string);
     assert(substring);
-    char *temp_string = NULL;
-    char *temp_substring = NULL;
+    char *temp_string TEMP = NULL;
+    char *temp_substring TEMP = NULL;
     char *temp = NULL;
     char *old_temp = NULL;
     // Allocates a temporary copy of substring depending on parameter passed.
     if(SELECTED(parameter, IGNORE_CASE)){
         temp_string = String_Utils_to_lowercase(*string, NONE);
         temp_substring = String_Utils_to_lowercase(substring, NONE);
-        push_strings(vm, 2, temp_string, temp_substring);
         temp = strstr(temp_string, temp_substring);
     } else temp = strstr(*string, substring);
     if(temp == NULL) return NULL;
@@ -202,19 +193,16 @@ char *String_Utils_from_token(char **string, const char *substring, int paramete
     if(SELECTED(parameter, MODIFY)){
         String_Utils_set(string, temp);
         //free everything
-        if(temp_string != NULL || temp_substring != NULL) pop_vn(vm, 2);
         free(temp);
         //free(old_temp);
         return *string;
     }
     // If either temp_* are not null, then IGNORE_CASE was passed, hence pop them from the stack.
-    if(temp_string != NULL || temp_substring != NULL) pop_vn(vm, 2);
     return temp;
 }
 
 /*
- * Should be optimized so as to not allocate an extra cell in the array. Also, edged in another GC.
- * Should no longer attempt to free twice!
+ * Should be optimized so as to not allocate an extra cell in the array.
  */
 char **String_Utils_split(const char *string, const char *delimiter, size_t *size) {
     assert(string);
@@ -224,10 +212,9 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
     char **string_array = malloc(sizeof (char *));
     char *temp = NULL;
     // Allocated a temporary string so original string is not modified from strtok.
-    char *temp_string = strdup(string);
+    char *temp_string TEMP = strdup(string);
     temp = strtok(temp_string, delimiter); // So strtok does not mess with the original string.
     if (temp == NULL) { free(temp_string); return NULL; } // If temp does not contain the delimiter, then free the tmep_string and return NULL.
-    push_strings(vm, 1, temp_string); // Push both temp and temp_string on the stack.
     unsigned int index = 0; // Used to record the size of the array.
     while (temp != NULL) {
         // If the index is not 0, a simple check so as to not waste an extra allocation, then reallocate the array to be the
@@ -240,7 +227,6 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
         // Reallocates the array so it can hold another array.
         temp = strtok(NULL, delimiter);
     }
-    pop_vn(vm, 1);
     *size = index;
     return string_array;
 }
@@ -435,13 +421,11 @@ int String_Utils_index_of(const char *string, const char *substring, int paramet
     assert(string);
     assert(substring);
     char *temp = NULL;
-    char *temp_string = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&string, NONE) : NULL;
-    char *temp_substring = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&substring, NONE) : NULL;
-    if (temp_string != NULL && temp_substring != NULL) push_strings(vm, 2, temp_string, temp_substring);
+    char *temp_string TEMP = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&string, NONE) : NULL;
+    char *temp_substring TEMP = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&substring, NONE) : NULL;
     char *old_temp = NULL;
     temp = strstr(temp_string == NULL ? string : temp_string, temp_substring == NULL ? substring : temp_substring);
     if(temp == NULL) {
-        if (temp_string != NULL && temp_substring != NULL) pop_vn(vm, 2);
         return 0; 
     }
     if(SELECTED(parameter, LAST)){
@@ -455,7 +439,6 @@ int String_Utils_index_of(const char *string, const char *substring, int paramet
         temp = old_temp;
     }
     int result = strlen(string) - strlen(temp);
-    if (temp_string != NULL && temp_substring != NULL) pop_vn(vm, 2);
     return result;
 }
 
@@ -490,31 +473,20 @@ char *String_Utils_between(const char *string, const char *start, const char *en
     assert(string);
     assert(start);
     assert(end);
-    char *temp = NULL; 
+    char *temp TEMP = NULL; 
     char *new_temp = NULL;
-    char *temp_string = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(string, NONE) : string;
-    char *temp_start = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(start, NONE) : start;
-    char *temp_end = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(end, NONE) : end; 
-    temp = strstr(temp_string, temp_start) + strlen(temp_start);
-    if(SELECTED(parameter, IGNORE_CASE)) push_strings(vm, 4, temp_string, temp_start, temp_end, temp);
-    if(temp == NULL) { if(SELECTED(parameter, IGNORE_CASE)) pop_vn(vm, 4); return NULL;}
+    char *temp_string TEMP = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(string, NONE) : string;
+    char *temp_start TEMP = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(start, NONE) : start;
+    char *temp_end TEMP = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(end, NONE) : end; 
+    temp  = strstr(temp_string, temp_start) + strlen(temp_start);
+    if(temp == NULL) return NULL;
     size_t size_of_substring = strlen(temp) - (strlen(strstr(temp_string, temp_end)));
     size_t index_of_start = strlen(string) - strlen(temp);
     new_temp = String_Utils_substring(string, index_of_start, size_of_substring, NONE);
-    if(SELECTED(parameter, IGNORE_CASE)) pop_vn(vm, 4);
     return new_temp;
 }
 
-/*
-* Required to initialize the garbage collector. Too bad it can't be static or called automatically.
-*/
-void String_Utils_Init_GC(void){
-    vm = SU_VM_Create();
-}
-/*
-* Destroys the virtual machine, which also frees everything on the stack preventing memory leaks as long as
-* this is called.
-*/
-void String_Utils_Destroy_GC(void){
-    SU_VM_Destroy(vm);
+void String_Utils_destroy(char **string){
+    //printf("Deleted string %s of size %d\n", *string, strlen(*string) + 1);
+    free(*string);
 }

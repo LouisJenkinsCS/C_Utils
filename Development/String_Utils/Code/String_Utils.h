@@ -1,6 +1,6 @@
 /*
  * @Author: Louis Jenkins
- * @Version: 1.1
+ * @Version: 1.2
  * 
  * What is String_Utils? String_Utils is basically an attempt at implementing a
  * very useful, somewhat efficient String library with basic string manipulations
@@ -58,7 +58,7 @@
 * memory consumption than a struct having to be allocated, then have ALL 28 - 30 functions initialized
 * to each function, then call it like SU->Concat. I've learned my lesson.
 */
- #define SU String_Utils
+ #define SU_ String_Utils_
 
 /**
  * NONE: The default for a function. This is what you pass if you really don't need
@@ -108,6 +108,12 @@
  * works with more than one. (I.E IGNORE_CASE | IGNORE_CASE | MODIFY)
  */
 #define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO))
+
+/**
+ *
+ *
+ */
+#define TEMP __attribute__ ((__cleanup__(String_Utils_destroy)))
 
 #include <stdlib.h> /* Can't malloc without it */
 #include <string.h> /* Overly obvious reasons */
@@ -336,13 +342,10 @@ int String_Utils_count(const char *string, const char *substring, int parameter)
 char *String_Utils_between(const char *string, const char *start, const char *end, int parameter);
 
 /**
- * Initialize the garbage collector for functions.
+ * Callback function for GCC attribute cleanup. Called when the string leaves the scope of the function.
+ * @param string String to be freed.
  */
-void String_Utils_Init_GC(void);
+void String_Utils_destroy(char **string);
 
-/**
- * Destroys the garbage collector.
- */
-void String_Utils_Destroy_GC(void);
 #endif	/* STRING_UTILS_H */
 
