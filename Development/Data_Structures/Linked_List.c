@@ -253,10 +253,21 @@ int Linked_List_remove_at(Linked_List *this, unsigned int index, int parameter){
 	return temp_node ? Linked_List_remove_node(this, temp_node, parameter) : 0;
 }
 /* Returns the next object in the iterator. */
-void *Iterator_next(Iterator *iterator);
+void *Iterator_next(Iterator *iterator){
+	assert(iterator);
+	/* This is a simple short circuit evaluation. If the current node is NULL, then there is no element in
+	   the list on creation, was tampered with by the user, or some unforeseen error has occured. 
+	   If there is a current, then if the next is null, there is no next node so do not proceed. */
+	if(!iterator->current || !iterator->current->next) return NULL;
+	return iterator->current = iterator->current->next;
+}
 
 /* Returns the previous entry in the iterator if and only if it is a double linked list. */
-void * Iterator_previous(Iterator *iterator);
+void * Iterator_previous(Iterator *iterator){
+	assert(iterator);
+	// If the previous node is NULL, then there is no previous node so do not go backward.
+
+}
 
 /* Moves the current node to be the last, if it isn't already. */
 void * Iterator_last(Iterator *iterator);

@@ -1,0 +1,97 @@
+==23502== Memcheck, a memory error detector
+==23502== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+==23502== Using Valgrind-3.10.0 and LibVEX; rerun with -h for copyright info
+==23502== Command: ./String_Utils
+==23502== 
+--23502-- Valgrind options:
+--23502--    --leak-check=full
+--23502--    --show-leak-kinds=all
+--23502--    -v
+--23502-- Contents of /proc/version:
+--23502--   Linux version 3.16.6-2-desktop (geeko@buildhost) (gcc version 4.8.3 20140627 [gcc-4_8-branch revision 212064] (SUSE Linux) ) #1 SMP PREEMPT Mon Oct 20 13:47:22 UTC 2014 (feb42ea)
+--23502-- Arch and hwcaps: AMD64, LittleEndian, amd64-rdtscp-sse3
+--23502-- Page sizes: currently 4096, max supported 4096
+--23502-- Valgrind library directory: /usr/lib64/valgrind
+--23502-- Reading syms from /home/Moltar/Documents/GitHub/C_Utils/Development/String_Utils/Code/String_Utils
+--23502-- Reading syms from /lib64/ld-2.19.so
+--23502-- Reading syms from /usr/lib64/valgrind/memcheck-amd64-linux
+--23502--    object doesn't have a symbol table
+--23502--    object doesn't have a dynamic symbol table
+--23502-- Scheduler: using generic scheduler lock implementation.
+--23502-- Reading suppressions file: /usr/lib64/valgrind/default.supp
+==23502== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-23502-by-Moltar-on-linux-otxk.site
+==23502== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-23502-by-Moltar-on-linux-otxk.site
+==23502== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-23502-by-Moltar-on-linux-otxk.site
+==23502== 
+==23502== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==23502== don't want to do, unless you know exactly what you're doing,
+==23502== or are doing some strange experiment):
+==23502==   /usr/lib64/valgrind/../../bin/vgdb --pid=23502 ...command...
+==23502== 
+==23502== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==23502==   /path/to/gdb ./String_Utils
+==23502== and then give GDB the following command
+==23502==   target remote | /usr/lib64/valgrind/../../bin/vgdb --pid=23502
+==23502== --pid is optional if only one valgrind process is running
+==23502== 
+--23502-- REDIR: 0x4017810 (ld-linux-x86-64.so.2:strlen) redirected to 0x3806bd01 (???)
+--23502-- Reading syms from /usr/lib64/valgrind/vgpreload_core-amd64-linux.so
+--23502--    object doesn't have a symbol table
+--23502-- Reading syms from /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so
+--23502--    object doesn't have a symbol table
+==23502== WARNING: new redirection conflicts with existing -- ignoring it
+--23502--     old: 0x04017810 (strlen              ) R-> (0000.0) 0x3806bd01 ???
+--23502--     new: 0x04017810 (strlen              ) R-> (2007.0) 0x04c2c730 strlen
+--23502-- REDIR: 0x40175c0 (ld-linux-x86-64.so.2:index) redirected to 0x4c2c2e0 (index)
+--23502-- REDIR: 0x40177e0 (ld-linux-x86-64.so.2:strcmp) redirected to 0x4c2d880 (strcmp)
+--23502-- REDIR: 0x4018510 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4c30330 (mempcpy)
+--23502-- Reading syms from /lib64/libc-2.19.so
+--23502-- REDIR: 0x4ebadb0 (libc.so.6:strcasecmp) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4ebd0a0 (libc.so.6:strncasecmp) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4eba530 (libc.so.6:memcpy@GLIBC_2.2.5) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4eb88b0 (libc.so.6:rindex) redirected to 0x4c2bfc0 (rindex)
+--23502-- REDIR: 0x4eb6bb0 (libc.so.6:strlen) redirected to 0x4c2c670 (strlen)
+--23502-- REDIR: 0x4eb0f60 (libc.so.6:malloc) redirected to 0x4c290a0 (malloc)
+--23502-- REDIR: 0x4ebf7d0 (libc.so.6:__GI_memcpy) redirected to 0x4c2e220 (__GI_memcpy)
+--23502-- REDIR: 0x4eb15a0 (libc.so.6:free) redirected to 0x4c2a310 (free)
+--23502-- REDIR: 0x4eb5160 (libc.so.6:strcmp) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4ec53f0 (libc.so.6:__strcmp_sse2_unaligned) redirected to 0x4c2d740 (strcmp)
+--23502-- REDIR: 0x4ec1740 (libc.so.6:strchrnul) redirected to 0x4c2ff40 (strchrnul)
+--23502-- REDIR: 0x4eb99c0 (libc.so.6:strstr) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4eb9500 (libc.so.6:__GI_strstr) redirected to 0x4c305c0 (__strstr_sse2)
+--23502-- REDIR: 0x4ebf780 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4ec56a0 (libc.so.6:__memcpy_sse2_unaligned) redirected to 0x4c2dc40 (memcpy@@GLIBC_2.14)
+--23502-- REDIR: 0x4eb65f0 (libc.so.6:strcpy) redirected to 0x4a23770 (_vgnU_ifunc_wrapper)
+--23502-- REDIR: 0x4eb6630 (libc.so.6:__GI_strcpy) redirected to 0x4c2c830 (__GI_strcpy)
+--23502-- REDIR: 0x4eb1630 (libc.so.6:realloc) redirected to 0x4c2b3a0 (realloc)
+Passed Test Capitalize
+Passed Test Char_At
+Passed Test Compare
+Passed Test Concat
+Passed Test Count
+Passed Test Ends_With
+Passed Test Equals
+Passed Test From
+Passed Test From_Token
+Passed Test Get_Bytes
+Passed Test Index_Of
+Passed Test Join
+Passed Test Replaced
+Passed Test Reverse
+Passed Test Set
+Passed Test Split
+Passed Test Starts_With
+Passed Test Substring
+Passed Test To_Lowercase
+Passed Test To_Uppercase
+Passed Test Trim
+Passed Test ALL
+==23502== 
+==23502== HEAP SUMMARY:
+==23502==     in use at exit: 0 bytes in 0 blocks
+==23502==   total heap usage: 100 allocs, 100 frees, 4,072 bytes allocated
+==23502== 
+==23502== All heap blocks were freed -- no leaks are possible
+==23502== 
+==23502== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==23502== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
