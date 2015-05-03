@@ -46,50 +46,70 @@ int Linked_List_add(Linked_List *this, void *item){
 /* Below are static private functions that can ease the process along without
    being exposed to the user. */
 
-/* Checks if node is found in the linked list. */
-static int find_node(Linked_List *list, Node *node, int parameter){
+/* Checks to see if the node exists in the list. This function differs from node_to_index in that it will return
+   1 if it exists, or 0 if it does not, as 0 is a valid index in the linked list, to avoid confusion */
+static int node_exists(Linked_List *list, Node *node){
+	assert(list);
+	Node *temp_node = NULL;
+	for(temp_node = list->first; temp_node; temp_node = temp_node->next) if(temp_node == node) return 1;
+	return 0;
+
+}
+
+/* Retrieves the index of the passed node if found. Should be of note that the index here is 1, so the 
+   returned index should be decremented first. */
+static int node_to_index(Linked_List *list, Node *node){
 	int index = 0;
 	Node *temp_node = NULL;
 	// Loops until the node is NULL or node is found.
-	while((temp_node = list->next)){
-		// If node is found, return 1.
+	for(temp_node = list->first; temp_node; temp_node = temp_node->next){
+		// If node is found, return the index.
 		index++;
-		if(node == temp_node){
-			if(SELECTED(parameter, DELETE)){
-				list->delete_item(node->item);
-			}
-			return index;
-		}
+		if(node == temp_node) return index;
 	}
 	// If node is not found, return 0;
 	return 0;
 }
 
-/* Finds the index the item is at. Note: Find a way to integrate this with find_node. */
-static int find_item(Linked_List *list, void *item, int parameter){
-	int index = 0;
+/* Obtains the node that the item is in. Should note, I fixed up the code quite a bit, making it more
+   simplistic and shorter, even more understandable and documented. It also no longer uses a parameter to delete the item, 
+   instead of just returning an index and removing the item (as clearly this means I have to find the node again anyway via it's index)
+   I have it return the node that the item is at instead, allowing the caller to do what they play with the node. */
+static Node *item_to_node(Linked_List *list, void *item){
+	assert(list);
 	Node *node = NULL;
-	// Loops until the node is NULL or node is found.
-	while((node = list->next)){
-		// If node is found, return 1.
-		index++;
-		if(item == node->item){
-			if(SELECTED(parameter, DELETE)){
-				list->delete_item(node->item);
-			}
-			return index;
-		}
-	}
-	// If node is not found, return 0;
-	return 0;
+	// Loops until the node is NULL or node is found. If found, return the node.
+	for(node = list->first; node ; node = node->next) if(item == node->item) return node;
+	// If the node is not found, however, return NULL.
+	return NULL;
 }
 
+/* Returns the node at that index in the list. It is fixed up and optimized to not check if it is out of bounds,
+   if the index is of the last in the list, or if it is the first, which it did not before. Also, it utilizes short circuit
+   evaluations to advance in the linked list, safely checking if it is null before dereferencing. There is even an assertion to ensure that
+   the list->size is correctly working. */
 static Node *index_to_node(Linked_List *list, unsigned int index){
+	assert(list);
+	// Quick evaluations.
+	// If it is out of bounds (remember that the Linked List is zero-based, so if it is equal to the size, it is one index out of bounds.),
+	// then return NULL. Saves time.
+	if(index >= list->size) return NULL;
+	// If the index is clearly the last in the list, just return the last node.
+	if(index == list->size - 1) return list->last;
+	// If the index is 0, then just return the first.
+	if(index == 0) return list->first;
+	// Otherwise, scan the list for the node.
 	int i = 0;
 	Node *node = NULL;
-	for(;node = list->next && i < index; i++); // Advance linked list up to index.
-	if(i != index) return NULL; // Out of bounds.
-	return node; // Else return the node.
+	// This for loop is also a short circuit evaluation. It initialized the node to
+	// to the first node in the list. Then, it checks if node is NULL, then if node->next is NULL
+	// while also setting node to the next node. Then if the current index is not equal to the passed 
+	// index. 
+	for(node = list->first; node && node = node->next && i != index; i++);
+	// Basically, if the for loop stopped early, it did not then there is something wrong with the program.
+	assert(i == index);
+	// If it is found, return the node.
+	return node;
 }
 
 /* Loops through each node, and performs the the passed callback on each item in the list. 
@@ -98,57 +118,79 @@ static Node *index_to_node(Linked_List *list, unsigned int index){
    the result returned will be 15.*/
 static int for_each_item(Linked_List *list, int (*callback)(void *item)){
 	assert(list);
+	assert(callback);
 	int result = 0;
 	Node *node = list->first;
 	if(!node) return 0;
 	result += callback(node->item);
 	int i = 0;
-	for(;node = node->next && i < list->size;i++)result += callback(node->item);
+	// For as long as node is valid and not null, it will call the callback on it,
+	// increment by setting node to node->next.
+	for(;node ;node = node->next)result += callback(node->item);
 	return result;
 }
 
 /* Removes as if node is only one in list. */
 static int remove_only(Linked_List *list, Node *node, int parameter){
+	assert(list);
 	// If the node passed is not in list, return 0.
-	if(find_node(list, node, parameter)) return 0;
+	if(!node_exists(list, node)) return 0;
 	list->first = NULL;
 	list->last = NULL;
+	list->current = NULL;
+	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
 	free(node);
+	list->size = 0;
 	return 1;
 }
 
 /* Removes as if node is the first one in the list. */
 static int remove_first(Linked_List *list, Node *node, int parameter){
+	assert(list);
 	// If the node is not in the list, return 0.
-	if(find_node(list, node, parameter)) return 0;
+	if(!node_exists(list, node)) return 0;
 	// Set the new first to be the next in line.
 	list->first = list->first->next;
 	// Set the new first's previous to NULL.
 	list->first->next->prev = NULL;
+	// If the current node is the first, advance it to the next node.
+	if(list->current == node) list->current = list->first;
+	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
+	free(node);
+	list->size--;
 	return 1;
 }
 
 /* Removes as if node is the last one in the list. */
 static int remove_last(Linked_List *list, Node *node, int parameter){
 	// If the node is not the last in the list, return 0.
-	if(find_node(list, node, parameter)) return 0;
+	if(!node_exists(list, node)) return 0;
 	// Set the last's previous node as the new last.
 	list->last = list->last->prev;
 	// Set the new last's next node to NULL.
 	list->last->next = NULL;
+	// If the current node is the last, then go back one node.
+	if(list->current == node) list->current = list->last;
 	// Delete the item node holds.
+	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
+	// Free the node.
 	free(node);
+	// Decrement size.
+	list->size--;
 	return 1;
 }
 
 /* Removes as if, as is with the average case, this node is between two other nodes. */
 static int remove_normal(Linked_List *list, Node *node, int parameter){
 	// If the node is not in the list, return 0.
-	if(find_node(list, node, NONE) == 0) return 0;
+	if(!node_exists(list, node)) return 0;
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
+	// Advance one node if the ndoe about to be deleted is actually the current one.
+	if(list->current == node) list->current = node->next;
 	free(node);
+	list->size--;
 	return 1;
 }
 
@@ -158,11 +200,9 @@ static int delete_all_nodes(Linked_List *list, int parameter){
 	int result = 0;
 	Node *node = NULL;
 	int i = 0;
-	// Will set the node to the first in the linked list, remove the first node,
-	// and since remove_first sets the node after it as the first, or NULL if there is
-	// no next node, then I can keep reassigning node as the new first item.
-	// Depending on parameter passed, it can even delete each node as well.
-	for(;node = list->first;i++) remove_first(list, node, parameter);
+	// For each node, it will call the removal method.
+	for(;node = list->first;i++) Linked_List_remove_node(list, node, parameter);
+	list->size = 0;
 	return 1;
 }
 
@@ -187,7 +227,6 @@ int Linked_List_remove_node(Linked_List *this, Node *node, int parameter){
 
 /* The standard, default callback in place of a null delete callback. Just frees the pointer and sets it to null. */
 int Linked_List_default_delete(void *item){
-	assert(item);
 	free(item);
 	return 1;
 }
@@ -196,25 +235,6 @@ int Linked_List_default_delete(void *item){
    the one declared last in memory will be before the one declared before it. */
 int Linked_List_default_compare(Linked_List *this, void *item_one, void *item_two){
 	return item_one - item_two; // Memory address subtraction (lol).
-}
-
-/* Returns an iterator for the linked list. This function will also set the required callbacks as well. */
-Iterator *Linked_List_get_iterator(Linked_List *this){
-	assert(this);
-	Iterator *iterator = malloc(sizeof(Iterator));
-	// Set the iterator to work on this list.
-	iterator->list = this;
-	// Set the current node as the first in the list.
-	iterator->current = this->first;
-	// Set up function pointers for ease of use.
-	iterator->next = &Iterator_next;
-	iterator->prev = &Iterator_previous;
-	iterator->last = &Iterator_last;
-	iterator->first = &Iterator_first;
-	iterator->remove = &Iterator_remove;
-	iterator->add = &Iterator_add;
-	// And done... return it.
-	return iterator;
 }
 
 /* Returns the void * at the given index's node. Can remove it from the list entirely. */
@@ -228,20 +248,11 @@ void *Linked_List_get_at(Linked_List *this, unsigned int index){
 /* Sorts the given linked list in either ascending (default) or descending order. Uses Merge Sort. */
 int Linked_List_sort(Linked_List *this, int parameter);
 
-/* Removes the Node from the list. */
-int Linked_List_remove_node(Linked_List *this, Node *node, int parameter){
-	assert(this);
-	assert(node);
-	// If find_node returns an index (> 0) return 1, else 0.
-	return find_node(this, node, parameter) ? 1: 0;
-}
-
 /* Removes the item from the list by scanning through all nodes. */
 int Linked_List_remove_item(Linked_List *this, void *item, int parameter){
 	assert(this);
-	assert(item);
-	// if find_item returns an index (> 0) return 1, else 0;
-	return find_item(this, node, parameter);
+	// Passes the passed item to the item_to_node function so it can call the default remove function.
+	return Linked_List_remove(this, item_to_node(this, item), parameter); 
 }
 
 /* Remove the node at the given index. */
@@ -253,13 +264,10 @@ int Linked_List_remove_at(Linked_List *this, unsigned int index, int parameter){
 	return temp_node ? Linked_List_remove_node(this, temp_node, parameter) : 0;
 }
 /* Returns the next object in the iterator. */
-void *Iterator_next(Iterator *iterator){
-	assert(iterator);
-	/* This is a simple short circuit evaluation. If the current node is NULL, then there is no element in
-	   the list on creation, was tampered with by the user, or some unforeseen error has occured. 
-	   If there is a current, then if the next is null, there is no next node so do not proceed. */
-	if(!iterator->current || !iterator->current->next) return NULL;
-	return iterator->current = iterator->current->next;
+void *Linked_List_next(Linked_List *this){
+	assert(this);
+	/* Continue here! */
+	return NULL;
 }
 
 /* Returns the previous entry in the iterator if and only if it is a double linked list. */

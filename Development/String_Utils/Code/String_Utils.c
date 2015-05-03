@@ -1,14 +1,17 @@
 #include "String_Utils.h"
 /*
- * I decided to use String_Utils to test my new garbage collector. Not all functions use it,
- * only ones that allocated 2 or more temporary variables. This is more of a trial run, there
- * is no heap currently implemented in the virtual machine, only a basic stack that pushes new values
- * on the stack, pops them off of the stack, and destroying the virtual machine will activate the
- * garbage collector's mark and sweep algorithm to free everything. 
+ * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't
+ * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it
+ * literally did nothing of value except complicate code and even increase the program size by 3x. So, instead, I
+ * opted to have another experiment, one which is already heavily tested. The macro TEMP uses the
+ * cleanup attribute specific for GCC and Clang compilers, making it 100% dependent on them to compile, but
+ * it's easy enough to remove either way. Besides, it accomplished what I want to do. 
  *
- * Also I decided to not care about portability much, I'm going to program almost exclusively in C
- * from now on, so there's no point. The glib c is better than anything I can make, so may as well
- * use theirs in my own program.
+ * Of course in the future I most likely (99.999% sure) I'm going to be replacing it entirely from the library functions,
+ * as it currently is impossible to use without it being dependent on GCC and POSIX as is. Most likely, it will be apart of the whole C_Utils
+ * package. However, I'll go into what TEMP does. What TEMP does is it will call the assigned callback for cleanup when it
+ * leaves the variable's scope, most likely a function, but could be inside of a loop if it was declared there. TEMP will basically just free 
+ * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
  */
 
 
