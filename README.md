@@ -5,9 +5,7 @@ As my mind seems to be as fickle as my luck, C_Utils doesn't really have a set g
 
 C_Utils is going to be a personal side project that I will want to implement as libraries in future side projects. They're not for anyone else to use, just my own.
 
-## *Completed Projects*
-
-### String_Utils
+## String_Utils
 
 #### Summary
 
@@ -47,8 +45,6 @@ with the | operator, I.E 'MODIFY | IGNORE_CASE'
 
 I hope you enjoy my first project as much as I will, I worked very hard on it. Hope it shows! Enjoy!
 
-*Future Projects*
-
 ## Network_Utils
 
 ### Summary
@@ -65,13 +61,21 @@ In essence, going to be some basic file reading utilities. I might dabble in par
 
 ### Summary
 
-The basic idea behind this is that, since C is missing any type of dynamic data structure, barring arrays (both examples such as int[] and int **), I took the liberty to do it myself in as much of a reusable way as possible. At the time I am writing this, Data Strctures is still in it's planning phase, however the the current plan goes like. Everything starts with something, and in this project, it begins with a Linked List. An array is too unreliable of a data structure to work with dynamically and generically. Stacks, while an array is a very valid option and easy to implement, can be done in a Linked List. Queues can be done with a Linked List. More complex data structures such as Hash Maps and Binary Trees can also be done with a Linked List. So, the Linked List will be the most important data structure, and will be the most worked on to ensure that it is completely reusable with all implemented data types. 
+This package will pretty much be my attempts at creating bare-bones, although well-test data structures, such as a double linked list, hash map, and binary heap (binary tree). I plan on creating them so as they are as general and easy to use as humanly possible.
 
-So far, the Linked List accepts callback functions for special insertions, deletions and comparisons, however to make this feature less of a drag (I.E having to make 3 callback functions just to use a simple Linked List when you may not even need them), default alternatives will also be provided as well in this case. Before expanding on that, it should also be noted that by using a tagged union, the Linked Lists doubles as a single and doubly linked list.
+#### Linked_List Features
 
-The Linked List's constructor method is planned so that it will take callback functions as arguments, as well as the enumeration depicting whether it's a single or doubly linked list that needs to be created. If any of the callback functions are left as NULL, then default implementations will be used instead, allowing ease of use and also tailoring for specific operations. Linked List also features an iterator which will utilize these callbacks. 
+##### Optional Callbacks for Deleting and Comparing two elements
 
-Linked List, insofar is not type safe, so you it is strongly advised that only a single data type be used for each instance of the Linked List.
+When created, data structures will not require certain callbacks, however of course it strongly recommended you do pass your own. The default for them will be simple, such having a default deletion that just frees the pointer, while a user-defined callback can more thoroughly ensure properly deletion of each element to prevent memory leaks; a default comparator will just subtract the two item's memory address, to determine if they are equal, with the item declared after being the one, in most cases, that will be considered greater. As is obvious, user-defined callbacks are not needed yet will help immensely for operations like sorting and removing and deleting elements inside of the Linked_List.
+
+##### Multiple parameter passing
+
+For functions that support it, parameters passed to a function will cause the operation to perform different. For instance, if you wish to add an item to the list, by default it is appended to the end of the list. Passing parameters such as FIRST, which prepends it to the beginning of the list, or SORTED | DESCENDING inserts it into the list in a sorted, descending order.
+
+##### Barebones iteration
+
+Features a lightweight iterator built into the Linked_List struct, which allows you to iterate through each and every node in the linked list, appending and prepending, or removing items.
 
 ## Memory_Utils
 
