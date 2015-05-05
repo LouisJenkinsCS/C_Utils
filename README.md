@@ -26,19 +26,19 @@ One of the key features, and where my library differs from all of the others, is
 ```
 str1 = "Hello ";  
 str2 = "World";
-strcat(str1, str2)
+strcat(str1, str2);
 ```
 This causes a segmentation fault, as it's read only memory. Take for example my library's concatenation function...
 
 ```
-str3 = String_Utils_Concat(&str1, str2, NONE)
+str3 = String_Utils_Concat(&str1, str2, NONE);
 ```
 This does not cause a segmentation fault. Note the unary operator here, by passing a reference of the string, it allows the function to change what the string is pointing at, hence being able to modify the original string with the MODIFY parameter.
 
 An example of multiple parameter passing, would be:
 
 ```
-String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> More Random Text <PARSE_THIS> Final Random Text ", "<parse_text>", IGNORE_CASE | LAST)
+String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> More Random Text <PARSE_THIS> Final Random Text ", "<parse_text>", IGNORE_CASE | LAST);
 ``` 
 
 Which would get the very last token to be parsed, ignoring case for comparison. 
@@ -72,7 +72,25 @@ Basic networking. Basically, creating sockets, basic server-client basic structs
 
 ### Summary
 
-In essence, going to be some basic file reading utilities. I might dabble in parsing files, like XML and JSON, might see if I can make something like JFileChooser where a GUI pops up for you to select your file from (that'd be awesome!). Got a lot on my plate as is though.
+File_Utils in essence is going to be a robust, semi-lightweight library for manipulating files. It will feature things that people will want to use in a language like C that can easily be found in other Object-Oriented languages.
+
+#### Features
+
+##### File_Info Structure
+
+This structure wraps the FILE * in an object-like structure, which will also contain an array of buffers that holds a string up to the first newline it encounters. This way, it will make operations like reading the next line possible and easy to do. Also, do to this, it also makes deletion of lines possible, and appending of data even easier. File_Info keeps track of the current line and current character in the line so you don't have to.
+
+##### Modification of any line in a document.
+
+With File_Info, it will allow you to delete, modify and append new lines anywhere in the document, even append characters and strings to the current line as well. It will even allow you to replace a line entirely with one of your own.
+
+##### View a document before writing it.
+
+It is a rather inefficient way, but you can even receive a massive string of the document with newlines intact. This allows you to print it yourself, or any other tool to view the text beforehand.
+
+##### Parameter Passing
+
+Tailor your File how you want it. With certain parameters, you can append text from a current position, from the beggining or at the end of the line without having to move current character forward to the end yourself. You can even receive a copy of the document up to your current line, between two lines, or even before.
 
 ## Data_Structures
 
