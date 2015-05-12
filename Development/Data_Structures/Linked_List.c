@@ -2,16 +2,26 @@
 
 Linked_List *Linked_List_create(Linked_List_Delete delete_item, Linked_List_Compare compare){
 	Linked_List *list = malloc(sizeof(Linked_List));
-	// The first and last nodes are initialized to zero.
-	list->first = NULL;
-	list->last = NULL;
+	// Initialize first, last and current nodes to null.
+	list->first = list->last = list->current = NULL;
 	// Size initialized to zero.
 	list->size = 0;
 	// If any of the callbacks are null, the below checks for them and sets their behaviour to an already existing default
 	// callback respectively.
 	list->delete_item = (delete_item == NULL) ? (&Linked_List_default_delete : delete_item);
 	list->compare = (compare == NULL) ? (&Linked_List_default_compare : compare);
-	// Set other liste functions here too!
+	// Set other list function pointers here too!
+	list->next = &Linked_List_next;
+	list->prev = &Linked_List_previous;
+	list->sort = &Linked_List_sort;
+	list->add = &Linked_List_add;
+	list->remove_current = &Linked_List_remove_current;
+	list->remove_item = &Linked_List_remove_item;
+	list->remove_at = &Linked_List_remove_at;
+	list->get_at = &Linked_List_get_at;
+	list->get_first = &Linked_List_first;
+	list->get_last = &Linked_List_last;
+	list->clear= &Linked_List_clear;
 	return list;
 }
 
@@ -133,8 +143,6 @@ static int for_each_item(Linked_List *list, int (*callback)(void *item)){
 /* Removes as if node is only one in list. */
 static int remove_only(Linked_List *list, Node *node, int parameter){
 	assert(list);
-	// If the node passed is not in list, return 0.
-	if(!node_exists(list, node)) return 0;
 	list->first = NULL;
 	list->last = NULL;
 	list->current = NULL;
@@ -147,8 +155,6 @@ static int remove_only(Linked_List *list, Node *node, int parameter){
 /* Removes as if node is the first one in the list. */
 static int remove_first(Linked_List *list, Node *node, int parameter){
 	assert(list);
-	// If the node is not in the list, return 0.
-	if(!node_exists(list, node)) return 0;
 	// Set the new first to be the next in line.
 	list->first = list->first->next;
 	// Set the new first's previous to NULL.
@@ -163,8 +169,7 @@ static int remove_first(Linked_List *list, Node *node, int parameter){
 
 /* Removes as if node is the last one in the list. */
 static int remove_last(Linked_List *list, Node *node, int parameter){
-	// If the node is not the last in the list, return 0.
-	if(!node_exists(list, node)) return 0;
+	assert(list);
 	// Set the last's previous node as the new last.
 	list->last = list->last->prev;
 	// Set the new last's next node to NULL.
@@ -182,8 +187,7 @@ static int remove_last(Linked_List *list, Node *node, int parameter){
 
 /* Removes as if, as is with the average case, this node is between two other nodes. */
 static int remove_normal(Linked_List *list, Node *node, int parameter){
-	// If the node is not in the list, return 0.
-	if(!node_exists(list, node)) return 0;
+	assert(list);
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	if(SELECTED(parameter, DELETE)) list->delete_item(node->item);
@@ -213,6 +217,8 @@ static int delete_all_nodes(Linked_List *list, int parameter){
 int Linked_List_remove_node(Linked_List *this, Node *node, int parameter){
 	assert(this);
 	assert(node);
+	// Check whether or not the node passed exists.
+	if(!node_exists(this, node)) return 0;
 	// If the first and last of the linked list is this node, then it's the only node in the list.
 	if(this->first == node && this->last == node) return remove_only(this, node, parameter);
 	// Else if the last is this node, then it is the last in the list.
@@ -252,7 +258,7 @@ int Linked_List_sort(Linked_List *this, int parameter);
 int Linked_List_remove_item(Linked_List *this, void *item, int parameter){
 	assert(this);
 	// Passes the passed item to the item_to_node function so it can call the default remove function.
-	return Linked_List_remove(this, item_to_node(this, item), parameter); 
+	return Linked_List_remove_node(this, item_to_node(this, item), parameter); 
 }
 
 /* Remove the node at the given index. */
@@ -263,48 +269,60 @@ int Linked_List_remove_at(Linked_List *this, unsigned int index, int parameter){
 	// If temp_node is not null, proceed to remove the node, else return 0.
 	return temp_node ? Linked_List_remove_node(this, temp_node, parameter) : 0;
 }
+
+int Linked_List_remove_current(Linked_List *this, int parameter){
+	assert(this);
+	return Linked_List_remove_node(this, this->current, parameter);
+}
+
 /* Returns the next object in the iterator. */
 void *Linked_List_next(Linked_List *this){
 	assert(this);
-	/* Continue here! */
-	return NULL;
+	// If either the current or the next is null, return NULL.
+	if(!this->current || !this->current->next) return NULL;
+	// Else, set current to next and return it's item.
+	return (this->current = this->current->next)->item;
 }
 
 /* Returns the previous entry in the iterator if and only if it is a double linked list. */
-void * Iterator_previous(Iterator *iterator){
-	assert(iterator);
-	// If the previous node is NULL, then there is no previous node so do not go backward.
-
+void * Linked_List_previous(Linked_List *this){
+	assert(this);
+	if(!this->current || !this->current->previous) return NULL;
+	return (this->current = this->current->previous)->item;
 }
 
 /* Moves the current node to be the last, if it isn't already. */
-void * Iterator_last(Iterator *iterator);
+void * Linked_List_last(Linked_List *this){
+	assert(this);
+	if(!this->last) return NULL;
+	return (this->current = this->last)->item;
+}
 
 /* Moves the current node to be the first, if it isn't already. */
-void * Iterator_first(Iterator *iterator);
-
-/* Deletes the current node from the list. */
-int Iterator_remove(Iterator *iterator);
-
-/* Adds the requested item either before or after this. Default is After */
-int Iterator_add(Iterator *iterator, void *item, int parameter);
-
-/* Deletes this iterator. Does not destroy the linked list along with it. */
-void Iterator_destroy(Iterator *iterator);
+void * Linked_List_first(Linked_List *this){
+	assert(this);
+	if(!this->first) return NULL;
+	return (this->current = this->first)->item;
+}
 
 /* Destroys the linked list along with all of it's contents. Make sure you get everything from the linked list before
    calling this! */
 void Linked_List_destroy(Linked_List *list, int parameter){
 	assert(list);
 	// Free all function pointers and callbacks.
-	free(list->remove);
+	free(list->remove_at);
+	free(list->remove_current);
+	free(list->remove_item);
+	free(list->sort);
+	free(list->next);
+	free(list->prev);
+	free(list->get_first);
+	free(list->get_last);
 	free(list->add);
 	free(list->delete_item);
 	free(list->compare);
 	free(list->clear);
 	free(list->get);
-	free(list->get_iterator);
-	// Free all nodes.
 	// Will delete every node, and also with the possibility of deleting all items.
 	delete_all_nodes(list, parameter);
 	free(list); // finally, free the list.

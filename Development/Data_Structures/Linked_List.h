@@ -111,8 +111,8 @@ struct Linked_List{
 	Node *current;
 	/// The current size of the linked list.
 	size_t size;
-	/// Removes an item from the list.
-	Linked_List_Remove remove;
+	/// Adds the passed item to the list.
+	Linked_List_Add add;
 	/// Comparator Callback used for sorting
 	Linked_List_Compare compare;
 	/// Callback for deleting an item from the list
@@ -121,6 +121,24 @@ struct Linked_List{
 	Linked_List_Clear clear;
 	/// Gets the item at the specified location. Sets the current node to this.
 	Linked_List_Get_At get;
+	/// Advances the current node forward one if possible and return the item.
+	Linked_List_Next next;
+	/// Sends the current node back one if possible, and returns the item.
+	Linked_List_Previous prev;
+	/// Set current to last node in list.
+	Linked_List_Last get_last;
+	/// Set current to the first node in list.
+	Linked_List_First get_first;
+	/// Removes the current node from the list.
+	Linked_List_Remove_Current remove_current;
+	/// Remove the node at the given index.
+	Linked_List_Remove_At remove_at;
+	/// Remove the node associated with the passed item if exists.
+	Linked_List_Remove_Item remove_item;
+	/// Clears the linked list of all items.
+	Linked_List_Clear clear;
+	/// Sorts the linked list based on comparator.
+	Linked_List_Sort sort;
 };
 
 /* Create the Linked List with the the supplied callbacks. If NULL is passed for any, the default implementation 
