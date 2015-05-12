@@ -5,49 +5,62 @@ As my mind seems to be as fickle as my luck, C_Utils doesn't really have a set g
 
 C_Utils is going to be a personal side project that I will want to implement as libraries in future side projects. They're not for anyone else to use, just my own.
 
-## *Completed Projects*
+## String_Utils
 
-### String_Utils
-
-#### Summary
-
-Documentation for String_Utils can be found [here](http://theif519.github.io/String_Utils_Documentation/)
+### Version
 
 Current version: 1.1
 
-View Documentation for a more up to date summary!
+Documentation for the current version can be found [here.](http://theif519.github.io/String_Utils_Documentation/)
 
-What is String_Utils? String_Utils is basically an attempt at implementing a
-very useful, somewhat efficient String library with basic string manipulations
-comparators, and utilities offered in object oriented languages. In fact, this
-is based on Java's String object's methods, hence the name of most of the functions.
+### Summary
 
-My reason for creating this is, not just for fun, and boy was it ever, but 
-also because I haven't found any attempt at creating a string library the way
-I did. I rather dislike the way C's String library handles thing, it's too
-minimal with how it abstracts and encapsulates it's functions, and plus it 
-doesn't even have the basic functions that most people use day-to-day, but they
-do however give you the tools to do it yourself, so I decided to. 
+String Utilities for the C Programming Language, or String_Utils, is my attempt at implementing a more user and newbie-friendly library for string manipulations. 
 
-String_Utils has a plethora of well-tested (as well as you can with one person
-writing this in one week) functions that you've grown to love in OOP languages
-like Java, I.E Substring, Index_OF, Split/Join, etc. I attempted to implement
-them as closely as they would be in Java, although of course since C and Java
-are vastly different languages, with different paradigms, it's impossible
-to make it exactly like so. 
+#### Features
 
-Another nice feature is the passing of parameters to tailor the operation the way you want
-it if the library function supports it. For instance, one of the problems I had with the standard
-C library was that strcat modifies the original string AND returns the pointer to the same
-string it modified. I figured, why not just have an option to modify the string passed or not? 
-What if I want to work with a string literal? Then with strcat, it would segfault. With my 
-concat implementation, you can pass a string literal and not have it attempt to modify it, instead
-create a copy of the string for you. In some functions, multiple parameter passing can be passed
-with the | operator, I.E 'MODIFY | IGNORE_CASE'
+##### Multiple parameter passing.
 
-I hope you enjoy my first project as much as I will, I worked very hard on it. Hope it shows! Enjoy!
+One of the key features, and where my library differs from all of the others, is that by passing parameters to the function, you can tailor the operation of said function. For example, the option to modify the original string is up to the user. One issue with the standard library, and even others like it, is that they assume that the user wishes to modify the original string. Take for example, the two string literals below.
 
-*Future Projects*
+```
+str1 = "Hello ";  
+str2 = "World";
+strcat(str1, str2);
+```
+This causes a segmentation fault, as it's read only memory. Take for example my library's concatenation function...
+
+```
+str3 = String_Utils_Concat(&str1, str2, NONE);
+```
+This does not cause a segmentation fault. Note the unary operator here, by passing a reference of the string, it allows the function to change what the string is pointing at, hence being able to modify the original string with the MODIFY parameter.
+
+An example of multiple parameter passing, would be:
+
+```
+String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> More Random Text <PARSE_THIS> Final Random Text ", "<parse_text>", IGNORE_CASE | LAST);
+``` 
+
+Which would get the very last token to be parsed, ignoring case for comparison. 
+
+##### Small size library
+
+String_Utils only contains one header file and one source file, well documented and readable.
+
+##### Non intrusive
+
+String_Utils, unlike some other libraries, does not force you to use their own structs that act as a wrapper object for the
+string, allowing you to use it with or even without your own wrapper structs. 
+
+##### Memory Management
+
+While this feature is GCC and Clang dependent, by using a defined macro, TEMP, after declaring the name and type of a variable, but before the assignment, as such...
+
+```
+char *string TEMP = strdup("Hello World!");
+```
+
+Will, when it goes out of scope, for example, of a function, free the string itself. It should be noted that if you change what string the variable is pointing to outside of my library, it will not be able to free it as it the macro works by freeing what is pointed to by the TEMP variable.
 
 ## Network_Utils
 
@@ -59,19 +72,45 @@ Basic networking. Basically, creating sockets, basic server-client basic structs
 
 ### Summary
 
-In essence, going to be some basic file reading utilities. I might dabble in parsing files, like XML and JSON, might see if I can make something like JFileChooser where a GUI pops up for you to select your file from (that'd be awesome!). Got a lot on my plate as is though.
+File_Utils in essence is going to be a robust, semi-lightweight library for manipulating files. It will feature things that people will want to use in a language like C that can easily be found in other Object-Oriented languages.
+
+#### Features
+
+##### File_Info Structure
+
+This structure wraps the FILE * in an object-like structure, which will also contain an array of buffers that holds a string up to the first newline it encounters. This way, it will make operations like reading the next line possible and easy to do. Also, do to this, it also makes deletion of lines possible, and appending of data even easier. File_Info keeps track of the current line and current character in the line so you don't have to.
+
+##### Modification of any line in a document.
+
+With File_Info, it will allow you to delete, modify and append new lines anywhere in the document, even append characters and strings to the current line as well. It will even allow you to replace a line entirely with one of your own.
+
+##### View a document before writing it.
+
+It is a rather inefficient way, but you can even receive a massive string of the document with newlines intact. This allows you to print it yourself, or any other tool to view the text beforehand.
+
+##### Parameter Passing
+
+Tailor your File how you want it. With certain parameters, you can append text from a current position, from the beggining or at the end of the line without having to move current character forward to the end yourself. You can even receive a copy of the document up to your current line, between two lines, or even before.
 
 ## Data_Structures
 
 ### Summary
 
-The basic idea behind this is that, since C is missing any type of dynamic data structure, barring arrays (both examples such as int[] and int **), I took the liberty to do it myself in as much of a reusable way as possible. At the time I am writing this, Data Strctures is still in it's planning phase, however the the current plan goes like. Everything starts with something, and in this project, it begins with a Linked List. An array is too unreliable of a data structure to work with dynamically and generically. Stacks, while an array is a very valid option and easy to implement, can be done in a Linked List. Queues can be done with a Linked List. More complex data structures such as Hash Maps and Binary Trees can also be done with a Linked List. So, the Linked List will be the most important data structure, and will be the most worked on to ensure that it is completely reusable with all implemented data types. 
+This package will pretty much be my attempts at creating bare-bones, although well-test data structures, such as a double linked list, hash map, and binary heap (binary tree). I plan on creating them so as they are as general and easy to use as humanly possible.
 
-So far, the Linked List accepts callback functions for special insertions, deletions and comparisons, however to make this feature less of a drag (I.E having to make 3 callback functions just to use a simple Linked List when you may not even need them), default alternatives will also be provided as well in this case. Before expanding on that, it should also be noted that by using a tagged union, the Linked Lists doubles as a single and doubly linked list.
+#### Linked_List Features
 
-The Linked List's constructor method is planned so that it will take callback functions as arguments, as well as the enumeration depicting whether it's a single or doubly linked list that needs to be created. If any of the callback functions are left as NULL, then default implementations will be used instead, allowing ease of use and also tailoring for specific operations. Linked List also features an iterator which will utilize these callbacks. 
+##### Optional Callbacks for Deleting and Comparing two elements
 
-Linked List, insofar is not type safe, so you it is strongly advised that only a single data type be used for each instance of the Linked List.
+When created, data structures will not require certain callbacks, however of course it strongly recommended you do pass your own. The default for them will be simple, such having a default deletion that just frees the pointer, while a user-defined callback can more thoroughly ensure properly deletion of each element to prevent memory leaks; a default comparator will just subtract the two item's memory address, to determine if they are equal, with the item declared after being the one, in most cases, that will be considered greater. As is obvious, user-defined callbacks are not needed yet will help immensely for operations like sorting and removing and deleting elements inside of the Linked_List.
+
+##### Multiple parameter passing
+
+For functions that support it, parameters passed to a function will cause the operation to perform different. For instance, if you wish to add an item to the list, by default it is appended to the end of the list. Passing parameters such as FIRST, which prepends it to the beginning of the list, or SORTED | DESCENDING inserts it into the list in a sorted, descending order.
+
+##### Barebones iteration
+
+Features a lightweight iterator built into the Linked_List struct, which allows you to iterate through each and every node in the linked list, appending and prepending, or removing items.
 
 ## Memory_Utils
 
