@@ -56,6 +56,22 @@ int Linked_List_add(Linked_List *this, void *item){
 /* Below are static private functions that can ease the process along without
    being exposed to the user. */
 
+/* Used to split the array of nodes to be sorted. */
+static int split_nodes(Node **array_of_nodes, size_t start, size_t end, Linked_List_Compare comparator){
+	// Start initially is 0, End initially is the size of the array.
+	assert(array_of_nodes);
+	assert(comparator);
+	// Continue here.
+	return 1;
+}
+
+/* Should "merge" the array by treating the first and last index of the two sections of arrays to be merged. */
+static int merge_nodes(Node **array_of_nodes, size_t f_Begin, size_t f_End, size_t l_Begin, size_t l_End){
+	assert(array_of_nodes);
+	// Unfinished!
+	return 1;
+}
+
 /* Checks to see if the node exists in the list. This function differs from node_to_index in that it will return
    1 if it exists, or 0 if it does not, as 0 is a valid index in the linked list, to avoid confusion */
 static int node_exists(Linked_List *list, Node *node){
@@ -303,6 +319,18 @@ void * Linked_List_first(Linked_List *this){
 	assert(this);
 	if(!this->first) return NULL;
 	return (this->current = this->first)->item;
+}
+
+/* Returns an array of items. */
+void **Linked_List_To_Array(Linked_List *this){
+	assert(this);
+	void **array_of_items = malloc(sizeof(void *) * this->size);
+	Node *node = NULL;
+	int index = 0;
+	for(node = this->first; node; node = node->next){
+		array_of_items[index++] = node->item;
+	}
+	return array_of_items;
 }
 
 /* Destroys the linked list along with all of it's contents. Make sure you get everything from the linked list before
