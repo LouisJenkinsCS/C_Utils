@@ -2,46 +2,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
+#include "Thread_Pool.h"
 
-typedef struct Thread_Pool Thread_Pool;
-
-typedef struct Result Result;
-
-typedef struct Sub_Process Sub_Process;
-
-typedef struct Task Task;
-
-typedef struct Binary_Semaphore Binary_Semaphore;
-
-typedef struct Task_Queue Task_Queue;
-
-typedef void *(*thread_callback)(void *args);
-
-struct Thread_Pool {
-	/// Array of threads.
-	pthread_t *threads;
-	/// The queue with all jobs assigned to it.
-	Task_Queue *queue;
-	/// Amount of threads currently created, A.K.A Max amount.
-	size_t thread_count;
-	/// Amount of threads currently active.
-	size_t active_threads;
-	/// Flag to keep all threads alive.
-	volatile unsigned char keep_alive;
-};
-
-struct Binary_Semaphore {
-	/// The lock to simulate a binary semaphore.
-	pthread_mutex_t *mutex;
-	/// Condition variable to wait on.
-	pthread_cond_t *cond;
-	/// Dictates whether or not it is held.
-	unsigned char held;
-	/// Function pointer for obtaining the lock.
-	void (*lock)(Binary_Semaphore *) lock;
-	/// Function pointer for releasing the lock.
-	void (*unlock)(Binary_Semaphore *) unlock;
-};
 
 void BS_Unlock(Binary_Semaphore *semaphore){
 	pthread_mutex_lock(semaphore->mutex);
@@ -69,47 +31,6 @@ Binary_Semaphore *Binary_Semaphore_Create(void){
 	semaphore->unlock = BS_Unlock;
 	return semaphore;
 }
-
-struct Result {
-	/// Lock to protect contents of 'Result'
-	pthread_mutex_t *lock;
-	/// Condition variable to signal result being ready.
-	pthread_cond_t *cond;
-	/// Determines whether or not it has been processed.
-	volatile unsigned char ready;
-	/// The return type, NULL until ready.
-	void *item;
-};
-
-struct Task {
-	/// Task to be executed.
-	thread_callback cb;
-	/// Arguments to be passed to the task.
-	void *args;
-	/// Pointing to the next task in the queue.
-	Task *next;
-	/// Mutex to ensure no other thread attempts to do this task.
-	pthread_mutex_t *lock;
-};
-
-struct Sub_Process {
-	/// Task to be processed.
-	Task *task;
-	/// Result from the Task.
-	Result *result;
-};
-
-struct Task_Queue{
-	/// Pointer to the head of the queue.
-	Task *head;
-	/// Pointer to the tail of the queue.
-	Task *tail;
-	/// Maintains the size of the current queue.
-	size_t size;
-	/// Binary Semaphore for allowing threads to get the next task.
-	Binary_Semaphore *semaphore;
-
-};
 
 static void *Get_Tasks(void *args){
 	Thread_Pool *tp = args;
