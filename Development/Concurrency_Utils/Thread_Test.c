@@ -21,7 +21,7 @@ struct Thread_Pool {
 
 struct Result {
 	/// Determines whether or not it has been processed.
-	unsigned char ready;
+	volatile unsigned char ready;
 	/// The return type, NULL until ready.
 	void *item;
 };
@@ -35,17 +35,9 @@ struct Sub_Process {
 	void *args;
 };
 
-static void *Process_Result(void *args){
-	Sub_Process *proc = args;
-	// Nested thread, find a better way to do this.
-	pthread_t temp_thread;
-	// Second thread.
-	pthread_create(&temp_thread, NULL, proc->cb, proc->args);
-	// Obtain result from second thread.
-	pthread_join(&temp_thread, proc->result->item);
-	// Reasoning for returning NULL? The result has already been returned to the user.
-	// Just flags as ready.
-	proc->result->ready = 1;
+static void *Process_Result(Sub_Process process){
+	process->result->item = process->cb(process->args);
+	process->result->ready = 1;
 	return NULL;
 }
 
@@ -59,8 +51,8 @@ Result *TP_Add_Task(thread_pool *tp, thread_callback cb, void *args, int paramet
 	proc->result = result;
 	proc->cb = cb;
 	proc->args = args;
-	// First thread.
-	pthread_create(tp->threads[(tp->active_threads)++], attribute, )
+	pthread_create(tp->threads[(tp->active_threads)++], attribute, Process_Result, proc);
+	return result;
 }
 
 void *test_function(void *args){

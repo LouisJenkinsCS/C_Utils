@@ -13,7 +13,7 @@
  * somewhat lightweight and robust library for file reading, writing and manipulations.
  * 
  * File_Utils begins by opening the file pointed to by a file pointer or a filename
- * passed, in read only mode. This is because it never actually writes directly to eh
+ * passed, in read only mode. This is because it never actually writes directly to the
  * file unless specified, as it reads the entire file, line by line to a buffer.
  * The buffer, or rather the array of buffers, stores every line, meaning it must
  * contain a newline character to properly be considered a line, from the file to
