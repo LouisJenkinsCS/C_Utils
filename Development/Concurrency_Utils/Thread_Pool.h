@@ -23,6 +23,8 @@ struct Thread_Pool {
 	size_t active_threads;
 	/// Flag to keep all threads alive.
 	volatile unsigned char keep_alive;
+	/// Mutex for thread_count and active_threads, and keep_alive.
+	pthread_mutex_t *thread_count_change;
 };
 
 struct Binary_Semaphore {
@@ -32,17 +34,13 @@ struct Binary_Semaphore {
 	pthread_cond_t *cond;
 	/// Dictates whether or not it is held.
 	unsigned char held;
-	/// Function pointer for obtaining the lock.
-	void (*lock)(Binary_Semaphore *) lock;
-	/// Function pointer for releasing the lock.
-	void (*unlock)(Binary_Semaphore *) unlock;
 };
 
 struct Result {
 	/// Lock to protect contents of 'Result'
-	pthread_mutex_t *lock;
+	pthread_mutex_t *not_ready;
 	/// Condition variable to signal result being ready.
-	pthread_cond_t *cond;
+	pthread_cond_t *is_ready;
 	/// Determines whether or not it has been processed.
 	volatile unsigned char ready;
 	/// The return type, NULL until ready.
@@ -57,15 +55,11 @@ struct Task {
 	/// Pointing to the next task in the queue.
 	Task *next;
 	/// Mutex to ensure no other thread attempts to do this task.
-	pthread_mutex_t *lock;
-};
-
-struct Sub_Process {
-	/// Task to be processed.
-	Task *task;
+	pthread_mutex_t *being_processed;
 	/// Result from the Task.
 	Result *result;
 };
+
 
 struct Task_Queue{
 	/// Pointer to the head of the queue.
@@ -76,6 +70,10 @@ struct Task_Queue{
 	size_t size;
 	/// Binary Semaphore for allowing threads to get the next task.
 	Binary_Semaphore *semaphore;
+	/// Condition variable to signal when a task is added to the queue.
+	pthread_cond_t *new_task;
+	/// Lock to use on the condition variable
+	pthread_mutex_t *mutex;
 
 };
 

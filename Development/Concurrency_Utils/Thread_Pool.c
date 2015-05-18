@@ -4,27 +4,50 @@
 #include <assert.h>
 #include "Thread_Pool.h"
 
-
+/// Used to lock the given mutex.
+#define LOCK(mutex) pthread_mutex_lock(mutex);
+/// Used to try to lock the mutex, returning immediately on failure.
+#define TRYLOCK(mutex) pthread_mutex_trylock(mutex);
+/// Used to unlock the given mutex.
+#define UNLOCK(mutex) pthread_mutex_unlock(mutex);
+/// Causes the current thread to wait for a signal to be sent.
+#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex);
+/// Signals a thread waiting on the condition based on a default scheduler.
+#define SIGNAL(condition) pthread_cond_signal(condition);
+/// Used to broadcast to all threads waiting on the condition variable.
+#define BROADCAST(condition) pthread_cond_broadcast(condition);
+/// Used to atomically increment the count.
+#define INCREMENT(var, mutex) (do { \
+								LOCK(mutex); \
+								var++; \
+								UNLOCK(mutex); \
+								})
+/// Used to atomically decrement the count.
+#define DECREMENT(var, mutex) (do { \
+								LOCK(mutex); \
+								var--; \
+								UNLOCK(mutex); \
+							    })
 void BS_Unlock(Binary_Semaphore *semaphore){
-	pthread_mutex_lock(semaphore->mutex);
+	LOCK(semaphore->mutex);
 	// If the thread somehow attempts to unlock without having the actual lock, something went wrong.
 	assert(semaphore->held == 1);
 	semaphore->held = 0;
 	// Signal that the semaphore is no longer being held.
-	pthread_cond_signal(semaphore->cond);
-	pthread_mutex_unlock(semaphore->mutex);
+	SIGNAL(semaphore->cond);
+	UNLOCK(semaphore->mutex);
 }
 
 void BS_Lock(Binary_Semaphore *semaphore){
-	pthread_mutex_lock(semaphore->mutex);
-	while(semaphore->held) pthread_cond_wait(semaphore->cond, semaphore->mutex);
+	LOCK(semaphore->mutex);
+	while(semaphore->held) WAIT(semaphore->cond, semaphore->mutex);
 	semaphore->held = 1;
-	pthread_mutex_unlock(semaphore->mutex);
+	UNLOCK(semaphore->mutex);
 }
 
 Binary_Semaphore *Binary_Semaphore_Create(void){
 	Binary_Semaphore *semaphore = malloc(sizeof(Binary_Semaphore));
-	pthread_mutex_init(semaphore->lock, NULL);
+	pthread_mutex_init(semaphore->mutex, NULL);
 	pthread_cond_init(semaphore->cond, NULL);
 	semaphore->held = 0;
 	semaphore->lock = BS_Lock;
@@ -32,15 +55,35 @@ Binary_Semaphore *Binary_Semaphore_Create(void){
 	return semaphore;
 }
 
+static Task *next_task(Task_Queue *queue){
+	Task *task = NULL;
+	for(task = queue->head; task; task = task->next){
+		// int pthread_mutex_trylock(pthread_mutex_t *mutex) returns 0 on success.
+		if(!TRYLOCK(task->being_processed)) return task;
+	}
+	return NULL;
+}
+
 static void *Get_Tasks(void *args){
 	Thread_Pool *tp = args;
 	while(tp->keep_alive){
-		// If queue size is 0.
-		if(!tp->queue->size){
-			// Acquire the lock to successfully condition wait.
+		// Wait until signal is sent, when task is given.
+		LOCK(tp->queue->getting_task);
+		while(!tp->queue->size){
+			// If the queue size is empty, wait until something has been added.
+			WAIT(tp->queue->new_task, tp->queue->getting_task);
 		}
+		// If while it was waiting, the keep_alive flag has changed, then break the while loop.
+		if(!tp->keep_alive) break;
+		Task *task = next_task(tp->queue);
+		UNLOCK(tp->queue->getting_task);
+		if(!task) continue;
+		INCREMENT(tp->active_threads, thread_count_change);
+		Process_Task(task);
+		DECREMENT(tp->active_threads, thread_count_change);
 	}
-
+	DECREMENT(tp->thread_count, tp->thread_count_change);
+	return NULL;
 }
 
 Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
@@ -65,15 +108,16 @@ static void add_task(Sub_Process *process){
 
 }
 
-static void *Process_Result(Sub_Process *process){
+static void *Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
-	pthread_mutex_lock(process->result->lock);
-	process->result->item = process->task->cb(process->task->args);
-	process->result->ready = 1;
+	LOCK(task->result->not_ready);
+	task->result->item = task->cb(task->args);
+	task->result->ready = 1;
 	// Signal that the result is ready.
-	pthread_cond_signal(process->result->cond);
+	SIGNAL(task->result->is_ready);
 	// Release lock.
-	pthread_mutex_unlock(process->result->lock);
+	UNLOCK(task->result->not_ready);
+	UNLOCK(task->being_processed);
 	return NULL;
 }
 
@@ -106,12 +150,12 @@ int TP_Result_Destroy(Result *result){
 /// Will block until result is ready. 
 void *TP_Obtain_Result(Result *result){
 	// Attempts to obtain the lock before proceeding, since the worker thread will only unlock when it's finished.
-	pthread_mutex_lock(result->lock);
+	LOCK(result->not_ready);
 	// If the result isn't ready after obtaining the lock, then it must have (somehow) obtained the lock before 
 	// the worker thread finished, so release the lock until signaled.
-	while(!result->ready) pthread_cond_wait(result->cond, result->lock);
+	while(!result->ready) WAIT(result->is_ready, result->not_ready);
 	// Now that it's finished, release the lock.
-	pthread_mutex_unlock(result->lock);
+	UNLOCK(result->not_ready);
 	// Since the item is fully processed, return it's item.
 	return result->item;
 }
