@@ -8,39 +8,43 @@
 /// Check if a parameter was passed
 #define SELECTED(ARGUMENT, MACRO) ((ARGUMENT & MACRO))
 /// Used to lock the given mutex.
-#define LOCK(mutex) pthread_mutex_lock(mutex);
+#define LOCK(mutex) pthread_mutex_lock(mutex)
 /// Used to try to lock the mutex, returning immediately on failure.
-#define TRYLOCK(mutex) pthread_mutex_trylock(mutex);
+#define TRYLOCK(mutex) pthread_mutex_trylock(mutex)
 /// Used to unlock the given mutex.
-#define UNLOCK(mutex) pthread_mutex_unlock(mutex);
+#define UNLOCK(mutex) pthread_mutex_unlock(mutex)
 /// Causes the current thread to wait for a signal to be sent.
-#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex);
+#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex)
 /// Signals a thread waiting on the condition based on a default scheduler.
-#define SIGNAL(condition) pthread_cond_signal(condition);
+#define SIGNAL(condition) pthread_cond_signal(condition)
 /// Used to broadcast to all threads waiting on the condition variable.
-#define BROADCAST(condition) pthread_cond_broadcast(condition);
+#define BROADCAST(condition) pthread_cond_broadcast(condition)
 /// Used to atomically increment the variable.
-#define INCREMENT(var, mutex) (do { \
-								LOCK(mutex); \
-								var++; \
-								UNLOCK(mutex); \
-								}while(0))
+#define INCREMENT(var, mutex) \
+		do { \
+			LOCK(mutex); \
+			var++; \
+			UNLOCK(mutex); \
+		} while(0)
 /// Used to atomically decrement the variable.
-#define DECREMENT(var, mutex) (do { \
-								LOCK(mutex); \
-								var--; \
-								UNLOCK(mutex); \
-							    } while(0))
+#define DECREMENT(var, mutex) \
+		do { \
+			LOCK(mutex); \
+			var--; \
+			UNLOCK(mutex); \
+		} while(0)
 /// Used to quickly initialize a mutex.
-#define INIT_MUTEX(mutex, attr) (do { \
-								   mutex = malloc(sizeof(pthread_mutex_t));\
-								   pthread_mutex_init(mutex, attr);
-								} while(0))
+#define INIT_MUTEX(mutex, attr) \
+		    do { \
+			   mutex = malloc(sizeof(pthread_mutex_t));\
+			   pthread_mutex_init(mutex, attr); \
+			} while(0)
 /// Used to quickly initialize a condition variable.
-#define INIT_COND(cond, attr) (do { \
-								   cond = malloc(sizeof(pthread_cond_t));\
-								   pthread_cond_init(cond, attr);
-								} while(0))
+#define INIT_COND(cond, attr) \
+			do { \
+			   cond = malloc(sizeof(pthread_cond_t));\
+			   pthread_cond_init(cond, attr); \
+			} while(0)
 
 typedef struct Thread_Pool Thread_Pool;
 
@@ -58,7 +62,7 @@ typedef void *(*thread_callback)(void *args);
 
 struct Thread_Pool {
 	/// Array of threads.
-	pthread_t *threads;
+	pthread_t **threads;
 	/// The queue with all jobs assigned to it.
 	Task_Queue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
@@ -134,7 +138,7 @@ Binary_Semaphore *Binary_Semaphore_Create(void);
 Thread_Pool *TP_Create(size_t number_of_threads, int parameters);
 
 /// Add a task for the thread pool to process, returning a result struct.
-Result *TP_Add_Task(thread_pool *tp, thread_callback cb, void *args);
+Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args);
 
 /// Will destroy the Result and set it's reference to NULL.
 int TP_Result_Destroy(Result *result);
