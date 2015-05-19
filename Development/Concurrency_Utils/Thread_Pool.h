@@ -122,6 +122,8 @@ struct Task_Queue{
 	pthread_cond_t *new_task;
 	/// Lock to use on the condition variable
 	pthread_mutex_t *getting_task;
+	/// Lock to use when adding a task.
+	pthread_mutex_t *adding_task;
 
 };
 

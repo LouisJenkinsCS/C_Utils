@@ -20,7 +20,7 @@ void *print_hello(thread_task *task){
 	int i = 0;
 	for(; i<task->amount; i++) {
 		iterations++;
-		printf("Thread %d; Iteration %d;\nHello World!", task->thread_id, i);
+		printf("Task %d; Iteration %d;\nHello World!", task->thread_id, i);
 		pthread_yield();
 	}
 	free(task);
@@ -28,20 +28,23 @@ void *print_hello(thread_task *task){
 }
 
 int main(void){
-	const int num_threads = 10;
-	const int runs = 1000;
+	const int num_threads = 250;
+	const unsigned int num_tasks = 100000;
+	const int runs = 5;
 	Thread_Pool *tp = TP_Create(num_threads, NONE);
 	printf("Thread Pool created\n");
-	Result **result = malloc(sizeof(Result) * runs);
+	Result **result = malloc(sizeof(Result) * num_tasks);
 	int i = 0;
-	for(;i<num_threads;i++){
+	for(;i<num_tasks ;i++){
 		thread_task *task = TT_Create(i+1, runs);
 		result[i] = TP_Add_Task(tp, (void *)print_hello, task);
 	}
 	printf("All threads started!\n");
-	//TP_Obtain_Result(result[runs-2]);
-	sleep(5);
-	printf("Total iterations %d; Should be %d; %s\n" ,iterations, num_threads * runs
-		,iterations == runs * num_threads ? "True" : "False");
+	TP_Obtain_Result(result[num_tasks -1]);
+	printf("Total iterations %d; Should be %d; %s\n" ,iterations, num_tasks * runs
+		,iterations == runs * num_tasks ? "True" : "False");
+	for(i=0; i<num_tasks; i++){
+		TP_Result_Destroy(result[i]);
+	}
 	return EXIT_SUCCESS;
 }

@@ -24,15 +24,18 @@ static Task *next_task(Task_Queue *queue){
 	Task *task = NULL;
 	// Note: Generally the head of the queue will always be the one which needs to
 	// be processed next, but this is extra insurance.
+	LOCK(queue->adding_task);
 	for(task = queue->head; task; task = task->next){
 		// If the lock can be acquired, then it's not currently being processed.
 		// Also, since this is already being processed, remove it from the queue.
 		if(TRYLOCK(task->being_processed) == 0){
 			queue->head = task->next;
 			queue->size--;
+			UNLOCK(queue->adding_task);
 			return task;
 		}
 	}
+	UNLOCK(queue->adding_task);
 	return NULL;
 }
 
@@ -96,6 +99,7 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	//queue->semaphore = Binary_Semaphore_Create();
 	INIT_COND(queue->new_task, NULL);
 	INIT_MUTEX(queue->getting_task, NULL);
+	INIT_MUTEX(queue->adding_task, NULL);
 	tp->queue = queue;
 	INIT_MUTEX(tp->thread_count_change, NULL);
 	int i = 0;
@@ -121,8 +125,15 @@ Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args){
 	Task *task = malloc(sizeof(Task));
 	task->cb = cb;
 	task->args = args;
-	task->next = tp->queue->head;
-	tp->queue->head = task;
+	LOCK(tp->queue->adding_task);
+	if(tp->queue->size == 0){
+		task->next = NULL;
+		tp->queue->head = tp->queue->tail = task;
+	} else {
+		tp->queue->tail->next = tp->queue->tail = task;
+		task->next = NULL;
+	}
+	UNLOCK(tp->queue->adding_task);
 	INIT_MUTEX(task->being_processed, NULL);
 	task->result = result;
 	tp->queue->size++;
@@ -148,4 +159,9 @@ void *TP_Obtain_Result(Result *result){
 	UNLOCK(result->not_ready);
 	// Since the item is fully processed, return it's item.
 	return result->item;
+}
+
+void *TP_Wait(Thread_Pool *tp){
+	// TODO: Create a function which waits until the last task is finished.
+	// Find a way to do it without adding too many condition variables.
 }
