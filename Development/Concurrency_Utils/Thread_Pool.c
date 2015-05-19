@@ -4,30 +4,7 @@
 #include <assert.h>
 #include "Thread_Pool.h"
 
-/// Used to lock the given mutex.
-#define LOCK(mutex) pthread_mutex_lock(mutex);
-/// Used to try to lock the mutex, returning immediately on failure.
-#define TRYLOCK(mutex) pthread_mutex_trylock(mutex);
-/// Used to unlock the given mutex.
-#define UNLOCK(mutex) pthread_mutex_unlock(mutex);
-/// Causes the current thread to wait for a signal to be sent.
-#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex);
-/// Signals a thread waiting on the condition based on a default scheduler.
-#define SIGNAL(condition) pthread_cond_signal(condition);
-/// Used to broadcast to all threads waiting on the condition variable.
-#define BROADCAST(condition) pthread_cond_broadcast(condition);
-/// Used to atomically increment the count.
-#define INCREMENT(var, mutex) (do { \
-								LOCK(mutex); \
-								var++; \
-								UNLOCK(mutex); \
-								})
-/// Used to atomically decrement the count.
-#define DECREMENT(var, mutex) (do { \
-								LOCK(mutex); \
-								var--; \
-								UNLOCK(mutex); \
-							    })
+
 void BS_Unlock(Binary_Semaphore *semaphore){
 	LOCK(semaphore->mutex);
 	// If the thread somehow attempts to unlock without having the actual lock, something went wrong.
@@ -57,9 +34,16 @@ Binary_Semaphore *Binary_Semaphore_Create(void){
 
 static Task *next_task(Task_Queue *queue){
 	Task *task = NULL;
+	// Note: Generally the head of the queue will always be the one which needs to
+	// be processed next, but this is extra insurance.
 	for(task = queue->head; task; task = task->next){
-		// int pthread_mutex_trylock(pthread_mutex_t *mutex) returns 0 on success.
-		if(!TRYLOCK(task->being_processed)) return task;
+		// If the lock can be acquired, then it's not currently being processed.
+		// Also, since this is already being processed, remove it from the queue.
+		if(TRYLOCK(task->being_processed) == 0){
+			queue->head = task->next;
+			queue->size--;
+			return task;
+		}
 	}
 	return NULL;
 }
@@ -94,21 +78,20 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	queue->head = NULL;
 	queue->tail = NULL;
 	queue->size = 0;
-	queue->semaphore = Binary_Semaphore_Create();
+	//queue->semaphore = Binary_Semaphore_Create();
+	INIT_COND(queue->new_task);
+	INIT_MUTEX(queue->getting_task);
 	tp->queue = queue;
+	INIT_MUTEX(tp->thread_count_change);
 	int i = 0;
-	// Create the number of threads, also sends the threadpool as an argument.
 	for(;i < number_of_threads; i++){
 		tp->threads[i] = malloc(sizeof(pthread_t));
 		pthread_create(tp->threads[i], NULL, Get_Tasks, tp);
 	}
+	return tp;
 }
 
-static void add_task(Sub_Process *process){
-
-}
-
-static void *Process_Task(Task *task){
+static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
 	LOCK(task->result->not_ready);
 	task->result->item = task->cb(task->args);
@@ -118,33 +101,34 @@ static void *Process_Task(Task *task){
 	// Release lock.
 	UNLOCK(task->result->not_ready);
 	UNLOCK(task->being_processed);
+	free(task);
 	return NULL;
 }
 
-Result *TP_Add_Task(thread_pool *tp, thread_callback cb, void *args, int parameters){
+Result *TP_Add_Task(thread_pool *tp, thread_callback cb, void *args){
 	// Initialize Result to be returned.
 	Result *result = malloc(sizeof(Result));
 	result->ready = 0;
 	result->item = NULL;
+	INIT_MUTEX(result->not_ready);
+	INIT_COND(result->is_ready);
 	// Initialize Task to be processed.
 	Task *task = malloc(sizeof(Task));
 	task->cb = cb;
 	task->args = arg;
-	// Initialize Sub_Process to process task and result.
-	Sub_Process *proc = malloc(sizeof(Sub_Process));
-	proc->result = result;
-	proc->task = task;
-	// Add task to job queue.
-	add_task(proc);
+	task->next = tp->queue->head;
+	tp->queue->head = task;
+	INIT_MUTEX(task->being_processed);
+	task->result = result;
+	SIGNAL(tp->queue->new_task);
 	return result;
 }
 
 /// Will destroy the Result and set it's reference to NULL.
 int TP_Result_Destroy(Result *result){
-	pthread_mutex_destroy(result->lock);
-	pthread_cond_destroy(result->cond);
+	pthread_mutex_destroy(result->not_ready);
+	pthread_cond_destroy(result->is_ready);
 	free(result);
-	result = NULL;
 	return 1;
 }
 /// Will block until result is ready. 
