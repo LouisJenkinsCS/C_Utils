@@ -125,6 +125,7 @@ Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args){
 	tp->queue->head = task;
 	INIT_MUTEX(task->being_processed, NULL);
 	task->result = result;
+	tp->queue->size++;
 	SIGNAL(tp->queue->new_task);
 	return result;
 }
