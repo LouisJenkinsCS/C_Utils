@@ -103,6 +103,7 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	for(;i < number_of_threads; i++){
 		tp->threads[i] = malloc(sizeof(pthread_t));
 		pthread_create(tp->threads[i], NULL, Get_Tasks, tp);
+		tp->thread_count++;
 	}
 	return tp;
 }
