@@ -54,8 +54,6 @@ typedef struct Sub_Process Sub_Process;
 
 typedef struct Task Task;
 
-typedef struct Binary_Semaphore Binary_Semaphore;
-
 typedef struct Task_Queue Task_Queue;
 
 typedef void *(*thread_callback)(void *args);
@@ -73,15 +71,6 @@ struct Thread_Pool {
 	volatile unsigned char keep_alive;
 	/// Mutex for thread_count and active_threads, and keep_alive.
 	pthread_mutex_t *thread_count_change;
-};
-
-struct Binary_Semaphore {
-	/// The lock to simulate a binary semaphore.
-	pthread_mutex_t *mutex;
-	/// Condition variable to wait on.
-	pthread_cond_t *cond;
-	/// Dictates whether or not it is held.
-	unsigned char held;
 };
 
 struct Result {
@@ -116,25 +105,17 @@ struct Task_Queue{
 	Task *tail;
 	/// Maintains the size of the current queue.
 	size_t size;
-	/// Binary Semaphore for allowing threads to get the next task.
-	Binary_Semaphore *semaphore;
+	/// Condition variable to signal that all tasks are finished.
+	pthread_cond_t *is_finished;
+	/// Lock to use to wait until is_finished is signaled.
+	pthread_mutex_t *no_tasks;
 	/// Condition variable to signal when a task is added to the queue.
 	pthread_cond_t *new_task;
-	/// Lock to use on the condition variable
-	pthread_mutex_t *getting_task;
+	/// Lock to use to wait until a new task is added.
+	pthread_mutex_t *await_task;
 	/// Lock to use when adding a task.
 	pthread_mutex_t *adding_task;
-
 };
-
-/// Unlocks the given semaphore.
-void BS_Unlock(Binary_Semaphore *semaphore);
-
-/// Locks the given binary semaphore.
-void BS_Lock(Binary_Semaphore *semaphore);
-
-/// Used for the threadpool.
-Binary_Semaphore *Binary_Semaphore_Create(void);
 
 /// Creates thread pool with the static number of threads.
 Thread_Pool *TP_Create(size_t number_of_threads, int parameters);
@@ -147,4 +128,7 @@ int TP_Result_Destroy(Result *result);
 
 /// Will block until result is ready. 
 void *TP_Obtain_Result(Result *result);
+
+/// Will block until the task queue is empty.
+void TP_Wait(Thread_Pool *tp);
 #endif /* END THREAD_POOL_H */

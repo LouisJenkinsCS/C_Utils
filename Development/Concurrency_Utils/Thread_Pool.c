@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <assert.h>
 #include "Thread_Pool.h"
 
 
@@ -43,50 +42,28 @@ static void *Get_Tasks(void *args){
 	Thread_Pool *tp = args;
 	while(tp->keep_alive){
 		// Wait until signal is sent, when task is given.
-		LOCK(tp->queue->getting_task);
+		LOCK(tp->queue->await_task);
 		while(!tp->queue->size){
 			// If the queue size is empty, wait until something has been added.
-			WAIT(tp->queue->new_task, tp->queue->getting_task);
+			WAIT(tp->queue->new_task, tp->queue->await_task);
 		}
 		// If while it was waiting, the keep_alive flag has changed, then break the while loop.
 		if(!tp->keep_alive) break;
 		Task *task = next_task(tp->queue);
-		UNLOCK(tp->queue->getting_task);
+		UNLOCK(tp->queue->await_task);
 		if(!task) continue;
 		INCREMENT(tp->active_threads, tp->thread_count_change);
 		Process_Task(task);
 		DECREMENT(tp->active_threads, tp->thread_count_change);
+		LOCK(tp->queue->no_tasks);
+		if(queue->size == 0 && tp->active_threads == 0) SIGNAL(queue->is_finished);
+		UNLOCK(tp->queue->no_tasks);
 	}
 	DECREMENT(tp->thread_count, tp->thread_count_change);
 	return NULL;
 }
 
 /* End Static, Private functions. */
-
-void BS_Unlock(Binary_Semaphore *semaphore){
-	LOCK(semaphore->mutex);
-	// If the thread somehow attempts to unlock without having the actual lock, something went wrong.
-	assert(semaphore->held == 1);
-	semaphore->held = 0;
-	// Signal that the semaphore is no longer being held.
-	SIGNAL(semaphore->cond);
-	UNLOCK(semaphore->mutex);
-}
-
-void BS_Lock(Binary_Semaphore *semaphore){
-	LOCK(semaphore->mutex);
-	while(semaphore->held) WAIT(semaphore->cond, semaphore->mutex);
-	semaphore->held = 1;
-	UNLOCK(semaphore->mutex);
-}
-
-Binary_Semaphore *Binary_Semaphore_Create(void){
-	Binary_Semaphore *semaphore = malloc(sizeof(Binary_Semaphore));
-	INIT_MUTEX(semaphore->mutex, NULL);
-	INIT_COND(semaphore->cond, NULL);
-	semaphore->held = 0;
-	return semaphore;
-}
 
 Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	Thread_Pool *tp = malloc(sizeof(Thread_Pool));
@@ -96,10 +73,11 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	queue->head = NULL;
 	queue->tail = NULL;
 	queue->size = 0;
-	//queue->semaphore = Binary_Semaphore_Create();
 	INIT_COND(queue->new_task, NULL);
+	INIT_COND(queue->is_empty, NULL);
 	INIT_MUTEX(queue->getting_task, NULL);
 	INIT_MUTEX(queue->adding_task, NULL);
+	INIT_MUTEX(queue->await_task, NULL);
 	tp->queue = queue;
 	INIT_MUTEX(tp->thread_count_change, NULL);
 	int i = 0;
@@ -161,7 +139,14 @@ void *TP_Obtain_Result(Result *result){
 	return result->item;
 }
 
-void *TP_Wait(Thread_Pool *tp){
-	// TODO: Create a function which waits until the last task is finished.
-	// Find a way to do it without adding too many condition variables.
+void TP_Wait(Thread_Pool *tp){
+	LOCK(tp->queue->no_tasks);
+	while(tp->queue->size != 0) WAIT(tp->queue->is_finished, tp->queue->no_tasks);
+	UNLOCK(tp->queue->no_tasks);
 }
+
+int TP_Destroy(Thread_Pool *tp){
+	// TODO: Create a destructor for the thread pool. Must shutdown the current threads
+	// Maybe wait until all threads are finished, or maybe shutdown depending on parameter.
+}
+
