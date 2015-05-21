@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include "Thread_Pool.h"
 
+/* Initialize Thread Pool as static. */
+static Thread_Pool *tp = NULL;
 
 /* Begin Static, Private functions */
 
@@ -45,7 +47,7 @@ static void *Get_Tasks(void *args){
 	while(tp->keep_alive){
 		// Wait until signal is sent, when task is given.
 		LOCK(tp->queue->await_task);
-		while(!tp->queue->size && tp->keep_alive){
+		while(tp->queue->size != 0 && tp->keep_alive){
 			// If the queue size is empty, wait until something has been added.
 			WAIT(tp->queue->new_task, tp->queue->await_task);
 		}
@@ -77,8 +79,8 @@ static void *Get_Tasks(void *args){
 
 /* End Static, Private functions. */
 
-Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
-	Thread_Pool *tp = malloc(sizeof(Thread_Pool));
+int Thread_Pool_Init(size_t number_of_threads){
+	tp = malloc(sizeof(Thread_Pool));
 	tp->keep_alive = 1;
 	tp->thread_count = tp->active_threads = 0;
 	Task_Queue *queue = malloc(sizeof(Task_Queue));
@@ -108,7 +110,7 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 
 
 
-Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args){
+Result *Thread_Pool_Add_Task(thread_callback cb, void *args){
 	// Initialize Result to be returned.
 	Result *result = malloc(sizeof(Result));
 	result->ready = 0;
@@ -136,14 +138,14 @@ Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args){
 }
 
 /// Will destroy the Result and set it's reference to NULL.
-int TP_Result_Destroy(Result *result){
+int Thread_Pool_Result_Destroy(Result *result){
 	DESTROY_MUTEX(result->not_ready);
 	DESTROY_COND(result->is_ready);
 	free(result);
 	return 1;
 }
 /// Will block until result is ready. 
-void *TP_Obtain_Result(Result *result){
+void *Thread_Pool_Obtain_Result(Result *result){
 	// Attempts to obtain the lock before proceeding, since the worker thread will only unlock when it's finished.
 	LOCK(result->not_ready);
 	// If the result isn't ready after obtaining the lock, then it must have (somehow) obtained the lock before 
@@ -155,13 +157,13 @@ void *TP_Obtain_Result(Result *result){
 	return result->item;
 }
 
-void TP_Wait(Thread_Pool *tp){
+void Thread_Pool_Wait(void){
 	LOCK(tp->queue->no_tasks);
 	while(tp->queue->size != 0 || tp->active_threads != 0) WAIT(tp->queue->is_finished, tp->queue->no_tasks);
 	UNLOCK(tp->queue->no_tasks);
 }
 
-int TP_Destroy(Thread_Pool *tp){
+int Thread_Pool_Destroy(Thread_Pool *tp){
 	size_t thread_count = tp->thread_count;
 	TP_Wait(tp);
 	tp->keep_alive = 0;
@@ -192,6 +194,20 @@ int TP_Destroy(Thread_Pool *tp){
 	int i = 0;
 	free(tp->threads);
 	free(tp);
+	tp = NULL;
 	return 1;
 }
 
+int Thread_Pool_Pause(void){
+	int successful_pauses;
+	int i = 0;
+	for(;i<tp->thread_count;i++)
+		if (PAUSE(tp->threads[i]) == 0)
+			successful_pauses++;
+	// The only time this function is successful is if it successfully paused all threads.
+	return successful_pauses == tp->thread_count;
+}
+
+int Thread_Pool_Timed_Pause(unsigned int seconds);
+
+int Thread_Pool_Resume(Thread_Pool *tp);

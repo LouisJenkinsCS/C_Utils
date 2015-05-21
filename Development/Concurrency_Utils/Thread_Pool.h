@@ -19,6 +19,8 @@
 #define SIGNAL(condition) pthread_cond_signal(condition)
 /// Used to broadcast to all threads waiting on the condition variable.
 #define BROADCAST(condition) pthread_cond_broadcast(condition)
+/// Macro used to pause the thread, as the function name is very misleading. Sends SIGUSR1 signal.
+#define PAUSE(thread) pthread_kill(thread, SIGUSR1)
 /// Used to atomically increment the variable.
 #define INCREMENT(var, mutex) \
 		do { \
@@ -90,6 +92,9 @@ struct Thread_Pool {
 	pthread_mutex_t *thread_count_change;
 };
 
+/// Global (Static) Thread Pool struct, feels like it's unavoidable.
+extern Thread_Pool *tp;
+
 struct Result {
 	/// Lock to protect contents of 'Result'
 	pthread_mutex_t *not_ready;
@@ -135,17 +140,26 @@ struct Task_Queue{
 };
 
 /// Creates thread pool with the static number of threads.
-Thread_Pool *TP_Create(size_t number_of_threads, int parameters);
+int Thread_Pool_Init(size_t number_of_threads);
 
 /// Add a task for the thread pool to process, returning a result struct.
-Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args);
+Result *Thread_Pool_Add_Task(thread_callback cb, void *args);
 
 /// Will destroy the Result and set it's reference to NULL.
-int TP_Result_Destroy(Result *result);
+int Thread_Pool_Result_Destroy(Result *result);
 
 /// Will block until result is ready. 
-void *TP_Obtain_Result(Result *result);
+void *Thread_Pool_Obtain_Result(Result *result);
 
 /// Will block until the task queue is empty.
-void TP_Wait(Thread_Pool *tp);
+void Thread_Pool_Wait(void);
+
+/// Will pause all threads until a signal to resume to sent.
+int Thread_Pool_Pause(void);
+
+/// Will pause all threads until a signal to resume is sent or the time passed has ellapsed.
+int Thread_Pool_Timed_Pause(unsigned int seconds);
+
+/// Will resume all currently paused threads.
+int Thread_Pool_Resume(void);
 #endif /* END THREAD_POOL_H */
