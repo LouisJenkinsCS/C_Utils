@@ -36,16 +36,33 @@
 /// Used to quickly initialize a mutex.
 #define INIT_MUTEX(mutex, attr) \
 		    do { \
-			   mutex = malloc(sizeof(pthread_mutex_t));\
+			   mutex = malloc(sizeof(pthread_mutex_t)); \
 			   pthread_mutex_init(mutex, attr); \
 			} while(0)
 /// Used to quickly initialize a condition variable.
 #define INIT_COND(cond, attr) \
 			do { \
-			   cond = malloc(sizeof(pthread_cond_t));\
+			   cond = malloc(sizeof(pthread_cond_t)); \
 			   pthread_cond_init(cond, attr); \
 			} while(0)
-
+/// Free the mutex.
+#define DESTROY_MUTEX(mutex) \
+			do { \
+				pthread_mutex_destroy(mutex); \
+				free(mutex); \
+			} while(0)
+/// Free the condition variable.
+#define DESTROY_COND(cond) \
+			do { \
+				pthread_cond_destroy(cond); \
+				free(cond); \
+			} while(0)
+/// Simple macro to enable debug
+#define TP_DEBUG 0
+/// Print a message if and only if TP_DEBUG is enabled.
+#define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
+/// Print a formatted message if and only if TP_DEBUG is enabled.
+#define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
 typedef struct Thread_Pool Thread_Pool;
 
 typedef struct Result Result;

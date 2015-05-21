@@ -16,6 +16,7 @@ static void Process_Task(Task *task){
 	// Release lock.
 	UNLOCK(task->result->not_ready);
 	UNLOCK(task->being_processed);
+	DESTROY_MUTEX(task->being_processed);
 	free(task);
 }
 
@@ -40,15 +41,20 @@ static Task *next_task(Task_Queue *queue){
 
 static void *Get_Tasks(void *args){
 	Thread_Pool *tp = args;
+	//pthread_detach(pthread_self());
 	while(tp->keep_alive){
 		// Wait until signal is sent, when task is given.
 		LOCK(tp->queue->await_task);
-		while(!tp->queue->size){
+		while(!tp->queue->size && tp->keep_alive){
 			// If the queue size is empty, wait until something has been added.
 			WAIT(tp->queue->new_task, tp->queue->await_task);
 		}
 		// If while it was waiting, the keep_alive flag has changed, then break the while loop.
-		if(!tp->keep_alive) break;
+		if(!tp->keep_alive) {
+			UNLOCK(tp->queue->await_task);
+			SIGNAL(tp->queue->new_task);
+			break;
+		}
 		Task *task = next_task(tp->queue);
 		UNLOCK(tp->queue->await_task);
 		if(!task) continue;
@@ -56,10 +62,16 @@ static void *Get_Tasks(void *args){
 		Process_Task(task);
 		DECREMENT(tp->active_threads, tp->thread_count_change);
 		LOCK(tp->queue->no_tasks);
-		if(queue->size == 0 && tp->active_threads == 0) SIGNAL(queue->is_finished);
+		// Note to self: This is probably the cause for the random results for completed iterations.
+		// If all 8 threads, while extremely rare but very much possible, are waiting on this lock,
+		// after they have decremented the active_thread count and the task queue is 0, it will be
+		// flagged as finish when it actually isn't.
+		if(tp->queue->size == 0 && tp->active_threads == 0) SIGNAL(tp->queue->is_finished);
 		UNLOCK(tp->queue->no_tasks);
 	}
 	DECREMENT(tp->thread_count, tp->thread_count_change);
+	TP_DEBUG_PRINTF("Thread count decremented: %d\n", tp->thread_count);
+	pthread_exit(NULL);
 	return NULL;
 }
 
@@ -74,19 +86,23 @@ Thread_Pool *TP_Create(size_t number_of_threads, int parameters){
 	queue->tail = NULL;
 	queue->size = 0;
 	INIT_COND(queue->new_task, NULL);
-	INIT_COND(queue->is_empty, NULL);
-	INIT_MUTEX(queue->getting_task, NULL);
-	INIT_MUTEX(queue->adding_task, NULL);
+	INIT_COND(queue->is_finished, NULL);
 	INIT_MUTEX(queue->await_task, NULL);
+	INIT_MUTEX(queue->adding_task, NULL);
+	INIT_MUTEX(queue->no_tasks, NULL);
 	tp->queue = queue;
 	INIT_MUTEX(tp->thread_count_change, NULL);
 	int i = 0;
 	tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
 		tp->threads[i] = malloc(sizeof(pthread_t));
-		pthread_create(tp->threads[i], NULL, Get_Tasks, tp);
+		pthread_create(tp->threads[i], &attr, Get_Tasks, tp);
 		tp->thread_count++;
 	}
+	pthread_attr_destroy(&attr);
 	return tp;
 }
 
@@ -121,8 +137,8 @@ Result *TP_Add_Task(Thread_Pool *tp, thread_callback cb, void *args){
 
 /// Will destroy the Result and set it's reference to NULL.
 int TP_Result_Destroy(Result *result){
-	pthread_mutex_destroy(result->not_ready);
-	pthread_cond_destroy(result->is_ready);
+	DESTROY_MUTEX(result->not_ready);
+	DESTROY_COND(result->is_ready);
 	free(result);
 	return 1;
 }
@@ -141,12 +157,41 @@ void *TP_Obtain_Result(Result *result){
 
 void TP_Wait(Thread_Pool *tp){
 	LOCK(tp->queue->no_tasks);
-	while(tp->queue->size != 0) WAIT(tp->queue->is_finished, tp->queue->no_tasks);
+	while(tp->queue->size != 0 || tp->active_threads != 0) WAIT(tp->queue->is_finished, tp->queue->no_tasks);
 	UNLOCK(tp->queue->no_tasks);
 }
 
 int TP_Destroy(Thread_Pool *tp){
-	// TODO: Create a destructor for the thread pool. Must shutdown the current threads
-	// Maybe wait until all threads are finished, or maybe shutdown depending on parameter.
+	size_t thread_count = tp->thread_count;
+	TP_Wait(tp);
+	tp->keep_alive = 0;
+	// Broadcast to all threads to wake up on new_task condition variable.
+	BROADCAST(tp->queue->new_task);
+	// We wait until all tasks are finished before freeing the Thread Pool and threads.
+	TP_DEBUG_PRINTF("Queue Size: %d\n", tp->queue->size);
+	TP_Wait(tp);
+	while(tp->thread_count != 0) sleep(0);
+	TP_DEBUG_PRINT("Made it past Wait!\n");
+	// Free all Task_Queue mutexes and condition variables.
+	DESTROY_MUTEX(tp->queue->no_tasks);
+	TP_DEBUG_PRINT("Destroyed Mutex: no_tasks\n");
+	DESTROY_MUTEX(tp->queue->await_task);
+	TP_DEBUG_PRINT("Destroyed Mutex: await_task\n");
+	DESTROY_MUTEX(tp->queue->adding_task);
+	TP_DEBUG_PRINT("Destroyed Mutex: adding_task\n");
+	DESTROY_COND(tp->queue->new_task);
+	TP_DEBUG_PRINT("Destroyed Condition Variable: new_task\n");
+	DESTROY_COND(tp->queue->is_finished);
+	TP_DEBUG_PRINT("Destroyed Condition_Variable: is_finished\n");
+	free(tp->queue);
+	TP_DEBUG_PRINT("Destroyed Task_Queue\n");
+	// Free Thread_Pool's mutexes and condition variables.
+	DESTROY_MUTEX(tp->thread_count_change);
+	TP_DEBUG_PRINT("Destroyed Mutex: thread_count_change\n");
+	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
+	int i = 0;
+	free(tp->threads);
+	free(tp);
+	return 1;
 }
 
