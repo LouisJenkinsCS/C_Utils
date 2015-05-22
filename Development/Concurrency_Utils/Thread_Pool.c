@@ -155,7 +155,6 @@ static void *Get_Tasks(void *args){
 	}
 	DECREMENT(tp->thread_count, tp->thread_count_change);
 	TP_DEBUG_PRINTF("Thread count decremented: %d\n", tp->thread_count);
-	//pthread_exit(NULL);
 	return NULL;
 }
 
@@ -265,7 +264,11 @@ int Thread_Pool_Destroy(void){
 	DESTROY_COND(tp->queue->is_finished);
 	free(tp->queue);
 	DESTROY_MUTEX(tp->thread_count_change);
+	DESTROY_COND(tp->resume);
+	DESTROY_MUTEX(tp->pause);
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
+	int i = 0;
+	for(;i<thread_count;i++)free(tp->threads[i]);
 	free(tp->threads);
 	free(tp);
 	tp = NULL;
