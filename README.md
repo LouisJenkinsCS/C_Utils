@@ -6,12 +6,6 @@ As my mind seems to be as fickle as my luck, C_Utils doesn't really have a set g
 C_Utils is going to be a personal side project that I will want to implement as libraries in future side projects. They're not for anyone else to use, just my own.
 
 
-## Network_Utils
-
-### Summary
-
-Basic networking. Basically, creating sockets, basic server-client basic structs, send and receiving information over the network. I might also try to attempt serialization, or at the very least send string-representation of objects (might have to work in unison with File and String Utils).
-
 ## File_Utils
 
 ### Summary
