@@ -1,12 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <signal.h>
 #include "Thread_Pool.h"
 
 /* Initialize Thread Pool as static. */
 static Thread_Pool *tp = NULL;
 
 /* Begin Static, Private functions */
+
+/// The callback used to handle pausing all threads.
+/// Also this is the primary reason for using a global (static) thread pool.
+static void Pause_Handler(){
+	LOCK(tp->pause);
+	while(tp->paused) WAIT(tp->resume, tp->pause);
+	UNLOCK(tp->pause);
+}
 
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
@@ -20,6 +29,7 @@ static void Process_Task(Task *task){
 	UNLOCK(task->being_processed);
 	DESTROY_MUTEX(task->being_processed);
 	free(task);
+	TP_DEBUG_PRINT("A thread finished their task!\n");
 }
 
 static Task *next_task(Task_Queue *queue){
@@ -37,17 +47,21 @@ static Task *next_task(Task_Queue *queue){
 			return task;
 		}
 	}
+	TP_DEBUG_PRINT("Task returned NULL\n");
 	UNLOCK(queue->adding_task);
 	return NULL;
 }
 
 static void *Get_Tasks(void *args){
-	Thread_Pool *tp = args;
-	//pthread_detach(pthread_self());
+	// Set up the signal handler to pause.
+	struct sigaction pause_signal;
+	pause_signal.sa_handler = Pause_Handler;
+	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) fprintf(stderr, "Get_Task callback was unable to initialize a pause_handler\n");
 	while(tp->keep_alive){
 		// Wait until signal is sent, when task is given.
 		LOCK(tp->queue->await_task);
-		while(tp->queue->size != 0 && tp->keep_alive){
+		while(tp->queue->size == 0 && tp->keep_alive){
+			TP_DEBUG_PRINTF("Queue Size: %d, Keep_Alive: %d\n", tp->queue->size, tp->keep_alive);
 			// If the queue size is empty, wait until something has been added.
 			WAIT(tp->queue->new_task, tp->queue->await_task);
 		}
@@ -58,7 +72,9 @@ static void *Get_Tasks(void *args){
 			break;
 		}
 		Task *task = next_task(tp->queue);
+		//printf("A thread got a task!\n");
 		UNLOCK(tp->queue->await_task);
+		//printf("A thread unlocked: await_task\n");
 		if(!task) continue;
 		INCREMENT(tp->active_threads, tp->thread_count_change);
 		Process_Task(task);
@@ -82,6 +98,7 @@ static void *Get_Tasks(void *args){
 int Thread_Pool_Init(size_t number_of_threads){
 	tp = malloc(sizeof(Thread_Pool));
 	tp->keep_alive = 1;
+	tp->paused = 0;
 	tp->thread_count = tp->active_threads = 0;
 	Task_Queue *queue = malloc(sizeof(Task_Queue));
 	queue->head = NULL;
@@ -93,7 +110,9 @@ int Thread_Pool_Init(size_t number_of_threads){
 	INIT_MUTEX(queue->adding_task, NULL);
 	INIT_MUTEX(queue->no_tasks, NULL);
 	tp->queue = queue;
+	INIT_COND(tp->resume, NULL);
 	INIT_MUTEX(tp->thread_count_change, NULL);
+	INIT_MUTEX(tp->pause, NULL);
 	int i = 0;
 	tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
 	pthread_attr_t attr;
@@ -101,11 +120,11 @@ int Thread_Pool_Init(size_t number_of_threads){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
 		tp->threads[i] = malloc(sizeof(pthread_t));
-		pthread_create(tp->threads[i], &attr, Get_Tasks, tp);
+		pthread_create(tp->threads[i], &attr, Get_Tasks, NULL);
 		tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
-	return tp;
+	return 1;
 }
 
 
@@ -163,15 +182,14 @@ void Thread_Pool_Wait(void){
 	UNLOCK(tp->queue->no_tasks);
 }
 
-int Thread_Pool_Destroy(Thread_Pool *tp){
+int Thread_Pool_Destroy(void){
 	size_t thread_count = tp->thread_count;
-	TP_Wait(tp);
 	tp->keep_alive = 0;
 	// Broadcast to all threads to wake up on new_task condition variable.
 	BROADCAST(tp->queue->new_task);
+	Thread_Pool_Wait();
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
 	TP_DEBUG_PRINTF("Queue Size: %d\n", tp->queue->size);
-	TP_Wait(tp);
 	while(tp->thread_count != 0) sleep(0);
 	TP_DEBUG_PRINT("Made it past Wait!\n");
 	// Free all Task_Queue mutexes and condition variables.
@@ -191,7 +209,6 @@ int Thread_Pool_Destroy(Thread_Pool *tp){
 	DESTROY_MUTEX(tp->thread_count_change);
 	TP_DEBUG_PRINT("Destroyed Mutex: thread_count_change\n");
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
-	int i = 0;
 	free(tp->threads);
 	free(tp);
 	tp = NULL;
@@ -201,13 +218,16 @@ int Thread_Pool_Destroy(Thread_Pool *tp){
 int Thread_Pool_Pause(void){
 	int successful_pauses;
 	int i = 0;
-	for(;i<tp->thread_count;i++)
-		if (PAUSE(tp->threads[i]) == 0)
-			successful_pauses++;
+	for(;i<tp->thread_count;i++) if (PAUSE(*tp->threads[i]) == 0) successful_pauses++;
 	// The only time this function is successful is if it successfully paused all threads.
+	tp->paused = 1;
 	return successful_pauses == tp->thread_count;
 }
 
 int Thread_Pool_Timed_Pause(unsigned int seconds);
 
-int Thread_Pool_Resume(Thread_Pool *tp);
+int Thread_Pool_Resume(void){
+	int result = BROADCAST(tp->resume) == 0;
+	tp->paused = 0;
+	return result;
+}

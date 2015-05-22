@@ -88,12 +88,16 @@ struct Thread_Pool {
 	size_t active_threads;
 	/// Flag to keep all threads alive.
 	volatile unsigned char keep_alive;
+	/// Flag used to pause all threads
+	volatile unsigned char paused;
 	/// Mutex for thread_count and active_threads, and keep_alive.
 	pthread_mutex_t *thread_count_change;
+	/// Condition variable used to resume all threads.
+	pthread_cond_t *resume;
+	/// Mutex accompanied by the condition variable.
+	pthread_mutex_t *pause;
 };
 
-/// Global (Static) Thread Pool struct, feels like it's unavoidable.
-extern Thread_Pool *tp;
 
 struct Result {
 	/// Lock to protect contents of 'Result'
@@ -147,6 +151,9 @@ Result *Thread_Pool_Add_Task(thread_callback cb, void *args);
 
 /// Will destroy the Result and set it's reference to NULL.
 int Thread_Pool_Result_Destroy(Result *result);
+
+/// Destroy the thread pool.
+int Thread_Pool_Destroy(void);
 
 /// Will block until result is ready. 
 void *Thread_Pool_Obtain_Result(Result *result);

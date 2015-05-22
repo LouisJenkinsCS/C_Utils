@@ -21,7 +21,7 @@ void *print_hello(thread_task *task){
 	int i = 0;
 	for(; i<task->amount; i++) {
 		iterations++;
-		//printf("Task %d; Iteration %d;\nHello World!", task->thread_id, i);
+		printf("Task %d; Iteration %d;\n", task->thread_id, i+1);
 		pthread_yield();
 	}
 	free(task);
@@ -36,7 +36,7 @@ char *format_time(double time){
 	}
 	while((int)(time/60)){
 		minutes++;
-		time -= minutes;
+		time -= 60;
 	}
 	while((int)time){
 		seconds++;
@@ -48,29 +48,34 @@ char *format_time(double time){
 }
 
 int main(void){
-	const int num_threads = 10;
+	const int num_threads = 2;
 	const unsigned int num_tasks = 1000;
-	const int runs = 1;
+	const int runs = 50;
 	time_t *start = malloc(sizeof(time_t));
 	time_t *end = malloc(sizeof(time_t));
 	time(start);
-	Thread_Pool *tp = TP_Create(num_threads, NONE);
+	Thread_Pool_Init(num_threads);
 	printf("Thread Pool created\n");
 	Result **result = malloc(sizeof(Result) * num_tasks);
 	int i = 0;
 	for(;i<num_tasks ;i++){
 		thread_task *task = TT_Create(i+1, runs);
-		result[i] = TP_Add_Task(tp, (void *)print_hello, task);
+		result[i] = Thread_Pool_Add_Task((void *)print_hello, task);
 	}
-	printf("All tasks added!\n");
-	TP_Wait(tp);
+	printf("All tasks added!\nStarted!\n");
+	sleep(1);
+	printf("Pausing!\n");
+	Thread_Pool_Pause();
+	sleep(10);
+	Thread_Pool_Resume();
+	Thread_Pool_Wait();
 	printf("Total iterations %d; Should be %d; %s\n" ,iterations, num_tasks * runs
 		,iterations == runs * num_tasks ? "True" : "False");
 	for(i=0; i<num_tasks; i++){
-		TP_Result_Destroy(result[i]);
+		Thread_Pool_Result_Destroy(result[i]);
 	}
 	free(result);
-	TP_Destroy(tp);
+	Thread_Pool_Destroy();
 	printf("Thread_Pool struct destroyed!\n");
 	time(end);
 	double total_time = difftime(*end, *start);
