@@ -1,70 +1,7 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-/// Normal, default option for a given function.
-#define NONE 1 << 0
-/// For asynchronous actions, will return immediately from a function instead of blocking.
-#define ASYNC 1 << 1
-/// Check if a parameter was passed
-#define SELECTED(ARGUMENT, MACRO) ((ARGUMENT & MACRO))
-/// Used to lock the given mutex.
-#define LOCK(mutex) pthread_mutex_lock(mutex)
-/// Used to try to lock the mutex, returning immediately on failure.
-#define TRYLOCK(mutex) pthread_mutex_trylock(mutex)
-/// Used to unlock the given mutex.
-#define UNLOCK(mutex) pthread_mutex_unlock(mutex)
-/// Causes the current thread to wait for a signal to be sent.
-#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex)
-/// Signals a thread waiting on the condition based on a default scheduler.
-#define SIGNAL(condition) pthread_cond_signal(condition)
-/// Used to broadcast to all threads waiting on the condition variable.
-#define BROADCAST(condition) pthread_cond_broadcast(condition)
-/// Macro used to pause the thread, as the function name is very misleading. Sends SIGUSR1 signal.
-#define PAUSE(thread) pthread_kill(thread, SIGUSR1)
-/// Used to atomically increment the variable.
-#define INCREMENT(var, mutex) \
-		do { \
-			LOCK(mutex); \
-			var++; \
-			UNLOCK(mutex); \
-		} while(0)
-/// Used to atomically decrement the variable.
-#define DECREMENT(var, mutex) \
-		do { \
-			LOCK(mutex); \
-			var--; \
-			UNLOCK(mutex); \
-		} while(0)
-/// Used to quickly initialize a mutex.
-#define INIT_MUTEX(mutex, attr) \
-		    do { \
-			   mutex = malloc(sizeof(pthread_mutex_t)); \
-			   pthread_mutex_init(mutex, attr); \
-			} while(0)
-/// Used to quickly initialize a condition variable.
-#define INIT_COND(cond, attr) \
-			do { \
-			   cond = malloc(sizeof(pthread_cond_t)); \
-			   pthread_cond_init(cond, attr); \
-			} while(0)
-/// Free the mutex.
-#define DESTROY_MUTEX(mutex) \
-			do { \
-				pthread_mutex_destroy(mutex); \
-				free(mutex); \
-			} while(0)
-/// Free the condition variable.
-#define DESTROY_COND(cond) \
-			do { \
-				pthread_cond_destroy(cond); \
-				free(cond); \
-			} while(0)
-/// Simple macro to enable debug
-#define TP_DEBUG 0
-/// Print a message if and only if TP_DEBUG is enabled.
-#define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
-/// Print a formatted message if and only if TP_DEBUG is enabled.
-#define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
+
 typedef struct Thread_Pool Thread_Pool;
 
 typedef struct Result Result;

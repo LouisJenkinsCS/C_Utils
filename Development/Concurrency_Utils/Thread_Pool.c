@@ -4,19 +4,83 @@
 #include <signal.h>
 #include "Thread_Pool.h"
 
+/* Define helper macros here. */
+
+/// Used to lock the given mutex.
+#define LOCK(mutex) pthread_mutex_lock(mutex)
+/// Used to try to lock the mutex, returning immediately on failure.
+#define TRYLOCK(mutex) pthread_mutex_trylock(mutex)
+/// Used to unlock the given mutex.
+#define UNLOCK(mutex) pthread_mutex_unlock(mutex)
+/// Causes the current thread to wait for a signal to be sent.
+#define WAIT(condition, mutex) pthread_cond_wait(condition, mutex)
+/// Signals a thread waiting on the condition based on a default scheduler.
+#define SIGNAL(condition) pthread_cond_signal(condition)
+/// Used to broadcast to all threads waiting on the condition variable.
+#define BROADCAST(condition) pthread_cond_broadcast(condition)
+/// Macro used to pause the thread, as the function name is very misleading. Sends SIGUSR1 signal.
+#define PAUSE(thread) pthread_kill(thread, SIGUSR1)
+/// Used to atomically increment the variable.
+#define INCREMENT(var, mutex) \
+		do { \
+			LOCK(mutex); \
+			var++; \
+			UNLOCK(mutex); \
+		} while(0)
+/// Used to atomically decrement the variable.
+#define DECREMENT(var, mutex) \
+		do { \
+			LOCK(mutex); \
+			var--; \
+			UNLOCK(mutex); \
+		} while(0)
+/// Used to quickly initialize a mutex.
+#define INIT_MUTEX(mutex, attr) \
+		    do { \
+			   mutex = malloc(sizeof(pthread_mutex_t)); \
+			   pthread_mutex_init(mutex, attr); \
+			} while(0)
+/// Used to quickly initialize a condition variable.
+#define INIT_COND(cond, attr) \
+			do { \
+			   cond = malloc(sizeof(pthread_cond_t)); \
+			   pthread_cond_init(cond, attr); \
+			} while(0)
+/// Free the mutex.
+#define DESTROY_MUTEX(mutex) \
+			do { \
+				pthread_mutex_destroy(mutex); \
+				free(mutex); \
+			} while(0)
+/// Free the condition variable.
+#define DESTROY_COND(cond) \
+			do { \
+				pthread_cond_destroy(cond); \
+				free(cond); \
+			} while(0)
+/// Simple macro to enable debug
+#define TP_DEBUG 0
+/// Print a message if and only if TP_DEBUG is enabled.
+#define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
+/// Print a formatted message if and only if TP_DEBUG is enabled.
+#define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
+
+/* End definition of helper macros. */
+
 /* Initialize Thread Pool as static. */
 static Thread_Pool *tp = NULL;
 
 /* Begin Static, Private functions */
 
 /// The callback used to handle pausing all threads.
-/// Also this is the primary reason for using a global (static) thread pool.
+// Also this is the primary reason for using a global (static) thread pool.
 static void Pause_Handler(){
 	LOCK(tp->pause);
 	while(tp->paused) WAIT(tp->resume, tp->pause);
 	UNLOCK(tp->pause);
 }
 
+/// Processes a task, store it's result, signals that the result is ready, then destroys the task.
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
 	LOCK(task->result->not_ready);
@@ -32,6 +96,7 @@ static void Process_Task(Task *task){
 	TP_DEBUG_PRINT("A thread finished their task!\n");
 }
 
+/// Obtains the next task from the queue.
 static Task *next_task(Task_Queue *queue){
 	Task *task = NULL;
 	// Note: Generally the head of the queue will always be the one which needs to
@@ -52,6 +117,7 @@ static Task *next_task(Task_Queue *queue){
 	return NULL;
 }
 
+/// The main thread loop to obtain tasks from the task queue.
 static void *Get_Tasks(void *args){
 	// Set up the signal handler to pause.
 	struct sigaction pause_signal;
@@ -89,7 +155,7 @@ static void *Get_Tasks(void *args){
 	}
 	DECREMENT(tp->thread_count, tp->thread_count_change);
 	TP_DEBUG_PRINTF("Thread count decremented: %d\n", tp->thread_count);
-	pthread_exit(NULL);
+	//pthread_exit(NULL);
 	return NULL;
 }
 
@@ -191,23 +257,14 @@ int Thread_Pool_Destroy(void){
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
 	TP_DEBUG_PRINTF("Queue Size: %d\n", tp->queue->size);
 	while(tp->thread_count != 0) sleep(0);
-	TP_DEBUG_PRINT("Made it past Wait!\n");
 	// Free all Task_Queue mutexes and condition variables.
 	DESTROY_MUTEX(tp->queue->no_tasks);
-	TP_DEBUG_PRINT("Destroyed Mutex: no_tasks\n");
 	DESTROY_MUTEX(tp->queue->await_task);
-	TP_DEBUG_PRINT("Destroyed Mutex: await_task\n");
 	DESTROY_MUTEX(tp->queue->adding_task);
-	TP_DEBUG_PRINT("Destroyed Mutex: adding_task\n");
 	DESTROY_COND(tp->queue->new_task);
-	TP_DEBUG_PRINT("Destroyed Condition Variable: new_task\n");
 	DESTROY_COND(tp->queue->is_finished);
-	TP_DEBUG_PRINT("Destroyed Condition_Variable: is_finished\n");
 	free(tp->queue);
-	TP_DEBUG_PRINT("Destroyed Task_Queue\n");
-	// Free Thread_Pool's mutexes and condition variables.
 	DESTROY_MUTEX(tp->thread_count_change);
-	TP_DEBUG_PRINT("Destroyed Mutex: thread_count_change\n");
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
 	free(tp->threads);
 	free(tp);
@@ -231,3 +288,22 @@ int Thread_Pool_Resume(void){
 	tp->paused = 0;
 	return result;
 }
+
+/* Undefine all user macros below. */
+
+#undef LOCK
+#undef UNLOCK
+#undef TRYLOCK
+#undef WAIT
+#undef SIGNAL
+#undef BROADCAST
+#undef PAUSE
+#undef INCREMENT
+#undef DECREMENT
+#undef INIT_MUTEX
+#undef INIT_COND
+#undef DESTROY_MUTEX
+#undef DESTROY_COND
+#undef TP_DEBUG
+#undef TP_DEBUG_PRINT
+#undef TP_DEBUG_PRINTF
