@@ -35,7 +35,10 @@ struct Thread_Pool {
 	pthread_mutex_t *pause;
 };
 
-
+/**
+ * The result returned when adding a new task to the task queue. It allows you to
+ * to wait on it's result and obtain it.
+ */
 struct Result {
 	/// Lock to protect contents of 'Result'
 	pthread_mutex_t *not_ready;
@@ -47,6 +50,9 @@ struct Result {
 	void *item;
 };
 
+/**
+ * Encompasses the task submitted by the user. Contains the result of the task as well.
+ */
 struct Task {
 	/// Task to be executed.
 	thread_callback cb;
@@ -60,7 +66,9 @@ struct Task {
 	Result *result;
 };
 
-
+/**
+ * The queue all worker threads use to obtain the next task to process.
+ */
 struct Task_Queue{
 	/// Pointer to the head of the queue.
 	Task *head;
@@ -80,30 +88,71 @@ struct Task_Queue{
 	pthread_mutex_t *adding_task;
 };
 
-/// Creates thread pool with the static number of threads.
+/**
+ * Constructor for the thread pool, creating the requested amount of threads. 
+ * Used to initialize the static variable in the source file, and should not
+ * be called (yet, no checks for if the thread pool currently exists are 
+ * implemented yet) if one already exists, as it may result in undefined behavior.
+ * @param number_of_threads Amount of worker threads to initialize at startup.
+ * @return 1 on success.
+ */
 int Thread_Pool_Init(size_t number_of_threads);
 
-/// Add a task for the thread pool to process, returning a result struct.
+/**
+ * Adds a task to the thread pool. Callback must return a pointer * and arguments must 
+ * also be a pointer. Alternatively, you can cast the function pointer to a void pointer
+ * like such: (void *)function; Doing so results in undefined behavior, but allows
+ * it to work if you do not really want the result.
+ * @param cb Callback function to be called as the task.
+ * @param args Arguments to pass to the thread pool.
+ * @return The result from the task to be obtained later.
+ */
 Result *Thread_Pool_Add_Task(thread_callback cb, void *args);
 
-/// Will destroy the Result and set it's reference to NULL.
+/**
+ * Destroys the Result from a task.
+ * @param result Result to be destroyed.
+ * @return 1 on success.
+ */
 int Thread_Pool_Result_Destroy(Result *result);
 
-/// Destroy the thread pool.
+/**
+ * Destroys the current thread pool, waiting for the current tasks to be finished.
+ * @return 1 on success.
+ */
 int Thread_Pool_Destroy(void);
 
-/// Will block until result is ready. 
+/**
+ * Obtain the result from a Result, blocking until it's ready. This is the only safe
+ * way to obtain said result.
+ * @param result Result to obtain result from.
+ * @return The item stored inside of the result.
+ */ 
 void *Thread_Pool_Obtain_Result(Result *result);
 
-/// Will block until the task queue is empty.
+/**
+ * Blocks until all tasks in the thread pool are finished.
+ */
 void Thread_Pool_Wait(void);
 
-/// Will pause all threads until a signal to resume to sent.
+/**
+ * Pause all operations in the task queue. Warning: May be unstable if critical operations
+ * are being performed.
+ * @return 1 on success, 0 if at least one thread is not able to pause.
+ */
 int Thread_Pool_Pause(void);
 
-/// Will pause all threads until a signal to resume is sent or the time passed has ellapsed.
+/**
+ * (Unimplemented) Pause the thread pool for the given amount of time.
+ * @param seconds Amount of time to pause for.
+ * @return 1 on success, 0 if at least one thread cannot pause.
+ */
 int Thread_Pool_Timed_Pause(unsigned int seconds);
 
-/// Will resume all currently paused threads.
+/**
+ * Resume all worker threads that are paused. If no threads are waiting, nothing
+ * happens.
+ * @return 1 on success, 0 if at least one thread cannot be resumed.
+ */
 int Thread_Pool_Resume(void);
 #endif /* END THREAD_POOL_H */
