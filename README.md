@@ -1,21 +1,31 @@
-# C_Utils
-Utilities for C projects
+# Utilities Package for the C Programming Language
 
-As my mind seems to be as fickle as my luck, C_Utils doesn't really have a set goal of what I want it to be. At first it was a vast library of all possible things I would ever want to use in future projects, but seeing as literally of them actually exist in one way or another, this is going to be my experimentation and person projects in C. They are in essence going to be utilities, but they are not going to be the most efficient. 
+##Summary
 
-C_Utils is going to be a personal side project that I will want to implement as libraries in future side projects. They're not for anyone else to use, just my own.
+Utilities Package for the C Programming Language, or C_Utils for short, is going to be my attempt at providing a full fledged package for various libraries, as both to provide useful tools for anyone to use, and for a learning experience. 
 
+##About the Author
 
-## Memory_Utils
+I am a Senior Computer Science student, but I declared late and haven't really found my passion for programming until half way through Junior Year, so needless to say, I am behind in my CS Curriculum, so this is my attempt at teaching myself what's needed of all comptuer science students without having to wait another year to learn what I should already know. Don't be discouraged and think that this will be a bad utilities package, for I definitely will try my best at completing it as best I possibly can, and make it as efficient and useful as well. 
 
-### Summary
+##Utility Libraries available
 
-This is a theoretical and most likely not going to be finished at all, but as of yet, I've been experimenting with memory management and, in particular, garbage collection. I've already implemented my own simple garbage collector, thanks to a kind blogger who gave out his template, as I'll be trying to improve it as implement it in the other utilities as well.
+###Concurrency Utils
 
-## Concurrency_Utils
+Thread Pool implementation.
 
-### Summary
+###String Utils
 
-A great way to take the opportunity to learn something new, especially in today's day and age, concurrency is king, without a doubt. Single-Threaded applications are a thing of the past, and I've only ever had to work with concurrency once, and while I've learned quite a bit, I don't know nearly enough. Concurrency_Utils be my attempt at implementing a nice and easy abstraction for creating threads, with the goal being that it'll be so easy you don't even have to know what the hell a thread is and be able create and use threads with my library.
+String manipulation library.
 
-Another thing I plan on implementing, which gets me excited, is a thread pool. While others do exist, mine may not be as good, but I plan on making it usable and viable, and of course, easy to use. This way you do not have to deal with threads at all. Just add it to the thread pool's job queue and let it do it's thing. So much stuff to do, so little time.
+### File Utils
+
+File I/O library
+
+### Data Structures
+
+Linked List, Queue, Stack, Hash Map, all with the option to be thread safe.
+
+### Notes:
+
+Not all packages are finished yet, but this is what I hope to attain by the end of it all.
