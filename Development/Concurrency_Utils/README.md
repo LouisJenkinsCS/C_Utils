@@ -2,8 +2,6 @@
 
 ##Summary
 
-###What is it?
-
 Concurrency Utilities, or Concurrency_Utils, is a package filled with robust, well-tested libraries to make concurrent programming easier for you, the developer. This package will feature, when completed, thread-safe data structures, a thread pool to abstract the need to use threads, and more.
 
 ##Current Projects
