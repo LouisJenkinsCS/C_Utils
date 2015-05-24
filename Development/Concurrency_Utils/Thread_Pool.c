@@ -80,8 +80,6 @@
 #define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
 /// Print a formatted message if and only if TP_DEBUG is enabled.
 #define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
-/// Gets the calling thread of this macro.
-#define SELF pthread_self();
 
 /* End definition of helper macros. */
 
@@ -90,16 +88,21 @@ static Thread_Pool *tp = NULL;
 
 /* Begin Static, Private functions */
 
+/// Return the Worker associated with the calling thread.
+static Worker *Get_Self(void){
+	int i = 0;
+	for(;i<tp->thread_count;i++) if(pthread_equals(*(tp->worker_threads[i]->thread), pthread_self())) return tp->worker_threads[i];
+	return NULL;
+}
+
+
 /// The callback used to handle pausing all threads.
 // Also this is the primary reason for using a global (static) thread pool.
 static void Pause_Handler(){
-	int i = 0;
-	for(;i<thread_count;i++){
-		if(worker_threads[i]->thread == pthread_self()){
-			if(worker_threads[i]->task && worker_threads[i]->task->preference == NO_PAUSE && worker_threads[i]->task->status != DELAYED_PAUSE){ 
-				worker_threads[i]->task->status = DELAYED_PAUSE;
-			} else break;
-		}
+	Worker *self = Get_Self();
+	if(self && self->task && self->task->preference == NO_PAUSE && self->task->status != DELAYED_PAUSE){ 
+		self->task->status = DELAYED_PAUSE;
+		return;
 	}
 	LOCK(tp->pause);
 	while(tp->paused) WAIT(tp->resume, tp->pause);
@@ -134,6 +137,7 @@ static void Add_Task_Sorted(Task *task){
 /// Processes a task, store it's result, signals that the result is ready, then destroys the task.
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
+	if(tp->paused)PAUSE(SELF);
 	LOCK(task->result->not_ready);
 	task->result->item = task->callback(task->args);
 	task->result->ready = 1;
@@ -143,7 +147,7 @@ static void Process_Task(Task *task){
 	UNLOCK(task->result->not_ready);
 	UNLOCK(task->being_processed);	
 	DESTROY_MUTEX(task->being_processed);
-	if(task->preference == NO_PAUSE && tp->paused) PAUSE(SELF);
+	if(task->preference == NO_PAUSE && tp->paused) PAUSE(pthread_self());
 	free(task);
 	TP_DEBUG_PRINT("A thread finished their task!\n");
 }
@@ -221,10 +225,12 @@ static void *Monitor_Threads(void *args){
 int Thread_Pool_Init(size_t number_of_threads){
 	// If the thread pool is already initialized, return.
 	if(tp) return 0; 
-	tp = malloc(sizeof(Thread_Pool));
-	tp->keep_alive = 1;
-	tp->paused = 0;
-	tp->thread_count = tp->active_threads = 0;
+	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
+	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
+	Thread_Pool temp_tp = malloc(sizeof(Thread_Pool));
+	temp_tp->keep_alive = 1;
+	temp_tp->paused = 0;
+	temp_tp->thread_count = tp->active_threads = 0;
 	Task_Queue *queue = malloc(sizeof(Task_Queue));
 	queue->head = NULL;
 	queue->tail = NULL;
@@ -234,20 +240,22 @@ int Thread_Pool_Init(size_t number_of_threads){
 	INIT_MUTEX(queue->await_task, NULL);
 	INIT_MUTEX(queue->adding_task, NULL);
 	INIT_MUTEX(queue->no_tasks, NULL);
-	tp->queue = queue;
-	INIT_COND(tp->resume, NULL);
-	INIT_MUTEX(tp->thread_count_change, NULL);
-	INIT_MUTEX(tp->pause, NULL);
+	temp_tp->queue = queue;
+	INIT_COND(temp_tp->resume, NULL);
+	INIT_MUTEX(temp_tp->thread_count_change, NULL);
+	INIT_MUTEX(temp_tp->pause, NULL);
 	int i = 0;
-	tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
+	temp_tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
-		INIT_WORKER(tp->worker_threads[i], attr, Get_Tasks, NULL, i+1);
-		tp->thread_count++;
+		INIT_WORKER(temp_tp->worker_threads[i], attr, Get_Tasks, NULL, i+1);
+		temp_tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
+	// Finally assign the static pointer to the newly initialized thread pointer.
+	tp = temp_tp;
 	return 1;
 }
 
@@ -338,9 +346,9 @@ int Thread_Pool_Destroy(void){
 
 int Thread_Pool_Pause(void){
 	if(!tp) return 0;
-	int successful_pauses;
+	int successful_pauses = 0;
 	int i = 0;
-	for(;i<tp->thread_count;i++) if (PAUSE(*tp->threads[i]) == 0) successful_pauses++;
+	for(;i<tp->thread_count;i++) if (PAUSE(*tp->worker_threads[i]->thread) == 0) successful_pauses++;
 	// The only time this function is successful is if it successfully paused all threads.
 	tp->paused = 1;
 	return successful_pauses == tp->thread_count;
@@ -375,4 +383,3 @@ int Thread_Pool_Resume(void){
 #undef TP_DEBUG
 #undef TP_DEBUG_PRINT
 #undef TP_DEBUG_PRINTF
-#undef SELF
