@@ -246,6 +246,10 @@ int Thread_Pool_Init(size_t number_of_threads){
 	INIT_MUTEX(temp_tp->pause, NULL);
 	int i = 0;
 	temp_tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
+	// This is the latest I can actually assign the static thread pool, as once the worker threads are created, they will attempt
+	// to dereference the thread pool anyway to see if it's keep_alive is still flagged. So besides overcomplicating it further, I
+	// decide to just leave it at this. The chance of it messing up is minimized.
+	tp = temp_tp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -254,8 +258,6 @@ int Thread_Pool_Init(size_t number_of_threads){
 		temp_tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
-	// Finally assign the static pointer to the newly initialized thread pointer.
-	tp = temp_tp;
 	return 1;
 }
 
