@@ -1,6 +1,7 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
+typedef struct Worker Worker;
 
 typedef struct Thread_Pool Thread_Pool;
 
@@ -53,9 +54,18 @@ enum Task_Status {
 	WAITING
 };
 
+struct Workers {
+	/// The worker thread that does the work.
+	pthread_t *thread;
+	/// The worker thread id.
+	unsigned int id;
+	/// The current task being worked on.
+	Task *task = current_task;
+};
+
 struct Thread_Pool {
 	/// Array of threads.
-	pthread_t **threads;
+	Workers **worker_threads;
 	/// The queue with all jobs assigned to it.
 	Task_Queue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
@@ -94,7 +104,7 @@ struct Result {
  */
 struct Task {
 	/// Task to be executed.
-	thread_callback cb;
+	thread_callback callback;
 	/// Arguments to be passed to the task.
 	void *args;
 	/// Pointing to the next task in the queue.
@@ -150,11 +160,11 @@ int Thread_Pool_Init(size_t number_of_threads);
  * also be a pointer. Alternatively, you can cast the function pointer to a void pointer
  * like such: (void *)function; Doing so results in undefined behavior, but allows
  * it to work if you do not really want the result.
- * @param cb Callback function to be called as the task.
+ * @param callback Callback function to be called as the task.
  * @param args Arguments to pass to the thread pool.
  * @return The result from the task to be obtained later.
  */
-Result *Thread_Pool_Add_Task(thread_callback cb, void *args, Priority priority, Pause_Preference preference);
+Result *Thread_Pool_Add_Task(thread_callback callback, void *args, Priority priority, Pause_Preference preference);
 
 /**
  * Destroys the Result from a task.

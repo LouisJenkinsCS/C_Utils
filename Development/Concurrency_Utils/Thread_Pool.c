@@ -47,6 +47,21 @@
 			   cond = malloc(sizeof(pthread_cond_t)); \
 			   pthread_cond_init(cond, attr); \
 			} while(0)
+/// Used to quickly initialize a worker thread.
+#define INIT_WORKER(worker, task, args, id) \
+			do { \
+				worker = malloc(sizeof(Worker)); \
+				worker->thread = malloc(sizeof(pthread_t)); \
+				pthread_create(worker->thread, attribute, task, args); \
+				worker->id = id; \
+				worker->task = NULL; \
+			} while(0)
+/// Frees the worker thread.
+#define DESTROY_WORKER(worker){
+			pthread_destroy(worker->thread);
+			free(worker->thread);
+			free(worker);
+		}
 /// Free the mutex.
 #define DESTROY_MUTEX(mutex) \
 			do { \
@@ -65,6 +80,8 @@
 #define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
 /// Print a formatted message if and only if TP_DEBUG is enabled.
 #define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
+/// Gets the calling thread of this macro.
+#define SELF pthread_self();
 
 /* End definition of helper macros. */
 
@@ -76,23 +93,57 @@ static Thread_Pool *tp = NULL;
 /// The callback used to handle pausing all threads.
 // Also this is the primary reason for using a global (static) thread pool.
 static void Pause_Handler(){
+	int i = 0;
+	for(;i<thread_count;i++){
+		if(worker_threads[i]->thread == pthread_self()){
+			if(worker_threads[i]->task && worker_threads[i]->task->preference == NO_PAUSE && worker_threads[i]->task->status != DELAYED_PAUSE){ 
+				worker_threads[i]->task->status = DELAYED_PAUSE;
+			} else break;
+		}
+	}
 	LOCK(tp->pause);
 	while(tp->paused) WAIT(tp->resume, tp->pause);
 	UNLOCK(tp->pause);
+}
+
+static void Add_Task_Sorted(Task *task){
+	LOCK(tp->queue->adding_task);
+	if(tp->queue->size == 0){
+		task->next = NULL;
+		tp->queue->head = tp->queue->tail = task;
+	} else if (task->priority == LOWEST_PRIORITY) {
+		tp->queue->tail->next = tp->queue->tail = task;
+		task->next = NULL;
+	} else {
+		Task *task_to_compare = NULL;
+		// To avoid adding a doubly linked list, I keep track of the previous task.
+		Task *previous_task = NULL;
+		for(previous_task = task_to_compare = TP->queue->head; task_to_compare; previous_task = task_to_compare, task_to_compare = task_to_compare->next){
+			if(task->priority > task_to_compare->priority){
+				task->next = previous_task->next;
+				previous_task->next = task;
+			} else if (!task->next){
+				task_to_compare->next = task;
+				task->next = NULL;
+			}
+		}
+	}
+	UNLOCK(tp->queue->adding_task);
 }
 
 /// Processes a task, store it's result, signals that the result is ready, then destroys the task.
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
 	LOCK(task->result->not_ready);
-	task->result->item = task->cb(task->args);
+	task->result->item = task->callback(task->args);
 	task->result->ready = 1;
 	// Signal that the result is ready.
 	SIGNAL(task->result->is_ready);
 	// Release lock.
 	UNLOCK(task->result->not_ready);
-	UNLOCK(task->being_processed);
+	UNLOCK(task->being_processed);	
 	DESTROY_MUTEX(task->being_processed);
+	if(task->preference == NO_PAUSE && tp->paused) PAUSE(SELF);
 	free(task);
 	TP_DEBUG_PRINT("A thread finished their task!\n");
 }
@@ -168,6 +219,8 @@ static void *Monitor_Threads(void *args){
 /* End Static, Private functions. */
 
 int Thread_Pool_Init(size_t number_of_threads){
+	// If the thread pool is already initialized, return.
+	if(tp) return 0; 
 	tp = malloc(sizeof(Thread_Pool));
 	tp->keep_alive = 1;
 	tp->paused = 0;
@@ -191,8 +244,7 @@ int Thread_Pool_Init(size_t number_of_threads){
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
-		tp->threads[i] = malloc(sizeof(pthread_t));
-		pthread_create(tp->threads[i], &attr, Get_Tasks, NULL);
+		INIT_WORKER(tp->worker_threads[i], attr, Get_Tasks, NULL, i+1);
 		tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
@@ -201,7 +253,8 @@ int Thread_Pool_Init(size_t number_of_threads){
 
 
 
-Result *Thread_Pool_Add_Task(thread_callback cb, void *args, Priority priority, Pause_Preference preference){
+Result *Thread_Pool_Add_Task(thread_callback callback, void *args, Priority priority, Pause_Preference preference){
+	if(!tp) return;
 	// Initialize Result to be returned.
 	Result *result = malloc(sizeof(Result));
 	result->ready = 0;
@@ -210,21 +263,12 @@ Result *Thread_Pool_Add_Task(thread_callback cb, void *args, Priority priority, 
 	INIT_COND(result->is_ready, NULL);
 	// Initialize Task to be processed.
 	Task *task = malloc(sizeof(Task));
-	task->cb = cb;
+	task->callback = callback;
 	task->args = args;
 	task->priority = priority;
 	task->preference = preference;
 	task->status = WAITING;
-	LOCK(tp->queue->adding_task);
-	// TODO: Below, change this so it adds based on priority in queue.
-	if(tp->queue->size == 0){
-		task->next = NULL;
-		tp->queue->head = tp->queue->tail = task;
-	} else {
-		tp->queue->tail->next = tp->queue->tail = task;
-		task->next = NULL;
-	}
-	UNLOCK(tp->queue->adding_task);
+	Add_Task_Sorted(task);
 	task->time_added = malloc(sizeof(time_t));
 	time(task->time_added);
 	INIT_MUTEX(task->being_processed, NULL);
@@ -243,6 +287,8 @@ int Thread_Pool_Result_Destroy(Result *result){
 }
 /// Will block until result is ready. 
 void *Thread_Pool_Obtain_Result(Result *result){
+	// If there is no thread pool, return.
+	if(!tp) return NULL;
 	// Attempts to obtain the lock before proceeding, since the worker thread will only unlock when it's finished.
 	LOCK(result->not_ready);
 	// If the result isn't ready after obtaining the lock, then it must have (somehow) obtained the lock before 
@@ -255,12 +301,14 @@ void *Thread_Pool_Obtain_Result(Result *result){
 }
 
 void Thread_Pool_Wait(void){
+	if(!tp) return;
 	LOCK(tp->queue->no_tasks);
 	while(tp->queue->size != 0 || tp->active_threads != 0) WAIT(tp->queue->is_finished, tp->queue->no_tasks);
 	UNLOCK(tp->queue->no_tasks);
 }
 
 int Thread_Pool_Destroy(void){
+	if(!tp) return;
 	size_t thread_count = tp->thread_count;
 	tp->keep_alive = 0;
 	// Broadcast to all threads to wake up on new_task condition variable.
@@ -281,7 +329,7 @@ int Thread_Pool_Destroy(void){
 	DESTROY_MUTEX(tp->pause);
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
 	int i = 0;
-	for(;i<thread_count;i++)free(tp->threads[i]);
+	for(;i<thread_count;i++) DESTROY_WORKER(tp->worker_threads[i]);
 	free(tp->threads);
 	free(tp);
 	tp = NULL;
@@ -289,6 +337,7 @@ int Thread_Pool_Destroy(void){
 }
 
 int Thread_Pool_Pause(void){
+	if(!tp) return 0;
 	int successful_pauses;
 	int i = 0;
 	for(;i<tp->thread_count;i++) if (PAUSE(*tp->threads[i]) == 0) successful_pauses++;
@@ -300,6 +349,7 @@ int Thread_Pool_Pause(void){
 int Thread_Pool_Timed_Pause(unsigned int seconds);
 
 int Thread_Pool_Resume(void){
+	if(!tp || !tp->paused) return 0;
 	int result = BROADCAST(tp->resume) == 0;
 	tp->paused = 0;
 	return result;
@@ -318,8 +368,11 @@ int Thread_Pool_Resume(void){
 #undef DECREMENT
 #undef INIT_MUTEX
 #undef INIT_COND
+#undef INIT_WORKER
+#undef DESTROY_WORKER
 #undef DESTROY_MUTEX
 #undef DESTROY_COND
 #undef TP_DEBUG
 #undef TP_DEBUG_PRINT
 #undef TP_DEBUG_PRINTF
+#undef SELF
