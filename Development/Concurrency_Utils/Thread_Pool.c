@@ -251,6 +251,7 @@ static void Set_Task_Priority(Task *task, int flags){
 /// Used to obtain the pause preference flag from the parameter to the task's preference.
 static void Set_Task_Preference(Task *task, int flags){
 	if(SELECTED(flags, TP_NO_PAUSE)) task->preference = NO_PAUSE;
+	else task->preference = PAUSE;
 }
 
 /* End Static, Private functions. */
@@ -314,7 +315,7 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	task->args = args;
 	Set_Task_Priority(task, flags);
 	Set_Task_Preference(task, flags);
-	task->status = WAITING;
+;	task->status = WAITING;
 	task->time_added = malloc(sizeof(time_t));
 	time(task->time_added);
 	Add_Task_Sorted(task);
