@@ -63,7 +63,7 @@ int main(void){
 	int i = 0;
 	for(;i<num_tasks ;i++){
 		thread_task *task = TT_Create(i+1, runs);
-		result[i] = Thread_Pool_Add_Task((void *)print_hello, task);
+		result[i] = Thread_Pool_Add_Task((void *)print_hello, task, TP_NONE);
 	}
 	printf("All tasks added!\nStarted!\n");
 	sleep(1);

@@ -50,20 +50,20 @@
 			   pthread_cond_init(cond, attr); \
 			} while(0)
 /// Used to quickly initialize a worker thread.
-#define INIT_WORKER(worker, task, args, id) \
+#define INIT_WORKER(worker, attribute, callback, args, id) \
 			do { \
 				worker = malloc(sizeof(Worker)); \
 				worker->thread = malloc(sizeof(pthread_t)); \
-				pthread_create(worker->thread, attribute, task, args); \
-				worker->id = id; \
+				pthread_create(worker->thread, attribute, callback, args); \
+				worker->thread_id = id; \
 				worker->task = NULL; \
 			} while(0)
 /// Frees the worker thread.
-#define DESTROY_WORKER(worker){
-			pthread_destroy(worker->thread);
-			free(worker->thread);
-			free(worker);
-		}
+#define DESTROY_WORKER(worker) \
+			do { \
+				free(worker->thread); \
+				free(worker); \
+			} while(0)
 /// Free the mutex.
 #define DESTROY_MUTEX(mutex) \
 			do { \
@@ -93,7 +93,7 @@ static Thread_Pool *tp = NULL;
 /// Return the Worker associated with the calling thread.
 static Worker *Get_Self(void){
 	int i = 0;
-	for(;i<tp->thread_count;i++) if(pthread_equals(*(tp->worker_threads[i]->thread), pthread_self())) return tp->worker_threads[i];
+	for(;i<tp->thread_count;i++) if(pthread_equal(*(tp->worker_threads[i]->thread), pthread_self())) return tp->worker_threads[i];
 	return NULL;
 }
 
@@ -137,12 +137,12 @@ static void Add_Task_Sorted(Task *task){
 	else if(tp->queue->size == 1){
 		if(task->priority > tp->queue->head->priority) Add_Task_As_Head(task);
 		else Add_Task_As_Tail(task);
-	} else if (task->priority == LOWEST_PRIORITY) Add_Task_As_Tail(task);
+	} else if (task->priority == TP_LOWEST) Add_Task_As_Tail(task);
 	else {
 		Task *task_to_compare = NULL;
 		// To avoid adding a doubly linked list, I keep track of the previous task.
 		Task *previous_task = NULL;
-		for(previous_task = task_to_compare = TP->queue->head; task_to_compare; previous_task = task_to_compare, task_to_compare = task_to_compare->next){
+		for(previous_task = task_to_compare = tp->queue->head; task_to_compare; previous_task = task_to_compare, task_to_compare = task_to_compare->next){
 			if(task->priority > task_to_compare->priority) Add_Task_After(task, previous_task);
 			else if (!task->next) Add_Task_As_Tail(task);
 		}
@@ -154,7 +154,7 @@ static void Add_Task_Sorted(Task *task){
 /// Processes a task, store it's result, signals that the result is ready, then destroys the task.
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
-	if(tp->paused)PAUSE(SELF);
+	if(tp->paused)PAUSE(pthread_self());
 	if(task->result){
 		LOCK(task->result->not_ready);
 		task->result->item = task->callback(task->args);
@@ -166,6 +166,7 @@ static void Process_Task(Task *task){
 	UNLOCK(task->being_processed);	
 	DESTROY_MUTEX(task->being_processed);
 	if(task->preference == NO_PAUSE && tp->paused) PAUSE(pthread_self());
+	Get_Self()->task = NULL;
 	free(task);
 	TP_DEBUG_PRINT("A thread finished their task!\n");
 }
@@ -183,6 +184,7 @@ static Task *next_task(Task_Queue *queue){
 			queue->head = task->next;
 			queue->size--;
 			UNLOCK(queue->adding_task);
+			Get_Self()->task = task;
 			return task;
 		}
 	}
@@ -196,6 +198,8 @@ static void *Get_Tasks(void *args){
 	// Set up the signal handler to pause.
 	struct sigaction pause_signal;
 	pause_signal.sa_handler = Pause_Handler;
+	pause_signal.sa_flags = SA_RESTART;
+	sigemptyset(&pause_signal.sa_mask);
 	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) fprintf(stderr, "Get_Task callback was unable to initialize a pause_handler\n");
 	while(tp->keep_alive){
 		// Wait until signal is sent, when task is given.
@@ -232,6 +236,16 @@ static void *Get_Tasks(void *args){
 	return NULL;
 }
 
+static void Debug_Print_Thread_Pool(void){
+	printf("Thread Pool:\n\n\n");
+	int i = 0;
+	for(;i<tp->thread_count;i++){
+		Worker *worker = tp->worker_threads[i];
+		printf("Worker Thread %d:\nThread Alive? %d\nThread_ID: %d\nHas Task?: %d\n\n",
+			i, worker->thread ? 1 : 0, worker->thread_id, worker->task ? 1 : 0);
+	}
+}
+
 static void *Monitor_Threads(void *args){
 	// TODO: Implement a method to monitor all tasks and threads. If a task is waiting for over 60 seconds, then
 	// spawn a new thread. If the thread pool has been empty for longer than 60 seconds, despawn a thread until
@@ -261,10 +275,10 @@ int Thread_Pool_Init(size_t number_of_threads){
 	if(tp) return 0; 
 	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
 	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
-	Thread_Pool temp_tp = malloc(sizeof(Thread_Pool));
+	Thread_Pool *temp_tp = malloc(sizeof(Thread_Pool));
 	temp_tp->keep_alive = 1;
 	temp_tp->paused = 0;
-	temp_tp->thread_count = tp->active_threads = 0;
+	temp_tp->thread_count = temp_tp->active_threads = 0;
 	Task_Queue *queue = malloc(sizeof(Task_Queue));
 	queue->head = NULL;
 	queue->tail = NULL;
@@ -279,7 +293,7 @@ int Thread_Pool_Init(size_t number_of_threads){
 	INIT_MUTEX(temp_tp->thread_count_change, NULL);
 	INIT_MUTEX(temp_tp->pause, NULL);
 	int i = 0;
-	temp_tp->threads = malloc(sizeof(pthread_t *) * number_of_threads);
+	temp_tp->worker_threads = malloc(sizeof(pthread_t *) * number_of_threads);
 	// This is the latest I can actually assign the static thread pool, as once the worker threads are created, they will attempt
 	// to dereference the thread pool anyway to see if it's keep_alive is still flagged. So besides overcomplicating it further, I
 	// decide to just leave it at this. The chance of it messing up is minimized.
@@ -288,10 +302,12 @@ int Thread_Pool_Init(size_t number_of_threads){
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
-		INIT_WORKER(temp_tp->worker_threads[i], attr, Get_Tasks, NULL, i+1);
+		Worker *worker = temp_tp->worker_threads[i];
+		INIT_WORKER(worker, &attr, Get_Tasks, NULL, i+1);
 		temp_tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
+	Debug_Print_Thread_Pool();
 	return 1;
 }
 
@@ -302,7 +318,7 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	// Initialize Result to be returned.
 	// TODO: Get flag from flags to determine whether to return a Result or NULL.
 	Result *result = NULL;
-	if(!SELECTED(flags, NO_RESULT)){
+	if(!SELECTED(flags, TP_NO_RESULT)){
 		Result *result = malloc(sizeof(Result));
 		result->ready = 0;
 		result->item = NULL;
@@ -364,7 +380,7 @@ int Thread_Pool_Destroy(void){
 	Thread_Pool_Wait();
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
 	TP_DEBUG_PRINTF("Queue Size: %d\n", tp->queue->size);
-	while(tp->thread_count != 0) sleep(0);
+	while(tp->thread_count != 0) pthread_yield();
 	// Free all Task_Queue mutexes and condition variables.
 	DESTROY_MUTEX(tp->queue->no_tasks);
 	DESTROY_MUTEX(tp->queue->await_task);
@@ -378,7 +394,7 @@ int Thread_Pool_Destroy(void){
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
 	int i = 0;
 	for(;i<thread_count;i++) DESTROY_WORKER(tp->worker_threads[i]);
-	free(tp->threads);
+	free(tp->worker_threads);
 	free(tp);
 	tp = NULL;
 	return 1;
