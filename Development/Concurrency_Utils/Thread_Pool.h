@@ -1,6 +1,56 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
+/**
+* Invokes the default behavior for the function. Defaults are listed below...
+*
+* Thread_Pool_Add_Task:
+* - Medium Priority.
+* - Pausable.
+* - Get result.
+*/
+extern const int NONE = 1 << 0;
+/// Will not return a Result upon submitting a task.
+extern const int NO_RESULT = 1 << 1;
+/// The flagged task will complete before the thread working on it pauses.
+extern const int NO_PAUSE = 1 << 2;
+/// Flags the task as lowest priority.
+extern const int LOWEST_PRIORITY = 1 << 3;
+/// Flags the task as low priority.
+extern const int LOW_PRIORITY = 1 << 4;
+/// Flags the task as high priority.
+extern const int HIGH_PRIORITY = 1 << 5;-
+/// Flags the task as highest priority.
+extern const int HIGHEST_PRIORITY = 1 << 6;
+
+/*
+* Example of parameter usage: Lets say you wish to add a task of rather high importance, and it's crucial that
+* it does not pause in the middle of it, but you also do not want the result. You can easily do such a thing, without
+* having to deal with having to deal with a large amount of parameters. 
+*
+* Thread_Pool_Add_Task(Task, Args, NO_PAUSE | NO_RESULT | HIGHEST_PRIORITY);
+*
+* Instead of something like Thread_Pool_Add_Task(Task, Args, 1, 1, 4);
+*
+* Note above that this assumes that Add_Task would have a int (or enumeration) for each option, imagine you want to add
+* a default task. A task of no particular importance, one where you wish to keep the result, and you don't care if the task is paused
+* or not.
+*
+* Thread_Pool_Add_Task(Task, Args, NONE);
+*
+* Instead of something like Thread_Pool_Add_Task(Task, Args, 0, 0, 2);
+*
+* It gets even more messy with enumerations.
+*
+* Thread_Pool_Add_Task(Task, Args, PAUSABLE, GET_RESULT, MEDIUM_PRIORITY);
+*
+* Or more practically, a combination of the two.
+*
+* Thread_Pool_Add_Task(Task, Args, 1, 1, MEDIUM_PRIORITY);
+*
+* Regardless, the bitwise one looks more pretty and elegant.
+*/
+
 typedef struct Worker Worker;
 
 typedef struct Thread_Pool Thread_Pool;
@@ -24,15 +74,15 @@ typedef void *(*thread_callback)(void *args);
 /// For insertions in a priority blocking queue fashion.
 enum Priority{
 	/// Lowest possible priority
-	LOWEST_PRIORITY,
+	LOWEST,
 	/// Low priority, above Lowest.
-	LOW_PRIORITY,
+	LOW,
 	/// Medium priority, considered the "average".
-	MEDIUM_PRIORITY,
+	MEDIUM,
 	/// High priority, or "above average".
-	HIGH_PRIORITY,
+	HIGH,
 	/// Highest priority, or "imminent"
-	HIGHEST_PRIORITY
+	HIGHEST
 };
 
 enum Pause_Preference{
@@ -164,7 +214,7 @@ int Thread_Pool_Init(size_t number_of_threads);
  * @param args Arguments to pass to the thread pool.
  * @return The result from the task to be obtained later.
  */
-Result *Thread_Pool_Add_Task(thread_callback callback, void *args, Priority priority, Pause_Preference preference);
+Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags);
 
 /**
  * Destroys the Result from a task.

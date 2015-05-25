@@ -7,6 +7,8 @@
 
 /* Define helper macros here. */
 
+/// Used to determine if a certain flag was passed.
+#define SELECTED(argument, flag) ((argument & flag))
 /// Used to lock the given mutex.
 #define LOCK(mutex) pthread_mutex_lock(mutex)
 /// Used to try to lock the mutex, returning immediately on failure.
@@ -109,28 +111,43 @@ static void Pause_Handler(){
 	UNLOCK(tp->pause);
 }
 
+static void Add_Task_As_Head(Task *task){
+	task->next = tp->queue->head;
+	tp->queue->head = task;
+}
+
+static void Add_Task_As_Tail(Task *task){
+	tp->queue->tail->next = tp->queue->tail = task;
+	task->next = NULL;
+}
+
+static void Add_Task_As_Only(Task *task){
+	task->next = NULL;
+	tp->queue->head = tp->queue->tail = task;
+}
+
+static void Add_Task_After(Task *task, Task *previous_task){
+	task->next = previous_task->next;
+	previous_task->next = task;
+}
+
 static void Add_Task_Sorted(Task *task){
 	LOCK(tp->queue->adding_task);
-	if(tp->queue->size == 0){
-		task->next = NULL;
-		tp->queue->head = tp->queue->tail = task;
-	} else if (task->priority == LOWEST_PRIORITY) {
-		tp->queue->tail->next = tp->queue->tail = task;
-		task->next = NULL;
-	} else {
+	if(tp->queue->size == 0) Add_Task_As_Only(task); 
+	else if(tp->queue->size == 1){
+		if(task->priority > tp->queue->head->priority) Add_Task_As_Head(task);
+		else Add_Task_As_Tail(task);
+	} else if (task->priority == LOWEST_PRIORITY) Add_Task_As_Tail(task);
+	else {
 		Task *task_to_compare = NULL;
 		// To avoid adding a doubly linked list, I keep track of the previous task.
 		Task *previous_task = NULL;
 		for(previous_task = task_to_compare = TP->queue->head; task_to_compare; previous_task = task_to_compare, task_to_compare = task_to_compare->next){
-			if(task->priority > task_to_compare->priority){
-				task->next = previous_task->next;
-				previous_task->next = task;
-			} else if (!task->next){
-				task_to_compare->next = task;
-				task->next = NULL;
-			}
+			if(task->priority > task_to_compare->priority) Add_Task_After(task, previous_task);
+			else if (!task->next) Add_Task_As_Tail(task);
 		}
 	}
+	tp->queue->size++;
 	UNLOCK(tp->queue->adding_task);
 }
 
@@ -263,9 +280,10 @@ int Thread_Pool_Init(size_t number_of_threads){
 
 
 
-Result *Thread_Pool_Add_Task(thread_callback callback, void *args, Priority priority, Pause_Preference preference){
+Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	if(!tp) return;
 	// Initialize Result to be returned.
+	// TODO: Get flag from flags to determine whether to return a Result or NULL.
 	Result *result = malloc(sizeof(Result));
 	result->ready = 0;
 	result->item = NULL;
@@ -275,7 +293,9 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, Priority prio
 	Task *task = malloc(sizeof(Task));
 	task->callback = callback;
 	task->args = args;
+	// TODO: Get flag from flags to set priority.
 	task->priority = priority;
+	// TODO: Get flag from flags to set preference.
 	task->preference = preference;
 	task->status = WAITING;
 	Add_Task_Sorted(task);
