@@ -9,19 +9,19 @@
 * - Pausable.
 * - Get result.
 */
-extern const int NONE = 1 << 0;
+#define TP_NONE 1 << 0;
 /// Will not return a Result upon submitting a task.
-extern const int NO_RESULT = 1 << 1;
+#define TP_NO_RESULT 1 << 1;
 /// The flagged task will complete before the thread working on it pauses.
-extern const int NO_PAUSE = 1 << 2;
+#define TP_NO_PAUSE 1 << 2;
 /// Flags the task as lowest priority.
-extern const int LOWEST_PRIORITY = 1 << 3;
+#define TP_LOWEST_PRIORITY 1 << 3;
 /// Flags the task as low priority.
-extern const int LOW_PRIORITY = 1 << 4;
+#define TP_LOW_PRIORITY 1 << 4;
 /// Flags the task as high priority.
-extern const int HIGH_PRIORITY = 1 << 5;-
+#define TP_HIGH_PRIORITY 1 << 5;-
 /// Flags the task as highest priority.
-extern const int HIGHEST_PRIORITY = 1 << 6;
+#define TP_HIGHEST_PRIORITY 1 << 6;
 
 /*
 * Example of parameter usage: Lets say you wish to add a task of rather high importance, and it's crucial that
@@ -36,7 +36,7 @@ extern const int HIGHEST_PRIORITY = 1 << 6;
 * a default task. A task of no particular importance, one where you wish to keep the result, and you don't care if the task is paused
 * or not.
 *
-* Thread_Pool_Add_Task(Task, Args, NONE);
+* Thread_Pool_Add_Task(Task, Args, TP_NONE);
 *
 * Instead of something like Thread_Pool_Add_Task(Task, Args, 0, 0, 2);
 *
@@ -74,15 +74,15 @@ typedef void *(*thread_callback)(void *args);
 /// For insertions in a priority blocking queue fashion.
 enum Priority{
 	/// Lowest possible priority
-	LOWEST,
+	TP_LOWEST,
 	/// Low priority, above Lowest.
-	LOW,
+	TP_LOW,
 	/// Medium priority, considered the "average".
-	MEDIUM,
+	TP_MEDIUM,
 	/// High priority, or "above average".
-	HIGH,
+	TP_HIGH,
 	/// Highest priority, or "imminent"
-	HIGHEST
+	TP_HIGHEST
 };
 
 enum Pause_Preference{

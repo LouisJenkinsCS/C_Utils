@@ -155,13 +155,14 @@ static void Add_Task_Sorted(Task *task){
 static void Process_Task(Task *task){
 	// Acquire lock to prevent main thread from getting result until ready.
 	if(tp->paused)PAUSE(SELF);
-	LOCK(task->result->not_ready);
-	task->result->item = task->callback(task->args);
-	task->result->ready = 1;
-	// Signal that the result is ready.
-	SIGNAL(task->result->is_ready);
-	// Release lock.
-	UNLOCK(task->result->not_ready);
+	if(task->result){
+		LOCK(task->result->not_ready);
+		task->result->item = task->callback(task->args);
+		task->result->ready = 1;
+		SIGNAL(task->result->is_ready);
+		UNLOCK(task->result->not_ready);
+	}
+	else task->callback(task->args);
 	UNLOCK(task->being_processed);	
 	DESTROY_MUTEX(task->being_processed);
 	if(task->preference == NO_PAUSE && tp->paused) PAUSE(pthread_self());
@@ -237,6 +238,21 @@ static void *Monitor_Threads(void *args){
 	// the minimum amount of threads are alive.
 }
 
+/// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.
+static void Set_Task_Priority(Task *task, int flags){
+	if(SELECTED(flags, TP_LOWEST_PRIORITY)) task->priority = TP_LOWEST;
+	else if(SELECTED(flags, TP_LOW_PRIORITY)) task->priority = TP_LOW;
+	else if(SELECTED(flags, TP_HIGH_PRIORITY)) task->priority = TP_HIGH;
+	else if(SELECTED(flags, TP_HIGHEST_PRIORITY)) task->priority = TP_HIGHEST;
+	else task->priority = TP_MEDIUM;
+
+}
+
+/// Used to obtain the pause preference flag from the parameter to the task's preference.
+static void Set_Task_Preference(Task *task, int flags){
+	if(SELECTED(flags, TP_NO_PAUSE)) task->preference = NO_PAUSE;
+}
+
 /* End Static, Private functions. */
 
 int Thread_Pool_Init(size_t number_of_threads){
@@ -284,23 +300,24 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	if(!tp) return;
 	// Initialize Result to be returned.
 	// TODO: Get flag from flags to determine whether to return a Result or NULL.
-	Result *result = malloc(sizeof(Result));
-	result->ready = 0;
-	result->item = NULL;
-	INIT_MUTEX(result->not_ready, NULL);
-	INIT_COND(result->is_ready, NULL);
+	Result *result = NULL;
+	if(!SELECTED(flags, NO_RESULT)){
+		Result *result = malloc(sizeof(Result));
+		result->ready = 0;
+		result->item = NULL;
+		INIT_MUTEX(result->not_ready, NULL);
+		INIT_COND(result->is_ready, NULL);
+	};
 	// Initialize Task to be processed.
 	Task *task = malloc(sizeof(Task));
 	task->callback = callback;
 	task->args = args;
-	// TODO: Get flag from flags to set priority.
-	task->priority = priority;
-	// TODO: Get flag from flags to set preference.
-	task->preference = preference;
+	Set_Task_Priority(task, flags);
+	Set_Task_Preference(task, flags);
 	task->status = WAITING;
-	Add_Task_Sorted(task);
 	task->time_added = malloc(sizeof(time_t));
 	time(task->time_added);
+	Add_Task_Sorted(task);
 	INIT_MUTEX(task->being_processed, NULL);
 	task->result = result;
 	tp->queue->size++;
