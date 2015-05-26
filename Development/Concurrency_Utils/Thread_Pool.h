@@ -9,19 +9,19 @@
 * - Pausable.
 * - Get result.
 */
-#define TP_NONE 1 << 0;
+#define TP_NONE 1 << 0
 /// Will not return a Result upon submitting a task.
-#define TP_NO_RESULT 1 << 1;
+#define TP_NO_RESULT 1 << 1
 /// The flagged task will complete before the thread working on it pauses.
-#define TP_NO_PAUSE 1 << 2;
+#define TP_NO_PAUSE 1 << 2
 /// Flags the task as lowest priority.
-#define TP_LOWEST_PRIORITY 1 << 3;
+#define TP_LOWEST_PRIORITY 1 << 3
 /// Flags the task as low priority.
-#define TP_LOW_PRIORITY 1 << 4;
+#define TP_LOW_PRIORITY 1 << 4
 /// Flags the task as high priority.
-#define TP_HIGH_PRIORITY 1 << 5;-
+#define TP_HIGH_PRIORITY 1 << 5
 /// Flags the task as highest priority.
-#define TP_HIGHEST_PRIORITY 1 << 6;
+#define TP_HIGHEST_PRIORITY 1 << 6
 
 /*
 * Example of parameter usage: Lets say you wish to add a task of rather high importance, and it's crucial that
@@ -104,18 +104,18 @@ enum Task_Status {
 	WAITING
 };
 
-struct Workers {
+struct Worker {
 	/// The worker thread that does the work.
 	pthread_t *thread;
 	/// The worker thread id.
-	unsigned int id;
+	unsigned int thread_id;
 	/// The current task being worked on.
-	Task *task = current_task;
+	Task *task;
 };
 
 struct Thread_Pool {
 	/// Array of threads.
-	Workers **worker_threads;
+	Worker **worker_threads;
 	/// The queue with all jobs assigned to it.
 	Task_Queue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
@@ -170,7 +170,7 @@ struct Task {
 	/// Determines the status of the task. Mostly used for determining the action to do before and after task is completed.
 	Task_Status status;
 	/// Time added to the thread pool, used to determine whether or not a thread should be terminated if the difference between then and now is 60 seconds.
-	Time_t *time_added;
+	time_t *time_added;
 };
 
 /**
