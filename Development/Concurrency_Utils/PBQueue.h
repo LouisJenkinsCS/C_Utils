@@ -52,8 +52,14 @@ PBQueue *PBQueue_Create_Unbounded(compare_elements comparator);
 /// Blocks until another element can be inserted.
 int PBQueue_Enqueue(PBQueue *queue, void *item);
 
-/// Blocks until available.
+/// Blocks until either another element can be inserted or the time ellapses.
+int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds);
+
+/// Blocks until a new element is available.
 void *PBQueue_Dequeue(PBQueue *queue);
+
+/// Blocks until a new element is available or the amount of the time ellapses.
+void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds);
 
 /// Tells if queue is empty.
 int PBQueue_Is_Empty(PBQueue *queue);

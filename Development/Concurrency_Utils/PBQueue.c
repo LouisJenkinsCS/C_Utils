@@ -1,47 +1,33 @@
 #include <pthread.h>
 #include <stdlib.h>
+#include <time.h>
 #include "PBQueue.h"
 
 /* Static functions */
 
 static void Add_As_Head(PBQueue *queue, PBQ_Node *node){
-	task->next = tp->queue->head;
-	tp->queue->head = task;
+	node->next = queue->head;
+	queue->head = node;
+	queue->size++;
 }
 
 static void Add_As_Tail(PBQueue *queue, PBQ_Node *node){
-	tp->queue->tail->next = tp->queue->tail = task;
-	task->next = NULL;
+	queue->tail->next = node;
+	queue->tail = node;
+	node->next = NULL;
+	queue->size++;
 }
 
 static void Add_As_Only(PBQueue *queue, PBQ_Node *node){
-	task->next = NULL;
-	tp->queue->head = tp->queue->tail = task;
+	node->next = NULL;
+	queue->head = queue->tail = node;
+	queue->size++;
 }
 
-static void Add_After(PBQueue *queue, PBQ_Node *node, PBQ_Node *node){
-	task->next = previous_task->next;
-	previous_task->next = task;
-}
-
-static void Add_Task_Sorted(Task *task){
-	LOCK(tp->queue->adding_task);
-	if(tp->queue->size == 0) Add_Task_As_Only(task); 
-	else if(tp->queue->size == 1){
-		if(task->priority > tp->queue->head->priority) Add_Task_As_Head(task);
-		else Add_Task_As_Tail(task);
-	} else if (task->priority == LOWEST_PRIORITY) Add_Task_As_Tail(task);
-	else {
-		Task *task_to_compare = NULL;
-		// To avoid adding a doubly linked list, I keep track of the previous task.
-		Task *previous_task = NULL;
-		for(previous_task = task_to_compare = TP->queue->head; task_to_compare; previous_task = task_to_compare, task_to_compare = task_to_compare->next){
-			if(task->priority > task_to_compare->priority) Add_Task_After(task, previous_task);
-			else if (!task->next) Add_Task_As_Tail(task);
-		}
-	}
-	tp->queue->size++;
-	UNLOCK(tp->queue->adding_task);
+static void Add_After(PBQueue *queue, PBQ_Node *this_node, PBQ_Node *previous_node){
+	this_node->next = previous_node->next;
+	previous_node->next = this_node;
+	queue->size++;
 }
 
 static void Add_Item(PBQueue *queue, void *item){
@@ -50,12 +36,16 @@ static void Add_Item(PBQueue *queue, void *item){
 	if(queue->size == 0) Add_As_Only(queue, node);
 	else if(queue->size == 1){
 		// Checks to see if the item is of greater priority than the head of the queue.
-		if(queue->comparator(void *item, queue->head->item) > 0) Add_Task_As_Head(node);
-		else Add_Task_As_Tail(node);
-	} else if(queue->comparator(void *item, queue->head->item) > 0) Add_Task_As_Head(node);
+		if(queue->comparator(item, queue->head->item) > 0) Add_As_Head(queue, node);
+		else Add_As_Tail(queue, node);
+	} else if(queue->comparator(item, queue->head->item) > 0) Add_As_Head(queue, node);
 	else {
 		PBQ_Node *current_node = PBQ_Node *previous_node = NULL;
 		// START HERE!
+		for(previous_node = current_node = queue->head; current_node; previous_node = current_node, current_node = current_node->next){
+			if(queue->comparator(item, current_node->item) > 0) { Add_After(queue, node, previous_node); return; }
+			else if(!current_node->next) Add_As_Tail(queue, node);
+		}
 	}
 }
 
@@ -111,10 +101,38 @@ int PBQueue_Enqueue(PBQueue *queue, void *item){
 	return 1;
 }
 
+/// Blocks until either another element can be inserted or the time ellapses.
+int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds){
+	if(!item) return 0;
+	struct timespec timeout;
+	clock_gettime(CLOCK_REALTIME, &timeout);
+	timeout.tv_sec += seconds;
+	pthread_mutex_lock(queue->adding_or_removing_elements);
+	if(queue->type == PBQ_BOUNDED){
+		while(queue->size == max_size) pthread_cond_timedwait(queue->is_not_full, queue->adding_or_removing_elements, &timeout);
+	}
+	Add_Item(queue, item);
+	pthread_cond_signal(queue->is_not_empty);
+	pthread_mutex_unlock(queue->adding_or_removing_elements);
+	return 1;
+}
+
 /// Blocks until available.
 void *PBQueue_Dequeue(PBQueue *queue){
 	pthread_mutex_lock(queue->adding_or_removing_elements);
 	while(queue->size == 0) pthread_cond_wait(queue->is_not_empty, queue->adding_or_removing_elements);
+	void *item = Take_Item(queue);
+	pthread_mutex_unlock(pthread->adding_or_removing_elements);
+	return item;
+}
+
+/// Blocks until a new element is available or the amount of the time ellapses.
+void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds){
+	pthread_mutex_lock(queue->adding_or_removing_elements);
+	struct timespec timeout;
+	clock_gettime(CLOCK_REALTIME, &timeout);
+	timeout.tv_sec += seconds;
+	while(queue->size == 0) pthread_cond_timedwait(queue->is_not_empty, queue->adding_or_removing_elements, &timeout);
 	void *item = Take_Item(queue);
 	pthread_mutex_unlock(pthread->adding_or_removing_elements);
 	return item;
