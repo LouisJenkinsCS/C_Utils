@@ -77,7 +77,7 @@
 				free(cond); \
 			} while(0)
 /// Simple macro to enable debug
-#define TP_DEBUG 0
+#define TP_DEBUG 1
 /// Print a message if and only if TP_DEBUG is enabled.
 #define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
 /// Print a formatted message if and only if TP_DEBUG is enabled.
@@ -117,13 +117,15 @@ static void Add_Task_As_Head(Task *task){
 }
 
 static void Add_Task_As_Tail(Task *task){
-	tp->queue->tail->next = tp->queue->tail = task;
+	tp->queue->tail->next = task;
+	tp->queue->tail = task;
 	task->next = NULL;
 }
 
 static void Add_Task_As_Only(Task *task){
 	task->next = NULL;
-	tp->queue->head = tp->queue->tail = task;
+	tp->queue->head = task;
+	tp->queue->tail = task;
 }
 
 static void Add_Task_After(Task *task, Task *previous_task){
@@ -169,6 +171,7 @@ static void Process_Task(Task *task){
 	Get_Self()->task = NULL;
 	free(task);
 	TP_DEBUG_PRINT("A thread finished their task!\n");
+	if(task->status == DELAYED_PAUSE && tp->paused)PAUSE(pthread_self());
 }
 
 /// Obtains the next task from the queue.
@@ -302,9 +305,10 @@ int Thread_Pool_Init(size_t number_of_threads){
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	for(;i < number_of_threads; i++){
-		Worker *worker = temp_tp->worker_threads[i];
+		Worker *worker = NULL;
 		INIT_WORKER(worker, &attr, Get_Tasks, NULL, i+1);
-		temp_tp->thread_count++;
+		tp->worker_threads[i] = worker;
+		tp->thread_count++;
 	}
 	pthread_attr_destroy(&attr);
 	Debug_Print_Thread_Pool();

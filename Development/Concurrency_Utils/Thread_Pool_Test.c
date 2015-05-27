@@ -24,7 +24,7 @@ int *print_hello(thread_task *task){
 	int i = 0;
 	for(; i<task->amount; i++) {
 		iterations++;
-		printf("Task %d; Iteration %d;\n", task->task_id, i+1);
+		//printf("Task %d; Iteration %d;\n", task->task_id, i+1);
 		pthread_yield();
 	}
 	free(task);
@@ -71,8 +71,9 @@ int main(void){
 	Thread_Pool_Pause();
 	sleep(10);
 	Thread_Pool_Resume();
-	int retval = *((int *)(Thread_Pool_Obtain_Result(result[num_tasks/2 - 1])));
-	assert(retval == num_tasks/2);
+	printf("Resumed!\n");
+	//int retval = *((int *)(Thread_Pool_Obtain_Result(result[num_tasks/2 - 1])));
+	//assert(retval == num_tasks/2);
 	Thread_Pool_Wait();
 	printf("Total iterations %d; Should be %d; %s\n" ,iterations, num_tasks * runs
 		,iterations == runs * num_tasks ? "True" : "False");

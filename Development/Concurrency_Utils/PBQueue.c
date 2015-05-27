@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 #include "PBQueue.h"
 
 /* Static functions */
@@ -40,7 +41,8 @@ static void Add_Item(PBQueue *queue, void *item){
 		else Add_As_Tail(queue, node);
 	} else if(queue->comparator(item, queue->head->item) > 0) Add_As_Head(queue, node);
 	else {
-		PBQ_Node *current_node = PBQ_Node *previous_node = NULL;
+		PBQ_Node *current_node = NULL;
+		PBQ_Node *previous_node = NULL;
 		// START HERE!
 		for(previous_node = current_node = queue->head; current_node; previous_node = current_node, current_node = current_node->next){
 			if(queue->comparator(item, current_node->item) > 0) { Add_After(queue, node, previous_node); return; }
@@ -49,7 +51,14 @@ static void Add_Item(PBQueue *queue, void *item){
 	}
 }
 
-static void Take_Item(PBQueue *queue);
+static void *Take_Item(PBQueue *queue){
+	PBQ_Node *node = queue->head;
+	void *item = queue->head->item;
+	queue->head = queue->head->next;
+	free(node);
+	queue->size--;
+	return item;
+}
 
 /* End static functions */
 
@@ -93,7 +102,10 @@ int PBQueue_Enqueue(PBQueue *queue, void *item){
 	if(!item) return 0;
 	pthread_mutex_lock(queue->adding_or_removing_elements);
 	if(queue->type == PBQ_BOUNDED){
-		while(queue->size == max_size) pthread_cond_wait(queue->is_not_full, queue->adding_or_removing_elements);
+		//printf("Queue Size: %d\n", queue->size);
+		while(queue->size == queue->max_size) {
+			pthread_cond_wait(queue->is_not_full, queue->adding_or_removing_elements);
+		}
 	}
 	Add_Item(queue, item);
 	pthread_cond_signal(queue->is_not_empty);
@@ -109,7 +121,7 @@ int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds){
 	timeout.tv_sec += seconds;
 	pthread_mutex_lock(queue->adding_or_removing_elements);
 	if(queue->type == PBQ_BOUNDED){
-		while(queue->size == max_size) pthread_cond_timedwait(queue->is_not_full, queue->adding_or_removing_elements, &timeout);
+		while(queue->size == queue->max_size) pthread_cond_timedwait(queue->is_not_full, queue->adding_or_removing_elements, &timeout);
 	}
 	Add_Item(queue, item);
 	pthread_cond_signal(queue->is_not_empty);
@@ -120,9 +132,12 @@ int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds){
 /// Blocks until available.
 void *PBQueue_Dequeue(PBQueue *queue){
 	pthread_mutex_lock(queue->adding_or_removing_elements);
-	while(queue->size == 0) pthread_cond_wait(queue->is_not_empty, queue->adding_or_removing_elements);
+	while(queue->size == 0) { 
+		pthread_cond_wait(queue->is_not_empty, queue->adding_or_removing_elements);
+	}
 	void *item = Take_Item(queue);
-	pthread_mutex_unlock(pthread->adding_or_removing_elements);
+	pthread_cond_signal(queue->is_not_full);
+	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return item;
 }
 
@@ -134,7 +149,7 @@ void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds){
 	timeout.tv_sec += seconds;
 	while(queue->size == 0) pthread_cond_timedwait(queue->is_not_empty, queue->adding_or_removing_elements, &timeout);
 	void *item = Take_Item(queue);
-	pthread_mutex_unlock(pthread->adding_or_removing_elements);
+	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return item;
 }
 

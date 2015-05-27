@@ -20,7 +20,7 @@ enum PBQ_Type{
 	PBQ_UNBOUNDED,
 	/// The queue's size is based on 
 	PBQ_BOUNDED
-}
+};
 
 struct PBQueue {
 	/// A pointer to the head node.
