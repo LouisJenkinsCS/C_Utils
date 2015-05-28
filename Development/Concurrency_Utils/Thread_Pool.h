@@ -217,7 +217,7 @@ void Thread_Pool_Timed_Wait(unsigned int seconds);
 int Thread_Pool_Pause(void);
 
 /**
- * (Unimplemented) Pause the thread pool for the given amount of time.
+ * Pause the thread pool for the given amount of time.
  * @param seconds Amount of time to pause for.
  * @return 1 on success, 0 if at least one thread cannot pause.
  */

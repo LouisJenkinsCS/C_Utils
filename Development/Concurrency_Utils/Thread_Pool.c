@@ -186,8 +186,11 @@ int Thread_Pool_Init(size_t number_of_threads){
 	temp_tp->thread_count = temp_tp->active_threads = 0;
 	temp_tp->queue = PBQueue_Create_Unbounded(compare_task_priority);
 	init_cond(temp_tp->resume, NULL);
+	init_cond(temp_tp->all_tasks_finished);
 	init_mutex(temp_tp->thread_count_change, NULL);
 	init_mutex(temp_tp->pause, NULL);
+	init_mutex(temp_tp->is_paused, NULL);
+	init_mutex(temp_tp->no_tasks);
 	// TODO: Initialize mutex and condition variables in thread pool recently added.
 	int i = 0;
 	temp_tp->worker_threads = malloc(sizeof(pthread_t *) * number_of_threads);
@@ -237,21 +240,27 @@ int Thread_Pool_Result_Destroy(Result *result){
 }
 /// Will block until result is ready. 
 void *Thread_Pool_Obtain_Result(Result *result){
-	// If there is no thread pool, return.
 	if(!tp) return NULL;
-	// Attempts to obtain the lock before proceeding, since the worker thread will only unlock when it's finished.
 	pthread_mutex_lock(result->not_ready);
-	// If the result isn't ready after obtaining the lock, then it must have (somehow) obtained the lock before 
-	// the worker thread finished, so release the lock until signaled.
 	while(!result->ready) pthread_cond_wait(result->is_ready, result->not_ready);
-	// Now that it's finished, release the lock.
 	pthread_mutex_unlock(result->not_ready);
-	// Since the item is fully processed, return it's item.
 	return result->item;
 }
 
 /// Will block until result is ready or time ellapses.
-void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds);
+void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds){
+	if(!tp) return NULL;
+	struct timespec timeout;
+	clock_gettime(CLOCK_REALTIME, &timeout);
+	timeout.tv_sec += seconds;
+	pthread_mutex_lock(result->not_ready);
+	while(!result->ready) {
+		int retval = pthread_cond_timedwait(result->is_ready, result->not_ready, &timeout);
+		if(retval == ETIMEDOUT) return NULL;
+	}
+	pthread_mutex_unlock(result->not_ready);
+	return result->item;
+}
 
 /// Will block until all tasks are finished.
 int Thread_Pool_Wait(void){
@@ -284,7 +293,6 @@ int Thread_Pool_Destroy(void){
 	Thread_Pool_Wait();
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
 	while(tp->thread_count != 0) pthread_yield();
-	// Free all Task_Queue mutexes and condition variables.
 	destroy_mutex(tp->queue->no_tasks);
 	destroy_mutex(tp->queue->await_task);
 	destroy_mutex(tp->queue->adding_task);
@@ -294,7 +302,6 @@ int Thread_Pool_Destroy(void){
 	destroy_mutex(tp->thread_count_change);
 	destroy_cond(tp->resume);
 	destroy_mutex(tp->pause);
-	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
 	int i = 0;
 	for(;i<thread_count;i++) DESTROY_WORKER(tp->worker_threads[i]);
 	free(tp->worker_threads);
@@ -322,27 +329,11 @@ int Thread_Pool_Timed_Pause(unsigned int seconds){
 int Thread_Pool_Resume(void){
 	if(!tp || !tp->paused) return 0;
 	tp->paused = 0;
-	int result = pthread_cond_broadcast(tp->resume) == 0;	
-	return result;
+	return pthread_cond_broadcast(tp->resume) == 0;	
 }
 
 /* Undefine all user macros below. */
 
-#undef LOCK
-#undef UNLOCK
-#undef TRYLOCK
-#undef WAIT
-#undef SIGNAL
-#undef BROADCAST
-#undef PAUSE
-#undef INCREMENT
-#undef DECREMENT
-#undef INIT_MUTEX
-#undef INIT_COND
-#undef INIT_WORKER
-#undef DESTROY_WORKER
-#undef DESTROY_MUTEX
-#undef DESTROY_COND
 #undef TP_DEBUG
 #undef TP_DEBUG_PRINT
 #undef TP_DEBUG_PRINTF
