@@ -8,58 +8,6 @@
 
 /* Define helper macros here. */
 
-#define INCREMENT(var, mutex) \
-		do { \
-			LOCK(mutex); \
-			var++; \
-			UNLOCK(mutex); \
-		} while(0)
-/// Used to atomically decrement the variable.
-#define DECREMENT(var, mutex) \
-		do { \
-			LOCK(mutex); \
-			var--; \
-			UNLOCK(mutex); \
-		} while(0)
-/// Used to quickly initialize a mutex.
-#define INIT_MUTEX(mutex, attr) \
-		    do { \
-			   mutex = malloc(sizeof(pthread_mutex_t)); \
-			   pthread_mutex_init(mutex, attr); \
-			} while(0)
-/// Used to quickly initialize a condition variable.
-#define INIT_COND(cond, attr) \
-			do { \
-			   cond = malloc(sizeof(pthread_cond_t)); \
-			   pthread_cond_init(cond, attr); \
-			} while(0)
-/// Used to quickly initialize a worker thread.
-#define INIT_WORKER(worker, attribute, callback, args, id) \
-			do { \
-				worker = malloc(sizeof(Worker)); \
-				worker->thread = malloc(sizeof(pthread_t)); \
-				pthread_create(worker->thread, attribute, callback, args); \
-				worker->thread_id = id; \
-				worker->task = NULL; \
-			} while(0)
-/// Frees the worker thread.
-#define DESTROY_WORKER(worker) \
-			do { \
-				free(worker->thread); \
-				free(worker); \
-			} while(0)
-/// Free the mutex.
-#define DESTROY_MUTEX(mutex) \
-			do { \
-				pthread_mutex_destroy(mutex); \
-				free(mutex); \
-			} while(0)
-/// Free the condition variable.
-#define DESTROY_COND(cond) \
-			do { \
-				pthread_cond_destroy(cond); \
-				free(cond); \
-			} while(0)
 /// Simple macro to enable debug
 #define TP_DEBUG 1
 /// Print a message if and only if TP_DEBUG is enabled.
@@ -128,7 +76,7 @@ static void Process_Task(Worker *self){
 
 static void signal_if_queue_finished(void){
 	pthread_mutex_lock(tp->no_tasks);
-	if(PBQueue_is_empty(tp->queue) && tp->active_threads == 0) pthread_cond_signal(tp->all_tasks_finished);
+	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0) pthread_cond_signal(tp->all_tasks_finished);
 	pthread_mutex_unlock(tp->no_tasks);
 }
 
@@ -144,12 +92,12 @@ static void *Get_Tasks(void *args){
 	while(tp->keep_alive){
 		while(tp->keep_alive && !self->task) self->task = PBQueue_Timed_Enqueue(tp->queue, queue_timeout);
 		if(!tp->keep_alive) break;
-		INCREMENT(tp->active_threads, tp->thread_count_change);
-		Process_Task(task);
-		DECREMENT(tp->active_threads, tp->thread_count_change);
+		increment(tp->active_threads, tp->thread_count_change);
+		Process_Task(self);
+		decrement(tp->active_threads, tp->thread_count_change);
 		signal_if_queue_finished();
 	}
-	DECREMENT(tp->thread_count, tp->thread_count_change);
+	decrement(tp->thread_count, tp->thread_count_change);
 	return NULL;
 }
 
@@ -158,14 +106,57 @@ static int is_selected(int flag, int mask){
 	return (flag & mask)
 }
 
-static void Debug_Print_Thread_Pool(void){
-	printf("Thread Pool:\n\n\n");
-	int i = 0;
-	for(;i<tp->thread_count;i++){
-		Worker *worker = tp->worker_threads[i];
-		printf("Worker Thread %d:\nThread Alive? %d\nThread_ID: %d\nHas Task?: %d\n\n",
-			i, worker->thread ? 1 : 0, worker->thread_id, worker->task ? 1 : 0);
-	}
+/// Helper function to initialize a condition variable.
+static void init_cond(pthread_cond_t *cond, pthread_attr_t *attr){
+	cond = malloc(sizeof(pthread_cond_t));
+   	pthread_cond_init(cond, attr);
+}
+
+/// Helper function to initialize a mutex.
+static void init_mutex(pthread_mutex_t *mutex, pthread_attr_t *attr){
+	mutex = malloc(sizeof(pthread_mutex_t));
+   	pthread_mutex_init(mutex, attr);
+}
+
+/// Helper function to initialize a worker.
+static void init_worker(Worker *worker, pthread_attr_t *attribute, thread_callback callback, void *args, unsigned int id){
+	worker = malloc(sizeof(Worker)); \
+	worker->thread = malloc(sizeof(pthread_t)); \
+	pthread_create(worker->thread, attribute, callback, args); \
+	worker->thread_id = id; \
+	worker->task = NULL; \
+}
+
+/// Helper function to destroy a condition variable
+static void destroy_cond(pthread_cond_t *cond){
+	pthread_cond_destroy(cond);
+	free(cond);
+}
+
+/// Helper function to destroy a mutex.
+static void destroy_mutex(pthread_mutex_t *mutex){
+	pthread_mutex_destroy(mutex);
+	free(mutex);
+}
+
+/// Helper function to destroy a worker.
+static void destroy_worker(Worker *worker){
+	free(worker->thread);
+	free(worker);
+}
+
+/// Helper function to atomically increment a number.
+static void increment(long long number, pthread_mutex_t *mutex){
+	pthread_mutex_lock(mutex);
+	number++;
+	pthread_mutex_unlock(mutex);
+}
+
+/// Helper function to atomically decrement a number.
+static void decrement(long long number, pthread_mutex_t *mutex){
+	pthread_mutex_lock(mutex);
+	number--;
+	pthread_mutex_unlock(mutex);
 }
 
 /// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.
@@ -194,9 +185,9 @@ int Thread_Pool_Init(size_t number_of_threads){
 	temp_tp->paused = 0;
 	temp_tp->thread_count = temp_tp->active_threads = 0;
 	temp_tp->queue = PBQueue_Create_Unbounded(compare_task_priority);
-	INIT_COND(temp_tp->resume, NULL);
-	INIT_MUTEX(temp_tp->thread_count_change, NULL);
-	INIT_MUTEX(temp_tp->pause, NULL);
+	init_cond(temp_tp->resume, NULL);
+	init_mutex(temp_tp->thread_count_change, NULL);
+	init_mutex(temp_tp->pause, NULL);
 	// TODO: Initialize mutex and condition variables in thread pool recently added.
 	int i = 0;
 	temp_tp->worker_threads = malloc(sizeof(pthread_t *) * number_of_threads);
@@ -207,7 +198,7 @@ int Thread_Pool_Init(size_t number_of_threads){
 	for(;i < number_of_threads; i++){
 		Worker *worker = NULL;
 		// TODO: Assign the worker as the argument.
-		INIT_WORKER(worker, &attr, Get_Tasks, NULL, i+1);
+		init_worker(worker, &attr, Get_Tasks, NULL, i+1);
 		tp->worker_threads[i] = worker;
 		tp->thread_count++;
 	}
@@ -224,8 +215,8 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 		Result *result = malloc(sizeof(Result));
 		result->ready = 0;
 		result->item = NULL;
-		INIT_MUTEX(result->not_ready, NULL);
-		INIT_COND(result->is_ready, NULL);
+		init_mutex(result->not_ready, NULL);
+		init_cond(result->is_ready, NULL);
 	};
 	Task *task = malloc(sizeof(Task));
 	task->callback = callback;
@@ -239,8 +230,8 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 
 /// Will destroy the Result and set it's reference to NULL.
 int Thread_Pool_Result_Destroy(Result *result){
-	DESTROY_MUTEX(result->not_ready);
-	DESTROY_COND(result->is_ready);
+	destroy_mutex(result->not_ready);
+	destroy_mutex(result->is_ready);
 	free(result);
 	return 1;
 }
@@ -294,15 +285,15 @@ int Thread_Pool_Destroy(void){
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
 	while(tp->thread_count != 0) pthread_yield();
 	// Free all Task_Queue mutexes and condition variables.
-	DESTROY_MUTEX(tp->queue->no_tasks);
-	DESTROY_MUTEX(tp->queue->await_task);
-	DESTROY_MUTEX(tp->queue->adding_task);
-	DESTROY_COND(tp->queue->new_task);
-	DESTROY_COND(tp->queue->is_finished);
+	destroy_mutex(tp->queue->no_tasks);
+	destroy_mutex(tp->queue->await_task);
+	destroy_mutex(tp->queue->adding_task);
+	destroy_cond(tp->queue->new_task);
+	destroy_cond(tp->queue->is_finished);
 	PBQueue_Destroy(tp->queue);
-	DESTROY_MUTEX(tp->thread_count_change);
-	DESTROY_COND(tp->resume);
-	DESTROY_MUTEX(tp->pause);
+	destroy_mutex(tp->thread_count_change);
+	destroy_cond(tp->resume);
+	destroy_mutex(tp->pause);
 	TP_DEBUG_PRINTF("Thread_Count size: %d\n", tp->thread_count);
 	int i = 0;
 	for(;i<thread_count;i++) DESTROY_WORKER(tp->worker_threads[i]);
