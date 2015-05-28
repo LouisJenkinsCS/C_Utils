@@ -79,6 +79,7 @@ static void *Take_Item(PBQueue *queue){
 
 /// Returns an initialized bounded queue of max size max_elements.
 PBQueue *PBQueue_Create_Bounded(size_t max_elements, compare_elements comparator){
+	assert(comparator);
 	PBQueue *queue = malloc(sizeof(PBQueue));
 	queue->size = 0;
 	queue->max_size = max_elements;
@@ -96,6 +97,7 @@ PBQueue *PBQueue_Create_Bounded(size_t max_elements, compare_elements comparator
 
 /// Returns an initialized unbounded queue.
 PBQueue *PBQueue_Create_Unbounded(compare_elements comparator){
+	assert(comparator);
 	PBQueue *queue = malloc(sizeof(PBQueue));
 	/// max_size is set to 0 here because it's irrelevant and not used for something unbounded.
 	queue->size = queue->max_size = 0;
@@ -183,6 +185,20 @@ void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds){
 	pthread_cond_signal(queue->is_not_full);
 	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return item;
+}
+
+/// Clear the queue, and optionally execute a callback on every item currently in the queue. I.E allows you to delete them.
+int PBQueue_Clear(PBQueue *queue, void (*callback)(void *item)){
+	pthread_mutex_lock(queue->adding_or_removing_elements);
+	PBQ_Node *current_node = NULL;
+	for(current_node = queue->head; current_node; current_node = queue->head){
+		if(callback) callback(current_node->item);
+		queue->head = current_node->next;
+		free(current_node);
+		queue->size--;
+	}
+	pthread_mutex_unlock(queue->adding_or_removing_elements);
+	return 1;
 }
 
 /// Tells if queue is empty.

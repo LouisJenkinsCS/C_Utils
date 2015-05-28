@@ -113,8 +113,7 @@ void test_timed_enqueue_and_dequeue(void){
 int main(void){
 	queue = PBQueue_Create_Bounded(bounds, compare_integers);
 	test_enqueue_and_dequeue();
-	free(queue);
-	queue = PBQueue_Create_Bounded(bounds, compare_integers);
+	PBQueue_Clear(queue, free);
 	test_timed_enqueue_and_dequeue();
 	printf("Finished All Tests!\n");
 	return EXIT_SUCCESS;
