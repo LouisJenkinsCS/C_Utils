@@ -201,6 +201,13 @@ int PBQueue_Clear(PBQueue *queue, void (*callback)(void *item)){
 	return 1;
 }
 
+/// Clears the queue then destroys the queue. Will execute a callback on every item in the queue if not null.
+int PBQueue_Destroy(PBQueue *queue, void (*callback)(void *item)){
+	pthread_mutex_lock(queue->adding_or_removing_elements);
+	PBQ_Node *current_node = NULL;
+	// TODO: Free all other resources!
+}
+
 /// Tells if queue is empty.
 int PBQueue_Is_Empty(PBQueue *queue){
 	return queue->size == 0;

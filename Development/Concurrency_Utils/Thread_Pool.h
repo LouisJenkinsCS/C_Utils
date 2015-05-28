@@ -23,6 +23,8 @@
 /// Flags the task as highest priority.
 #define TP_HIGHEST_PRIORITY 1 << 6
 
+#include "PBQueue.h"
+
 /*
 * Example of parameter usage: Lets say you wish to add a task of rather high importance, and it's crucial that
 * it does not pause in the middle of it, but you also do not want the result. You can easily do such a thing, without
@@ -85,25 +87,6 @@ enum Priority{
 	TP_HIGHEST
 };
 
-enum Pause_Preference{
-	/// Task can never be paused, must always finish.
-	NO_PAUSE,
-	/// Task can be paused before it finishes.
-	PAUSE
-};
-
-/// Determines whether a task is paused
-enum Task_Status {
-	/// The thread running the task will pause after it finishes.
-	DELAYED_PAUSE,
-	/// Task has been aborted, either due to user request or segmentation fault.
-	ABORTED,
-	/// Task is being processed.
-	PROCESSING,
-	/// Task is waiting in queue.
-	WAITING
-};
-
 struct Worker {
 	/// The worker thread that does the work.
 	pthread_t *thread;
@@ -117,7 +100,7 @@ struct Thread_Pool {
 	/// Array of threads.
 	Worker **worker_threads;
 	/// The queue with all jobs assigned to it.
-	Task_Queue *queue;
+	PBQueue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
 	size_t thread_count;
 	/// Amount of threads currently active.
@@ -126,12 +109,18 @@ struct Thread_Pool {
 	volatile unsigned char keep_alive;
 	/// Flag used to pause all threads
 	volatile unsigned char paused;
+	/// Used for timed pauses.
+	volatile unsigned int seconds_to_pause;
 	/// Mutex for thread_count and active_threads, and keep_alive.
 	pthread_mutex_t *thread_count_change;
 	/// Condition variable used to resume all threads.
 	pthread_cond_t *resume;
 	/// Mutex accompanied by the condition variable.
-	pthread_mutex_t *pause;
+	pthread_mutex_t *is_paused;
+	/// Condition variable to determine whether all tasks are finished.
+	pthread_cond_t *all_tasks_finished;
+	/// Mutex accompanied by all_tasks_finished
+	pthread_mutex_t *no_tasks;
 };
 
 /**
@@ -159,40 +148,14 @@ struct Task {
 	void *args;
 	/// Pointing to the next task in the queue.
 	Task *next;
-	/// Mutex to ensure no other thread attempts to do this task.
-	pthread_mutex_t *being_processed;
 	/// Result from the Task.
 	Result *result;
 	/// Priority of task.
 	Priority priority;
 	/// Determines whether or not this task can be paused midway.
-	Pause_Preference preference;
+	unsigned char no_pause;
 	/// Determines the status of the task. Mostly used for determining the action to do before and after task is completed.
-	Task_Status status;
-	/// Time added to the thread pool, used to determine whether or not a thread should be terminated if the difference between then and now is 60 seconds.
-	time_t *time_added;
-};
-
-/**
- * The queue all worker threads use to obtain the next task to process.
- */
-struct Task_Queue{
-	/// Pointer to the head of the queue.
-	Task *head;
-	/// Pointer to the tail of the queue.
-	Task *tail;
-	/// Maintains the size of the current queue.
-	size_t size;
-	/// Condition variable to signal that all tasks are finished.
-	pthread_cond_t *is_finished;
-	/// Lock to use to wait until is_finished is signaled.
-	pthread_mutex_t *no_tasks;
-	/// Condition variable to signal when a task is added to the queue.
-	pthread_cond_t *new_task;
-	/// Lock to use to wait until a new task is added.
-	pthread_mutex_t *await_task;
-	/// Lock to use when adding a task.
-	pthread_mutex_t *adding_task;
+	unsigned char delayed_pause;
 };
 
 /**
@@ -237,10 +200,14 @@ int Thread_Pool_Destroy(void);
  */ 
 void *Thread_Pool_Obtain_Result(Result *result);
 
+void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds);
+
 /**
  * Blocks until all tasks in the thread pool are finished.
  */
 void Thread_Pool_Wait(void);
+
+void Thread_Pool_Timed_Wait(unsigned int seconds);
 
 /**
  * Pause all operations in the task queue. Warning: May be unstable if critical operations
