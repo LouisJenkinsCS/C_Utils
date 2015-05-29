@@ -53,13 +53,14 @@ static void Add_Item(PBQueue *queue, void *item){
 		if(queue->comparator(item, queue->head->item) > 0) Add_As_Head(queue, node);
 		else Add_As_Tail(queue, node);
 	} else if(queue->comparator(item, queue->head->item) > 0) Add_As_Head(queue, node);
+	else if(queue->comparator(queue->tail->item, item) >= 0) Add_As_Tail(queue, node);
 	else {
 		PBQ_Node *current_node = NULL;
 		PBQ_Node *previous_node = NULL;
 		// START HERE!
 		for(previous_node = current_node = queue->head; current_node; previous_node = current_node, current_node = current_node->next){
 			if(queue->comparator(item, current_node->item) > 0) { Add_After(queue, node, previous_node); return; }
-			else if(!current_node->next) Add_As_Tail(queue, node);
+			else if(!current_node->next) { Add_As_Tail(queue, node); return; }
 		}
 	}
 }
@@ -90,7 +91,6 @@ PBQueue *PBQueue_Create_Bounded(size_t max_elements, compare_elements comparator
 	pthread_cond_init(queue->is_not_full, NULL);
 	pthread_cond_init(queue->is_not_empty, NULL);
 	pthread_mutex_init(queue->adding_or_removing_elements, NULL);
-	queue->type = PBQ_BOUNDED;
 	queue->comparator = comparator;
 	return queue;
 }
@@ -108,7 +108,6 @@ PBQueue *PBQueue_Create_Unbounded(compare_elements comparator){
 	pthread_cond_init(queue->is_not_full, NULL);
 	pthread_cond_init(queue->is_not_empty, NULL);
 	pthread_mutex_init(queue->adding_or_removing_elements, NULL);
-	queue->type = PBQ_UNBOUNDED;
 	queue->comparator = comparator;
 	return queue;
 }
@@ -117,17 +116,20 @@ PBQueue *PBQueue_Create_Unbounded(compare_elements comparator){
 int PBQueue_Enqueue(PBQueue *queue, void *item){
 	assert(queue);
 	assert(item);
-	assert(queue->size < queue->max_size + 1);
 	/// Does not take nulls.
 	if(!item) return 0;
 	pthread_mutex_lock(queue->adding_or_removing_elements);
-	if(queue->type == PBQ_BOUNDED){
+	//printf("Enqueue: Made it inside of lock.!\n");
+	if(queue->max_size){
+		assert(queue->size <= queue->max_size);
 		//printf("Queue Size: %d\n", queue->size);
 		while(queue->size == queue->max_size) {
+			//printf("Enqueue: Queue is full, waiting...\n");
 			pthread_cond_wait(queue->is_not_full, queue->adding_or_removing_elements);
 		}
 	}
 	Add_Item(queue, item);
+	//printf("Enqueue: Queue Size is %d\n", queue->size);
 	pthread_cond_signal(queue->is_not_empty);
 	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return 1;
@@ -140,7 +142,7 @@ int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds){
 	clock_gettime(CLOCK_REALTIME, &timeout);
 	timeout.tv_sec += seconds;
 	pthread_mutex_lock(queue->adding_or_removing_elements);
-	if(queue->type == PBQ_BOUNDED){
+	if(!queue->max_size){
 		while(queue->size == queue->max_size){
 			int retval = pthread_cond_timedwait(queue->is_not_full, queue->adding_or_removing_elements, &timeout);
 			if(retval == ETIMEDOUT){ 
@@ -170,18 +172,22 @@ void *PBQueue_Dequeue(PBQueue *queue){
 
 /// Blocks until a new element is available or the amount of the time ellapses.
 void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds){
+	assert(queue);
 	pthread_mutex_lock(queue->adding_or_removing_elements);
 	struct timespec timeout;
 	clock_gettime(CLOCK_REALTIME, &timeout);
 	timeout.tv_sec += seconds;
-	while(queue->size == 0){ 
+	while(!queue->size){ 
+		//printf("Timed_Dequeue: Condition Waiting!\n");
 		int retval = pthread_cond_timedwait(queue->is_not_empty, queue->adding_or_removing_elements, &timeout);
 		if(retval == ETIMEDOUT){
+			//printf("Timed_Dequeue: A thread timedout!\n");
 			pthread_mutex_unlock(queue->adding_or_removing_elements);
 			return NULL;
 		}
 	}
 	void *item = Take_Item(queue);
+	//printf("Timed_Dequeue: Queue Size is %d\n", queue->size);
 	pthread_cond_signal(queue->is_not_full);
 	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return item;
@@ -197,15 +203,21 @@ int PBQueue_Clear(PBQueue *queue, void (*callback)(void *item)){
 		free(current_node);
 		queue->size--;
 	}
+	queue->tail = NULL;
 	pthread_mutex_unlock(queue->adding_or_removing_elements);
 	return 1;
 }
 
 /// Clears the queue then destroys the queue. Will execute a callback on every item in the queue if not null.
 int PBQueue_Destroy(PBQueue *queue, void (*callback)(void *item)){
-	pthread_mutex_lock(queue->adding_or_removing_elements);
-	PBQ_Node *current_node = NULL;
-	// TODO: Free all other resources!
+	PBQueue_Clear(queue, callback);
+	pthread_cond_destroy(queue->is_not_full);
+	pthread_cond_destroy(queue->is_not_empty);
+	pthread_mutex_destroy(queue->adding_or_removing_elements);
+	free(queue->is_not_full);
+	free(queue->is_not_empty);
+	free(queue->adding_or_removing_elements);
+	free(queue);
 }
 
 /// Tells if queue is empty.

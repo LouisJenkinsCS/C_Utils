@@ -15,13 +15,6 @@ struct PBQ_Node{
 	void *item;
 };
 
-enum PBQ_Type{
-	/// The queue's size if infinite (or until out of memory).
-	PBQ_UNBOUNDED,
-	/// The queue's size is based on 
-	PBQ_BOUNDED
-};
-
 struct PBQueue {
 	/// A pointer to the head node.
 	PBQ_Node *head;
@@ -29,11 +22,9 @@ struct PBQueue {
 	PBQ_Node *tail;
 	/// To compare elements to determine priority.
 	compare_elements comparator;
-	/// Determines whether queue is bounded or unbounded.
-	PBQ_Type type;
 	/// Size of the current queue, meaning amount of elements currently in the queue.
 	volatile size_t size;
-	/// The maximum size of the queue if it is bounded.
+	/// The maximum size of the queue if it is bounded. If it is unbounded it is 0.
 	size_t max_size;
 	/// A new element may be added to the PBQueue.
 	pthread_cond_t *is_not_full;

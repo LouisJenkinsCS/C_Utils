@@ -92,6 +92,8 @@ struct Worker {
 	pthread_t *thread;
 	/// The worker thread id.
 	unsigned int thread_id;
+	/// Determines whether the thread is properly setup.
+	volatile unsigned char is_setup;
 	/// The current task being worked on.
 	Task *task;
 };
@@ -102,9 +104,9 @@ struct Thread_Pool {
 	/// The queue with all jobs assigned to it.
 	PBQueue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
-	size_t thread_count;
+	unsigned int thread_count;
 	/// Amount of threads currently active.
-	size_t active_threads;
+	unsigned int active_threads;
 	/// Flag to keep all threads alive.
 	volatile unsigned char keep_alive;
 	/// Flag used to pause all threads
@@ -205,9 +207,9 @@ void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds);
 /**
  * Blocks until all tasks in the thread pool are finished.
  */
-void Thread_Pool_Wait(void);
+int Thread_Pool_Wait(void);
 
-void Thread_Pool_Timed_Wait(unsigned int seconds);
+int Thread_Pool_Timed_Wait(unsigned int seconds);
 
 /**
  * Pause all operations in the task queue. Warning: May be unstable if critical operations

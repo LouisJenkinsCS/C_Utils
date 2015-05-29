@@ -3,9 +3,14 @@
 #include <stdio.h>
 #include "PBQueue.h"
 volatile int global_var = 1;
-const int bounds = 2;
+const int bounds = 5;
 
 PBQueue *queue;
+
+void print_value(void *number){
+	printf("Queue has value: %d\n", *(int *)number);
+	free(number);
+}
 
 void *producer_timeout_thread(void *args){
 	PBQueue *queue = args;
@@ -23,6 +28,7 @@ void *producer_timeout_thread(void *args){
 		printf("Producer: starting Enqueue %d\n", j);
 		PBQueue_Timed_Enqueue(queue, i, 10);
 	}
+	free(i);
 	printf("Producer: returning...\n");
 }
 
@@ -43,20 +49,18 @@ void *consumer_timeout_thread(void *args){
 
 void *producer_thread(void *args){
 	PBQueue *queue = args;
-	int **i = malloc(sizeof(int *) * bounds);
-	int j = 0, k = 0;
-	for(;j<bounds;j++){
-		i[j] = malloc(sizeof(int));
-	}
-	j = 0;
+	int **i = malloc(sizeof(int *));
+	int j = 0;
 	while(global_var){
-		if(j > bounds-1) { j = 0; sleep(3); }
-		*(i[j]) = k;
+		if(j % bounds == 0) sleep(3);
+		i[j] = malloc(sizeof(int));
+		*(i[j]) = j;
 		PBQueue_Enqueue(queue, i[j]);
 		printf("Pushed value: %d\n", *(i[j]));
 		j++;
-		k++;
+		i = realloc(i, sizeof(int *) * (j+1));
 	}
+	free(i);
 	printf("Producer returning...\n");
 	return NULL;
 }
@@ -68,6 +72,7 @@ void *consumer_thread(void *args){
 		sleep(1);
 		i = PBQueue_Dequeue(queue);
 		printf("Popped value: %d\n", *i);
+		free(i);
 	}
 	printf("Consumer returning...\n");
 	return NULL;
@@ -113,8 +118,9 @@ void test_timed_enqueue_and_dequeue(void){
 int main(void){
 	queue = PBQueue_Create_Bounded(bounds, compare_integers);
 	test_enqueue_and_dequeue();
-	PBQueue_Clear(queue, free);
+	PBQueue_Clear(queue, print_value);
 	test_timed_enqueue_and_dequeue();
+	PBQueue_Destroy(queue, NULL);
 	printf("Finished All Tests!\n");
 	return EXIT_SUCCESS;
 }
