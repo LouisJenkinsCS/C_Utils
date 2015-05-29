@@ -4,6 +4,12 @@
 #include <assert.h>
 #include "Thread_Pool.h"
 
+
+typedef struct{
+	time_t *start;
+	time_t *end;
+} Timer_T;
+
 int iterations = 0;
 
 typedef struct {
@@ -31,33 +37,50 @@ int *print_hello(thread_task *task){
 	return retval;
 }
 
-char *format_time(double time){
+Timer_T *Timer_Init(void){
+	Timer_T *timer = malloc(sizeof(Timer_T));
+	timer->start = malloc(sizeof(time_t));
+	timer->end = malloc(sizeof(time_t));
+	return timer;
+}
+
+void Timer_Start(Timer_T *timer){
+	time(timer->start);
+}
+
+void Timer_Stop(Timer_T *timer){
+	time(timer->end);
+}
+
+char *Timer_Get_Formatted(Timer_T *timer){
+	double total_time = difftime(*timer->end, *timer->start);
 	int hours = 0, minutes = 0, seconds = 0;
-	while((int)(time/3600)){
+	while((int)(total_time/3600)){
 		hours++;
-		time -= 3600;
+		total_time -= 3600;
 	}
-	while((int)(time/60)){
+	while((int)(total_time/60)){
 		minutes++;
-		time -= 60;
+		total_time -= 60;
 	}
-	while((int)time){
+	while((int)total_time){
 		seconds++;
-		time--;
+		total_time--;
 	}
 	char *formatted_time;
 	asprintf(&formatted_time, "%02d:%02d:%02d", hours, minutes, seconds);
 	return formatted_time;
 }
 
-int main(void){
-	const int num_threads = 5;
+void Timer_Destroy(Timer_T *timer){
+	free(timer->start);
+	free(timer->end);
+	free(timer);
+}
+
+void Test_Non_Timed_Functions(void){
 	const unsigned int num_tasks = 10000;
 	const int runs = 50;
-	time_t *start = malloc(sizeof(time_t));
-	time_t *end = malloc(sizeof(time_t));
-	time(start);
-	Thread_Pool_Init(num_threads);
 	printf("Thread Pool created\n");
 	Result **result = malloc(sizeof(Result *) * num_tasks);
 	int i = 0;
@@ -86,15 +109,47 @@ int main(void){
 		Thread_Pool_Result_Destroy(result[i]);
 	}
 	free(result);
+}
+
+int main(void){
+	// Setup the Thread Pool
+	const int num_threads = 5;
+	Thread_Pool_Init(num_threads);
+	// Setup the timers for each test.
+	Timer_T *total_time = Timer_Init();
+	Timer_T *timer_one = Timer_Init();
+	Timer_T *timer_two = Timer_Init();
+	Timer_T *timer_three = Timer_Init();
+	// Begin the timer to calculate the total timer as well as the first task.
+	Timer_Start(total_time);
+	Timer_Start(timer_one);
+	Timer_Start(timer_two);
+	Timer_Start(timer_three);
+	// Begin all tests and timers below.
+	Test_Non_Timed_Functions();
+	Timer_Stop(timer_one);
+	Timer_Start(timer_two);
+	Test_Priority_Tasks();
+	Timer_Stop(timer_two);
+	Timer_Start(timer_three);
+	Test_Timed_Functions();
+	Timer_Stop(timer_three);
+	Timer_Stop(total_time);
+	// All tests being finished, calculate individual and total time.
+	char *TNTF_Time = Timer_Get_Formatted(timer_one);
+	char *TPT_Time = Timer_Get_Formatted(timer_two);
+	char *TTF_Time = Timer_Get_Formatted(timer_three);
+	char *total_formatted_time = Timer_Get_Formatted(total_time);
+	// Print all test times.
+	printf("Passed Test_Non_Timed_Functions with time of: %s!\n", TNTF_Time);
+	printf("Passed Test_Priority_Tasks with time of %s!\n", TPT_Time);
+	printf("Passed Test_Timed_Functions with time of %s!\n", TTF_Time);
+	printf("Passed All Tests with total time %s!\n", total_formatted_time);
+	// Free all resources.
+	Timer_Destroy(total_time);
+	Timer_Destroy(timer_one);
+	free(total_formatted_time);
+	free(TNTF_Time);
 	Thread_Pool_Destroy();
-	printf("Thread_Pool struct destroyed!\n");
-	time(end);
-	double total_time = difftime(*end, *start);
-	char *formatted_time = format_time(total_time);
-	printf("Total time is %s\n", formatted_time);
-	free(formatted_time);
-	free(start);
-	free(end);
-	pthread_exit(EXIT_SUCCESS);
 	return EXIT_SUCCESS;
 }

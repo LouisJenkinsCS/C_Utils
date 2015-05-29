@@ -231,6 +231,10 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	return result;
 }
 
+int Thread_Pool_Clear_Tasks(void){
+	return PBQueue_Clear(tp->queue, NULL);
+}
+
 /// Will destroy the Result and set it's reference to NULL.
 int Thread_Pool_Result_Destroy(Result *result){
 	destroy_mutex(result->not_ready);
@@ -268,8 +272,6 @@ int Thread_Pool_Wait(void){
 	pthread_mutex_lock(tp->no_tasks);
 	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) pthread_cond_wait(tp->all_tasks_finished, tp->no_tasks);
 	pthread_mutex_unlock(tp->no_tasks);
-	printf("PBQueue_Is_Empty: %d\n", PBQueue_Is_Empty(tp->queue));
-	printf("tp->active_threads: %d\n", tp->active_threads);
 	return 1;
 }
 

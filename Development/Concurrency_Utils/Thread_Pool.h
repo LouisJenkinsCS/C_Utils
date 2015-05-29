@@ -181,6 +181,8 @@ int Thread_Pool_Init(size_t number_of_threads);
  */
 Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags);
 
+int Thread_Pool_Clear_Tasks(void);
+
 /**
  * Destroys the Result from a task.
  * @param result Result to be destroyed.
