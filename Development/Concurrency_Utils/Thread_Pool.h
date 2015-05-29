@@ -1,14 +1,51 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-/**
-* Invokes the default behavior for the function. Defaults are listed below...
-*
-* Thread_Pool_Add_Task:
-* - Medium Priority.
-* - Pausable.
-* - Get result.
-*/
+/*
+ *  To summarize, a thread pool is a pool of threads that initialized at creation,
+ * and perform tasks; by initializing a pool a threads beforehand, it greatly reduces
+ * the overhead of creating and deleting a thread for each task. 
+ * 
+ * Now that that's clear, how does my thread pool differ? My thread pool features
+ * selective pausing of tasks and pausing all tasks and resuming them at a later time
+ * either by a timer or manually resuming the thread pool. My thread pool also features
+ * the ability to obtain the result from a task and is optional.
+ * It also gives the ability to wait for all tasks to finish, and alternatively to
+ * wait up to a certain amount of time.
+ * 
+ * The thread pool currently is a static member, hence there can be only one at
+ * any given time, however at a later date there will instead be a static table
+ * of thread pools to allow multiple, however as that would complicate development,
+ * I decided to push that off to a later date.
+ * 
+ * The thread pool also is static in another sense. The amount of threads will always
+ * have the same amount of threads at runtime, and will only be reduced (to 0) on deletion.
+ * 
+ * The Thread Pool can be initialized with the below macros, used for bitmasking.
+ * For example, to add a task where you want no result, you would do the following:
+ * 
+ * Thread_Pool_Add_Task(function, arguments, TP_NO_RESULT);
+ * 
+ * If you wanted to add a task where you did want the result, but you wanted
+ * it of high priority and not being able to pause midway, you would do the following:
+ * 
+ * Thread_Pool_Add_Task(function, arguments, TP_NO_PAUSE | TP_HIGH_PRIORITY);
+ * 
+ * Alternatively, if you want to add a normal task (medium priority), you do the following:
+ * 
+ * Thread_Pool_Add_Task(function, arguments, TP_NONE);
+ * 
+ * Note that you do not need to specify everything, as in whether you want the result
+ * or not, as there are set defaults, listed below. These defaults are there to make
+ * adding general tasks easier.
+ * 
+ * Defaults:
+ * 
+ * - Result returned
+ * - Will pause mid-task.
+ * - Medium Priority task.
+ */
+/// The default behavior for a function.
 #define TP_NONE 1 << 0
 /// Will not return a Result upon submitting a task.
 #define TP_NO_RESULT 1 << 1
@@ -24,34 +61,6 @@
 #define TP_HIGHEST_PRIORITY 1 << 6
 
 #include "PBQueue.h"
-
-/*
-* Example of parameter usage: Lets say you wish to add a task of rather high importance, and it's crucial that
-* it does not pause in the middle of it, but you also do not want the result. You can easily do such a thing, without
-* having to deal with having to deal with a large amount of parameters. 
-*
-* Thread_Pool_Add_Task(Task, Args, NO_PAUSE | NO_RESULT | HIGHEST_PRIORITY);
-*
-* Instead of something like Thread_Pool_Add_Task(Task, Args, 1, 1, 4);
-*
-* Note above that this assumes that Add_Task would have a int (or enumeration) for each option, imagine you want to add
-* a default task. A task of no particular importance, one where you wish to keep the result, and you don't care if the task is paused
-* or not.
-*
-* Thread_Pool_Add_Task(Task, Args, TP_NONE);
-*
-* Instead of something like Thread_Pool_Add_Task(Task, Args, 0, 0, 2);
-*
-* It gets even more messy with enumerations.
-*
-* Thread_Pool_Add_Task(Task, Args, PAUSABLE, GET_RESULT, MEDIUM_PRIORITY);
-*
-* Or more practically, a combination of the two.
-*
-* Thread_Pool_Add_Task(Task, Args, 1, 1, MEDIUM_PRIORITY);
-*
-* Regardless, the bitwise one looks more pretty and elegant.
-*/
 
 typedef struct Worker Worker;
 
@@ -73,7 +82,6 @@ typedef enum Task_Status Task_Status;
 
 typedef void *(*thread_callback)(void *args);
 
-/// For insertions in a priority blocking queue fashion.
 enum Priority{
 	/// Lowest possible priority
 	TP_LOWEST,
@@ -125,10 +133,6 @@ struct Thread_Pool {
 	pthread_mutex_t *no_tasks;
 };
 
-/**
- * The result returned when adding a new task to the task queue. It allows you to
- * to wait on it's result and obtain it.
- */
 struct Result {
 	/// Lock to protect contents of 'Result'
 	pthread_mutex_t *not_ready;
@@ -136,13 +140,10 @@ struct Result {
 	pthread_cond_t *is_ready;
 	/// Determines whether or not it has been processed.
 	volatile unsigned char ready;
-	/// The return type, NULL until ready.
+	/// The returned item from the task.
 	void *item;
 };
 
-/**
- * Encompasses the task submitted by the user. Contains the result of the task as well.
- */
 struct Task {
 	/// Task to be executed.
 	thread_callback callback;
@@ -156,31 +157,35 @@ struct Task {
 	Priority priority;
 	/// Determines whether or not this task can be paused midway.
 	unsigned char no_pause;
-	/// Determines the status of the task. Mostly used for determining the action to do before and after task is completed.
+	/// Determines whether or not the thread that runs this task should pause after.
 	unsigned char delayed_pause;
 };
 
 /**
  * Constructor for the thread pool, creating the requested amount of threads. 
- * Used to initialize the static variable in the source file, and should not
- * be called (yet, no checks for if the thread pool currently exists are 
- * implemented yet) if one already exists, as it may result in undefined behavior.
+ * There can only be one thread pool instantiated at any given time, so this function
+ * will return 0 if there is another thread pool instantiated.
  * @param number_of_threads Amount of worker threads to initialize at startup.
- * @return 1 on success.
+ * @return 1 on success, 0 if the thread pool already exists.
  */
 int Thread_Pool_Init(size_t number_of_threads);
 
 /**
- * Adds a task to the thread pool. Callback must return a pointer * and arguments must 
- * also be a pointer. Alternatively, you can cast the function pointer to a void pointer
- * like such: (void *)function; Doing so results in undefined behavior, but allows
- * it to work if you do not really want the result.
+ * Adds a task to the thread pool. While it requires a void *(*callback)(void *args)
+ * function pointer, casting a function to void *, like (void *)function, will work
+ * but has undefined behavior.
  * @param callback Callback function to be called as the task.
  * @param args Arguments to pass to the thread pool.
- * @return The result from the task to be obtained later.
+ * @param flags TP_NONE | TP_LOWEST_PRIORITY | TP_LOW_PRIORITY | TP_HIGH_PRIORITY
+ * | TP_HIGHEST_PRIORITY | TP_NO_RESULT | TP_NO_PAUSE.
+ * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
 Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags);
 
+/**
+ * Clear all tasks in the task queue. Note: Will not cancel currently run tasks.
+ * @return 1 on success.
+ */
 int Thread_Pool_Clear_Tasks(void);
 
 /**
@@ -198,39 +203,56 @@ int Thread_Pool_Destroy(void);
 
 /**
  * Obtain the result from a Result, blocking until it's ready. This is the only safe
- * way to obtain said result.
+ * way to obtain said result. Also note, if the thread pool is shutdown, then the
+ * result returns NULL.
  * @param result Result to obtain result from.
- * @return The item stored inside of the result.
+ * @return The item stored inside of the result or NULL if thread pool is shut down.
  */ 
 void *Thread_Pool_Obtain_Result(Result *result);
 
+/**
+ * Obtain the result from the task, blocking until it is ready or until the time 
+ * elapses, in which it will return NULL.
+ * @param result Result to obtain result from.
+ * @param seconds Maximum amount of time to block for if result isn't ready.
+ * @return The item stored inside the result, or NULL if timeout or thread pool is shutdown.
+ */
 void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds);
 
 /**
- * Blocks until all tasks in the thread pool are finished.
+ * Block until all tasks are finished.
+ * @return 1 on success.
  */
 int Thread_Pool_Wait(void);
 
+/**
+ * Block until all tasks are finished or time elapses.
+ * @param seconds Maximum amount of time to block for.
+ * @return 1 if all tasks are finished, 0 if timeout.
+ */
 int Thread_Pool_Timed_Wait(unsigned int seconds);
 
 /**
- * Pause all operations in the task queue. Warning: May be unstable if critical operations
- * are being performed.
+ * Pause all operations in the task queue. Even NO_PAUSE flagged tasks will enter
+ * the pause signal handler, to determine if it can return, but it will return immediately
+ * once it determines whether it is or not. Primitive blocking functions like
+ * sleep and select should return perfectly since SA_RESTART is flagged in sigaction.
  * @return 1 on success, 0 if at least one thread is not able to pause.
  */
 int Thread_Pool_Pause(void);
 
 /**
- * Pause the thread pool for the given amount of time.
+ * Pause the thread pool for the given amount of time or resumed. Note: See: Thread_Pool_Pause.
  * @param seconds Amount of time to pause for.
  * @return 1 on success, 0 if at least one thread cannot pause.
  */
 int Thread_Pool_Timed_Pause(unsigned int seconds);
 
 /**
- * Resume all worker threads that are paused. If no threads are waiting, nothing
- * happens.
- * @return 1 on success, 0 if at least one thread cannot be resumed.
+ * Resume all worker threads that are paused. If the thread pool is not paused, or it is
+ * shutdown, it returns 0.
+ * @return 1 on success, 0 if at least one thread cannot be resumed, thread pool is not paused
+ * or does not exist..
  */
 int Thread_Pool_Resume(void);
 #endif /* END THREAD_POOL_H */
