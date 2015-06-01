@@ -15,90 +15,69 @@
  */
 
 
-/*
- * Using the wonderful asprintf function that returns the string of a formatted function.
- * I'm certain that the performance of this function is 100x better than strcpy into
- * a cleaned allocated temp, then strcat on top of that.
- */
+
 char *String_Utils_concat(char **string_one, const char *string_two, int parameter) {
     assert(string_one);
     assert(*string_one);
     assert(string_two);
-    // Allocate temporary string to size of two strings, + 1 for null terminator
     char *temp;
-    // GLIB C to the rescue!
     asprintf(&temp, "%s%s", *string_one, string_two);
-    // Based on parameters below, will modify the original screen, or just return the new string.
-    if (SELECTED(parameter, MODIFY)) {
+    if (SELECTED(parameter, SU_MODIFY)) {
         String_Utils_set(string_one, temp);
-        // Free temp as no longer needed.
         free(temp);
         return *string_one;
-    } else return temp; // Not modifying the original string is the default, even if there was no valid parameter.
+    } else return temp;
 }
 
 
-/*
- * Removed the experimental garbage collector.
- */
 int String_Utils_compare(const char *string_one, const char *string_two, int parameter) {
     assert(string_one);
     assert(string_two);
     int result = 0;
-    // Allocate two temporary strings
-    if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string_one TEMP = String_Utils_to_lowercase(&string_one, NONE);
-        char *temp_string_two TEMP = String_Utils_to_lowercase(&string_two, NONE);
+    if(SELECTED(parameter, SU_IGNORE_CASE)){
+        char *temp_string_one = String_Utils_to_lowercase(&string_one, SU_NONE);
+        char *temp_string_two = String_Utils_to_lowercase(&string_two, SU_NONE);
         result = strcmp(temp_string_one, temp_string_two);
+        free(temp_string_one);
+        free(temp_string_two);
     } else result = strcmp(string_one, string_two);
     return result;
 }
 
-/*
- * Basic index checks.
- */
 char String_Utils_char_at(const char *string, unsigned int index) {
     assert(string);
     return string[index > strlen(string) - 1 ? strlen(string) - 1 : index];
 }
 
-/*
- * Removed GC calls, added macro TEMP.
- */
 int String_Utils_contains(const char *string, const char *search, int parameter) { 
     assert(string);
     assert(search);
     int result = 0;
-    // Allocates temporary variables to hold copy of the passed strings.
-    if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string TEMP = strdup(string);
-        char *temp_search TEMP = strdup(search);
+    if(SELECTED(parameter, SU_IGNORE_CASE)){
+        char *temp_string = String_Utils_to_lowercase(&string, SU_NONE);
+        char *temp_search = String_Utils_to_lowercase(&search, SU_NONE);
         result = strstr(temp_string, temp_search) == NULL ? 0 : 1;
+        free(temp_string);
+        free(temp_search);
     } else result = strstr(string, search) == NULL ? 0 : 1;
     return result;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
 char *String_Utils_to_lowercase(char **string, int parameter) {
     assert(string);
     assert(*string);
-    char *temp = malloc(strlen(*string) + 1); // Note: This does not need to be added to the stack.
+    int length = strlen(*string);
+    char *temp = malloc(length + 1);
     int i = 0;
-    for (i; i <= strlen(*string); i++) {
-        temp[i] = tolower((*string)[i]);
-    }
-    if (SELECTED(parameter, MODIFY)) {
+    while((*string)[i++]) temp[i] = tolower((*string)[i]);
+    temp[length] = '\0';
+    if (SELECTED(parameter, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
-    } else return temp; // If the heap existed, temp would be added to it before return.
+    } else return temp;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
 char *String_Utils_to_uppercase(char **string, int parameter) {
     assert(string);
     assert(*string);
@@ -107,62 +86,41 @@ char *String_Utils_to_uppercase(char **string, int parameter) {
     for (i; i <= strlen(*string); i++) {
         temp[i] = toupper((*string)[i]);
     }
-    if (SELECTED(parameter, MODIFY)) {
+    if (SELECTED(parameter, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Note: This function can be changed to obtain a compressed byte repsentation of the string.
- */
 unsigned int *String_Utils_get_bytes(const char *string) {
-    assert(string);
-    unsigned int *bytes = malloc(sizeof (unsigned int) * strlen(string));
-    int i = 0;
-    for (i; i < strlen(string); i++) bytes[i] = (unsigned int) ((unsigned char) string[i]);
-    return bytes;
+    // TODO: Implement a way to compress the string, rather than uselessly returning
+    // an array of chars returned as an array of unsigned ints.
+    return NULL;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
 int String_Utils_equals(const char *string_one, const char *string_two, int parameter) {
     assert(string_one);
     assert(string_two);
     return String_Utils_compare(string_one, string_two, parameter) == 0 ? 1 : 0;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
 char *String_Utils_from(char **string, unsigned int index, int parameter) {
     assert(string);
     assert(*string);
-    int i = index > strlen(*string)-1 ? strlen(*string)-1 : index;
+    int length = strlen(*string);
+    int i = index > (length - 1) ? length - 1 : index;
     int j = 0;
-    // Allocate temporary variable.
-    char *temp = malloc((strlen(*string) + 1) - i); // Note: Uncomplicate the fuck out of this please.
-    
-    for (i; i <= strlen(*string); i++, j++) { // Less complicated
-        temp[j] = (*string)[i];
-    }
-    if (SELECTED(parameter, MODIFY)) {
+    char *temp = malloc((length - i) + 1);
+    while((*string)[i++]) temp[j++] = (*string)[i];
+    temp[++j] = '\0'; 
+    if (SELECTED(parameter, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Should fix IGNORE_CASE by extracting the portion of the original strange equal to the final string, except
- * in it's normal case. Also I'm trying to inch in uses for my GC.
- *
- * Proud to say that, this should be optimized a lot better than before. The ONLY copies it creates
- * are for string and substring, other than that, no more useless extra allocations and *ugh* memory leaks.
- * I'm improving every day and I can see it.
- */
 char *String_Utils_from_token(char **string, const char *substring, int parameter) {
     assert(string);
     assert(*string);
