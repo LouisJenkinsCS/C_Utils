@@ -11,7 +11,7 @@
 /// Prints a debug message, along with it's timestamp, file and line of code it's on.
 #define MU_DEBUG(message, ...) do { \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
-	fprintf(stderr, "%s: [DEBUG](%s:%d): '" message "'\n", timestamp,  __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(stderr, "%s: [DEBUG]: " message "\n", timestamp, ##__VA_ARGS__); \
 	free(timestamp); \
 } while(0)
 #endif

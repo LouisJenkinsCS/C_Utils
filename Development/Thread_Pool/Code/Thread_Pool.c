@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "Thread_Pool.h"
+#include <Misc_Utils.h>
 
 /* Define helper macros here. */
 
@@ -95,7 +96,10 @@ static void Process_Task(Worker *self){
 /// Will signal to any thread waiting that all tasks are finished.
 static void signal_if_queue_finished(void){
 	pthread_mutex_lock(tp->no_tasks);
-	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0) pthread_cond_signal(tp->all_tasks_finished);
+	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0){
+		pthread_cond_signal(tp->all_tasks_finished);
+		MU_LOG_INFO(tp->fp, "Queue Finished has been signaled!\nQueue Size : %d, Active Threads: %dThread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
+	}
 	pthread_mutex_unlock(tp->no_tasks);
 }
 
@@ -142,7 +146,7 @@ static void *Get_Tasks(void *args){
 	pause_signal.sa_handler = Pause_Handler;
 	pause_signal.sa_flags = SA_RESTART;
 	sigemptyset(&pause_signal.sa_mask);
-	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) fprintf(stderr, "Get_Task callback was unable to initialize a pause_handler\n");
+	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) MU_LOG_ERROR(tp->fp, "Get_Task callback was unable to initialize a pause_handler\n");
 	self->is_setup = 1;
 	while(tp->keep_alive){
 		while(tp->keep_alive && !self->task) self->task = PBQueue_Timed_Dequeue(tp->queue, queue_timeout);
@@ -179,6 +183,7 @@ int Thread_Pool_Init(size_t number_of_threads){
 	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
 	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
 	Thread_Pool *temp_tp = malloc(sizeof(Thread_Pool));
+	temp_tp->fp = fopen("Thread_Pool_Log.txt", "w");
 	temp_tp->keep_alive = 1;
 	temp_tp->paused = 0;
 	temp_tp->seconds_to_pause = 0;
@@ -272,6 +277,7 @@ int Thread_Pool_Wait(void){
 	pthread_mutex_lock(tp->no_tasks);
 	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) pthread_cond_wait(tp->all_tasks_finished, tp->no_tasks);
 	pthread_mutex_unlock(tp->no_tasks);
+	MU_LOG_INFO(tp->fp, "Thread_Pool_Wait returned!\nQueue Size : %d, Active Threads: %dThread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
 	return 1;
 }
 
@@ -308,6 +314,7 @@ int Thread_Pool_Destroy(void){
 	int i = 0;
 	for(;i<thread_count;i++) destroy_worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
+	fclose(tp->fp);
 	free(tp);
 	tp = NULL;
 	return 1;

@@ -61,6 +61,7 @@
 #define TP_HIGHEST_PRIORITY 1 << 6
 
 #include "PBQueue.h"
+#include <stdlib.h>
 
 typedef struct Worker Worker;
 
@@ -111,6 +112,8 @@ struct Thread_Pool {
 	Worker **worker_threads;
 	/// The queue with all jobs assigned to it.
 	PBQueue *queue;
+	/// File Pointer for logging.
+	FILE *fp;
 	/// Amount of threads currently created, A.K.A Max amount.
 	unsigned int thread_count;
 	/// Amount of threads currently active.
