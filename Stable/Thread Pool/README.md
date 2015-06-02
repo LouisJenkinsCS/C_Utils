@@ -1,4 +1,4 @@
-#Concurrency Utilities for the C Programming Language
+#Concurrency Utilities for the C Programming Language\
 
 ##Summary
 
@@ -7,6 +7,10 @@ Concurrency Utilities, or Concurrency_Utils, is a package filled with robust, we
 ##Current Projects
 
 ###Thread Pool
+
+Current version: 1.0
+
+Documentation found [here](http://theif519.github.io/Thread_Pool_Documentation/)
 
 ####Summary
 

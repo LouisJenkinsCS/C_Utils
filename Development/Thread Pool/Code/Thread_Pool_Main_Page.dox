@@ -1,7 +1,7 @@
 /*! \mainpage Thread Pool
  * 
  * @author Louis Jenkins
- * @version 1.0
+ * @version 1.1
  *
  * \section list_summary Summary
  *
@@ -13,21 +13,25 @@
  *
  * \subsection results Get Results!
  *
- * This thread pool returns a Result struct which allows you to wait on the returned value from a structure. Also, in the future this feature will be optional.
+ * This thread pool returns a Result struct which allows you to wait on the returned value from a task. This feature is entirely optional, tasks
+ * can be flagged to not to return a result, hence eliminating the need to handle memory management of the result. 
  *
  * \subsection pause_and_resume Pause all tasks to be resumed later!
  *
- * This thread pool also features a way to pause the current tasks in it's tracks, safely, and then resume at a later time. Note that while it may safely pause and 
- * resume, this may lead to undefined behavior if you are doing critical operations, as in the futrue there will be a feature to prevent this.
+ * Pause all tasks to be resumed later. Tasks can also be flagged to not be paused, hence the thread processing it will pause only after it finishes.
  *
- * \subsection priority Prioritize your tasks! (Future)
+ * \subsection priority Prioritize your tasks!
  *
  * Allows you to submit a higher priority task ahead of the tasks of lower priority.
  *
  * \subsection recover Recovery from segmentation faults and errors (Future)
  *
- * The Thread Pool can continue operation and just terminate the current thread, spawning a new one to take it's place, either resuming other tasks or abort all 
- * tasks and cleanup at the user's choice.
+ * The Thread Pool can continue operation and just terminate the current thread, spawning a new one to take it's place, either resuming other tasks 
+ * abort all tasks and cleanup at the user's choice.
+ *
+ * \subsection parameters Dynamic parameters based on the flags you want!
+ *
+ * Use of bitmasking to pass multiple flags as a parameter, with it's own default behavior if you exclude them.
  *
  * \section notes Notes and Disclaimers
  *  
