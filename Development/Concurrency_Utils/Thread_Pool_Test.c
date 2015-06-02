@@ -78,10 +78,18 @@ void Timer_Destroy(Timer_T *timer){
 	free(timer);
 }
 
+void Test_Priority_Tasks(void){
+	const unsigned int num_tasks = 10000;
+	const int runs = 10;
+	Task *task = TT_Create(1, runs);
+	Result *result = Thread_Pool_Add_Task(print_hello, task, TP_NO_RESULT);
+	assert(!result);
+	// TODO: Test other functions.
+}
+
 void Test_Non_Timed_Functions(void){
 	const unsigned int num_tasks = 10000;
 	const int runs = 50;
-	printf("Thread Pool created\n");
 	Result **result = malloc(sizeof(Result *) * num_tasks);
 	int i = 0;
 	printf("Pausing thread pool to add all tasks!\n");
@@ -115,6 +123,7 @@ int main(void){
 	// Setup the Thread Pool
 	const int num_threads = 5;
 	Thread_Pool_Init(num_threads);
+	printf("Thread Pool created\n");
 	// Setup the timers for each test.
 	Timer_T *total_time = Timer_Init();
 	Timer_T *timer_one = Timer_Init();
