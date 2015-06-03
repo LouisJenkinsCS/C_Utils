@@ -8,7 +8,7 @@ Concurrency Utilities, or Concurrency_Utils, is a package filled with robust, we
 
 ###Thread Pool
 
-Current version: 1.0
+Current version: 1.1
 
 Documentation found [here](http://theif519.github.io/Thread_Pool_Documentation/)
 
@@ -24,15 +24,27 @@ This thread pool returns a Result struct which allows you to wait on the returne
 
 #####Pause all tasks to be resumed later!
 
-This thread pool also features a way to pause the current tasks in it's tracks, safely, and then resume at a later time. Note that while it may safely pause and resume, this may lead to undefined behavior if you are doing critical operations, as in the futrue there will be a feature to prevent this.
+Pause all tasks to be resumed later. Tasks can also be flagged to not be paused, hence the thread processing it will pause only after it finishes.
 
-#####Prioritize your tasks! (Future)
+#####Prioritize your tasks!
 
 Allows you to submit a higher priority task ahead of the tasks of lower priority.
+
+#####Dynamic parameters based on the flags you want!
+
+Use of bitmasking to pass multiple flags as a parameter, with it's own default behavior if you exclude them
 
 #####Recovery from segmentation faults and errors (Future)
 
 The Thread Pool can continue operation and just terminate the current thread, spawning a new one to take it's place, either resuming other tasks or abort all tasks and cleanup at the user's choice.
+
+#####Static or Dynamic thread pool! (Future)
+
+The Thread Pool allows you to use either static or dynamic thread pool constructor. With the dynamic thread pool, it allows you to pick the minimum, maximum, and average amount of threads that should be alive at any given time.
+
+#####Multiple Thread Pools! (Future)
+
+The Thread Pool is managed by a static virtual table, which keeps track of all currently allocated thread pools, allows for more than one thread pool at any given time, maintaining all of it's features.
 
 ####Notes and Disclaimers
 
