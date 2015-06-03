@@ -21,13 +21,13 @@
  * are vastly different languages, with different paradigms, it's impossible
  * to make it exactly like so. 
  *
- * Another nice feature is the passing of parameters to tailor the operation the way you want
+ * Another nice feature is the passing of flagss to tailor the operation the way you want
  * it if the library function supports it. For instance, one of the problems I had with the standard
  * C library was that strcat modifies the original string AND returns the pointer to the same
  * string it modified. I figured, why not just have an option to modify the string passed or not? 
  * What if I want to work with a string literal? Then with strcat, it would segfault. With my 
  * concat implementation, you can pass a string literal and not have it attempt to modify it, instead
- * create a copy of the string for you. In some functions, multiple parameter passing can be passed
+ * create a copy of the string for you. In some functions, multiple flags passing can be passed
  * with the | operator, I.E 'MODIFY | IGNORE_CASE'
  *
  * Another note, to keep the feature of being able to modify the string, all functions that can modify,
@@ -42,43 +42,34 @@
 #define	STRING_UTILS_H
 
 /*
- * General Notes: More than one parameter can be passed to any given function, 
+ * General Notes: More than one flags can be passed to any given function, 
  * but of course, they must make sense. If you pass a function which supports it both
  * LOWERCASE and UPPERCASE it'll just be the same string you ended up with before
- * passing the parameters. Also, passing nonsensical parameters aren't likely to do anything
- * like NONE | REVERSE will just REVERSE as NONE does nothing. The parameters are
+ * passing the flagss. Also, passing nonsensical flagss aren't likely to do anything
+ * like NONE | REVERSE will just REVERSE as NONE does nothing. The flagss are
  * very basic and bare bones, but they will be (most likely) developed into something
  * more full fledged.
 */
 
 /**
-* After realizing how stupid it was to use a structure to hold merely function pointers
-* to all of the functions below, which not only bloated the code by about 100 - 150 LoC
-* this macro will fill the need of anything. SU_Concat would do the same, with infinitely less
-* memory consumption than a struct having to be allocated, then have ALL 28 - 30 functions initialized
-* to each function, then call it like SU->Concat. I've learned my lesson.
-*/
- #define SU_ String_Utils_
-
-/**
  * NONE: The default for a function. This is what you pass if you really don't need
  * the other options for any given function.
  */
-#define NONE 1 << 0
+#define SU_NONE 1 << 0
 
 /**
  * IGNORE_CASE: For functions that deal with string comparisons and manipulations. This will
  * do just as the macro says, before comparison it will compare the lowercase of whatever
  * it is comparing (without making any modifications) so as the original case doesn't matter.
  * Note: The default is going to be case sensitive.*/
-#define IGNORE_CASE 1 << 1
+#define SU_IGNORE_CASE 1 << 1
 
 /**
  * MODIFY: For functions which deal with string manipulations, this sets the function
  * to modify the string after it's operations are finished, although it will still return
  * it. Note: The default is not going to modify the string.
  */
-#define MODIFY  1 << 2
+#define SU_MODIFY  1 << 2
 
 /**
  * LAST: For string searches, will attempt to find the last occurrence of whatever it is
@@ -86,29 +77,7 @@
  * (Author Note: Only one function uses this, although I'll be updating and adding more functionality,
  * so there'll be more options for this in the future!)
  */
-#define LAST 1 << 3
-
-/**
- * String_Utils_DEBUG: Toggle for whether debug information prints or not
- */
-#define String_Utils_DEBUG 1
-
-/**
- * String_Utils_DEBUG_PRINT: Prints a message if Debug is enabled
- */
-#define String_Utils_DEBUG_PRINT(MESSAGE)(String_Utils_DEBUG ? fprintf(stderr, MESSAGE) : String_Utils_DEBUG)
-
-/**
- * String_Utils_DEBUG_PRINTF: Prints a formatted message if Debug is enabled (Like printf)
- */
-#define String_Utils_DEBUG_PRINTF(MESSAGE, ...)(String_Utils_DEBUG ? fprintf(stderr, MESSAGE, __VA_ARGS__) : String_Utils_DEBUG)
-
-/**
- * SELECTED: Uses bit masking to determine whether or not a certain parameter was passed to it,
- * works with more than one. (I.E IGNORE_CASE | IGNORE_CASE | MODIFY)
- */
-#define SELECTED(ARGUMENT, MACRO)((ARGUMENT & MACRO))
-
+#define SU_LAST 1 << 3
 /**
  *
  *
@@ -119,7 +88,7 @@
 #include <string.h> /* Overly obvious reasons */
 #include <stdio.h> /* Obvious reasons */
 #include <stdarg.h> /* For variadic function concat_all */
-#include <assert.h> /* Asserts NULL parameters */
+#include <assert.h> /* Asserts NULL flagss */
 #include <ctype.h> /* To trim strings and check isspace(...). */
 
 
@@ -127,36 +96,36 @@
  * Compares two strings.
  * @param string_one First string.
  * @param string_two Second string.
- * @param parameters NONE | IGNORE_CASE
+ * @param flagss NONE | IGNORE_CASE
  * @return (string_one - string_two).
  */
-int String_Utils_compare(const char *string_one, const char *string_two, int parameters);
+int String_Utils_compare(const char *string_one, const char *string_two, int flagss);
 
 /**
  * Checks to see if the string contains the substring. 
  * @param string The string
  * @param search Substring to find
- * @param parameters NONE | IGNORE_CASE
+ * @param flagss NONE | IGNORE_CASE
  * @return 1 if found, 0 if not found.
  */
-int String_Utils_contains(const char *string, const char *search, int parameters);
+int String_Utils_contains(const char *string, const char *search, int flagss);
 
 /**
  * Creates a copy of the string and converts it to lowercase.
  * @param string Pointer to the String to be manipulated
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return Lowercase string.
  */
-char *String_Utils_to_lowercase(char **string, int parameter);
+char *String_Utils_to_lowercase(char **string, int flags);
 
 /**
  * Creates a copy of the string and converts it to uppercase. Either returns the copy
- * or modifies the original string depending on the parameter passed.
+ * or modifies the original string depending on the flags passed.
  * @param string Pointer to the String to be modified
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return Uppercase string.
  */
-char *String_Utils_to_uppercase(char **string, int parameter);
+char *String_Utils_to_uppercase(char **string, int flags);
 
 /**
  * Returns the char at the position. If the index is greater than the overall
@@ -171,28 +140,19 @@ char String_Utils_char_at(const char *string, unsigned int index);
  * Concatenates two strings together.
  * @param string_one Pointer to the The first string.
  * @param string_two The second string.
- * @param parameters NONE | MODIFY
+ * @param flagss NONE | MODIFY
  * @return Returns the concatenated string.
  */
-char *String_Utils_concat(char **string_one, const char *string_two, int parameters);
-
-/**
- * Returns the string in byte representation.
- * Author's Note: A bytes_to_string method may be added at a later
- * date if I ever find a use for this. Was added because Java has one like this.
- * @param string The string to turn into an array of bytes.
- * @return Array of bytes.
- */
-unsigned int *String_Utils_get_bytes(const char *string);
+char *String_Utils_concat(char **string_one, const char *string_two, int flagss);
 
 /**
  * Checks to see if two strings are equal.
  * @param string_one First string to compare
  * @param string_two Second string to compare
- * @param parameter NONE | IGNORE_CASE
+ * @param flags NONE | IGNORE_CASE
  * @return 1 if equal, 0 if not.
  */
-int String_Utils_equals(const char *string_one, const char *string_two, int parameter);
+int String_Utils_equals(const char *string_one, const char *string_two, int flags);
 
 /**
  * Splits a string into an array of strings based on delimiter passed. It should
@@ -210,29 +170,29 @@ char **String_Utils_split(const char *string, const char *delimiter, size_t *siz
  * the size of the string, else will return NULL to prevent overflow.
  * @param string Pointer to the String to be operated on.
  * @param index The start of where in the string you want return.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return A copy of the string starting at the position, or NULL if potential overflow.
  */
-char *String_Utils_from(char **string, unsigned int index, int parameter);
+char *String_Utils_from(char **string, unsigned int index, int flags);
 
 /**
  * Returns a copy of the string from the first (or last) substring is found.
  * @param string Pointer to the String to search
  * @param substring Substring to search for
- * @param parameter NONE | IGNORE_CASE |  MODIFY | LAST
+ * @param flags NONE | IGNORE_CASE |  MODIFY | LAST
  * @return A copy of the string from where the substring is found, NULL if not found.
  */
-char *String_Utils_from_token(char **string, const char *substring, int parameter);
+char *String_Utils_from_token(char **string, const char *substring, int flags);
 
 /**
  * Concatenates all strings passed to it.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @param amount Amount of strings to be concatenated
  * @param string Pointer to the The first string to be passed to it
  * @param ... The rest of the strings to be passed.
  * @return The concatenated string.
  */
-char *String_Utils_concat_all(int parameter, size_t amount, char **string, ...);
+char *String_Utils_concat_all(int flags, size_t amount, char **string, ...);
 
 /**
  * Sets one equal to another string.
@@ -245,10 +205,10 @@ char *String_Utils_set(char **string_one, const char *string_two);
 /**
  * Reverses the given string.
  * @param string Pointer to the String to be operated on.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return The reversed string.
  */
-char *String_Utils_reverse(char **string, int parameter);
+char *String_Utils_reverse(char **string, int flags);
 
 /**
  * Joins an array of strings together into one big string with the delimiter prepended to each string after the first.
@@ -264,82 +224,82 @@ char *String_Utils_join(const char **array_of_strings, const char *delimiter, si
  * @param string Pointer to the The string the characters are to be replaced
  * @param old_char The characters to be found
  * @param new_char The characters that will replace the old_char
- * @param parameter NONE | IGNORE_CASE | MODIFY
+ * @param flags NONE | IGNORE_CASE | MODIFY
  * @return The new string with replaced characters.
  */
-char *String_Utils_replace(char **string, char old_char, char new_char, int parameter);
+char *String_Utils_replace(char **string, char old_char, char new_char, int flags);
 
 /**
  * Checks to see if a string starts with a substring
  * @param string he string to check.
  * @param find The substring to check for.
- * @param parameter NONE | IGNORE_CASE
+ * @param flags NONE | IGNORE_CASE
  * @return 1 if true, 0 if false.
  */
-int String_Utils_starts_with(const char *string, const char *find, int parameter);
+int String_Utils_starts_with(const char *string, const char *find, int flags);
 
 /**
  * Checks to see if a string ends with a substring.
  * @param string The string to check.
  * @param find The substring to check for.
- * @param parameter NONE | IGNORE_CASE
+ * @param flags NONE | IGNORE_CASE
  * @return  1 if true, 0 if false.
  */
-int String_Utils_ends_with(const char *string, const char *find, int parameter);
+int String_Utils_ends_with(const char *string, const char *find, int flags);
 
 /**
  * Returns a substring of the string.
  * @param string Pointer to the String to get a substring of.
  * @param begin The beginning index.
  * @param end The end index.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return The substring of the string.
  */
-char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int parameter);
+char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int flags);
 
 /**
  * Capitalizes the first character in the string.
  * @param string Pointer to the string to capitalize.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return The capitalized string.
  */
-char *String_Utils_capitalize(char **string, int parameter);
+char *String_Utils_capitalize(char **string, int flags);
 
 /**
  * Trims the string of all leading and trailing spaces.
  * @param string Pointer to the String to be trimmed.
- * @param parameter NONE | MODIFY
+ * @param flags NONE | MODIFY
  * @return Trimmed string.
  */
-char *String_Utils_trim(char **string, int parameter);
+char *String_Utils_trim(char **string, int flags);
 
 /**
  * Finds the index of the first or the last index of a given substring.
  * @param string String to be searched for
  * @param substring Substring to be searched for.
- * @param parameter NONE | IGNORE_CASE | LAST
+ * @param flags NONE | IGNORE_CASE | LAST
  * @return Index of the starting position of the found substring.
  */
-int String_Utils_index_of(const char *string, const char *substring, int parameter);
+int String_Utils_index_of(const char *string, const char *substring, int flags);
 
 /**
  * Counts occurrences that the delimiter (or substring) occurs in a string.
  * @param string String to search
  * @param delimiter Delimiter or Substring to search for
- * @param parameter NONE | IGNORE_CASE
+ * @param flags NONE | IGNORE_CASE
  * @return Amount of times the delimiter appears in your string, or 0 if NULL string passed
  */
-int String_Utils_count(const char *string, const char *substring, int parameter);
+int String_Utils_count(const char *string, const char *substring, int flags);
 
 /**
  * Returns a substring from between a start and end substring or delimiter in a string.
  * @param string String to be searched.
  * @param start The first substring or delimiter to search for
  * @param end The last substring or delimiter to search for.
- * @param parameter NONE | IGNORE_CASE
+ * @param flags NONE | IGNORE_CASE
  * @return The substring of what is between start and end, or NULL if NULL string is passed.
  */
-char *String_Utils_between(const char *string, const char *start, const char *end, int parameter);
+char *String_Utils_between(const char *string, const char *start, const char *end, int flags);
 
 /**
  * Callback function for GCC attribute cleanup. Called when the string leaves the scope of the function.

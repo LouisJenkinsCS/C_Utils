@@ -19,12 +19,23 @@
 #define MU_ASSERT(condition, file) do { \
 	if(!(condition)){ \
 		char *timestamp = Misc_Utils_Get_Timestamp(); \
-		fprintf(stderr, "Assertion Failed! See log!\n"); \
+		MU_DEBUG("Assertion Failed! See log!\n"); \
 		fprintf(file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
 		free(timestamp); \
 		exit(EXIT_FAILURE); \
 	} \
 } while(0)
+/// An assertion which prints to stderr, the logfile and returns.
+#define MU_ASSERT_RETURN(condition, file, retval) do { \
+	if(!(condition)){ \
+		char *timestamp = Misc_Utils_Get_Timestamp(); \
+		MU_DEBUG("Assertion Failed! See log!\n"); \
+		fprintf(file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
+		free(timestamp);
+		if(strcmp(" " retval " ", " void ") == 0) return;
+		else return retval;
+	}
+}
 /// Log an error message along with timestamp, file and line of code.
 #define MU_LOG_ERROR(file, message, ...) do { \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
