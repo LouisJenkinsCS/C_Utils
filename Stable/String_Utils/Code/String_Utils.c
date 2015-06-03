@@ -1,253 +1,162 @@
+#define _GNU_SOURCE
 #include "String_Utils.h"
-#include "String_Utils_Garbage_Collector.h"
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <ctype.h>
 /*
- * I decided to use String_Utils to test my new garbage collector. Not all functions use it,
- * only ones that allocated 2 or more temporary variables. This is more of a trial run, there
- * is no heap currently implemented in the virtual machine, only a basic stack that pushes new values
- * on the stack, pops them off of the stack, and destroying the virtual machine will activate the
- * garbage collector's mark and sweep algorithm to free everything. 
+ * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't
+ * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it
+ * literally did nothing of value except complicate code and even increase the program size by 3x. So, instead, I
+ * opted to have another experiment, one which is already heavily tested. The macro TEMP uses the
+ * cleanup attribute specific for GCC and Clang compilers, making it 100% dependent on them to compile, but
+ * it's easy enough to remove either way. Besides, it accomplished what I want to do. 
  *
- * Also I decided to not care about portability much, I'm going to program almost exclusively in C
- * from now on, so there's no point. The glib c is better than anything I can make, so may as well
- * use theirs in my own program.
+ * Of course in the future I most likely (99.999% sure) I'm going to be replacing it entirely from the library functions,
+ * as it currently is impossible to use without it being dependent on GCC and POSIX as is. Most likely, it will be apart of the whole C_Utils
+ * package. However, I'll go into what TEMP does. What TEMP does is it will call the assigned callback for cleanup when it
+ * leaves the variable's scope, most likely a function, but could be inside of a loop if it was declared there. TEMP will basically just free 
+ * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
  */
 
+static int is_selected(int mask, int flag){
+    return mask & flag;
+}
 
-/*
- * Using the wonderful asprintf function that returns the string of a formatted function.
- * I'm certain that the performance of this function is 100x better than strcpy into
- * a cleaned allocated temp, then strcat on top of that.
- */
-char *String_Utils_concat(char **string_one, const char *string_two, int parameter) {
+char *String_Utils_concat(char **string_one, const char *string_two, int flags) {
     assert(string_one);
     assert(*string_one);
     assert(string_two);
-    // Allocate temporary string to size of two strings, + 1 for null terminator
     char *temp;
-    // GLIB C to the rescue!
     asprintf(&temp, "%s%s", *string_one, string_two);
-    // Based on parameters below, will modify the original screen, or just return the new string.
-    if (SELECTED(parameter, MODIFY)) {
+    if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string_one, temp);
-        // Free temp as no longer needed.
         free(temp);
         return *string_one;
-    } else return temp; // Not modifying the original string is the default, even if there was no valid parameter.
+    } else return temp;
 }
 
 
-/*
- * Uses my new basic garbage collector. Honestly, it's not really anything special, and it could be done easily 
- * with basic frees over pushing and popping them from the stack, but this is a trial run. Also decided to
- * get rid of my copy function for strdup, which does it a lot better than I ever could anyway. It didn't
- * serve any different purpose in the end.
- */
-int String_Utils_compare(const char *string_one, const char *string_two, int parameter) {
+int String_Utils_compare(const char *string_one, const char *string_two, int flags) {
     assert(string_one);
     assert(string_two);
-    int result = 0;
-    // Allocate two temporary strings
-    if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string_one = String_Utils_to_lowercase(&string_one, NONE);
-        char *temp_string_two = String_Utils_to_lowercase(&string_two, NONE);
-        push_strings(vm, 2, temp_string_one, temp_string_two); // Puts both elements on stack.
-        result = strcmp(temp_string_one, temp_string_two);
-        pop_vn(vm, 2); // Pops both elements off of stack
-    } else result = strcmp(string_one, string_two);
-    return result;
+    return is_selected(flags, SU_IGNORE_CASE) ? strcasecmp(string_one, string_two) : strcmp(string_one, string_two);
 }
 
-/*
- * Basic index checks.
- */
 char String_Utils_char_at(const char *string, unsigned int index) {
     assert(string);
     return string[index > strlen(string) - 1 ? strlen(string) - 1 : index];
 }
 
-/*
- * Like Compare, uses GC. Not much new.
- */
-int String_Utils_contains(const char *string, const char *search, int parameter) { 
+int String_Utils_contains(const char *string, const char *search, int flags) { 
     assert(string);
     assert(search);
-    int result = 0;
-    // Allocates temporary variables to hold copy of the passed strings.
-    if(SELECTED(parameter, IGNORE_CASE)){
-        char *temp_string = strdup(string);
-        char *temp_search = strdup(search);
-        push_strings(vm, 2, temp_string, temp_search); // Puts both elements on stack.
-        result = strstr(temp_string, temp_search) == NULL ? 0 : 1;
-        pop_vn(vm, 2); // Pops both elements off of stack
-    } else result = strstr(string, search) == NULL ? 0 : 1;
-    return result;
+    return is_selected(flags, SU_IGNORE_CASE) ? (strcasestr(string, search) != NULL) : (strstr(string, search) != NULL) ;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
-char *String_Utils_to_lowercase(char **string, int parameter) {
+char *String_Utils_to_lowercase(char **string, int flags) {
     assert(string);
     assert(*string);
-    char *temp = malloc(strlen(*string) + 1); // Note: This does not need to be added to the stack.
+    int length = strlen(*string);
+    char *temp = malloc(length + 1);
     int i = 0;
-    for (i; i <= strlen(*string); i++) {
-        temp[i] = tolower((*string)[i]);
-    }
-    if (SELECTED(parameter, MODIFY)) {
-        String_Utils_set(string, temp);
-        free(temp);
-        return *string;
-    } else return temp; // If the heap existed, temp would be added to it before return.
-}
-
-/*
- * Properly allocates and deallocates memory.
- */
-char *String_Utils_to_uppercase(char **string, int parameter) {
-    assert(string);
-    assert(*string);
-    char *temp = malloc(strlen(*string) + 1);
-    int i = 0;
-    for (i; i <= strlen(*string); i++) {
-        temp[i] = toupper((*string)[i]);
-    }
-    if (SELECTED(parameter, MODIFY)) {
+    while((*string)[i]) temp[i] = tolower((*string)[i++]);
+    temp[length] = '\0';
+    if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Note: This function can be changed to obtain a compressed byte repsentation of the string.
- */
-unsigned int *String_Utils_get_bytes(const char *string) {
+char *String_Utils_to_uppercase(char **string, int flags) {
     assert(string);
-    unsigned int *bytes = malloc(sizeof (unsigned int) * strlen(string));
+    assert(*string);
+    int length = strlen(*string);
+    char *temp = malloc(length + 1);
     int i = 0;
-    for (i; i < strlen(string); i++) bytes[i] = (unsigned int) ((unsigned char) string[i]);
-    return bytes;
+    while((*string)[i]) temp[i] = toupper((*string)[i++]);
+    temp[length] = '\0';
+    if (is_selected(flags, SU_MODIFY)) {
+        String_Utils_set(string, temp);
+        free(temp);
+        return *string;
+    } else return temp;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
-int String_Utils_equals(const char *string_one, const char *string_two, int parameter) {
+int String_Utils_equals(const char *string_one, const char *string_two, int flags) {
     assert(string_one);
     assert(string_two);
-    return String_Utils_compare(string_one, string_two, parameter) == 0 ? 1 : 0;
+    return String_Utils_compare(string_one, string_two, flags) == 0;
 }
 
-/*
- * Properly allocates and deallocates memory.
- */
-char *String_Utils_from(char **string, unsigned int index, int parameter) {
+char *String_Utils_from(char **string, unsigned int index, int flags) {
     assert(string);
     assert(*string);
-    int i = index > strlen(*string)-1 ? strlen(*string)-1 : index;
+    int length = strlen(*string);
+    int i = index > (length - 1) ? length - 1 : index;
     int j = 0;
-    // Allocate temporary variable.
-    char *temp = malloc((strlen(*string) + 1) - i); // Note: Uncomplicate the fuck out of this please.
-    
-    for (i; i <= strlen(*string); i++, j++) { // Less complicated
-        temp[j] = (*string)[i];
-    }
-    if (SELECTED(parameter, MODIFY)) {
+    char *temp = malloc((length - i) + 1);
+    while((*string)[i]) temp[j++] = (*string)[i++];
+    temp[j] = '\0'; 
+    if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Should fix IGNORE_CASE by extracting the portion of the original strange equal to the final string, except
- * in it's normal case. Also I'm trying to inch in uses for my GC.
- *
- * Proud to say that, this should be optimized a lot better than before. The ONLY copies it creates
- * are for string and substring, other than that, no more useless extra allocations and *ugh* memory leaks.
- * I'm improving every day and I can see it.
- */
-char *String_Utils_from_token(char **string, const char *substring, int parameter) {
+char *String_Utils_from_token(char **string, const char *substring, int flags) {
     assert(string);
     assert(*string);
     assert(substring);
-    char *temp_string = NULL;
-    char *temp_substring = NULL;
     char *temp = NULL;
-    char *old_temp = NULL;
-    // Allocates a temporary copy of substring depending on parameter passed.
-    if(SELECTED(parameter, IGNORE_CASE)){
-        temp_string = String_Utils_to_lowercase(*string, NONE);
-        temp_substring = String_Utils_to_lowercase(substring, NONE);
-        push_strings(vm, 2, temp_string, temp_substring);
-        temp = strstr(temp_string, temp_substring);
-    } else temp = strstr(*string, substring);
-    if(temp == NULL) return NULL;
-    // here comes the complicated part
-    if(SELECTED(parameter, LAST)){
-        while(temp != NULL) {
-            temp = strstr(temp, temp_substring == NULL ? substring : temp_substring);
-            // Only time temp_* is NULL is if IGNORE_CASE wasn't passed, hence a check is needed here.
-            if(temp != NULL) { // If there is another token, then clearly the previous doesn't count as the last, so...
-                // Assigns old_temp to temp
-                old_temp = temp; // Set old_temp to the new temp, as it becomes the new 'last'
-                if(strlen(temp) <= strlen(substring)) temp = NULL;
-                else temp += strlen(substring);
-            }
+    char *temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+    if(!temp_string) return NULL;
+    if(is_selected(flags, SU_LAST)){
+        while(temp_string) {
+            temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+            if(temp_string && strlen(temp_string) > strlen(substring)) {
+                temp = temp_string;
+                temp_string += strlen(substring);
+            } else break;
         }
-        temp = old_temp; // Simple, sets temp to old temp.
+        temp_string = temp;
     }
-    temp = String_Utils_substring(string, strlen(*string) - strlen(temp), strlen(*string), NONE); // Sets temp equal to the same substring except guaranteed to not be lowercase.
-    if(SELECTED(parameter, MODIFY)){
-        String_Utils_set(string, temp);
-        //free everything
-        if(temp_string != NULL || temp_substring != NULL) pop_vn(vm, 2);
-        free(temp);
-        //free(old_temp);
+    if(is_selected(flags, SU_MODIFY)){
+        String_Utils_set(string, temp_string);
         return *string;
-    }
-    // If either temp_* are not null, then IGNORE_CASE was passed, hence pop them from the stack.
-    if(temp_string != NULL || temp_substring != NULL) pop_vn(vm, 2);
-    return temp;
+    } else return temp;
 }
 
-/*
- * Should be optimized so as to not allocate an extra cell in the array. Also, edged in another GC.
- * Should no longer attempt to free twice!
- */
+// Not Thread Safe! Update later to use strtok_r for reentrant and thread-safe splitting.
 char **String_Utils_split(const char *string, const char *delimiter, size_t *size) {
     assert(string);
     assert(delimiter);
-    assert(size);
-    // Allocates an array of strings, initial size of only one string.
+    assert(size); 
     char **string_array = malloc(sizeof (char *));
     char *temp = NULL;
-    // Allocated a temporary string so original string is not modified from strtok.
+    char *saveptr;
     char *temp_string = strdup(string);
-    temp = strtok(temp_string, delimiter); // So strtok does not mess with the original string.
-    if (temp == NULL) { free(temp_string); return NULL; } // If temp does not contain the delimiter, then free the tmep_string and return NULL.
-    push_strings(vm, 1, temp_string); // Push both temp and temp_string on the stack.
-    unsigned int index = 0; // Used to record the size of the array.
-    while (temp != NULL) {
-        // If the index is not 0, a simple check so as to not waste an extra allocation, then reallocate the array to be the
-        // index + 1, which is just enough for string_array[index].
-        if(index != 0) string_array = realloc(string_array, (sizeof (char *) * (index + 1))); 
-        // The index in the array is allocated
+    if(!(temp = strtok_r(temp_string, delimiter, &saveptr))){ 
+        free(temp_string); 
+        return NULL; 
+    } 
+    unsigned int index = 0;
+    while(temp){
+        if(index) string_array = realloc(string_array, (sizeof (char *) * (index + 1))); 
         string_array[index] = malloc(strlen(temp) + 1);
-        strcpy(string_array[index], temp);
-        index++;
-        // Reallocates the array so it can hold another array.
-        temp = strtok(NULL, delimiter);
+        strcpy(string_array[index++], temp);
+        temp = strtok_r(NULL, delimiter, &saveptr);
     }
-    pop_vn(vm, 1);
     *size = index;
+    free(temp_string);
     return string_array;
 }
 
-/*
- * Majorly optimized down to a two-step operation (besides for assertions for null).
- */
 char *String_Utils_set(char **string_one, const char *string_two) {
     assert(string_one);
     assert(*string_one);
@@ -257,146 +166,112 @@ char *String_Utils_set(char **string_one, const char *string_two) {
     return *string_one;
 }
 
-/*
- * No longer arbitrarily creates copies of the variadic arguments passed to it.
- */
-char *String_Utils_concat_all(int parameter, size_t amount, char **string, ...) {
+char *String_Utils_concat_all(int flags, size_t amount, char **string, ...) {
     assert(string);
     assert(*string);
     va_list args;
     int i = 0;
     va_start(args, string);
-    char *final_string = strdup(*string); // final_string starts with the very first string.
+    char *final_string = strdup(*string);
     char *temp = NULL;
-    for(i; i < amount; i++){
+    for(;i<amount; i++){
         temp = va_arg(args, char *);
-        final_string = String_Utils_concat(&final_string, temp, MODIFY);
+        final_string = String_Utils_concat(&final_string, temp, SU_MODIFY);
     }
     va_end(args);
-    if (SELECTED(parameter, MODIFY)) {
+    if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, final_string);
         free(final_string);
-        return string;
+        return *string;
     } else return final_string;
 }
 
-/*
- * For loop should correctly reverse the string without underflowing like before.
- */
-char *String_Utils_reverse(char **string, int parameter) {
+char *String_Utils_reverse(char **string, int flags) {
     assert(string);
     assert(*string);
-    char *temp = malloc(strlen(*string) + 1);
-    int i, j;
-    for (i = 0, j = strlen(*string) - 1; i < strlen(*string); i++, j--) {
-        temp[i] = (*string)[j];
-    }
-    temp[strlen(*string)] = '\0';
-    if (SELECTED(parameter, MODIFY)) {
+    int i = 0, length = strlen(*string), j = length - 1;
+    char *temp = malloc(length + 1);
+    for (;i < length; i++, j--) temp[i] = (*string)[j];
+    temp[length] = '\0';
+    if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Trimmed the redundant for loops for SELECTED statement into one for loop
- */
-char *String_Utils_replace(char **string, char old_char, char new_char, int parameter){
+char *String_Utils_replace(char **string, char old_char, char new_char, int flags){
     assert(string);
     assert(*string);
-    char *temp = malloc(strlen(*string) + 1);
+    int length = strlen(*string);
+    char *temp = malloc(length + 1);
     int i = 0;
-    for(i; i <= strlen(*string); i++){
-        // if IGNORE_CASE is selected, then compare the lower case chars, else the normal case chars.
-        // tolower(string[i]) == tolower(old_char) or string[i] == old_char
-        if((SELECTED(parameter, IGNORE_CASE) ? tolower((*string)[i]) : (*string)[i] ) ==
-           (SELECTED(parameter, IGNORE_CASE) ? tolower(old_char) : old_char)) temp[i] = new_char;
-        else temp[i] = (*string)[i];
-    }
-    if(SELECTED(parameter, MODIFY)){
+    if(is_selected(flags, SU_IGNORE_CASE)){
+        for(;i <= length; i++) temp[i] = ((*string)[i] == tolower(old_char)) ? new_char : (*string)[i];
+    } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char: (*string)[i];
+    if(is_selected(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
         return *string;
     } else return temp;
 }
 
-/*
- * Changed size_t to not use a pointer when it doesn't even modify it.
- */
 char *String_Utils_join(const char **array_of_strings, const char *delimiter, size_t size){
     assert(array_of_strings);
     assert(delimiter);
     char *temp = NULL;
     int i = 0;
     for(i; i < size; i++){
-        if(temp == NULL) temp = strdup(array_of_strings[i]);
-        else String_Utils_concat_all(MODIFY, 2, &temp, delimiter, array_of_strings[i]);
+        if(!temp) temp = strdup(array_of_strings[i]);
+        else String_Utils_concat_all(SU_MODIFY, 2, &temp, delimiter, array_of_strings[i]);
     }
     return temp;
 }
 
-/*
- * At a impasse here for a solution. Either I allocate to save efficiency by only checking
- * for lowercase once at the expense of allocating memory... or checking every pass of the
- * for loop, wasting resource on a bitwise operation to check for parameter, yet no extra
- * memory allocation.
- */
-int String_Utils_starts_with(const char *string, const char *find, int parameter){
+int String_Utils_starts_with(const char *string, const char *find, int flags){
     assert(string);
     assert(find);
-    int i = 0;
-    for(i; i < strlen(find); i++) if(SELECTED(parameter, IGNORE_CASE)){
-        if(tolower(string[i]) != tolower(find[i])) return 0;
-    } else if(string[i] != find[i]) return 0;
-    return 1;
-}
-
-/*
- * Same problem as starts_with, impasse.
- */
-int String_Utils_ends_with(const char *string, const char *find, int parameter){
-    assert(string);
-    assert(find);
-    int i, j;
-    for(i = strlen(string) - strlen(find), j = 0; i < strlen(string); i++, j++){
-        if(SELECTED(parameter, IGNORE_CASE)){
-            if(tolower(string[i]) != tolower(find[j])) return 0; 
-        } else if(string[i] != find[j]) return 0;
+    int i = 0, lowercase = is_selected(flags, SU_IGNORE_CASE);
+    for(;i < strlen(find); i++){ 
+        if(lowercase && tolower(string[i]) != tolower(find[i])) return 0;
+        else if(!lowercase && string[i] != find[i]) return 0;
     }
     return 1;
 }
 
+int String_Utils_ends_with(const char *string, const char *find, int flags){
+    assert(string);
+    assert(find);
+    int string_length = strlen(string), find_length = strlen(find), i = string_length - find_length, j = 0;
+    int lowercase = is_selected(flags, SU_IGNORE_CASE);
+    for(;i < string_length; i++, j++){
+        if(lowercase && tolower(string[i]) != tolower(find[j])) return 0; 
+        else if(!lowercase && string[i] != find[j]) return 0;
+    }
+    return 1;
+}
 
-/*
- * Should work as intended without memory leaks. 
- */
-char *String_Utils_capitalize(char **string, int parameter){
+char *String_Utils_capitalize(char **string, int flags){
     assert(string);
     assert(*string);
     char *temp = strdup(*string);
     temp[0] = toupper(temp[0]);
-    if(SELECTED(parameter, MODIFY)) { String_Utils_set(string, temp); free(temp); return *string; }
-    return temp;
+    if(is_selected(flags, SU_MODIFY)) { 
+        String_Utils_set(string, temp); 
+        free(temp); 
+        return *string; 
+    } else return temp;
 }
 
-/*
- * Correctly allocates and deallocates memory.
- */
-char *String_Utils_trim(char **string, int parameter){
+char *String_Utils_trim(char **string, int flags){
     assert(string);
     assert(*string);
     char *temp = NULL;
-    int i = 0;
-    int j = strlen(*string)-1;
-    for(i; i < strlen(*string); i++){
-        if(!isspace((*string)[i])) break;
-    }
-    for(j; j > i ; j--){
-        if(!isspace((*string)[j])) break;
-    }
-    temp = String_Utils_substring(string, i, j, NONE);
-    if(SELECTED(parameter, MODIFY)){
+    int length = strlen(*string), i = 0, j = length - 1;
+    for(;i < length; i++) if(!isspace((*string)[i])) break;
+    for(;j > i ; j--) if(!isspace((*string)[j])) break;
+    temp = String_Utils_substring(string, i, j, SU_NONE);
+    if(is_selected(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -404,22 +279,18 @@ char *String_Utils_trim(char **string, int parameter){
     return temp;
 }
 
-/*
- * Removed old_temp as it's useless now that copy is gone.
- */
-char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int parameter){
+char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int flags){
     assert(string);
     assert(*string);
-    // If begin is greater than the end, set new_begin to 0, else equal to begin
     unsigned int new_begin = begin > end ? 0 : begin; // Bounds checking for begin
-    // If end is out of bounds, set new_end to the length of the string - 1, else equal to end
-    unsigned int new_end = end >= strlen(*string) ? strlen(*string) - 1 : end;
-    size_t size = new_end - new_begin; // The size of the substring will be end - begin
-    char *temp = malloc(size + 2); // Allocate a temporary variable to hold substring.
-    //memset(temp, 0, size + 1); // Zeroes the struct to clean it.
-    memcpy(temp, *string + begin, size + 1); // Copy into temp (destination), the contents of string[begin] size bytes.
-    temp[size + 1] = '\0'; // Append a null terminator to the temporary string.
-    if(SELECTED(parameter, MODIFY)) { // Modifies the original string is parameter is passed.
+    unsigned int new_end = end >= strlen(*string) ? strlen(*string) - 1 : end; // Bounds checking for end.
+    new_end = (new_begin > new_end) ? new_begin : new_end; // Bounds checking to prevent unsigned int overflow (Or else 4GB+ malloc).
+    // I.E if new_end < new_begin, then new_end = new_begin - x. Size = (new_begin - x) - new_begin = -x. Then size = 4294967295 - x.
+    size_t size = new_end - new_begin;
+    char *temp = malloc(size + 2);
+    memcpy(temp, *string + begin, size + 1);
+    temp[size + 1] = '\0';
+    if(is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp); 
         return *string; 
@@ -427,94 +298,58 @@ char *String_Utils_substring(char **string, unsigned int begin, unsigned int end
     return temp;
 }
 
-/*
- * Still over complicated, but slightly less so, also more optimized as no longer makes copies of strings 
- * meaninglessly, but it does not make checks on each loop, which has to be optimized out at a later date.
- */
-int String_Utils_index_of(const char *string, const char *substring, int parameter){
+int String_Utils_index_of(const char *string, const char *substring, int flags){
     assert(string);
     assert(substring);
     char *temp = NULL;
-    char *temp_string = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&string, NONE) : NULL;
-    char *temp_substring = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&substring, NONE) : NULL;
-    if (temp_string != NULL && temp_substring != NULL) push_strings(vm, 2, temp_string, temp_substring);
     char *old_temp = NULL;
-    temp = strstr(temp_string == NULL ? string : temp_string, temp_substring == NULL ? substring : temp_substring);
-    if(temp == NULL) {
-        if (temp_string != NULL && temp_substring != NULL) pop_vn(vm, 2);
-        return 0; 
-    }
-    if(SELECTED(parameter, LAST)){
-        while(temp != NULL) {
-            temp = strstr(temp_string == NULL ? string : temp_string, temp_substring == NULL ? substring : temp_substring);
-            if(temp != NULL){
-                // Free old_temp before assigning it to copy of temp.
-                old_temp = temp; 
-            }
+    temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
+    if(!temp || strlen(temp) < strlen(substring)) return 0;
+    if(is_selected(flags, SU_LAST)){
+        temp += strlen(substring);
+        while(temp) {
+            temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);
+            if(temp && strlen(temp) > strlen(substring)) {
+                old_temp = temp;
+                temp += strlen(substring);
+            } else break;
         }
         temp = old_temp;
     }
-    int result = strlen(string) - strlen(temp);
-    if (temp_string != NULL && temp_substring != NULL) pop_vn(vm, 2);
-    return result;
+    return strlen(string) - strlen(temp);
 }
 
-/*
- * Fixed a few things, but not 100% sure it'll work, gotta watch this.
- */
-int String_Utils_count(const char *string, const char *substring, int parameter){
+int String_Utils_count(const char *string, const char *substring, int flags){
     assert(string);
     assert(substring);
     int count = 0;
-    char *temp = NULL; 
-    char *temp_ptr = NULL;
-    temp = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(&string, NONE) : string;
-    temp_ptr = temp; // For when temp gets set to NULL, will be able to keep track of it to be freed later.
-    while(temp = strstr(temp, substring)){ // temp gets set to the next occurrence of the found substring 
+    char *temp = string;
+    while(temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring)){
         count++;
-        //printf("Count is %d\nCurrent string being compared: %s\nString length = %d\nSubstring length: %d\n", count, string, strlen(string), strlen(substring));
-        if(strlen(temp) < strlen(substring)) temp = NULL;
+        if(strlen(temp) < strlen(substring)) break;
         else temp += strlen(substring);
-        //printf("New String: %s\nNew String Length: %d\n", temp, strlen(temp));
     }
-    if(SELECTED(parameter, IGNORE_CASE)) free(temp_ptr); // If IGNORE_CASE was passed, then it's safe to free the copy of temp.
     return count;
 }
 
-/*
- * Jesus, this function is 1000% over complicated, but it definitely demonstrates a good reason to use my
- * GC. Instead of having to redundantly free everything, I can just add all 4 to the stack in one line, and
- * pop them all in one line as well.
- */
-char *String_Utils_between(const char *string, const char *start, const char *end, int parameter){
+// Reimplement function to use strcasestr().
+char *String_Utils_between(const char *string, const char *start, const char *end, int flags){
     assert(string);
     assert(start);
     assert(end);
     char *temp = NULL; 
     char *new_temp = NULL;
-    char *temp_string = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(string, NONE) : string;
-    char *temp_start = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(start, NONE) : start;
-    char *temp_end = SELECTED(parameter, IGNORE_CASE) ? String_Utils_to_lowercase(end, NONE) : end; 
-    temp = strstr(temp_string, temp_start) + strlen(temp_start);
-    if(SELECTED(parameter, IGNORE_CASE)) push_strings(vm, 4, temp_string, temp_start, temp_end, temp);
-    if(temp == NULL) { if(SELECTED(parameter, IGNORE_CASE)) pop_vn(vm, 4); return NULL;}
-    size_t size_of_substring = strlen(temp) - (strlen(strstr(temp_string, temp_end)));
+    temp  = (is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, start) : strstr(string, start));
+    if(!temp) return NULL;
+    temp += strlen(start);
+    new_temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, end) : strstr(temp, end);
+    if(!new_temp) return NULL;
+    size_t size_of_substring = strlen(temp) - strlen(new_temp);
     size_t index_of_start = strlen(string) - strlen(temp);
-    new_temp = String_Utils_substring(string, index_of_start, size_of_substring, NONE);
-    if(SELECTED(parameter, IGNORE_CASE)) pop_vn(vm, 4);
+    new_temp = String_Utils_substring(string, index_of_start, size_of_substring, SU_NONE);
     return new_temp;
 }
 
-/*
-* Required to initialize the garbage collector. Too bad it can't be static or called automatically.
-*/
-void String_Utils_Init_GC(void){
-    vm = SU_VM_Create();
-}
-/*
-* Destroys the virtual machine, which also frees everything on the stack preventing memory leaks as long as
-* this is called.
-*/
-void String_Utils_Destroy_GC(void){
-    SU_VM_Destroy(vm);
+void String_Utils_destroy(char **string){
+    free(*string);
 }

@@ -102,7 +102,7 @@ int  testString_Utils_contains() {
 int  testString_Utils_count() {
     char test[] = "Count";
     const char *string = "What is the meaning of the word 'the', when there is the person in the mirror staring back at the recipient? The answer is unclear.";
-    const char *delimiter = "the";
+    const char *delimiter = "The";
     int parameter_one = SU_IGNORE_CASE;
     int parameter_two = SU_NONE;
     TEST(String_Utils_count(string, delimiter, parameter_one) == 8, test);

@@ -101,7 +101,7 @@ char *String_Utils_from(char **string, unsigned int index, int flags) {
     int j = 0;
     char *temp = malloc((length - i) + 1);
     while((*string)[i]) temp[j++] = (*string)[i++];
-    temp[++j] = '\0'; 
+    temp[j] = '\0'; 
     if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
