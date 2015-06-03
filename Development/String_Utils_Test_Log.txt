@@ -1,42 +1,44 @@
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:48) Passed Test Capitalize
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:48) Passed Test Capitalize
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:60) Passed Test Char_At
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:60) Passed Test Char_At
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:73) Passed Test Compare
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:73) Passed Test Compare
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:87) Passed Test Concat
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:87) Passed Test Concat
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:110) Passed Test Count
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:110) Passed Test Count
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:123) Passed Test Ends_With
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:123) Passed Test Ends_With
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:134) Passed Test Equals
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:134) Passed Test Equals
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:151) Passed Test From
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:151) Passed Test From
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:156) Skipping From Token!
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:156) Skipping From Token!
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:181) Passed Test Index_Of
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:181) Passed Test Index_Of
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:194) Passed Test Join
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:194) Passed Test Join
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:211) Passed Test Replace
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:211) Passed Test Replace
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:223) Passed Test Reverse
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:223) Passed Test Reverse
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:232) Passed Test Set
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:232) Passed Test Set
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:249) Passed Test Split
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:249) Passed Test Split
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:260) Passed Test Starts_With
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:260) Passed Test Starts_With
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:274) Passed Test Substring
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:274) Passed Test Substring
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:286) Passed Test To_Lowercase
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:286) Passed Test To_Lowercase
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:298) Passed Test To_Uppercase
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:298) Passed Test To_Uppercase
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:310) Passed Test Trim
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:310) Passed Test Trim
 
-03:42:15 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:316) All tests finished!
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:317) All tests finished!
+
+03:52:22 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:320) Total Time: 00:00:00
 

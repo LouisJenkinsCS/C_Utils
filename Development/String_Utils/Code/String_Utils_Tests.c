@@ -312,8 +312,14 @@ int testString_Utils_trim() {
 
 int main(void){
     fp = fopen("String_Utils_Test_Log.txt", "w");
+    Timer_t *timer = Timer_Init(1);
     TEST_ALL_FUNCTIONS;
     MU_LOG_INFO(fp, "All tests finished!\n");
+    Timer_Stop(timer);
+    char *total_time = Timer_To_String(timer);
+    MU_LOG_INFO(fp, "Total Time: %s\n", total_time);
+    Timer_Destroy(timer);
+    free(total_time);
     fclose(fp);
     return 0;
 }
