@@ -153,8 +153,6 @@ int  testString_Utils_from() {
 
 int  testString_Utils_from_token() {
     char test[] = "From_Token";
-    MU_LOG_INFO(fp, "Skipping From Token!\n");
-    return 0;
     char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
     const char *delimiter = "<Parse_Me>";
     int parameter_one = SU_NONE;
