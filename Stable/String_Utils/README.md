@@ -2,13 +2,17 @@
 
 ### Version
 
-Current version: 1.1
+Current version: 1.2
 
 Documentation for the current version can be found [here.](http://theif519.github.io/String_Utils_Documentation/)
 
 ### Summary
 
-String Utilities for the C Programming Language, or String_Utils, is my attempt at implementing a more user and newbie-friendly library for string manipulations. 
+String_Utils is a string library based off of Java's own String library, except the library works on char * over a string object (or struct). It is a lightweight, relatively speedy library which relies upon the libc and glibc.
+
+String_Utils also features passing flags with the '|' operator, for example, SU_IGNORE_CASE|SU_LAST does exactly as it says, ignore case for string comparison, and return the last string that matches the criteria. For default behavior, you pass SU_NONE flag instead.
+
+Some functions require passing the address of the string (&) for possible modification of the original string, as String_Utils never modifies the string passed, by default, so it is safe to use string literals unless passing SU_MODIFY flag.
 
 #### Features
 
@@ -24,14 +28,14 @@ strcat(str1, str2);
 This causes a segmentation fault, as it's read only memory. Take for example my library's concatenation function...
 
 ```
-str3 = String_Utils_Concat(&str1, str2, NONE);
+str3 = String_Utils_Concat(&str1, str2, SU_NONE);
 ```
 This does not cause a segmentation fault. Note the unary operator here, by passing a reference of the string, it allows the function to change what the string is pointing at, hence being able to modify the original string with the MODIFY parameter.
 
 An example of multiple parameter passing, would be:
 
 ```
-String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> More Random Text <PARSE_THIS> Final Random Text ", "<parse_text>", IGNORE_CASE | LAST);
+String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> More Random Text <PARSE_THIS> Final Random Text ", "<parse_text>", SU_IGNORE_CASE | SU_LAST);
 ``` 
 
 Which would get the very last token to be parsed, ignoring case for comparison. 
