@@ -1,40 +1,44 @@
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:39) Passed Test Capitalize
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:48) Passed Test Capitalize
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:50) Passed Test Char_At
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:60) Passed Test Char_At
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:62) Passed Test Compare
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:73) Passed Test Compare
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:75) Passed Test Concat
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:87) Passed Test Concat
 
-12:59:39 PM: [ASSERT](./String_Utils/Code/String_Utils_Tests.c:95) An Assertion for 'String_Utils_count(string, delimiter, parameter_two) == 1' has failed!
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:108) Passed Test Ends_With
+01:24:36 PM: [ERROR](./String_Utils/Code/String_Utils_Tests.c:109) Failed Test Count
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:118) Passed Test Equals
+01:24:36 PM: [ASSERT](./String_Utils/Code/String_Utils_Tests.c:109) An Assertion for 'String_Utils_count(string, delimiter, parameter_two) == 1' has failed!
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:123) Passed Test Ends_With
 
-12:59:39 PM: [ASSERT](./String_Utils/Code/String_Utils_Tests.c:131) An Assertion for 'strcmp(result_one, "I am an idiot!") == 0' has failed!
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:138) Skipping From Token!
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:134) Passed Test Equals
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:162) Passed Test Index_Of
+01:24:36 PM: [ERROR](./String_Utils/Code/String_Utils_Tests.c:148) Failed Test From
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:174) Passed Test Join
+01:24:36 PM: [ASSERT](./String_Utils/Code/String_Utils_Tests.c:148) An Assertion for 'strcmp(result_one, "I am an idiot!") == 0' has failed!
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:156) Skipping From Token!
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:190) Passed Test Replaced
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:181) Passed Test Index_Of
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:201) Passed Test Reverse
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:194) Passed Test Join
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:209) Passed Test Set
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:211) Passed Test Replace
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:225) Passed Test Split
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:223) Passed Test Reverse
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:235) Passed Test Starts_With
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:232) Passed Test Set
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:248) Passed Test Substring
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:249) Passed Test Split
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:259) Passed Test To_Lowercase
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:260) Passed Test Starts_With
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:270) Passed Test To_Uppercase
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:274) Passed Test Substring
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:281) Passed Test Trim
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:286) Passed Test To_Lowercase
 
-12:59:39 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:287) Passed Test ALL
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:298) Passed Test To_Uppercase
+
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:310) Passed Test Trim
+
+01:24:36 PM: [INFO](./String_Utils/Code/String_Utils_Tests.c:316) All tests finished!
 
