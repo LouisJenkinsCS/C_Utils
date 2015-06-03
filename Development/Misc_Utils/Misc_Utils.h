@@ -21,6 +21,7 @@
 		char *timestamp = Misc_Utils_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
 		fprintf(file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
+		fflush(file); \
 		free(timestamp); \
 		exit(EXIT_FAILURE); \
 	} \
@@ -31,27 +32,30 @@
 		char *timestamp = Misc_Utils_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
 		fprintf(file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
-		free(timestamp);
-		if(strcmp(" " retval " ", " void ") == 0) return;
-		else return retval;
-	}
-}
+		fflush(file); \
+		free(timestamp); \
+		return retval; \
+	} \
+} while(0)
 /// Log an error message along with timestamp, file and line of code.
 #define MU_LOG_ERROR(file, message, ...) do { \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(file, "%s: [ERROR](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fflush(file); \
 	free(timestamp); \
 } while(0) 
 /// Log a warning message along with timestamp, file and line of code.
 #define MU_LOG_WARNING(file, message, ...) do { \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(file, "%s: [WARNING](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fflush(file); \
 	free(timestamp); \
 } while(0)
 /// Log an info message along with timestamp, file and line of code.
 #define MU_LOG_INFO(file, message, ...) do { \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(file, "%s: [INFO](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fflush(file); \
 	free(timestamp); \
 } while(0)
 /// Checks if a variable is true, otherwise will return. Will not log to file.

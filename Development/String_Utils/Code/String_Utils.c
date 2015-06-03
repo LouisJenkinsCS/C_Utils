@@ -1,6 +1,8 @@
+#define _GNU_SOURCE
 #include "String_Utils.h"
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -52,7 +54,7 @@ char String_Utils_char_at(const char *string, unsigned int index) {
 int String_Utils_contains(const char *string, const char *search, int flags) { 
     assert(string);
     assert(search);
-    return is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, search) != NULL : strstr(string, search) != NULL;
+    return is_selected(flags, SU_IGNORE_CASE) ? (strcasestr(string, search) != NULL) : (strstr(string, search) != NULL) ;
 }
 
 char *String_Utils_to_lowercase(char **string, int flags) {
@@ -73,7 +75,8 @@ char *String_Utils_to_lowercase(char **string, int flags) {
 char *String_Utils_to_uppercase(char **string, int flags) {
     assert(string);
     assert(*string);
-    char *temp = malloc(strlen(*string) + 1);
+    int length = strlen(*string);
+    char *temp = malloc(length + 1);
     int i = 0;
     while((*string)[i]) temp[i] = toupper((*string)[i++]);
     temp[length] = '\0';
@@ -121,12 +124,10 @@ char *String_Utils_from_token(char **string, const char *substring, int flags) {
                 temp_string += strlen(substring);
             } else break;
         }
+        temp_string = temp;
     }
     if(is_selected(flags, SU_MODIFY)){
-        // Special case: string gets freed, and so will temp, hence I make a copy of temp to set it to.
-        temp = strdup(temp);
-        String_Utils_set(string, temp);
-        free(temp);
+        String_Utils_set(string, temp_string);
         return *string;
     } else return temp;
 }
@@ -181,7 +182,7 @@ char *String_Utils_concat_all(int flags, size_t amount, char **string, ...) {
     if (is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, final_string);
         free(final_string);
-        return string;
+        return *string;
     } else return final_string;
 }
 
@@ -232,7 +233,7 @@ int String_Utils_starts_with(const char *string, const char *find, int flags){
     assert(find);
     int i = 0, lowercase = is_selected(flags, SU_IGNORE_CASE);
     for(;i < strlen(find); i++){ 
-        if(lowercase && tolower(string[i]) != tolower(find[i]) return 0;
+        if(lowercase && tolower(string[i]) != tolower(find[i])) return 0;
         else if(!lowercase && string[i] != find[i]) return 0;
     }
     return 1;
@@ -270,7 +271,7 @@ char *String_Utils_trim(char **string, int flags){
     for(;i < length; i++) if(!isspace((*string)[i])) break;
     for(;j > i ; j--) if(!isspace((*string)[j])) break;
     temp = String_Utils_substring(string, i, j, SU_NONE);
-    if(is_selected(flags, MODIFY)){
+    if(is_selected(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -289,7 +290,7 @@ char *String_Utils_substring(char **string, unsigned int begin, unsigned int end
     char *temp = malloc(size + 2);
     memcpy(temp, *string + begin, size + 1);
     temp[size + 1] = '\0';
-    if(is_selected(flags, MODIFY)) {
+    if(is_selected(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp); 
         return *string; 
