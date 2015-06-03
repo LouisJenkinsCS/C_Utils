@@ -8,18 +8,12 @@
 #include <assert.h>
 #include <ctype.h>
 /*
- * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't
- * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it
- * literally did nothing of value except complicate code and even increase the program size by 3x. So, instead, I
- * opted to have another experiment, one which is already heavily tested. The macro TEMP uses the
- * cleanup attribute specific for GCC and Clang compilers, making it 100% dependent on them to compile, but
- * it's easy enough to remove either way. Besides, it accomplished what I want to do. 
- *
- * Of course in the future I most likely (99.999% sure) I'm going to be replacing it entirely from the library functions,
- * as it currently is impossible to use without it being dependent on GCC and POSIX as is. Most likely, it will be apart of the whole C_Utils
- * package. However, I'll go into what TEMP does. What TEMP does is it will call the assigned callback for cleanup when it
- * leaves the variable's scope, most likely a function, but could be inside of a loop if it was declared there. TEMP will basically just free 
- * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
+ * String_Utils has had it's garbage collector stripped from it (kept for another project),
+ * and had it's TEMP GCC attribute removed from the source to prevent potential problems.
+ * Instead the macro is available outside of the source, not inside. I also decided
+ * to use glibc's already implemented functions, which is very good and efficient,
+ * although unfortunately it is not apart of the standard library, hence the _GNU_SOURCE
+ * definition, but all in all, anyone with the gcc compiler and running on Linux can run it.
  */
 
 static int is_selected(int mask, int flag){
