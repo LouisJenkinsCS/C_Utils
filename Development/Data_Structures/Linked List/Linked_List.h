@@ -53,7 +53,7 @@ struct Linked_List{
 	/// The current size of the linked list.
 	size_t size;
 	/// Determines whether the list should be sorted before being added in sorted order.
-	unsigned char is_sorted;
+	volatile unsigned char is_sorted;
 	/// Ensures only one thread adds or removes items, but multiple threads can read.
 	pthread_rwlock_t *adding_or_removing_items;
 	/// File for logging information.
