@@ -1,56 +1,49 @@
 #include "Linked_List.h"
+#include <Misc_Utils.h>
 
-Linked_List *Linked_List_create(Linked_List_Delete delete_item, Linked_List_Compare compare){
+Linked_List *Linked_List_create(void){
 	Linked_List *list = malloc(sizeof(Linked_List));
-	// Initialize first, last and current nodes to null.
+	if(!list) return 0;
 	list->first = list->last = list->current = NULL;
-	// Size initialized to zero.
 	list->size = 0;
-	// If any of the callbacks are null, the below checks for them and sets their behaviour to an already existing default
-	// callback respectively.
-	list->delete_item = (delete_item == NULL) ? (&Linked_List_default_delete : delete_item);
-	list->compare = (compare == NULL) ? (&Linked_List_default_compare : compare);
-	// Set other list function pointers here too!
-	list->next = &Linked_List_next;
-	list->prev = &Linked_List_previous;
-	list->sort = &Linked_List_sort;
-	list->add = &Linked_List_add;
-	list->remove_current = &Linked_List_remove_current;
-	list->remove_item = &Linked_List_remove_item;
-	list->remove_at = &Linked_List_remove_at;
-	list->get_at = &Linked_List_get_at;
-	list->get_first = &Linked_List_first;
-	list->get_last = &Linked_List_last;
-	list->clear= &Linked_List_clear;
+	list->is_sorted = 1;
+	list->adding_or_removing_items = malloc(sizeof(pthread_mutex_t));
+	if(!adding_or_removing_items){
+		free(list);
+		return 0;
+	}
+	list->current_node_change = malloc(sizeof(pthread_mutex_t));
+	if(!current_node_change){
+		free(list);
+		free(adding_or_removing_items);
+		return 0;
+	}
+	pthread_mutex_init(list->adding_or_removing_items, NULL);
+	pthread_mutex_init(list->current_node_change, NULL);
+	list->fp = fopen("Linked_List_Log.txt", "w");
 	return list;
 }
 
-/* The standard, default callback used in place of a null Add_Callback parameter. */
-int Linked_List_add(Linked_List *this, void *item){
-	assert(this);
-	assert(item);
-	// Allocate new node.
-	Node *new_node = malloc(sizeof(Node));
-	// If malloc returns NULL, then out of memory.
-	if(new_node == NULL) return 0;
-	// Add the item to the node.
+int Linked_List_add(Linked_List *this, void *item, Linked_List_Compare compare){
+	if(!this) return 0;
+	MU_ASSERT_RETURN(item, this->fp, 0);
+	Node *new_node; 
+	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), this->fp, 0);
 	new_node->item = item;
-	new_node->next = NULL;
-	// The old last is the new node's previous, as new_node becomes the last node.
-	new_node->prev = this->last;
-	// Checks if the first and last nodes are NULL, meaning nothing has been inserted yet.
+	pthread_mutex_lock(this->adding_or_removing_items);
 	if(this->first == NULL && this->last == NULL){
-		// Sets both first and last nodes as this new_node, as it literally becomes the first and last
-		// as no other nodes are present.
 		this->first = new_node;
 		this->last = new_node;
-	} else { // Else, if other nodes exist, then add it after last and bridge the gap.
-		// The current last should point to the new node as it's next node.
-		this->last->next = new_node;
-		// Then set the new last as the new node.
-		this->last = new_node;
+		this->size++;
+		pthread_mutex_unlock(this->adding_or_removing_items);
+		return 1;
 	}
-	return 1; // Returns 1 on success.
+	int result = 0;
+	if(compare) result = add_sorted(this, new_node, compare);
+	else result = add_unsorted(this, new_node);
+	if(result) this->size++;
+	pthread_mutex_unlock(this->adding_or_removing_items);
+	return result;
 }
 
 /* Below are static private functions that can ease the process along without
@@ -72,8 +65,47 @@ static int merge_nodes(Node **array_of_nodes, size_t f_Begin, size_t f_End, size
 	return 1;
 }
 
-/* Checks to see if the node exists in the list. This function differs from node_to_index in that it will return
-   1 if it exists, or 0 if it does not, as 0 is a valid index in the linked list, to avoid confusion */
+static int add_as_head(Linked_List *this, Node *node){
+	node->next = this->head;
+	this->head->previous = node;
+	this->head = node;
+	return 1;
+}
+
+static int add_as_tail(Linked_List *this, Node *node){
+	this->tail->next = node;
+	node->previous = this->tail;
+	this->tail = node;
+	return 1;
+}
+
+static int add_between(Linked_List *this, Node *previous_node, Node *current_node){
+	previous_node->previous->next = current_node;
+	current_node->next = previous_node;
+	current_node->previous = previous_node->previous;
+	previous_node->previous = current_node;
+	return 1;
+}
+
+static int add_sorted(Linked_List *this, Node *node, Linked_List_Compare compare){
+	if(!this->is_sorted) Linked_List_sort(this, compare);
+	Node *current_node = NULL;
+	if(this->size == 1) return compare(node->item, this->head->item) > 0 ? add_as_head(this, node) : add_as_tail(this, node);
+	for(current_node = this->head; current_node; current_node = current_node->next){
+		if(compare(node->item, current_node->item) > 0) return add_between(this, current_node, node);
+	}
+	MU_LOG_ERROR(list->fp, "Was unable to add an item, sortedly, to the list!\n");
+	return 0;
+}
+
+static int add_unsorted(Linked_List *this, Node *node){
+	node->next = NULL;
+	node->prev = this->last;
+	this->last->next = node;
+	this->last = node;
+	return 1;
+}
+
 static int node_exists(Linked_List *list, Node *node){
 	assert(list);
 	Node *temp_node = NULL;
