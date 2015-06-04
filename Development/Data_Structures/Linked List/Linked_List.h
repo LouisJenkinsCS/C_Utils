@@ -54,10 +54,8 @@ struct Linked_List{
 	size_t size;
 	/// Determines whether the list should be sorted before being added in sorted order.
 	unsigned char is_sorted;
-	/// Lock to ensure that only one thread can add or remove items from the list.
-	pthread_mutex_t *adding_or_removing_items;
-	/// Locks to ensure that only one thread can move the current node in the iterator.
-	pthread_mutex_t *current_node_change;
+	/// Ensures only one thread adds or removes items, but multiple threads can read.
+	pthread_rwlock_t *adding_or_removing_items;
 	/// File for logging information.
 	FILE *fp;
 };
