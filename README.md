@@ -10,11 +10,11 @@ I am a Senior Computer Science student, but I declared late and haven't really f
 
 ##Utility Libraries available
 
-###Concurrency Utils
+### Thread Pool
 
 Thread Pool implementation.
 
-###String Utils
+### String Utils
 
 String manipulation library.
 
@@ -22,10 +22,18 @@ String manipulation library.
 
 File I/O library
 
+### Networking Utils
+
+Networking library, offering functions for creating sockets and connections, a basic template for a client and server class, and HTTP protocol and parsing, along with FTP.
+
 ### Data Structures
 
-Linked List, Queue, Stack, Hash Map, all with the option to be thread safe.
+Linked List, Priority Blocking Queue, Hash Map, Stack, etc. All thread safe.
 
-### Notes:
+### Misc Utils
+
+Miscallaneous utilities package, featuring debugging tools such as logging and debugging macros and a timer.
+
+## Notes:
 
 Not all packages are finished yet, but this is what I hope to attain by the end of it all.
