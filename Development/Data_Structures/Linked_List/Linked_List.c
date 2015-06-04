@@ -7,17 +7,11 @@
 
 /* Used to split the array of nodes to be sorted. */
 static int split_nodes(Node **array_of_nodes, size_t start, size_t end, Linked_List_Compare comparator){
-	// Start initially is 0, End initially is the size of the array.
-	assert(array_of_nodes);
-	assert(comparator);
-	// Continue here.
 	return 1;
 }
 
-/* Should "merge" the array by treating the first and last index of the two sections of arrays to be merged. */
+/* Should "merge" the array by treating the head and tail index of the two sections of arrays to be merged. */
 static int merge_nodes(Node **array_of_nodes, size_t f_Begin, size_t f_End, size_t l_Begin, size_t l_End){
-	assert(array_of_nodes);
-	// Unfinished!
 	return 1;
 }
 
@@ -38,7 +32,7 @@ static int add_as_tail(Linked_List *list, Node *node){
 static int add_between(Linked_List *list, Node *previous_node, Node *current_node){
 	previous_node->prev->next = current_node;
 	current_node->next = previous_node;
-	current_node->prev = previous_node->previous;
+	current_node->prev = previous_node->prev;
 	previous_node->prev = current_node;
 	return 1;
 }
@@ -56,9 +50,9 @@ static int add_sorted(Linked_List *list, Node *node, Linked_List_Compare compare
 
 static int add_unsorted(Linked_List *list, Node *node){
 	node->next = NULL;
-	node->prev = list->last;
-	list->last->next = node;
-	list->last = node;
+	node->prev = list->tail;
+	list->tail->next = node;
+	list->tail = node;
 	list->is_sorted = 0;
 	return 1;
 }
@@ -66,7 +60,7 @@ static int add_unsorted(Linked_List *list, Node *node){
 /// Lock before calling this function!
 static int node_exists(Linked_List *list, Node *node){
 	Node *temp_node = NULL;
-	for(temp_node = list->first; temp_node; temp_node = temp_node->next) {
+	for(temp_node = list->head; temp_node; temp_node = temp_node->next) {
 		if(temp_node == node) {
 			return 1;
 		}
@@ -79,7 +73,7 @@ static int node_to_index(Linked_List *list, Node *node){
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	int index = 0;
 	Node *temp_node = NULL;
-	for(temp_node = list->first; temp_node; temp_node = temp_node->next){
+	for(temp_node = list->head; temp_node; temp_node = temp_node->next){
 		index++;
 		if(node == temp_node) {
 			pthread_rwlock_unlock(list->adding_or_removing_items);
@@ -95,7 +89,7 @@ static int node_to_index(Linked_List *list, Node *node){
 static Node *item_to_node(Linked_List *list, void *item){
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	Node *node = NULL;
-	for(node = list->first; node ; node = node->next) { 
+	for(node = list->head; node ; node = node->next) { 
 		if(item == node->item) {
 			pthread_rwlock_unlock(list->adding_or_removing_items);
 			return node;
@@ -115,15 +109,15 @@ static Node *index_to_node(Linked_List *list, unsigned int index){
 	}
 	if(index == list->size) {
 		pthread_rwlock_unlock(list->adding_or_removing_items);
-		return list->last;
+		return list->tail;
 	}
 	if(index == 0) {
 		pthread_rwlock_unlock(list->adding_or_removing_items);
-		return list->first;
+		return list->head;
 	}
 	int i = 0;
-	Node *node = list->first;
-	while(node && node->next && node = node->next && ++i != index);
+	Node *node = list->head;
+	while(node && node->next && (node = node->next) && ++i != index);
 	pthread_rwlock_unlock(list->adding_or_removing_items);
 	MU_ASSERT_RETURN(i == index, list->fp, NULL);
 	return node;
@@ -133,25 +127,15 @@ static Node *index_to_node(Linked_List *list, unsigned int index){
 static int for_each_item(Linked_List *list, void (*callback)(void *item)){
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	Node *node = NULL;
-	for(node = list->first; node; node = node->next) callback(node->item);
+	for(node = list->head; node; node = node->next) callback(node->item);
 	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return 1;
 }
 
-/// Obtains lock inside of function!
-static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
-	pthread_rwlock_wrlock(list->adding_or_removing_items);
-	while(list->head){
-		if(delete_item) delete_item(list->head->item);
-		remove_node(list->head);
-	}
-	pthread_rwlock_unlock(list->adding_or_removing_items);
-}
-
 /* Removes as if node is only one in list. */
 static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	list->first = NULL;
-	list->last = NULL;
+	list->head = NULL;
+	list->tail = NULL;
 	list->current = NULL;
 	if(delete_item) delete_item(node->item);
 	free(node);
@@ -159,22 +143,22 @@ static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_
 	return 1;
 }
 
-/* Removes as if node is the first one in the list. */
-static int remove_first(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	list->first = list->first->next;
-	list->first->next->prev = NULL;
-	if(list->current == node) list->current = list->first;
+/* Removes as if node is the head one in the list. */
+static int remove_head(Linked_List *list, Node *node, Linked_List_Delete delete_item){
+	list->head = list->head->next;
+	list->head->next->prev = NULL;
+	if(list->current == node) list->current = list->head;
 	if(delete_item) delete_item(node->item);
 	free(node);
 	list->size--;
 	return 1;
 }
 
-/* Removes as if node is the last one in the list. */
-static int remove_last(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	list->last = list->last->prev;
-	list->last->next = NULL;
-	if(list->current == node) list->current = list->last;
+/* Removes as if node is the tail one in the list. */
+static int remove_tail(Linked_List *list, Node *node, Linked_List_Delete delete_item){
+	list->tail = list->tail->prev;
+	list->tail->next = NULL;
+	if(list->current == node) list->current = list->tail;
 	if(delete_item) delete_item(node->item);
 	free(node);
 	list->size--;
@@ -194,18 +178,28 @@ static int remove_normal(Linked_List *list, Node *node, Linked_List_Delete delet
 
 static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_item){
 	MU_ASSERT_RETURN(node, list->fp, 0);
-	pthread_rwlock_wrlock(tp->adding_or_removing_items);
+	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	if(!node_exists(list, node)) {
 		MU_LOG_WARNING(list->fp, "Remove_Node failed to find the node in the list!\n");
 		return 0;
 	}
 	int result = 0;
-	if(list->first == node && list->last == node) result = remove_only(list, node, delete_item);
-	else if(list->last == node) result = remove_last(list, node, delete_item);
-	else if(list->first == node) result = remove_first(list, node, delete_item);
+	if(list->head == node && list->tail == node) result = remove_only(list, node, delete_item);
+	else if(list->tail == node) result = remove_tail(list, node, delete_item);
+	else if(list->head == node) result = remove_head(list, node, delete_item);
 	else result = remove_normal(list, node, delete_item);
-	pthread_rwlock_unlock(tp->adding_or_removing_items);
+	pthread_rwlock_unlock(list->adding_or_removing_items);
 
+}
+
+/// Obtains lock inside of function!
+static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
+	pthread_rwlock_wrlock(list->adding_or_removing_items);
+	while(list->head){
+		if(delete_item) delete_item(list->head->item);
+		remove_node(list, list->head, delete_item);
+	}
+	pthread_rwlock_unlock(list->adding_or_removing_items);
 }
 
 /* End of private functions. */
@@ -214,11 +208,11 @@ static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_
 Linked_List *Linked_List_create(void){
 	Linked_List *list = malloc(sizeof(Linked_List));
 	if(!list) return 0;
-	list->first = list->last = list->current = NULL;
+	list->head = list->tail = list->current = NULL;
 	list->size = 0;
 	list->is_sorted = 1;
 	list->adding_or_removing_items = malloc(sizeof(pthread_rwlock_t));
-	if(!adding_or_removing_items){
+	if(!list->adding_or_removing_items){
 		free(list);
 		return 0;
 	}
@@ -234,9 +228,9 @@ int Linked_List_add(Linked_List *list, void *item, Linked_List_Compare compare){
 	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), list->fp, 0);
 	new_node->item = item;
 	pthread_rwlock_wrlock(list->adding_or_removing_items);
-	if(list->first == NULL && list->last == NULL){
-		list->first = new_node;
-		list->last = new_node;
+	if(list->head == NULL && list->tail == NULL){
+		list->head = new_node;
+		list->tail = new_node;
 		list->size++;
 		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return 1;
@@ -251,10 +245,13 @@ int Linked_List_add(Linked_List *list, void *item, Linked_List_Compare compare){
 
 void *Linked_List_get_at(Linked_List *list, unsigned int index){
 	if(!list) return NULL;
-	return (temp_node = index_to_node(list, index)) ? temp_node->item : NULL;
+	Node *node = NULL;
+	return (node = index_to_node(list, index)) ? node->item : NULL;
 }
 
-int Linked_List_sort(Linked_List *list, Linked_List_Compare compare);
+int Linked_List_sort(Linked_List *list, Linked_List_Compare compare){
+	return 0;
+}
 
 int Linked_List_remove_item(Linked_List *list, void *item, Linked_List_Delete delete_item){
 	if(!list) return 0;
@@ -264,7 +261,7 @@ int Linked_List_remove_item(Linked_List *list, void *item, Linked_List_Delete de
 int Linked_List_remove_at(Linked_List *list, unsigned int index, Linked_List_Delete delete_item){
 	if(!list) return 0;
 	Node *temp_node = index_to_node(list, index);
-	return temp_node ? Linked_List_remove_node(list, temp_node, delete_item) : 0;
+	return temp_node ? remove_node(list, temp_node, delete_item) : 0;
 }
 
 int Linked_List_remove_current(Linked_List *list, Linked_List_Delete delete_item){
@@ -278,18 +275,18 @@ void *Linked_List_next(Linked_List *list){
 }
 
 void * Linked_List_previous(Linked_List *list){
-	if(!list || !list->current || !list->current->previous) return NULL;
-	return (list->current = list->current->previous)->item;
+	if(!list || !list->current || !list->current->prev) return NULL;
+	return (list->current = list->current->prev)->item;
 }
 
-void * Linked_List_last(Linked_List *list){
-	if(!list || !list->last) return NULL;
-	return (list->current = list->last)->item;
+void * Linked_List_tail(Linked_List *list){
+	if(!list || !list->tail) return NULL;
+	return (list->current = list->tail)->item;
 }
 
-void * Linked_List_first(Linked_List *list){
-	if(!list || !list->first) return NULL;
-	return (list->current = list->first)->item;
+void * Linked_List_head(Linked_List *list){
+	if(!list || !list->head) return NULL;
+	return (list->current = list->head)->item;
 }
 
 void **Linked_List_To_Array(Linked_List *list){
@@ -299,7 +296,7 @@ void **Linked_List_To_Array(Linked_List *list){
 	Node *node = NULL;
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	int index = 0;
-	for(node = list->first; node; node = node->next){
+	for(node = list->head; node; node = node->next){
 		array_of_items[index++] = node->item;
 	}
 	pthread_rwlock_unlock(list->adding_or_removing_items);

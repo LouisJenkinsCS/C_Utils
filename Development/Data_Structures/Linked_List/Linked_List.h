@@ -45,9 +45,9 @@ struct Node {
    some callback functions which are to be used to enforce polymorphism. */
 struct Linked_List{
 	/// The very first node.
-	Node *first;
+	Node *head;
 	/// The very last node.
-	Node *last;
+	Node *tail;
 	/// The current node, for iteration purposes. Initialized to first node.
 	Node *current;
 	/// The current size of the linked list.
