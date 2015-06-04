@@ -1,12 +1,12 @@
-## String_Utils
+# String_Utils
 
-### Version
+## Version
 
 Current version: 1.2
 
 Documentation for the current version can be found [here.](http://theif519.github.io/String_Utils_Documentation/)
 
-### Summary
+## Summary
 
 String_Utils is a string library based off of Java's own String library, except the library works on char * over a string object (or struct). It is a lightweight, relatively speedy library which relies upon the libc and glibc.
 
@@ -14,9 +14,9 @@ String_Utils also features passing flags with the '|' operator, for example, SU_
 
 Some functions require passing the address of the string (&) for possible modification of the original string, as String_Utils never modifies the string passed, by default, so it is safe to use string literals unless passing SU_MODIFY flag.
 
-#### Features
+### Features
 
-##### Multiple parameter passing.
+#### Multiple parameter passing.
 
 One of the key features, and where my library differs from all of the others, is that by passing parameters to the function, you can tailor the operation of said function. For example, the option to modify the original string is up to the user. One issue with the standard library, and even others like it, is that they assume that the user wishes to modify the original string. Take for example, the two string literals below.
 
@@ -40,16 +40,16 @@ String_Utils_From_Token("Garbage Text... <parse_this> Random Text <parse_this> M
 
 Which would get the very last token to be parsed, ignoring case for comparison. 
 
-##### Small size library
+#### Small size library
 
 String_Utils only contains one header file and one source file, well documented and readable.
 
-##### Non intrusive
+#### Non intrusive
 
 String_Utils, unlike some other libraries, does not force you to use their own structs that act as a wrapper object for the
 string, allowing you to use it with or even without your own wrapper structs. 
 
-##### Memory Management
+#### Memory Management
 
 While this feature is GCC and Clang dependent, by using a defined macro, TEMP, after declaring the name and type of a variable, but before the assignment, as such...
 
