@@ -104,11 +104,11 @@ static Node *item_to_node(Linked_List *list, void *item){
 /// Obtains lock inside of function!
 static Node *index_to_node(Linked_List *list, unsigned int index){
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
-	if(index > list->size) {
+	if(index >= list->size) {
 		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return NULL;
 	}
-	if(index == list->size) {
+	if(index == (list->size-1)) {
 		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return list->tail;
 	}
@@ -116,9 +116,17 @@ static Node *index_to_node(Linked_List *list, unsigned int index){
 		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return list->head;
 	}
+	if(index > (list->size / 2)){
+		int i = list->size-1;
+		Node *node = list->tail;
+		while((node = node->prev) && --i != index);
+		pthread_rwlock_unlock(list->adding_or_removing_items);
+		MU_ASSERT_RETURN(i == index, list->fp, NULL);
+		return node;
+	}
 	int i = 0;
 	Node *node = list->head;
-	while(node && node->next && (node = node->next) && ++i != index);
+	while((node = node->next) && ++i != index);
 	pthread_rwlock_unlock(list->adding_or_removing_items);
 	MU_ASSERT_RETURN(i == index, list->fp, NULL);
 	return node;
@@ -135,7 +143,6 @@ static int for_each_item(Linked_List *list, void (*callback)(void *item)){
 
 /* Removes as if node is only one in list. */
 static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	MU_DEBUG("Remove_Only: %d\n", list->size);
 	list->head = NULL;
 	list->tail = NULL;
 	list->current = NULL;
@@ -147,7 +154,6 @@ static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if node is the head one in the list. */
 static int remove_head(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	MU_DEBUG("Remove_Head: %d\n", list->size);
 	list->head->next->prev = NULL;
 	list->head = list->head->next;
 	if(list->current == node) list->current = list->head;
@@ -159,7 +165,6 @@ static int remove_head(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if node is the tail one in the list. */
 static int remove_tail(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	MU_DEBUG("Remove_Tail: %d\n", list->size);
 	list->tail = list->tail->prev;
 	list->tail->next = NULL;
 	if(list->current == node) list->current = list->tail;
@@ -171,7 +176,6 @@ static int remove_tail(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if, as is with the average case, this node is between two other nodes. */
 static int remove_normal(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	MU_DEBUG("Remove_Normal: %d\n", list->size);
 	node->next->prev = node->prev;
 	node->prev->next = node->next;
 	if(delete_item) delete_item(node->item);
@@ -194,7 +198,7 @@ static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_
 	else if(list->head == node) result = remove_head(list, node, delete_item);
 	else result = remove_normal(list, node, delete_item);
 	pthread_rwlock_unlock(list->adding_or_removing_items);
-
+	return result;
 }
 
 /// Obtains lock inside of function!

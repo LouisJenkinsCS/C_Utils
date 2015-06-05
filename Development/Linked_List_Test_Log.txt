@@ -1,12 +1,18 @@
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:16) Testing adding elements unsorted...
+06:15:55 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:17) Testing adding elements unsorted...
 
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:23) Test passed!
+06:15:56 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:24) Test passed!
 
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:24) Testing retrieval of elements at requested index...
+06:15:56 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:25) Testing retrieval of elements at requested index...
 
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:28) Test passed!
+06:15:57 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:31) Test passed!
 
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:29) Testing removal of elements at requested index...
+06:15:57 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:32) Testing removal of item with the item as the key and iterator.
 
-02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:37) All Tests Passed!
+06:15:57 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:37) Test passed!
+
+06:15:57 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:38) Testing removal of elements at requested index...
+
+06:15:58 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:46) All Tests Passed!
+
+06:15:58 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:51) Amount of Runs: 10000; Total time is: 00:00:03
 

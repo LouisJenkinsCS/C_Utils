@@ -72,10 +72,10 @@ void *Linked_List_next(Linked_List *this);
 void * Linked_List_previous(Linked_List *this);
 
 /// Moves the linked list to the very last node in the linked list, returning the item at that node.
-void * Linked_List_last(Linked_List *this);
+void * Linked_List_tail(Linked_List *this);
 
 /// Moves the linked list to the very first node in the linked list, returning the item at that node.
-void * Linked_List_first(Linked_List *this);
+void * Linked_List_head(Linked_List *this);
 
 /// Remove the current node from the linked list, calling the callback on the node's item if not NULL.
 void *Linked_List_remove_current(Linked_List *this, Linked_List_Delete delete_item);
