@@ -20,16 +20,6 @@ typedef int (*Linked_List_Compare)(void *item_one, void *item_two);
 /* End Linked_List Callbacks */
 
 
-/* Linked_List Misc. */
-
-// This should clear all items in the linked list with or without deleting them.
-typedef int (*Linked_List_Clear)(Linked_List *this, int parameter);
-/// Function to sort the linked list if comparator is set.
-typedef int (*Linked_List_Sort)(Linked_List *this, int parameter);
-
-/* End Linked_List Misc. */
-
-
 /* End Linked_List function pointers and callbacks. */
 
 
