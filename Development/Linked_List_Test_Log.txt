@@ -1,0 +1,12 @@
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:16) Testing adding elements unsorted...
+
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:23) Test passed!
+
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:24) Testing retrieval of elements at requested index...
+
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:28) Test passed!
+
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:29) Testing removal of elements at requested index...
+
+02:16:47 PM: [INFO](./Data_Structures/Linked_List/Linked_List_Test.c:37) All Tests Passed!
+

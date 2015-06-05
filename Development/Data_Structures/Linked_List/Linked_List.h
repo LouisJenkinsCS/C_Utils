@@ -13,7 +13,7 @@ typedef struct Linked_List Linked_List;
 /* Linked_List Callbacks */
 
 /// Callback used on an item to ensure proper deletion.
-typedef int (*Linked_List_Delete)(void *item);
+typedef void (*Linked_List_Delete)(void *item);
 /// This should be used on two items to compare the two, for sorting.
 typedef int (*Linked_List_Compare)(void *item_one, void *item_two);
 
@@ -63,7 +63,7 @@ int Linked_List_sort(Linked_List *this, Linked_List_Compare compare);
 int Linked_List_remove_item(Linked_List *this, void *item, Linked_List_Delete delete_item);
 
 /// Remove the item at the given index, calling the callback on the item the callback is not NULL.
-int Linked_List_remove_at(Linked_List *this, unsigned int index, Linked_List_Delete delete_item);
+void *Linked_List_remove_at(Linked_List *this, unsigned int index, Linked_List_Delete delete_item);
 
 /// Advances the linked list forward one if applicable, also returning the item at that node.
 void *Linked_List_next(Linked_List *this);
@@ -78,7 +78,7 @@ void * Linked_List_last(Linked_List *this);
 void * Linked_List_first(Linked_List *this);
 
 /// Remove the current node from the linked list, calling the callback on the node's item if not NULL.
-int Linked_List_remove_current(Linked_List *this, Linked_List_Delete delete_item);
+void *Linked_List_remove_current(Linked_List *this, Linked_List_Delete delete_item);
 
 /// Adds the item after the current node in the iterator.
 int Linked_List_add_after(Linked_List *this, void *item);

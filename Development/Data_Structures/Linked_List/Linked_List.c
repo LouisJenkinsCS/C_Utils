@@ -38,6 +38,7 @@ static int add_between(Linked_List *list, Node *previous_node, Node *current_nod
 }
 
 static int add_sorted(Linked_List *list, Node *node, Linked_List_Compare compare){
+	return 0;
 	if(!list->is_sorted) Linked_List_sort(list, compare);
 	Node *current_node = NULL;
 	if(list->size == 1) return compare(node->item, list->head->item) > 0 ? add_as_head(list, node) : add_as_tail(list, node);
@@ -134,6 +135,7 @@ static int for_each_item(Linked_List *list, void (*callback)(void *item)){
 
 /* Removes as if node is only one in list. */
 static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_item){
+	MU_DEBUG("Remove_Only: %d\n", list->size);
 	list->head = NULL;
 	list->tail = NULL;
 	list->current = NULL;
@@ -145,8 +147,9 @@ static int remove_only(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if node is the head one in the list. */
 static int remove_head(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	list->head = list->head->next;
+	MU_DEBUG("Remove_Head: %d\n", list->size);
 	list->head->next->prev = NULL;
+	list->head = list->head->next;
 	if(list->current == node) list->current = list->head;
 	if(delete_item) delete_item(node->item);
 	free(node);
@@ -156,6 +159,7 @@ static int remove_head(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if node is the tail one in the list. */
 static int remove_tail(Linked_List *list, Node *node, Linked_List_Delete delete_item){
+	MU_DEBUG("Remove_Tail: %d\n", list->size);
 	list->tail = list->tail->prev;
 	list->tail->next = NULL;
 	if(list->current == node) list->current = list->tail;
@@ -167,8 +171,9 @@ static int remove_tail(Linked_List *list, Node *node, Linked_List_Delete delete_
 
 /* Removes as if, as is with the average case, this node is between two other nodes. */
 static int remove_normal(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	node->prev->next = node->next;
+	MU_DEBUG("Remove_Normal: %d\n", list->size);
 	node->next->prev = node->prev;
+	node->prev->next = node->next;
 	if(delete_item) delete_item(node->item);
 	if(list->current == node) list->current = node->next;
 	free(node);
@@ -184,7 +189,7 @@ static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_
 		return 0;
 	}
 	int result = 0;
-	if(list->head == node && list->tail == node) result = remove_only(list, node, delete_item);
+	if(list->size == 1) result = remove_only(list, node, delete_item);
 	else if(list->tail == node) result = remove_tail(list, node, delete_item);
 	else if(list->head == node) result = remove_head(list, node, delete_item);
 	else result = remove_normal(list, node, delete_item);
@@ -228,9 +233,11 @@ int Linked_List_add(Linked_List *list, void *item, Linked_List_Compare compare){
 	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), list->fp, 0);
 	new_node->item = item;
 	pthread_rwlock_wrlock(list->adding_or_removing_items);
-	if(list->head == NULL && list->tail == NULL){
+	if(list->size == 0){
 		list->head = new_node;
 		list->tail = new_node;
+		new_node->next = NULL;
+		new_node->prev = NULL;
 		list->size++;
 		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return 1;
@@ -258,15 +265,22 @@ int Linked_List_remove_item(Linked_List *list, void *item, Linked_List_Delete de
 	return remove_node(list, item_to_node(list, item), delete_item); 
 }
 
-int Linked_List_remove_at(Linked_List *list, unsigned int index, Linked_List_Delete delete_item){
+void *Linked_List_remove_at(Linked_List *list, unsigned int index, Linked_List_Delete delete_item){
 	if(!list) return 0;
 	Node *temp_node = index_to_node(list, index);
-	return temp_node ? remove_node(list, temp_node, delete_item) : 0;
+	void *item = NULL;
+	if(temp_node){
+		item = temp_node->item;
+		remove_node(list, temp_node, delete_item);
+	} else MU_LOG_WARNING(list->fp, "The node returned from Index_To_Node was NULL!\n");
+	return item;
 }
 
-int Linked_List_remove_current(Linked_List *list, Linked_List_Delete delete_item){
+void *Linked_List_remove_current(Linked_List *list, Linked_List_Delete delete_item){
 	if(!list || !list->current) return 0;
-	return remove_node(list, list->current, delete_item);
+	void *item = list->current->item;
+	remove_node(list, list->current, delete_item);
+	return item;
 }
 
 void *Linked_List_next(Linked_List *list){
