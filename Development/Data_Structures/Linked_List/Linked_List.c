@@ -23,11 +23,15 @@ static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned in
 	while(++i < end) node = node->next;
 	sub_list->tail = node;
 	sub_list->size = i;
-	MU_ASSERT(list->size == ((begin + end) / 2), logger);
 	return sub_list;
 }
 
 static void append_to_list(sub_list_t *list, Node *node){
+	if(!list->size){
+		list->tail = list->head = node;
+		list->size++;
+		return;
+	}
 	list->tail->next = node;
 	node->previous = list->tail;
 	list->tail = node;
@@ -42,16 +46,62 @@ static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
 	return list;
 }
 
+static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
+	if(list->size == 1) return *list;
+	size_t mid = list->size / 2;
+	sub_list_t *list_one = split_list_of(list, 0, mid);
+	list_one = sort_list(list_one, compare);
+	sub_list_t *list_two = split_list_of(list, mid, list->size);
+	list_two = sort_list(list_two, compare);
+	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
+	free(list_one);
+	free(list_two);
+	return final_list;
+}
+
+static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
+	/// TODO: Implement this function.
+}
+
+static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
+	sub_list_t *final_list = sub_list_create(NULL, NULL, 0);
+	/* Assuming that it was properly sorted, then if the first element of the second list is greater than or equal
+	   to the last element in the first list, then it is safe to just append everything and return. */
+	if(compare(list_one->tail, list_two->head) <= 0) {
+		append_list_to_list(list_one, final_list);
+		append_list_to_list(list_two, final_list);
+		return final_list;
+	}
+	while(list_one->size > 0 && list_two->size > 0){
+		if(compare(list_one->head, list_two->head) <= 0){
+			append_to_list(final_list, list_one->head);
+			list_one->head = list_one->head->next;
+			list_one->size--;
+		} else {
+			append_to_list(final_list, list_two->head);
+			list_two->head = list_two->head->next;
+			list_two->size--;
+		}
+	}
+	if(list_one->size > 0) append_list_to_list(list_one, final_list);
+	if(list_two->size > 0) append_list_to_list(list_two, final_list);
+	return final_list;
+}
+
 /* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
 
 /* Used to split the array of nodes to be sorted. */
-static sub_list_t *sort_list(sub_list_t **list, Linked_List_Compare compare){
-	if(*list->size == 1) return *list;
-	size_t mid = *list->size / 2;
+static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
+	if(list->size == 1) return *list;
+	size_t mid = list->size / 2;
 	sub_list_t *list_one = split_list_of(list, 0, mid);
-	list_one = sort_list(&list_one, compare);
-	sub_list_t *list_two = split_list_of(list, mid, *list->size);
-	list_two = sort_list(&list_two, compare);
+	list_one = sort_list(list_one, compare);
+	sub_list_t *list_two = split_list_of(list, mid, list->size);
+	list_two = sort_list(list_two, compare);
+	sub_list_t *final_list = merge_lists(list_one, list_two);
+	free(list_one);
+	free(list_two);
+	return final_list;
 }
 
 /* Should "merge" the array by treating the head and tail index of the two sections of arrays to be merged. */
