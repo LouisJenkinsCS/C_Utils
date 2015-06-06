@@ -1,13 +1,57 @@
 #include "Linked_List.h"
 #include <Misc_Utils.h>
 
+/// Static logger for all linked lists do use.
+static MU_Logger_t *logger = NULL;
 
+/* Below are declarations for a private sub-list for the merge sort algorithm, which may not be necessary, but it certainly
+   makes it easier overall to visualize how to implement this. The sub-list just contains the head and tail nodes along with
+   it's size, and there are basic private functions which belong to it as well. */
 
-/* Begin Static Function Declarations */
+typedef struct {
+	Node *head;
+	Node *tail;
+	size_t size;
+} sub_list_t;
+
+static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned int end){
+	sub_list_t *sub_list = malloc(sizeof(sub_list_t));
+	int i = 0;
+	Node *node = list->head;
+	while(++i < begin) node = node->next;
+	sub_list->head = node;
+	while(++i < end) node = node->next;
+	sub_list->tail = node;
+	sub_list->size = i;
+	MU_ASSERT(list->size == ((begin + end) / 2), logger);
+	return sub_list;
+}
+
+static void append_to_list(sub_list_t *list, Node *node){
+	list->tail->next = node;
+	node->previous = list->tail;
+	list->tail = node;
+	list->size++;
+}
+
+static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
+	sub_list_t *list = malloc(sizeof(sub_list_t));
+	list->head = head;
+	list->tail = tail;
+	list->size = size;
+	return list;
+}
+
+/* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
 
 /* Used to split the array of nodes to be sorted. */
-static int split_nodes(Node **array_of_nodes, size_t start, size_t end, Linked_List_Compare comparator){
-	return 1;
+static sub_list_t *sort_list(sub_list_t **list, Linked_List_Compare compare){
+	if(*list->size == 1) return *list;
+	size_t mid = *list->size / 2;
+	sub_list_t *list_one = split_list_of(list, 0, mid);
+	list_one = sort_list(&list_one, compare);
+	sub_list_t *list_two = split_list_of(list, mid, *list->size);
+	list_two = sort_list(&list_two, compare);
 }
 
 /* Should "merge" the array by treating the head and tail index of the two sections of arrays to be merged. */
@@ -45,7 +89,7 @@ static int add_sorted(Linked_List *list, Node *node, Linked_List_Compare compare
 	for(current_node = list->head; current_node; current_node = current_node->next){
 		if(compare(node->item, current_node->item) > 0) return add_between(list, current_node, node);
 	}
-	MU_LOG_ERROR(list->fp, "Was unable to add an item, sortedly, to the list!\n");
+	MU_LOG_ERROR(logger, "Was unable to add an item, sortedly, to the list!\n");
 	return 0;
 }
 
@@ -82,7 +126,7 @@ static int node_to_index(Linked_List *list, Node *node){
 		}
 	}
 	pthread_rwlock_unlock(list->adding_or_removing_items);
-	MU_LOG_WARNING(list->fp, "Node_To_Index failed as the node was not found!\n");
+	MU_LOG_WARNING(logger, "Node_To_Index failed as the node was not found!\n");
 	return 0;
 }
 
@@ -96,7 +140,7 @@ static Node *item_to_node(Linked_List *list, void *item){
 			return node;
 		}
 	}
-	MU_LOG_WARNING(list->fp, "Item_To_Node was unable to find the item in the list, returning NULL");
+	MU_LOG_WARNING(logger, "Item_To_Node was unable to find the item in the list, returning NULL");
 	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return NULL;
 }
@@ -121,14 +165,14 @@ static Node *index_to_node(Linked_List *list, unsigned int index){
 		Node *node = list->tail;
 		while((node = node->prev) && --i != index);
 		pthread_rwlock_unlock(list->adding_or_removing_items);
-		MU_ASSERT_RETURN(i == index, list->fp, NULL);
+		MU_ASSERT_RETURN(i == index, logger, NULL);
 		return node;
 	}
 	int i = 0;
 	Node *node = list->head;
 	while((node = node->next) && ++i != index);
 	pthread_rwlock_unlock(list->adding_or_removing_items);
-	MU_ASSERT_RETURN(i == index, list->fp, NULL);
+	MU_ASSERT_RETURN(i == index, logger, NULL);
 	return node;
 }
 
@@ -186,10 +230,10 @@ static int remove_normal(Linked_List *list, Node *node, Linked_List_Delete delet
 }
 
 static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_item){
-	MU_ASSERT_RETURN(node, list->fp, 0);
+	MU_ASSERT_RETURN(node, logger, 0);
 	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	if(!node_exists(list, node)) {
-		MU_LOG_WARNING(list->fp, "Remove_Node failed to find the node in the list!\n");
+		MU_LOG_WARNING(logger, "Remove_Node failed to find the node in the list!\n");
 		return 0;
 	}
 	int result = 0;
@@ -226,15 +270,15 @@ Linked_List *Linked_List_create(void){
 		return 0;
 	}
 	pthread_rwlock_init(list->adding_or_removing_items, NULL);
-	list->fp = fopen("Linked_List_Log.txt", "w");
+	logger = MU_Logger_Create("Linked_List_Log.txt", "w", MU_ALL);
 	return list;
 }
 
 int Linked_List_add(Linked_List *list, void *item, Linked_List_Compare compare){
 	if(!list) return 0;
-	MU_ASSERT_RETURN(item, list->fp, 0);
+	MU_ASSERT_RETURN(item, logger, 0);
 	Node *new_node; 
-	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), list->fp, 0);
+	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), logger, 0);
 	new_node->item = item;
 	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	if(list->size == 0){
@@ -276,7 +320,7 @@ void *Linked_List_remove_at(Linked_List *list, unsigned int index, Linked_List_D
 	if(temp_node){
 		item = temp_node->item;
 		remove_node(list, temp_node, delete_item);
-	} else MU_LOG_WARNING(list->fp, "The node returned from Index_To_Node was NULL!\n");
+	} else MU_LOG_WARNING(logger, "The node returned from Index_To_Node was NULL!\n");
 	return item;
 }
 
@@ -310,7 +354,7 @@ void * Linked_List_head(Linked_List *list){
 void **Linked_List_To_Array(Linked_List *list){
 	if(!list) return NULL;
 	void **array_of_items = malloc(sizeof(void *) * list->size);
-	MU_ASSERT_RETURN(array_of_items, list->fp, NULL);
+	MU_ASSERT_RETURN(array_of_items, logger, NULL);
 	Node *node = NULL;
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	int index = 0;
@@ -326,6 +370,6 @@ void Linked_List_destroy(Linked_List *list, Linked_List_Delete delete_item){
 	delete_all_nodes(list, delete_item);
 	pthread_rwlock_destroy(list->adding_or_removing_items);
 	free(list->adding_or_removing_items);
-	fclose(list->fp);
+	MU_Logger_Is_Finished(logger);
 	free(list);
 }

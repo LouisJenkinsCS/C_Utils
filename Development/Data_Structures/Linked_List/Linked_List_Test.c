@@ -24,6 +24,7 @@ int main(void){
 	MU_LOG_INFO(fp, "Test passed!\n");
 	MU_LOG_INFO(fp, "Testing retrieval of elements at requested index...\n");
 	for(i = 0; i<runs;i++){
+		// Warning extremely slow! Exponential increase in runtime the higher runs gets.
 		int *item = Linked_List_get_at(list, i);
 		if(item != array[i]) MU_DEBUG("Item: %d; Array Value: %d\n", *item, *array[i]);
 		MU_ASSERT(item == array[i], fp);

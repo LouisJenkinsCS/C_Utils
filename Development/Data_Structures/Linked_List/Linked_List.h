@@ -46,8 +46,6 @@ struct Linked_List{
 	volatile unsigned char is_sorted;
 	/// Ensures only one thread adds or removes items, but multiple threads can read.
 	pthread_rwlock_t *adding_or_removing_items;
-	/// File for logging information.
-	FILE *fp;
 };
 
 /// Create a Linked List fully initialized.
