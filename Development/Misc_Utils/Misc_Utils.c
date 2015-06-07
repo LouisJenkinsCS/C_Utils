@@ -20,18 +20,20 @@ int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Le
 	return 1;
 }
 
-static void Logger_Destroy(MU_Logger_t *logger){
+static void Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr){
 	fclose(logger->file);
 	pthread_mutex_destroy(logger->decrement_count);
 	free(logger->decrement_count);
+	if(free_ptr) free(logger);
 }
 
-int MU_Logger_Deref(MU_Logger_t *logger){
+int MU_Logger_Deref(MU_Logger_t *logger, unsigned int free_ptr){
 	if(logger->reference_count <= 0) return 0;
 	pthread_mutex_lock(logger->decrement_count);
 	logger->reference_count--;
 	pthread_mutex_unlock(logger->decrement_count);
-	if(!logger->reference_count) Logger_Destroy(logger);
+	if(!logger->reference_count) Logger_Destroy(logger, free_ptr);
+	return 1;
 }
 
 Timer_t *Timer_Init(int start){

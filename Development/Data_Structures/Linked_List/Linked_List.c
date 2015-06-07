@@ -33,7 +33,7 @@ static void append_to_list(sub_list_t *list, Node *node){
 		return;
 	}
 	list->tail->next = node;
-	node->previous = list->tail;
+	node->prev = list->tail;
 	list->tail = node;
 	list->size++;
 }
@@ -44,19 +44,6 @@ static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
 	list->tail = tail;
 	list->size = size;
 	return list;
-}
-
-static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
-	if(list->size == 1) return list;
-	size_t mid = list->size / 2;
-	sub_list_t *list_one = split_list_of(list, 0, mid);
-	list_one = sort_list(list_one, compare);
-	sub_list_t *list_two = split_list_of(list, mid, list->size);
-	list_two = sort_list(list_two, compare);
-	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
-	free(list_one);
-	free(list_two);
-	return final_list;
 }
 
 static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
@@ -92,18 +79,17 @@ static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linke
 }
 
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
-	if(list->size == 1) return *list;
+	if(list->size == 1) return list;
 	size_t mid = list->size / 2;
-	sub_list_t *list_one = split_list_of(list, 0, mid);
+	sub_list_t *list_one = sub_list_of(list, 0, mid);
 	list_one = sort_list(list_one, compare);
-	sub_list_t *list_two = split_list_of(list, mid, list->size);
+	sub_list_t *list_two = sub_list_of(list, mid, list->size);
 	list_two = sort_list(list_two, compare);
-	sub_list_t *final_list = merge_lists(list_one, list_two);
+	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
 	free(list_one);
 	free(list_two);
 	return final_list;
 }
-
 /* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
 
 
@@ -307,6 +293,7 @@ static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
 
 
 Linked_List *Linked_List_create(void){
+	if(!logger) logger = malloc(sizeof(MU_Logger_t));
 	Linked_List *list = malloc(sizeof(Linked_List));
 	if(!list) return 0;
 	list->head = list->tail = list->current = NULL;
@@ -318,7 +305,7 @@ Linked_List *Linked_List_create(void){
 		return 0;
 	}
 	pthread_rwlock_init(list->adding_or_removing_items, NULL);
-	logger = MU_Logger_Create("Linked_List_Log.txt", "w", MU_ALL);
+	MU_Logger_Init(logger, "Linked_List_Log.txt", "w", MU_ALL);
 	return list;
 }
 
@@ -424,6 +411,6 @@ void Linked_List_destroy(Linked_List *list, Linked_List_Delete delete_item){
 	delete_all_nodes(list, delete_item);
 	pthread_rwlock_destroy(list->adding_or_removing_items);
 	free(list->adding_or_removing_items);
-	MU_Logger_Is_Finished(logger);
+	MU_Logger_Deref(logger,1);
 	free(list);
 }

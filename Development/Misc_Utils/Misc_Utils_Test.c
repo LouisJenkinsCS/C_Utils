@@ -23,6 +23,6 @@ int main(void){
 	char *tmp = NULL;
 	MU_ASSERT(tmp != NULL, logger);
 	Timer_Destroy(timer);
-	MU_Logger_Deref(logger);
+	MU_Logger_Deref(logger, 1);
 	return EXIT_SUCCESS;
 }
