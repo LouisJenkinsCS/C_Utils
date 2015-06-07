@@ -21,7 +21,7 @@
 
 typedef enum {
 	/// Display all types of warnings.
-	MU_ALL,
+	MU_ALL = 0,
 	/// Display Info, Warnings, Errors and Assertions only.
 	MU_INFO,
 	/// Display Warnings, Errors and Assertions only.
@@ -45,9 +45,9 @@ typedef struct {
 	pthread_mutex_t *decrement_count;
 } MU_Logger_t;
 
-void MU_Logger_Init(MU_Logger_t logger, char *filename, char *mode, MU_Logger_Level_t level);
+int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level);
 
-MU_Logger_t *MU_Logger_Deref(MU_Logger_t *logger);
+int MU_Logger_Deref(MU_Logger_t *logger);
 
 #ifdef NDEBUG
 /// If NDEBUG is defined, then MU_DEBUG becomes a NOP.

@@ -9,32 +9,28 @@ char *Misc_Utils_Get_Timestamp(void){
 	return time_and_date;
 }
 
-int MU_Logger_Init(MU_Logger_t logger, char *filename, char *mode, MU_Logger_Level_t level){
-	if(logger.is_initialized == 1) return 0;
+int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level){
 	FILE *file = fopen(filename, mode);
-	if(!fp) return 0;
-	logger.file = file;
-	logger.level = level;
-	logger.reference_count = 1;
-	logger.decrementing_count = malloc(sizeof(pthread_mutex_t));
-	pthread_mutex_init(logger->decrementing_count, NULL);
-	logger.is_initialized = 1;
-	return logger;
+	if(!file) return 0;
+	logger->file = file;
+	logger->level = level;
+	logger->reference_count = 1;
+	logger->decrement_count = malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(logger->decrement_count, NULL);
+	return 1;
 }
 
-static void Logger_Destroy(MU_Logger_t **logger){
-	fclose(*logger->file);
-	pthread_mutex_destroy(*logger->decrementing_count);
-	free(*logger->decrementing_count);
-	free(*logger);
-	*logger = NULL;
+static void Logger_Destroy(MU_Logger_t *logger){
+	fclose(logger->file);
+	pthread_mutex_destroy(logger->decrement_count);
+	free(logger->decrement_count);
 }
 
-int MU_Logger_Is_Finished(MU_Logger_t logger){
-	if(logger.is_initialized != 1 || logger.reference_count <= 0) return 0;
-	pthread_mutex_lock(logger->decrementing_count);
+int MU_Logger_Deref(MU_Logger_t *logger){
+	if(logger->reference_count <= 0) return 0;
+	pthread_mutex_lock(logger->decrement_count);
 	logger->reference_count--;
-	pthread_mutex_unlock(logger->decrementing_count);
+	pthread_mutex_unlock(logger->decrement_count);
 	if(!logger->reference_count) Logger_Destroy(logger);
 }
 
