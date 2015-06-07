@@ -39,13 +39,15 @@ typedef struct {
 	MU_Logger_Level_t level;
 	/// The reference count, to allow static declarations easier. 
 	volatile size_t reference_count;
+	/// Determines whether or not it's initialized.
+	volatile unsigned char is_initialized;
 	/// Lock used to ensure only one thread dereferences the count safely.
 	pthread_mutex_t *decrement_count;
 } MU_Logger_t;
 
-MU_Logger_t *MU_Logger_Create(char *filename, char *mode, MU_Logger_Level_t level);
+void MU_Logger_Init(MU_Logger_t logger, char *filename, char *mode, MU_Logger_Level_t level);
 
-MU_Logger_t *MU_Logger_Is_Finished(MU_Logger_t *logger);
+MU_Logger_t *MU_Logger_Deref(MU_Logger_t *logger);
 
 #ifdef NDEBUG
 /// If NDEBUG is defined, then MU_DEBUG becomes a NOP.

@@ -47,7 +47,7 @@ static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
 }
 
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
-	if(list->size == 1) return *list;
+	if(list->size == 1) return list;
 	size_t mid = list->size / 2;
 	sub_list_t *list_one = split_list_of(list, 0, mid);
 	list_one = sort_list(list_one, compare);
@@ -60,7 +60,10 @@ static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 }
 
 static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
-	/// TODO: Implement this function.
+	Node *node = NULL;
+	for(node = list_src->head; node; node = node->next){
+		append_to_list(list_dst, node);
+	}
 }
 
 static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
@@ -88,9 +91,6 @@ static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linke
 	return final_list;
 }
 
-/* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
-
-/* Used to split the array of nodes to be sorted. */
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	if(list->size == 1) return *list;
 	size_t mid = list->size / 2;
@@ -104,10 +104,8 @@ static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	return final_list;
 }
 
-/* Should "merge" the array by treating the head and tail index of the two sections of arrays to be merged. */
-static int merge_nodes(Node **array_of_nodes, size_t f_Begin, size_t f_End, size_t l_Begin, size_t l_End){
-	return 1;
-}
+/* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
+
 
 static int add_as_head(Linked_List *list, Node *node){
 	node->next = list->head;
@@ -355,7 +353,13 @@ void *Linked_List_get_at(Linked_List *list, unsigned int index){
 }
 
 int Linked_List_sort(Linked_List *list, Linked_List_Compare compare){
-	return 0;
+	if(!list || !compare) return 0;
+	pthread_rwlock_wrlock(list->adding_or_removing_items);
+	sub_list_t *sub_list = sub_list_create(list->head, list->tail, list->size);
+	free(sort_list(sub_list, compare));
+	free(sub_list);
+	pthread_rwlock_unlock(list->adding_or_removing_items);
+	return 1;
 }
 
 int Linked_List_remove_item(Linked_List *list, void *item, Linked_List_Delete delete_item){

@@ -9,15 +9,16 @@ char *Misc_Utils_Get_Timestamp(void){
 	return time_and_date;
 }
 
-MU_Logger_t *MU_Logger_Create(char *filename, char *mode, MU_Logger_Level_t level){
+int MU_Logger_Init(MU_Logger_t logger, char *filename, char *mode, MU_Logger_Level_t level){
+	if(logger.is_initialized == 1) return 0;
 	FILE *file = fopen(filename, mode);
-	if(!fp) return NULL;
-	MU_Logger_t *logger = malloc(sizeof(MU_Logger_t));
-	logger->file = file;
-	logger->level = level;
-	logger->reference_count = 1;
-	logger->decrementing_count = malloc(sizeof(pthread_mutex_t));
+	if(!fp) return 0;
+	logger.file = file;
+	logger.level = level;
+	logger.reference_count = 1;
+	logger.decrementing_count = malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(logger->decrementing_count, NULL);
+	logger.is_initialized = 1;
 	return logger;
 }
 
@@ -29,7 +30,8 @@ static void Logger_Destroy(MU_Logger_t **logger){
 	*logger = NULL;
 }
 
-void MU_Logger_Is_Finished(MU_Logger_t **logger){
+int MU_Logger_Is_Finished(MU_Logger_t logger){
+	if(logger.is_initialized != 1 || logger.reference_count <= 0) return 0;
 	pthread_mutex_lock(logger->decrementing_count);
 	logger->reference_count--;
 	pthread_mutex_unlock(logger->decrementing_count);
