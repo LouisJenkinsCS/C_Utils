@@ -51,6 +51,9 @@ struct Linked_List{
 /// Create a Linked List fully initialized.
 Linked_List *Linked_List_create(void);
 
+/// Create a Linked List fully initialized from the passed array up to it's size.
+Linked_List *Linked_List_create_from(void **array, size_t size);
+
 /// Returns the item at the index. Returns NULL if out of bounds.
 void *Linked_List_get_at(Linked_List *this, unsigned int index);
 
@@ -86,6 +89,12 @@ int Linked_List_add_before(Linked_List *this, void *item);
 
 /// Adds the item to the linked list, in sorted order if the callback is not null, otherwise at the end.
 int Linked_List_add(Linked_List *this, void *item, Linked_List_Compare compare);
+
+/// Returns an array of items in the list, setting the size parameter to the size of the array.
+void **Linked_List_to_array(Linked_List *this, size_t *array_size);
+
+/// Calls the callback on each item in the list.
+int Linked_List_for_each(Linked_List *this, void (*callback)(void *item));
 
 /// Destroy the linked list, and if the callback is not null, delete all items as well.
 void Linked_List_destroy(Linked_List *list, Linked_List_Delete delete_item);

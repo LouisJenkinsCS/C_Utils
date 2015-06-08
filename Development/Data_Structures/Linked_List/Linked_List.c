@@ -8,6 +8,7 @@ static MU_Logger_t *logger = NULL;
    makes it easier overall to visualize how to implement this. The sub-list just contains the head and tail nodes along with
    it's size, and there are basic private functions which belong to it as well. */
 
+/// Used to make sorting the list easier, ignore.
 typedef struct {
 	Node *head;
 	Node *tail;
@@ -295,17 +296,24 @@ static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
 Linked_List *Linked_List_create(void){
 	if(!logger) logger = malloc(sizeof(MU_Logger_t));
 	Linked_List *list = malloc(sizeof(Linked_List));
-	if(!list) return 0;
+	if(!list) return NULL;
 	list->head = list->tail = list->current = NULL;
 	list->size = 0;
 	list->is_sorted = 1;
 	list->adding_or_removing_items = malloc(sizeof(pthread_rwlock_t));
 	if(!list->adding_or_removing_items){
 		free(list);
-		return 0;
+		return NULL;
 	}
 	pthread_rwlock_init(list->adding_or_removing_items, NULL);
 	MU_Logger_Init(logger, "Linked_List_Log.txt", "w", MU_ALL);
+	return list;
+}
+
+Linked_List *Linked_List_create_from(void **array, size_t size){
+	Linked_List *list = Linked_List_create();
+	int i = 0;
+	for(;i<size;i++) Linked_List_add(list, array[i], NULL);
 	return list;
 }
 
@@ -337,6 +345,11 @@ void *Linked_List_get_at(Linked_List *list, unsigned int index){
 	if(!list) return NULL;
 	Node *node = NULL;
 	return (node = index_to_node(list, index)) ? node->item : NULL;
+}
+
+int Linked_List_for_each(Linked_List *list, void (*callback)(void *item)){
+	if(!list || !callback) return 0;
+	return for_each_item(list, callback);
 }
 
 int Linked_List_sort(Linked_List *list, Linked_List_Compare compare){
