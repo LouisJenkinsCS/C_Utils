@@ -10,6 +10,7 @@ char *Misc_Utils_Get_Timestamp(void){
 }
 
 int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level){
+	if(logger && logger->reference_count) return logger->reference_count++;
 	FILE *file = fopen(filename, mode);
 	if(!file) return 0;
 	logger->file = file;

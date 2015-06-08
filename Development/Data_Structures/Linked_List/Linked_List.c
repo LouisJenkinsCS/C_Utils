@@ -15,15 +15,29 @@ typedef struct {
 	size_t size;
 } sub_list_t;
 
+static void print_sub_list(sub_list_t *list){
+	Node *node = NULL;
+	int i = 0;
+	char *all_items_in_list;
+	asprintf(&all_items_in_list, "%s", "{");
+	for(node = list->head; i++ < list->size; node = node->next) asprintf(&all_items_in_list, "%s  %d,", all_items_in_list, *(int *)node->item);
+	asprintf(&all_items_in_list, "%s }\n", all_items_in_list);
+	MU_LOG_VERBOSE(logger, "%s\n", all_items_in_list);
+}
+
 static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned int end){
 	sub_list_t *sub_list = malloc(sizeof(sub_list_t));
 	int i = 0;
 	Node *node = list->head;
-	while(++i < begin) node = node->next;
+	while(i < begin) {
+		node = node->next;
+		i++;
+	}
 	sub_list->head = node;
 	while(++i < end) node = node->next;
 	sub_list->tail = node;
-	sub_list->size = i;
+	sub_list->size = end - begin;
+	MU_LOG_VERBOSE(logger, "Created a sublist from index %d to %d, size of %d\n", begin, end, sub_list->size);
 	return sub_list;
 }
 
@@ -31,12 +45,16 @@ static void append_to_list(sub_list_t *list, Node *node){
 	if(!list->size){
 		list->tail = list->head = node;
 		list->size++;
+		MU_LOG_VERBOSE(logger, "Appending node to empty list!\n");
+		print_sub_list(list);
 		return;
 	}
 	list->tail->next = node;
 	node->prev = list->tail;
 	list->tail = node;
 	list->size++;
+	MU_LOG_VERBOSE(logger, "Appending new element to list, new size: %d\n", list->size);
+	print_sub_list(list);
 }
 
 static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
@@ -44,49 +62,75 @@ static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
 	list->head = head;
 	list->tail = tail;
 	list->size = size;
+	//MU_LOG_VERBOSE(logger, "Created a sublist of size: %d\n", list->size);
 	return list;
 }
 
 static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
 	Node *node = NULL;
-	for(node = list_src->head; node; node = node->next){
-		append_to_list(list_dst, node);
-	}
+	int i = 0;
+	size_t old_size = list_dst->size;
+	for(node = list_src->head; i++ < list_src->size; node = node->next) append_to_list(list_dst, node);
+	//MU_LOG_VERBOSE(logger, "Appended list of size: %d to list of size: %d, new size is: %d\n", list_src->size, old_size, list_dst->size);
 }
 
 static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
 	sub_list_t *final_list = sub_list_create(NULL, NULL, 0);
 	/* Assuming that it was properly sorted, then if the first element of the second list is greater than or equal
 	   to the last element in the first list, then it is safe to just append everything and return. */
-	if(compare(list_one->tail, list_two->head) <= 0) {
+	if(compare(list_one->tail->item, list_two->head->item) <= 0) {
+		MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->tail->item, *(int *)list_two->head->item, compare(list_one->tail->item, list_two->head->item));
+		MU_LOG_VERBOSE(logger, "Appending List_One to Final List!\n");
 		append_list_to_list(list_one, final_list);
+		MU_LOG_VERBOSE(logger, "Appending List_Two to Final List!\n");
 		append_list_to_list(list_two, final_list);
+		MU_LOG_VERBOSE(logger, "List_One -> List_Two; Total size: %d\n", final_list->size);
 		return final_list;
 	}
 	while(list_one->size > 0 && list_two->size > 0){
-		if(compare(list_one->head, list_two->head) <= 0){
+		//MU_LOG_VERBOSE(logger, "List_One size: %d;List_Two size: %d\n", list_one->size, list_two->size);
+		if(compare(list_one->head->item, list_two->head->item) <= 0){
+			MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->head->item, *(int *)list_two->head->item, compare(list_one->head->item, list_two->head->item));
+			MU_LOG_VERBOSE(logger, "List_One Head <= List_Two Head, appending head to final list!\n");
 			append_to_list(final_list, list_one->head);
 			list_one->head = list_one->head->next;
 			list_one->size--;
 		} else {
+			MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->head->item, *(int *)list_two->head->item, compare(list_one->head->item, list_two->head->item));
+			MU_LOG_VERBOSE(logger, "List_One Head > List_Two Head, appending head to final list!\n");
 			append_to_list(final_list, list_two->head);
 			list_two->head = list_two->head->next;
 			list_two->size--;
 		}
 	}
-	if(list_one->size > 0) append_list_to_list(list_one, final_list);
-	if(list_two->size > 0) append_list_to_list(list_two, final_list);
+	if(list_one->size > 0) {
+		MU_LOG_VERBOSE(logger, "Appending the rest of List_One to final list!\n");
+		append_list_to_list(list_one, final_list);
+	}
+	if(list_two->size > 0) {
+		MU_LOG_VERBOSE(logger, "Appending rest of List_Two to final list!\n");
+		append_list_to_list(list_two, final_list);
+	}
+	MU_LOG_VERBOSE(logger, "Final List size: %d\n", final_list->size);
 	return final_list;
 }
 
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
-	if(list->size == 1) return list;
+	if(list->size == 1) {
+		MU_LOG_VERBOSE(logger, "List is of size 1, returning\n");
+		return list;
+	}
+	print_sub_list(list);
 	size_t mid = list->size / 2;
+	//MU_LOG_VERBOSE(logger, "Splitting first half of list from %d to %d\n", 0, mid);
 	sub_list_t *list_one = sub_list_of(list, 0, mid);
 	list_one = sort_list(list_one, compare);
+	//MU_LOG_VERBOSE(logger, "Splitting second half of list from %d to %d\n", mid, list->size);
 	sub_list_t *list_two = sub_list_of(list, mid, list->size);
 	list_two = sort_list(list_two, compare);
+	MU_LOG_VERBOSE(logger, "Merging both lists!\n");
 	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
+	MU_LOG_VERBOSE(logger, "Lists merged, size match: %s\n", list->size == final_list->size ? "True" : "False");
 	free(list_one);
 	free(list_two);
 	return final_list;
@@ -283,9 +327,9 @@ static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_
 /// Obtains lock inside of function!
 static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
 	pthread_rwlock_wrlock(list->adding_or_removing_items);
-	while(list->head){
-		if(delete_item) delete_item(list->head->item);
-		remove_node(list, list->head, delete_item);
+	Node *node = NULL;
+	while(node = list->head){
+		remove_node(list, node, delete_item);
 	}
 	pthread_rwlock_unlock(list->adding_or_removing_items);
 }
@@ -294,7 +338,7 @@ static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
 
 
 Linked_List *Linked_List_create(void){
-	if(!logger) logger = malloc(sizeof(MU_Logger_t));
+	if(!logger) logger = calloc(1, sizeof(MU_Logger_t));
 	Linked_List *list = malloc(sizeof(Linked_List));
 	if(!list) return NULL;
 	list->head = list->tail = list->current = NULL;
@@ -405,7 +449,7 @@ void * Linked_List_head(Linked_List *list){
 	return (list->current = list->head)->item;
 }
 
-void **Linked_List_To_Array(Linked_List *list){
+void **Linked_List_to_array(Linked_List *list, size_t *size){
 	if(!list) return NULL;
 	void **array_of_items = malloc(sizeof(void *) * list->size);
 	MU_ASSERT_RETURN(array_of_items, logger, NULL);
@@ -416,6 +460,7 @@ void **Linked_List_To_Array(Linked_List *list){
 		array_of_items[index++] = node->item;
 	}
 	pthread_rwlock_unlock(list->adding_or_removing_items);
+	*size = index;
 	return array_of_items;
 }
 

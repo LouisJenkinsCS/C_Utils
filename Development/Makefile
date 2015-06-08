@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c
+CFLAGS=-c -g
 LIBS=-pthread
 OBJS=Linked_List.o Linked_List_Test.o Misc_Utils.o
 TARGET=Linked_List_Test
