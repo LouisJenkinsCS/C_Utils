@@ -1,174 +1,174 @@
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14,  15,  16,  17,  18,  19, } Size: 10
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14,  15,  16,  17,  18,  19, } Size: 10
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11,  12,  13,  14, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11,  12,  13,  14, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   11, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   11, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10, } Size: 1
 With: List_Two: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   12, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   13, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   14, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   14, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   13, } Size: 1
 With: List_Two: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12, } Size: 1
 With: List_Two: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10,  11, } Size: 2
 With: List_Two: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14,  10,  11, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14,  10,  11, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   10,  11,  12,  13,  14, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   10,  11,  12,  13,  14, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11,  12,  13,  14, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   10, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   10, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   11, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   11, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10, } Size: 1
 With: List_Two: {   11, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   10,  11, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   12, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   12, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_One: {   13, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   13, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   14, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) List_Two: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   14, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Current_List: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   13, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   13, } Size: 1
 With: List_Two: {   14, } Size: 1
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   13,  14, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12, } Size: 1
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12, } Size: 1
 With: List_Two: {   13,  14, } Size: 2
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14, } Size: 3
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10,  11, } Size: 2
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   10,  11, } Size: 2
 With: List_Two: {   12,  13,  14, } Size: 3
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14,  10,  11, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  14,  10,  11, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12,  13,  14,  10,  11, } Size: 5
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:41) Merging: List_One: {   12,  13,  14,  10,  11, } Size: 5
 With: List_Two: {   12,  13,  14,  10,  11, } Size: 5
 
 
-12:26:12 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  10,  11,  12,  13,  10,  11,  12,  13, } Size: 10
+12:47:16 PM: [VERBOSE](./Data_Structures/Linked_List/Linked_List.c:25) Final_List: {   12,  13,  10,  11,  12,  13,  10,  11,  12,  13, } Size: 10
 
 

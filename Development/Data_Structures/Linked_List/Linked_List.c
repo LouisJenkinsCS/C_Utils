@@ -51,12 +51,20 @@ static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned in
 		i++;
 	}
 	sub_list->head = node;
+<<<<<<< HEAD
 	while(i++ <= end) {
+=======
+	while(i++ <= end){
+>>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 		node = node->next;
 		size++;
 	}
 	sub_list->tail = node;
 	sub_list->size = size;
+<<<<<<< HEAD
+=======
+	MU_LOG_VERBOSE(logger, "Created a sublist from index %d to %d, size of %d\n", begin, end, sub_list->size);
+>>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 	return sub_list;
 }
 
@@ -123,8 +131,13 @@ static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	}
 	print_sub_list(list, "Current_List");
 	size_t mid = list->size / 2;
+<<<<<<< HEAD
 	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
 	print_sub_list(list_one, "List_One");
+=======
+	//MU_LOG_VERBOSE(logger, "Splitting first half of list from %d to %d\n", 0, mid);
+	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
+>>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 	list_one = sort_list(list_one, compare);
 	sub_list_t *list_two = sub_list_of(list, mid, list->size - 1);
 	print_sub_list(list_two, "List_Two");
