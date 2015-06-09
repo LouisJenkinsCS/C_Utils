@@ -15,29 +15,48 @@ typedef struct {
 	size_t size;
 } sub_list_t;
 
-static void print_sub_list(sub_list_t *list){
+static void print_sub_list(sub_list_t *list, char *list_name){
 	Node *node = NULL;
 	int i = 0;
 	char *all_items_in_list;
-	asprintf(&all_items_in_list, "%s", "{");
+	asprintf(&all_items_in_list, "%s: { ", list_name);
 	for(node = list->head; i++ < list->size; node = node->next) asprintf(&all_items_in_list, "%s  %d,", all_items_in_list, *(int *)node->item);
-	asprintf(&all_items_in_list, "%s }\n", all_items_in_list);
+	asprintf(&all_items_in_list, "%s } Size: %d\n", all_items_in_list, list->size);
 	MU_LOG_VERBOSE(logger, "%s\n", all_items_in_list);
+}
+
+static void print_merge_sub_lists(sub_list_t *list_one, char *list_one_name, sub_list_t *list_two, char *list_two_name){
+	Node *node = NULL;
+	int i = 0;
+	char *all_items_in_list_one;
+	asprintf(&all_items_in_list_one, "%s: { ", list_one_name);
+	for(node = list_one->head; i++ < list_one->size; node = node->next) asprintf(&all_items_in_list_one, "%s  %d,", all_items_in_list_one, *(int *)node->item);
+	asprintf(&all_items_in_list_one, "%s } Size: %d\n", all_items_in_list_one, list_one->size);
+	char *all_items_in_list_two;
+	asprintf(&all_items_in_list_two, "%s: { ", list_two_name);
+	for(node = list_two->head, i = 0; i++ < list_two->size; node = node->next) asprintf(&all_items_in_list_two, "%s  %d,", all_items_in_list_two, *(int *)node->item);
+	asprintf(&all_items_in_list_two, "%s } Size: %d\n", all_items_in_list_two, list_two->size);
+	char *final_list_of_items;
+	asprintf(&final_list_of_items, "Merging: %sWith: %s\n", all_items_in_list_one, all_items_in_list_two);
+	MU_LOG_VERBOSE(logger, "%s", final_list_of_items);
 }
 
 static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned int end){
 	sub_list_t *sub_list = malloc(sizeof(sub_list_t));
 	int i = 0;
+	size_t size = 0;
 	Node *node = list->head;
 	while(i < begin) {
 		node = node->next;
 		i++;
 	}
 	sub_list->head = node;
-	while(++i < end) node = node->next;
+	while(i++ <= end) {
+		node = node->next;
+		size++;
+	}
 	sub_list->tail = node;
-	sub_list->size = end - begin;
-	MU_LOG_VERBOSE(logger, "Created a sublist from index %d to %d, size of %d\n", begin, end, sub_list->size);
+	sub_list->size = size;
 	return sub_list;
 }
 
@@ -45,16 +64,12 @@ static void append_to_list(sub_list_t *list, Node *node){
 	if(!list->size){
 		list->tail = list->head = node;
 		list->size++;
-		MU_LOG_VERBOSE(logger, "Appending node to empty list!\n");
-		print_sub_list(list);
 		return;
 	}
 	list->tail->next = node;
 	node->prev = list->tail;
 	list->tail = node;
 	list->size++;
-	MU_LOG_VERBOSE(logger, "Appending new element to list, new size: %d\n", list->size);
-	print_sub_list(list);
 }
 
 static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
@@ -62,7 +77,6 @@ static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
 	list->head = head;
 	list->tail = tail;
 	list->size = size;
-	//MU_LOG_VERBOSE(logger, "Created a sublist of size: %d\n", list->size);
 	return list;
 }
 
@@ -71,7 +85,6 @@ static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
 	int i = 0;
 	size_t old_size = list_dst->size;
 	for(node = list_src->head; i++ < list_src->size; node = node->next) append_to_list(list_dst, node);
-	//MU_LOG_VERBOSE(logger, "Appended list of size: %d to list of size: %d, new size is: %d\n", list_src->size, old_size, list_dst->size);
 }
 
 static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
@@ -79,58 +92,46 @@ static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linke
 	/* Assuming that it was properly sorted, then if the first element of the second list is greater than or equal
 	   to the last element in the first list, then it is safe to just append everything and return. */
 	if(compare(list_one->tail->item, list_two->head->item) <= 0) {
-		MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->tail->item, *(int *)list_two->head->item, compare(list_one->tail->item, list_two->head->item));
-		MU_LOG_VERBOSE(logger, "Appending List_One to Final List!\n");
 		append_list_to_list(list_one, final_list);
-		MU_LOG_VERBOSE(logger, "Appending List_Two to Final List!\n");
 		append_list_to_list(list_two, final_list);
-		MU_LOG_VERBOSE(logger, "List_One -> List_Two; Total size: %d\n", final_list->size);
 		return final_list;
 	}
 	while(list_one->size > 0 && list_two->size > 0){
-		//MU_LOG_VERBOSE(logger, "List_One size: %d;List_Two size: %d\n", list_one->size, list_two->size);
 		if(compare(list_one->head->item, list_two->head->item) <= 0){
-			MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->head->item, *(int *)list_two->head->item, compare(list_one->head->item, list_two->head->item));
-			MU_LOG_VERBOSE(logger, "List_One Head <= List_Two Head, appending head to final list!\n");
 			append_to_list(final_list, list_one->head);
 			list_one->head = list_one->head->next;
 			list_one->size--;
 		} else {
-			MU_LOG_VERBOSE(logger, "Compare(%d, %d) = %d\n", *(int *)list_one->head->item, *(int *)list_two->head->item, compare(list_one->head->item, list_two->head->item));
-			MU_LOG_VERBOSE(logger, "List_One Head > List_Two Head, appending head to final list!\n");
 			append_to_list(final_list, list_two->head);
 			list_two->head = list_two->head->next;
 			list_two->size--;
 		}
 	}
 	if(list_one->size > 0) {
-		MU_LOG_VERBOSE(logger, "Appending the rest of List_One to final list!\n");
 		append_list_to_list(list_one, final_list);
 	}
 	if(list_two->size > 0) {
-		MU_LOG_VERBOSE(logger, "Appending rest of List_Two to final list!\n");
 		append_list_to_list(list_two, final_list);
 	}
-	MU_LOG_VERBOSE(logger, "Final List size: %d\n", final_list->size);
 	return final_list;
 }
 
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	if(list->size == 1) {
-		MU_LOG_VERBOSE(logger, "List is of size 1, returning\n");
+		print_sub_list(list, "Current_List");
 		return list;
 	}
-	print_sub_list(list);
+	print_sub_list(list, "Current_List");
 	size_t mid = list->size / 2;
-	//MU_LOG_VERBOSE(logger, "Splitting first half of list from %d to %d\n", 0, mid);
-	sub_list_t *list_one = sub_list_of(list, 0, mid);
+	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
+	print_sub_list(list_one, "List_One");
 	list_one = sort_list(list_one, compare);
-	//MU_LOG_VERBOSE(logger, "Splitting second half of list from %d to %d\n", mid, list->size);
-	sub_list_t *list_two = sub_list_of(list, mid, list->size);
+	sub_list_t *list_two = sub_list_of(list, mid, list->size - 1);
+	print_sub_list(list_two, "List_Two");
 	list_two = sort_list(list_two, compare);
-	MU_LOG_VERBOSE(logger, "Merging both lists!\n");
+	print_merge_sub_lists(list_one, "List_One", list_two, "List_Two");
 	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
-	MU_LOG_VERBOSE(logger, "Lists merged, size match: %s\n", list->size == final_list->size ? "True" : "False");
+	print_sub_list(final_list, "Final_List");
 	free(list_one);
 	free(list_two);
 	return final_list;

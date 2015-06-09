@@ -21,7 +21,7 @@ int main(void){
 	logger = calloc(1, sizeof(MU_Logger_t));
 	MU_Logger_Init(logger, "Linked_List_Test_Log.txt", "w", MU_ALL);
 	Timer_t *timer = Timer_Init(1);
-	const int runs = 100;
+	const int runs = 10;
 	Linked_List *list = Linked_List_create();
 	void **array = malloc(sizeof(int *) * runs);
 	int i = 0;
