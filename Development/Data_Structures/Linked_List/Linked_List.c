@@ -51,20 +51,13 @@ static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned in
 		i++;
 	}
 	sub_list->head = node;
-<<<<<<< HEAD
-	while(i++ <= end) {
-=======
+
 	while(i++ <= end){
->>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 		node = node->next;
 		size++;
 	}
 	sub_list->tail = node;
 	sub_list->size = size;
-<<<<<<< HEAD
-=======
-	MU_LOG_VERBOSE(logger, "Created a sublist from index %d to %d, size of %d\n", begin, end, sub_list->size);
->>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 	return sub_list;
 }
 
@@ -97,13 +90,6 @@ static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
 
 static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
 	sub_list_t *final_list = sub_list_create(NULL, NULL, 0);
-	/* Assuming that it was properly sorted, then if the first element of the second list is greater than or equal
-	   to the last element in the first list, then it is safe to just append everything and return. */
-	if(compare(list_one->tail->item, list_two->head->item) <= 0) {
-		append_list_to_list(list_one, final_list);
-		append_list_to_list(list_two, final_list);
-		return final_list;
-	}
 	while(list_one->size > 0 && list_two->size > 0){
 		if(compare(list_one->head->item, list_two->head->item) <= 0){
 			append_to_list(final_list, list_one->head);
@@ -126,18 +112,11 @@ static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linke
 
 static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	if(list->size == 1) {
-		print_sub_list(list, "Current_List");
 		return list;
 	}
-	print_sub_list(list, "Current_List");
 	size_t mid = list->size / 2;
-<<<<<<< HEAD
 	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
 	print_sub_list(list_one, "List_One");
-=======
-	//MU_LOG_VERBOSE(logger, "Splitting first half of list from %d to %d\n", 0, mid);
-	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
->>>>>>> a65a06db9c728be835b763108841628fea22fd7d
 	list_one = sort_list(list_one, compare);
 	sub_list_t *list_two = sub_list_of(list, mid, list->size - 1);
 	print_sub_list(list_two, "List_Two");

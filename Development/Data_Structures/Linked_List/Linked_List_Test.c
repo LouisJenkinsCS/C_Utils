@@ -3,6 +3,7 @@
 #include <Misc_Utils.h>
 #include <stdio.h>
 
+
 static MU_Logger_t *logger = NULL;
 
 static void set_to_zero(void *item){
@@ -10,7 +11,7 @@ static void set_to_zero(void *item){
 }
 
 static int compare_ints(void *item_one, void *item_two){
-	return (*(int *)item_two - *(int *)item_one);
+	return (*(int *)item_one - *(int *)item_two);
 }
 
 static void print_item(void *item){
@@ -18,6 +19,7 @@ static void print_item(void *item){
 }
 
 int main(void){
+	srand(time(NULL));
 	logger = calloc(1, sizeof(MU_Logger_t));
 	MU_Logger_Init(logger, "Linked_List_Test_Log.txt", "w", MU_ALL);
 	Timer_t *timer = Timer_Init(1);
@@ -28,7 +30,7 @@ int main(void){
 	MU_LOG_INFO(logger, "Testing adding elements unsorted...\n");
 	for(;i<runs;i++){
 		array[i] = malloc(sizeof(int));
-		*(int *)array[i] = i + runs;
+		*(int *)array[i] = i * (rand() % runs);
 		Linked_List_add(list, array[i], NULL);
 	}
 	MU_ASSERT(list->size == runs, logger);
@@ -63,7 +65,7 @@ int main(void){
 	Linked_List_for_each(list_two, print_item);
 	Linked_List_destroy(list, NULL);
 	Linked_List_destroy(list_two, NULL);
-	MU_DEBUG("compare(%d, %d) = %d\n", *(int *)array[1], *(int *)array[2], compare_ints(array[0], array[1]));
+	MU_DEBUG("compare(%d, %d) = %d\n", *(int *)array[1], *(int *)array[2], compare_ints(array[1], array[2]));
 	free(array);
 	Timer_Stop(timer);
 	char *total_time = Timer_To_String(timer);
