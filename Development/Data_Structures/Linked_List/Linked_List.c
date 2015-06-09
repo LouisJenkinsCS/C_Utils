@@ -28,15 +28,19 @@ static void print_sub_list(sub_list_t *list){
 static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned int end){
 	sub_list_t *sub_list = malloc(sizeof(sub_list_t));
 	int i = 0;
+	size_t size = 0;
 	Node *node = list->head;
 	while(i < begin) {
 		node = node->next;
 		i++;
 	}
 	sub_list->head = node;
-	while(++i < end) node = node->next;
+	while(i++ <= end){
+		node = node->next;
+		size++;
+	}
 	sub_list->tail = node;
-	sub_list->size = end - begin;
+	sub_list->size = size;
 	MU_LOG_VERBOSE(logger, "Created a sublist from index %d to %d, size of %d\n", begin, end, sub_list->size);
 	return sub_list;
 }
@@ -123,7 +127,7 @@ static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
 	print_sub_list(list);
 	size_t mid = list->size / 2;
 	//MU_LOG_VERBOSE(logger, "Splitting first half of list from %d to %d\n", 0, mid);
-	sub_list_t *list_one = sub_list_of(list, 0, mid);
+	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
 	list_one = sort_list(list_one, compare);
 	//MU_LOG_VERBOSE(logger, "Splitting second half of list from %d to %d\n", mid, list->size);
 	sub_list_t *list_two = sub_list_of(list, mid, list->size);
