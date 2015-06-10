@@ -96,6 +96,9 @@ void **Linked_List_to_array(Linked_List *this, size_t *array_size);
 /// Calls the callback on each item in the list.
 int Linked_List_for_each(Linked_List *this, void (*callback)(void *item));
 
+/// Prints all items in the Linked List like such: { ... }
+void Linked_List_print_all(Linked_List *list, FILE *file, char *(*to_string)(void *item));
+
 /// Destroy the linked list, and if the callback is not null, delete all items as well.
 void Linked_List_destroy(Linked_List *list, Linked_List_Delete delete_item);
 

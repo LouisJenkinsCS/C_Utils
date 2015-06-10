@@ -10,20 +10,34 @@ static MU_Logger_t *logger = NULL;
 
 
 /// TODO: Change this to print all items in the linked list.
-static void print_sub_list(sub_list_t *list, char *list_name){
+static void print_list(Linked_List *list, FILE *file, char *(*to_string)(void *item)){
 	Node *node = NULL;
 	int i = 0;
 	char *all_items_in_list;
-	asprintf(&all_items_in_list, "%s: { ", list_name);
-	for(node = list->head; i++ < list->size; node = node->next) asprintf(&all_items_in_list, "%s  %d,", all_items_in_list, *(int *)node->item);
+	asprintf(&all_items_in_list, "{ ");
+	for(node = list->head; node ; node = node->next) {
+		char *item_as_string = to_string(node->item);
+		char *old_items_in_list = all_items_in_list;
+		asprintf(&all_items_in_list, "%s  %s,", all_items_in_list, item_as_string);
+		free(old_items_in_list);
+		free(item_as_string);
+	}
 	asprintf(&all_items_in_list, "%s } Size: %d\n", all_items_in_list, list->size);
-	MU_LOG_VERBOSE(logger, "%s\n", all_items_in_list);
+	fprintf(file, "%s\n", all_items_in_list);
+	fflush(file);
+	free(all_items_in_list);
 }
 
 static void swap_node_items(Node *node_one, Node *node_two){
 	void *item = node_one->item;
 	node_one->item = node_two->item;
 	node_two->item = item;
+}
+
+static char *to_string(void *item){
+	char *item_to_string;
+	asprintf(&item_to_string, "%d", *(int *)item);
+	return item_to_string;
 }
 
 static void insertion_sort_list(Linked_List *list, Linked_List_Compare compare){
@@ -35,7 +49,7 @@ static void insertion_sort_list(Linked_List *list, Linked_List_Compare compare){
 			swap_node_items(sub_node->next, sub_node);
 			sub_node = sub_node->prev;
 		}
-		sub_node->next = item;
+		if(sub_node) sub_node->next->item = item;
 	}
 }
 /* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
@@ -97,33 +111,27 @@ static int node_exists(Linked_List *list, Node *node){
 
 /// Obtains lock inside of function!
 static int node_to_index(Linked_List *list, Node *node){
-	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	int index = 0;
 	Node *temp_node = NULL;
 	for(temp_node = list->head; temp_node; temp_node = temp_node->next){
 		index++;
 		if(node == temp_node) {
-			pthread_rwlock_unlock(list->adding_or_removing_items);
 			return index;
 		}
 	}
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	MU_LOG_WARNING(logger, "Node_To_Index failed as the node was not found!\n");
 	return 0;
 }
 
 /// Obtains lock inside of function!
 static Node *item_to_node(Linked_List *list, void *item){
-	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	Node *node = NULL;
 	for(node = list->head; node ; node = node->next) { 
 		if(item == node->item) {
-			pthread_rwlock_unlock(list->adding_or_removing_items);
 			return node;
 		}
 	}
 	MU_LOG_WARNING(logger, "Item_To_Node was unable to find the item in the list, returning NULL");
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return NULL;
 }
 
@@ -131,39 +139,32 @@ static Node *item_to_node(Linked_List *list, void *item){
 static Node *index_to_node(Linked_List *list, unsigned int index){
 	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	if(index >= list->size) {
-		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return NULL;
 	}
 	if(index == (list->size-1)) {
-		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return list->tail;
 	}
 	if(index == 0) {
-		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return list->head;
 	}
 	if(index > (list->size / 2)){
 		int i = list->size-1;
 		Node *node = list->tail;
 		while((node = node->prev) && --i != index);
-		pthread_rwlock_unlock(list->adding_or_removing_items);
 		MU_ASSERT_RETURN(i == index, logger, NULL);
 		return node;
 	}
 	int i = 0;
 	Node *node = list->head;
 	while((node = node->next) && ++i != index);
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	MU_ASSERT_RETURN(i == index, logger, NULL);
 	return node;
 }
 
 /// Obtains lock inside of function!
 static int for_each_item(Linked_List *list, void (*callback)(void *item)){
-	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	Node *node = NULL;
 	for(node = list->head; node; node = node->next) callback(node->item);
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return 1;
 }
 
@@ -213,7 +214,6 @@ static int remove_normal(Linked_List *list, Node *node, Linked_List_Delete delet
 
 static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_item){
 	MU_ASSERT_RETURN(node, logger, 0);
-	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	if(!node_exists(list, node)) {
 		MU_LOG_WARNING(logger, "Remove_Node failed to find the node in the list!\n");
 		return 0;
@@ -223,18 +223,14 @@ static int remove_node(Linked_List *list, Node *node, Linked_List_Delete delete_
 	else if(list->tail == node) result = remove_tail(list, node, delete_item);
 	else if(list->head == node) result = remove_head(list, node, delete_item);
 	else result = remove_normal(list, node, delete_item);
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return result;
 }
 
 /// Obtains lock inside of function!
 static int delete_all_nodes(Linked_List *list, Linked_List_Delete delete_item){
-	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	Node *node = NULL;
-	while(node = list->head){
-		remove_node(list, node, delete_item);
-	}
-	pthread_rwlock_unlock(list->adding_or_removing_items);
+	void *result = NULL;
+	while(result = Linked_List_remove_at(list, 0, delete_item));
 }
 
 /* End of private functions. */
@@ -270,21 +266,18 @@ int Linked_List_add(Linked_List *list, void *item, Linked_List_Compare compare){
 	Node *new_node; 
 	MU_ASSERT_RETURN(new_node = malloc(sizeof(Node)), logger, 0);
 	new_node->item = item;
-	pthread_rwlock_wrlock(list->adding_or_removing_items);
 	if(list->size == 0){
 		list->head = new_node;
 		list->tail = new_node;
 		new_node->next = NULL;
 		new_node->prev = NULL;
 		list->size++;
-		pthread_rwlock_unlock(list->adding_or_removing_items);
 		return 1;
 	}
 	int result = 0;
 	if(compare) result = add_sorted(list, new_node, compare);
 	else result = add_unsorted(list, new_node);
 	if(result) list->size++;
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	return result;
 }
 
@@ -301,11 +294,7 @@ int Linked_List_for_each(Linked_List *list, void (*callback)(void *item)){
 
 int Linked_List_sort(Linked_List *list, Linked_List_Compare compare){
 	if(!list || !compare) return 0;
-	pthread_rwlock_wrlock(list->adding_or_removing_items);
-	sub_list_t *sub_list = sub_list_create(list->head, list->tail, list->size);
-	free(sort_list(sub_list, compare));
-	free(sub_list);
-	pthread_rwlock_unlock(list->adding_or_removing_items);
+	insertion_sort_list(list, compare);
 	return 1;
 }
 
@@ -357,20 +346,26 @@ void **Linked_List_to_array(Linked_List *list, size_t *size){
 	void **array_of_items = malloc(sizeof(void *) * list->size);
 	MU_ASSERT_RETURN(array_of_items, logger, NULL);
 	Node *node = NULL;
-	pthread_rwlock_rdlock(list->adding_or_removing_items);
 	int index = 0;
 	for(node = list->head; node; node = node->next){
 		array_of_items[index++] = node->item;
 	}
-	pthread_rwlock_unlock(list->adding_or_removing_items);
 	*size = index;
 	return array_of_items;
 }
 
+void Linked_List_print_all(Linked_List *list, FILE *file, char *(*to_string)(void *item)){
+	if(!list || !file || !to_string) return;
+	print_list(list, file, to_string);
+}
+
 void Linked_List_destroy(Linked_List *list, Linked_List_Delete delete_item){
 	if(!list) return;
+	MU_DEBUG("Made it inside of destroy!\n");
 	delete_all_nodes(list, delete_item);
+	MU_DEBUG("Deleted all nodes!\n");
 	pthread_rwlock_destroy(list->adding_or_removing_items);
+	MU_DEBUG("Destroyed lock!\n");
 	free(list->adding_or_removing_items);
 	MU_Logger_Deref(logger,1);
 	free(list);
