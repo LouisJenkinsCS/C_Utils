@@ -1,4 +1,0 @@
-11:29:14 PM: [WARNING](./Data_Structures/Linked_List/Linked_List.c:313) The node returned from Index_To_Node was NULL!
-
-11:29:14 PM: [WARNING](./Data_Structures/Linked_List/Linked_List.c:313) The node returned from Index_To_Node was NULL!
-

@@ -14,6 +14,10 @@ static int compare_ints(void *item_one, void *item_two){
 	return (*(int *)item_one - *(int *)item_two);
 }
 
+static int inverse_compare_ints(void *item_one, void *item_two){
+	return (*(int *)item_two - *(int *)item_one);
+}
+
 static char *print_item(void *item){
 	char *item_to_string;
 	asprintf(&item_to_string, "%d", *(int *)item);
@@ -25,8 +29,8 @@ int main(void){
 	logger = calloc(1, sizeof(MU_Logger_t));
 	MU_Logger_Init(logger, "Linked_List_Test_Log.txt", "w", MU_ALL);
 	Timer_t *timer = Timer_Init(1);
-	const int runs = 10000;
-	Linked_List *list = Linked_List_create();
+	const int runs = 100;
+	Linked_List_t *list = Linked_List_create();
 	void **array = malloc(sizeof(int *) * runs);
 	int i = 0;
 	MU_LOG_INFO(logger, "Testing adding elements unsorted...\n");
@@ -60,10 +64,12 @@ int main(void){
 	MU_ASSERT(list->size == 0, logger);
 	MU_LOG_INFO(logger, "Test passed!\n");
 	MU_LOG_INFO(logger, "Testing the Array-To-Linked_List functionality and sorting!\n");
-	Linked_List *list_two = Linked_List_create_from(array, runs);
+	Linked_List_t *list_two = Linked_List_create_from(array, runs, inverse_compare_ints);
+	MU_LOG_INFO(logger, "Printing all elements inside of list_two in descending order!\n");
+	Linked_List_print_all(list_two, logger->file, print_item);
 	Linked_List_sort(list_two, compare_ints);
 	for(i = 0;i < runs; i += 2) MU_ASSERT(Linked_List_next(list_two) <= Linked_List_next(list_two), logger);
-	MU_LOG_VERBOSE(logger, "Printing all elements inside of list_two!\n");
+	MU_LOG_VERBOSE(logger, "Printing all elements inside of list_two in ascending order!\n");
 	Linked_List_print_all(list_two, logger->file, print_item);
 	Linked_List_destroy(list, NULL);
 	Linked_List_destroy(list_two, NULL);
