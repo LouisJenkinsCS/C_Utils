@@ -21,9 +21,11 @@ static void print_list(Linked_List_t *list, FILE *file, char *(*to_string)(void 
 		free(old_items_in_list);
 		free(item_as_string);
 	}
+	char *old_items_in_list = all_items_in_list;
 	asprintf(&all_items_in_list, "%s } Size: %d\n", all_items_in_list, list->size);
 	fprintf(file, "%s\n", all_items_in_list);
 	fflush(file);
+	free(old_items_in_list);
 	free(all_items_in_list);
 }
 
@@ -58,6 +60,7 @@ static int add_as_head(Linked_List_t *list, Node_t *node){
 	node->next = list->head;
 	list->head->prev = node;
 	list->head = node;
+	node->prev = NULL;
 	return 1;
 }
 
@@ -65,6 +68,7 @@ static int add_as_tail(Linked_List_t *list, Node_t *node){
 	list->tail->next = node;
 	node->prev = list->tail;
 	list->tail = node;
+	node->next = NULL;
 	return 1;
 }
 
@@ -333,7 +337,6 @@ int Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item)){
 	if(!list || !callback) return 0;
 	pthread_rwlock_rdlock(list->manipulating_list);
 	int result = for_each_item(list, callback);
-	list->is_sorted = 1;
 	pthread_rwlock_unlock(list->manipulating_list);
 	return result;
 }
@@ -508,6 +511,22 @@ void Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(v
 	pthread_rwlock_rdlock(list->manipulating_list);
 	print_list(list, file, to_string);
 	pthread_rwlock_unlock(list->manipulating_list);
+}
+
+void *Linked_List_get_current(Linked_List_t *list){
+	if(!list) return NULL;
+	pthread_rwlock_rdlock(list->manipulating_list);
+	pthread_rwlock_rdlock(list->manipulating_iterator);
+	if(!list->current) {
+		pthread_rwlock_unlock(list->manipulating_iterator);
+		pthread_rwlock_unlock(list->manipulating_list);
+		return NULL;
+	}
+	void *item = list->current->item;
+	pthread_rwlock_unlock(list->manipulating_iterator);
+	pthread_rwlock_unlock(list->manipulating_list);
+	return item;
+
 }
 
 void Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item){

@@ -104,6 +104,9 @@ void Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(v
 /// Returns whether or not the item exists in the Linked_List
 int Linked_List_contains(Linked_List_t *list, void *item);
 
+/// Returns the current item being iterated over.
+void *Linked_List_get_current(Linked_List_t *list);
+
 /// Destroy the linked list, and if the callback is not null, delete all items as well.
 void Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item);
 
