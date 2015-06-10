@@ -8,13 +8,8 @@ static MU_Logger_t *logger = NULL;
    makes it easier overall to visualize how to implement this. The sub-list just contains the head and tail nodes along with
    it's size, and there are basic private functions which belong to it as well. */
 
-/// Used to make sorting the list easier, ignore.
-typedef struct {
-	Node *head;
-	Node *tail;
-	size_t size;
-} sub_list_t;
 
+/// TODO: Change this to print all items in the linked list.
 static void print_sub_list(sub_list_t *list, char *list_name){
 	Node *node = NULL;
 	int i = 0;
@@ -25,108 +20,23 @@ static void print_sub_list(sub_list_t *list, char *list_name){
 	MU_LOG_VERBOSE(logger, "%s\n", all_items_in_list);
 }
 
-static void print_merge_sub_lists(sub_list_t *list_one, char *list_one_name, sub_list_t *list_two, char *list_two_name){
-	Node *node = NULL;
-	int i = 0;
-	char *all_items_in_list_one;
-	asprintf(&all_items_in_list_one, "%s: { ", list_one_name);
-	for(node = list_one->head; i++ < list_one->size; node = node->next) asprintf(&all_items_in_list_one, "%s  %d,", all_items_in_list_one, *(int *)node->item);
-	asprintf(&all_items_in_list_one, "%s } Size: %d\n", all_items_in_list_one, list_one->size);
-	char *all_items_in_list_two;
-	asprintf(&all_items_in_list_two, "%s: { ", list_two_name);
-	for(node = list_two->head, i = 0; i++ < list_two->size; node = node->next) asprintf(&all_items_in_list_two, "%s  %d,", all_items_in_list_two, *(int *)node->item);
-	asprintf(&all_items_in_list_two, "%s } Size: %d\n", all_items_in_list_two, list_two->size);
-	char *final_list_of_items;
-	asprintf(&final_list_of_items, "Merging: %sWith: %s\n", all_items_in_list_one, all_items_in_list_two);
-	MU_LOG_VERBOSE(logger, "%s", final_list_of_items);
+static void swap_node_items(Node *node_one, Node *node_two){
+	void *item = node_one->item;
+	node_one->item = node_two->item;
+	node_two->item = item;
 }
 
-static sub_list_t *sub_list_of(sub_list_t *list, unsigned int begin, unsigned int end){
-	sub_list_t *sub_list = malloc(sizeof(sub_list_t));
-	int i = 0;
-	size_t size = 0;
-	Node *node = list->head;
-	while(i < begin) {
-		node = node->next;
-		i++;
-	}
-	sub_list->head = node;
-
-	while(i++ <= end){
-		node = node->next;
-		size++;
-	}
-	sub_list->tail = node;
-	sub_list->size = size;
-	return sub_list;
-}
-
-static void append_to_list(sub_list_t *list, Node *node){
-	if(!list->size){
-		list->tail = list->head = node;
-		list->size++;
-		return;
-	}
-	list->tail->next = node;
-	node->prev = list->tail;
-	list->tail = node;
-	list->size++;
-}
-
-static sub_list_t *sub_list_create(Node *head, Node *tail, size_t size){
-	sub_list_t *list = malloc(sizeof(sub_list_t));
-	list->head = head;
-	list->tail = tail;
-	list->size = size;
-	return list;
-}
-
-static void append_list_to_list(sub_list_t *list_src, sub_list_t *list_dst){
-	Node *node = NULL;
-	int i = 0;
-	size_t old_size = list_dst->size;
-	for(node = list_src->head; i++ < list_src->size; node = node->next) append_to_list(list_dst, node);
-}
-
-static sub_list_t *merge_lists(sub_list_t *list_one, sub_list_t *list_two, Linked_List_Compare compare){
-	sub_list_t *final_list = sub_list_create(NULL, NULL, 0);
-	while(list_one->size > 0 && list_two->size > 0){
-		if(compare(list_one->head->item, list_two->head->item) <= 0){
-			append_to_list(final_list, list_one->head);
-			list_one->head = list_one->head->next;
-			list_one->size--;
-		} else {
-			append_to_list(final_list, list_two->head);
-			list_two->head = list_two->head->next;
-			list_two->size--;
+static void insertion_sort_list(Linked_List *list, Linked_List_Compare compare){
+	Node *node = NULL, *sub_node = NULL;
+	for(node = list->head; node; node = node->next){
+		void *item = node->item;
+		sub_node = node->prev;
+		while(sub_node && compare(sub_node->item, item) > 0){
+			swap_node_items(sub_node->next, sub_node);
+			sub_node = sub_node->prev;
 		}
+		sub_node->next = item;
 	}
-	if(list_one->size > 0) {
-		append_list_to_list(list_one, final_list);
-	}
-	if(list_two->size > 0) {
-		append_list_to_list(list_two, final_list);
-	}
-	return final_list;
-}
-
-static sub_list_t *sort_list(sub_list_t *list, Linked_List_Compare compare){
-	if(list->size == 1) {
-		return list;
-	}
-	size_t mid = list->size / 2;
-	sub_list_t *list_one = sub_list_of(list, 0, mid-1);
-	print_sub_list(list_one, "List_One");
-	list_one = sort_list(list_one, compare);
-	sub_list_t *list_two = sub_list_of(list, mid, list->size - 1);
-	print_sub_list(list_two, "List_Two");
-	list_two = sort_list(list_two, compare);
-	print_merge_sub_lists(list_one, "List_One", list_two, "List_Two");
-	sub_list_t *final_list = merge_lists(list_one, list_two, compare);
-	print_sub_list(final_list, "Final_List");
-	free(list_one);
-	free(list_two);
-	return final_list;
 }
 /* Below are static private functions, or as I prefer to call them, helper functions, for the linked list. */
 
