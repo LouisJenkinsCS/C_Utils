@@ -10,30 +10,18 @@ char *Misc_Utils_Get_Timestamp(void){
 }
 
 int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level){
-	if(logger && logger->reference_count) return logger->reference_count++;
+	if(!logger) return 0;
 	FILE *file = fopen(filename, mode);
 	if(!file) return 0;
 	logger->file = file;
 	logger->level = level;
-	logger->reference_count = 1;
-	logger->decrement_count = malloc(sizeof(pthread_mutex_t));
-	pthread_mutex_init(logger->decrement_count, NULL);
 	return 1;
 }
 
-static void Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr){
+int MU_Logger_Destroy(MU_Logger_t *logger){
+	if(!logger) return 0;
 	fclose(logger->file);
-	pthread_mutex_destroy(logger->decrement_count);
-	free(logger->decrement_count);
-	if(free_ptr) free(logger);
-}
-
-int MU_Logger_Deref(MU_Logger_t *logger, unsigned int free_ptr){
-	if(logger->reference_count <= 0) return 0;
-	pthread_mutex_lock(logger->decrement_count);
-	logger->reference_count--;
-	pthread_mutex_unlock(logger->decrement_count);
-	if(!logger->reference_count) Logger_Destroy(logger, free_ptr);
+	free(logger);
 	return 1;
 }
 

@@ -4,6 +4,17 @@
 /// Static logger for all linked lists do use.
 static MU_Logger_t *logger = NULL;
 
+__attribute__((constructor)) static void init_logger(void){
+	logger = malloc(sizeof(MU_Logger_t));
+	if(!logger) MU_DEBUG("Unable to allocate memory for Linked_List's logger!!!");
+	return;
+	MU_Logger_Init(logger, "Linked_List_Log.txt", "w", MU_ALL);
+}
+
+__attribute__((destructor)) static void destroy_logger(void){
+	MU_Logger_Destroy(logger);
+	logger = NULL;
+}
 /* Begin implementations of helper functions. */
 
 /* Helper functions used for adding nodes to the list. */
@@ -246,12 +257,6 @@ static int for_each_item(Linked_List_t *list, void (*callback)(void *item)){
 /* Linked List Creation and Deletion functions */
 
 Linked_List_t *Linked_List_create(void){
-	if(!logger) logger = calloc(1, sizeof(MU_Logger_t));
-	if(!logger) {
-		MU_DEBUG("Unable to allocate memory for logger, Out of Memory!\n");
-		return NULL;
-	}
-	MU_Logger_Init(logger, "Linked_List_Log.txt", "w", MU_ALL);
 	Linked_List_t *list = malloc(sizeof(Linked_List_t));
 	if(!list) {
 		MU_DEBUG("See Log!!!\n");
@@ -302,7 +307,6 @@ void Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item){
 	pthread_rwlock_destroy(list->manipulating_list);
 	free(list->manipulating_list);
 	free(list->manipulating_iterator);
-	MU_Logger_Deref(logger,1);
 	free(list);
 }
 

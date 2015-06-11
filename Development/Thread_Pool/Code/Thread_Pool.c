@@ -14,6 +14,7 @@
 do { \
 	pthread_mutex_lock(mutex); \
 	var++; \
+	MU_LOG_VERBOSE(tp->logger, "Incremented " var " to %d\n", var); \
 	pthread_mutex_unlock(mutex); \
 } while(0)
 /// Simple macro to atomically decrement an integer on a mutex.
@@ -21,6 +22,7 @@ do { \
 do { \
 	pthread_mutex_lock(mutex); \
 	var--; \
+	MU_LOG_VERBOSE(tp->logger, "Decremented " var " to %d\n", var); \
 	pthread_mutex_unlock(mutex); \
 } while(0)
 /// Simple macro to enable debug
@@ -47,6 +49,7 @@ static Worker *Get_Self(void){
 	for(;i<tp->thread_count;i++) {
 		if(pthread_equal(*(tp->worker_threads[i]->thread), self)) return tp->worker_threads[i];
 	}
+	MU_LOG_ERROR(tp->logger, "A worker thread could not be identified from pthread_self!\n");
 	return NULL;
 }
 
@@ -54,9 +57,10 @@ static Worker *Get_Self(void){
 static void Pause_Handler(){
 	if(!tp->paused) return;
 	Worker *self = Get_Self();
-	assert(self);
+	MU_LOG_VERBOSE(tp->logger, "Thread #%d: entered the pause_handler!\n", self->thread_id);
 	if(self && self->task && self->task->no_pause && !self->task->delayed_pause){ 
 		self->task->delayed_pause = 1;
+		MU_LOG_VERBOSE(tp->logger, "Thread #%d: returning for a delayed pause!\n", self->thread_id);
 		return;
 	}
 	pthread_mutex_lock(tp->is_paused);
@@ -69,9 +73,11 @@ static void Pause_Handler(){
 			int retval = pthread_cond_timedwait(tp->resume, tp->is_paused, &timeout);
 			if(retval == ETIMEDOUT){
 				tp->paused = 0;
+				MU_LOG_VERBOSE(tp->logger, "Thread #%d: woke up from timed_pause!\n", self->thread_id);
 			}
 		}
 	} else while(tp->paused) pthread_cond_wait(tp->resume, tp->is_paused);
+	MU_LOG_VERBOSE(tp->logger, "Thread #%d: exited pause_handler!\n", self->thread_id);
 	pthread_mutex_unlock(tp->is_paused);
 }
 
@@ -88,7 +94,10 @@ static void Process_Task(Worker *self){
 		pthread_mutex_unlock(task->result->not_ready);
 	}
 	else task->callback(task->args);
-	if(task->delayed_pause) pthread_kill(pthread_self(), SIGUSR1);
+	if(task->delayed_pause) {
+		MU_LOG_VERBOSE(tp->logger, "Thread #%d: finished task, pausing self!\n", self->thread_id);
+		pthread_kill(pthread_self(), SIGUSR1);
+	}
 	self->task = NULL;
 	free(task);
 }
@@ -98,7 +107,7 @@ static void signal_if_queue_finished(void){
 	pthread_mutex_lock(tp->no_tasks);
 	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0){
 		pthread_cond_signal(tp->all_tasks_finished);
-		MU_LOG_INFO(tp->fp, "Queue Finished has been signaled!\nQueue Size : %d, Active Threads: %dThread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
+		MU_LOG_VERBOSE(tp->logger, "Queue Finished has been signaled!\nQueue Size : %d, Active Threads: %dThread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
 	}
 	pthread_mutex_unlock(tp->no_tasks);
 }
@@ -141,22 +150,26 @@ static void destroy_worker(Worker *worker){
 /// The main thread loop to obtain tasks from the task queue.
 static void *Get_Tasks(void *args){
 	Worker *self = args;
+	MU_LOG_VERBOSE(tp->logger, "Thread #%d: spawned!\n", self->thread_id);
 	// Set up the signal handler to pause.
 	struct sigaction pause_signal;
 	pause_signal.sa_handler = Pause_Handler;
 	pause_signal.sa_flags = SA_RESTART;
 	sigemptyset(&pause_signal.sa_mask);
-	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) MU_LOG_ERROR(tp->fp, "Get_Task callback was unable to initialize a pause_handler\n");
+	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) MU_LOG_ERROR(tp->logger, "Get_Task callback was unable to initialize a pause_handler\n");
 	self->is_setup = 1;
 	while(tp->keep_alive){
 		while(tp->keep_alive && !self->task) self->task = PBQueue_Timed_Dequeue(tp->queue, queue_timeout);
 		if(!tp->keep_alive) break;
 		TP_INCREMENT(tp->active_threads, tp->thread_count_change);
+		MU_LOG_VERBOSE(tp->logger, "Thread #%d: received a task!\n", self->thread_id);
 		Process_Task(self);
+		MU_LOG_VERBOSE(tp->logger, "Thread #%d: finished a task!\n", self->thread_id);
 		TP_DECREMENT(tp->active_threads, tp->thread_count_change);
 		signal_if_queue_finished();
 	}
 	TP_DECREMENT(tp->thread_count, tp->thread_count_change);
+	MU_LOG_VERBOSE(tp->logger, "Thread #%d: Exited!\n", self->thread_id);
 	return NULL;
 }
 
@@ -183,7 +196,8 @@ int Thread_Pool_Init(size_t number_of_threads){
 	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
 	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
 	Thread_Pool *temp_tp = malloc(sizeof(Thread_Pool));
-	temp_tp->fp = fopen("Thread_Pool_Log.txt", "w");
+	temp_tp->logger = malloc(sizeof(MU_Logger_t));
+	MU_Logger_Init(temp_tp->logger, "Thread_Pool_Log.txt", "w", MU_ALL);
 	temp_tp->keep_alive = 1;
 	temp_tp->paused = 0;
 	temp_tp->seconds_to_pause = 0;
@@ -233,6 +247,7 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	task->delayed_pause = 0;
 	task->result = result;
 	PBQueue_Enqueue(tp->queue, task);
+	MU_LOG_VERBOSE(tp->logger, "A task #%d has been added to the task_queue!\n", (tp->size + 1));
 	return result;
 }
 
@@ -277,7 +292,6 @@ int Thread_Pool_Wait(void){
 	pthread_mutex_lock(tp->no_tasks);
 	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) pthread_cond_wait(tp->all_tasks_finished, tp->no_tasks);
 	pthread_mutex_unlock(tp->no_tasks);
-	MU_LOG_INFO(tp->fp, "Thread_Pool_Wait returned!\nQueue Size : %d, Active Threads: %dThread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
 	return 1;
 }
 
@@ -302,9 +316,9 @@ int Thread_Pool_Destroy(void){
 	tp->keep_alive = 0;
 	Thread_Pool_Wait();
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
-	while(tp->thread_count != 0) {
+	/*while(tp->thread_count != 0) {
 		sleep(1);
-	}
+	}*/
 	destroy_mutex(tp->no_tasks);
 	destroy_cond(tp->all_tasks_finished);
 	PBQueue_Destroy(tp->queue);
@@ -314,7 +328,7 @@ int Thread_Pool_Destroy(void){
 	int i = 0;
 	for(;i<thread_count;i++) destroy_worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
-	fclose(tp->fp);
+	MU_Logger_Destroy(tp->logger);
 	free(tp);
 	tp = NULL;
 	return 1;
