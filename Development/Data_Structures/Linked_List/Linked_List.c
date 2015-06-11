@@ -295,6 +295,7 @@ Linked_List_t *Linked_List_create(void){
 }
 
 Linked_List_t *Linked_List_create_from(void **array, size_t size, Linked_List_Compare compare){
+	if(!array) return NULL;
 	Linked_List_t *list = Linked_List_create();
 	int i = 0;
 	for(;i<size;i++) Linked_List_add(list, array[i], compare);
