@@ -20,7 +20,8 @@ static int inverse_compare_ints(void *item_one, void *item_two){
 
 static char *print_item(void *item){
 	char *item_to_string;
-	asprintf(&item_to_string, "%d", *(int *)item);
+	if(!item) asprintf(&item_to_string, "%s", "NULL");
+	else asprintf(&item_to_string, "%d", *(int *)item);
 	return item_to_string;
 }
 
@@ -29,7 +30,7 @@ int main(void){
 	logger = calloc(1, sizeof(MU_Logger_t));
 	MU_Logger_Init(logger, "Linked_List_Test_Log.txt", "w", MU_ALL);
 	Timer_t *timer = Timer_Init(1);
-	const int runs = 10000;
+	const int runs = 1000;
 	Linked_List_t *list = Linked_List_create();
 	void **array = malloc(sizeof(int *) * runs);
 	int i = 0;
@@ -41,17 +42,14 @@ int main(void){
 	}
 	MU_ASSERT(Linked_List_get_at(list, runs/2) == array[runs/2], logger);
 	MU_ASSERT(list->size == runs, logger);
-	MU_LOG_INFO(logger, "Test passed!\n");
 	MU_LOG_INFO(logger, "Testing retrieval of elements at requested index...\n");
 	Linked_List_head(list);
 	for(i = 1; i<runs;i++) MU_ASSERT(Linked_List_next(list) == array[i], logger);
-	MU_LOG_INFO(logger, "Test passed!\n");
 	MU_LOG_INFO(logger, "Testing removal of item with the item as the key and iterator.\n");
 	MU_ASSERT(Linked_List_remove_item(list, array[runs/2], NULL), logger);
 	int *item = NULL;
 	Linked_List_head(list);
 	while(item = Linked_List_next(list)) MU_ASSERT(item != array[(runs/2)], logger);
-	MU_LOG_INFO(logger, "Test passed!\n");
 	MU_LOG_VERBOSE(logger, "Printing all elements inside of list unsorted!\n");
 	Linked_List_print_all(list, logger->file, print_item);
 	MU_LOG_INFO(logger, "Testing removal of elements at requested index...\n");
@@ -60,7 +58,6 @@ int main(void){
 		MU_ASSERT(result, logger);
 	}
 	MU_ASSERT(list->size == 0, logger);
-	MU_LOG_INFO(logger, "Test passed!\n");
 	MU_LOG_INFO(logger, "Testing the Array-To-Linked_List functionality and sorting!\n");
 	Linked_List_t *list_two = Linked_List_create_from(array, runs, inverse_compare_ints);
 	MU_LOG_INFO(logger, "Printing all elements inside of list_two in descending order!\n");
@@ -82,6 +79,12 @@ int main(void){
 	}
 	MU_LOG_VERBOSE(logger, "Printing all elements inside of list_two in ascending order!\n");
 	Linked_List_print_all(list_two, logger->file, print_item);
+	MU_LOG_INFO(logger, "Testing adding elements before and after the current elements!\n");
+	Linked_List_head(list_two);
+	Linked_List_add_after(list_two, NULL);
+	Linked_List_add_before(list_two, NULL);
+	MU_ASSERT(!list_two->head->item && !list_two->head->next->next->item, logger);
+	Linked_List_print_all(list_two, logger->file, print_item);
 	Linked_List_destroy(list, NULL);
 	Linked_List_destroy(list_two, free);
 	free(array);
@@ -92,6 +95,6 @@ int main(void){
 	MU_LOG_INFO(logger, "Amount of Runs: %d; Total time is: %s\n", runs, total_time);
 	free(total_time);
 	Timer_Destroy(timer); 
-	MU_Logger_Deref(logger, 1);
+	MU_Logger_Destroy(logger, 1);
 	return EXIT_SUCCESS;
 }

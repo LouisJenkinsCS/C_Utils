@@ -41,7 +41,7 @@ typedef struct {
 
 int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level);
 
-int MU_Logger_Destroy(MU_Logger_t *logger);
+int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 
 #ifdef NDEBUG
 /// If NDEBUG is defined, then MU_DEBUG becomes a NOP.

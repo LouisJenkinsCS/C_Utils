@@ -6,13 +6,15 @@ static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
-	if(!logger) MU_DEBUG("Unable to allocate memory for Linked_List's logger!!!");
-	return;
+	if(!logger){
+		MU_DEBUG("Unable to allocate memory for Linked_List's logger!!!");
+		return;
+	}
 	MU_Logger_Init(logger, "Linked_List_Log.txt", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_Destroy(logger);
+	MU_Logger_Destroy(logger, 1);
 	logger = NULL;
 }
 /* Begin implementations of helper functions. */
@@ -24,6 +26,7 @@ static int add_as_head(Linked_List_t *list, Node_t *node){
 	list->head->prev = node;
 	list->head = node;
 	node->prev = NULL;
+	list->size++;
 	return 1;
 }
 
@@ -32,6 +35,7 @@ static int add_as_tail(Linked_List_t *list, Node_t *node){
 	node->prev = list->tail;
 	list->tail = node;
 	node->next = NULL;
+	list->size++;
 	return 1;
 }
 
@@ -40,6 +44,7 @@ static int add_between(Linked_List_t *list, Node_t *previous_node, Node_t *curre
 	current_node->next = previous_node;
 	current_node->prev = previous_node->prev;
 	previous_node->prev = current_node;
+	list->size++;
 	return 1;
 }
 
@@ -48,6 +53,7 @@ static int add_after(Linked_List_t *list, Node_t *current_node, Node_t *new_node
 	new_node->next = current_node->next;
 	new_node->prev = current_node;
 	current_node->next = new_node;
+	list->size++;
 	return 1;
 }
 
@@ -63,6 +69,7 @@ static int add_before(Linked_List_t *list, Node_t *current_node, Node_t *new_nod
 	new_node->next = current_node;
 	new_node->prev = current_node->prev;
 	current_node->prev = new_node;
+	list->size++;
 	return 1;
 }
 
@@ -86,6 +93,7 @@ static int add_unsorted(Linked_List_t *list, Node_t *node){
 	list->tail->next = node;
 	list->tail = node;
 	list->is_sorted = 0;
+	list->size++;
 	return 1;
 }
 
@@ -261,7 +269,6 @@ Linked_List_t *Linked_List_create(void){
 	if(!list) {
 		MU_DEBUG("See Log!!!\n");
 		MU_LOG_ERROR(logger, "Was unable to allocate list, Out of Memory\n");
-		MU_Logger_Deref(logger, 1);
 		return NULL;
 	}
 	list->head = list->tail = list->current = NULL;
@@ -272,7 +279,6 @@ Linked_List_t *Linked_List_create(void){
 		MU_DEBUG("See Log!!!\n");
 		free(list);
 		MU_LOG_ERROR(logger, "Unable to allocate manipulating_list, Out of Memory!\n");
-		MU_Logger_Deref(logger, 1);
 		return NULL;
 	}
 	list->manipulating_iterator = malloc(sizeof(pthread_rwlock_t));
@@ -281,7 +287,6 @@ Linked_List_t *Linked_List_create(void){
 		free(list->manipulating_list);
 		free(list);
 		MU_LOG_ERROR(logger, "Unable to allocate manipulating_iterator rwlock, Out of Memory!\n");
-		MU_Logger_Deref(logger, 1);
 		return NULL;
 	}
 	pthread_rwlock_init(list->manipulating_list, NULL);
@@ -327,7 +332,6 @@ int Linked_List_add(Linked_List_t *list, void *item, Linked_List_Compare compare
 	int result = 0;
 	if(compare) result = add_sorted(list, node, compare);
 	else result = add_unsorted(list, node);
-	if(result) list->size++;
 	pthread_rwlock_unlock(list->manipulating_list);
 	return result;
 }

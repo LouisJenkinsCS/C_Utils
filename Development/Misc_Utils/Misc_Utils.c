@@ -12,16 +12,19 @@ char *Misc_Utils_Get_Timestamp(void){
 int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level){
 	if(!logger) return 0;
 	FILE *file = fopen(filename, mode);
-	if(!file) return 0;
+	if(!file) {
+		MU_DEBUG("Unable to create logfile!\n");
+		return 0;
+	}
 	logger->file = file;
 	logger->level = level;
 	return 1;
 }
 
-int MU_Logger_Destroy(MU_Logger_t *logger){
+int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr){
 	if(!logger) return 0;
-	fclose(logger->file);
-	free(logger);
+	if(logger->file) fclose(logger->file);
+	if(free_ptr) free(logger);
 	return 1;
 }
 
