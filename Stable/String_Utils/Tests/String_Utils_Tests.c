@@ -11,53 +11,66 @@
     if((cmp_result = strcmp(string_one, string_two)) != 0) FAILED(test); \
     MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, fp, 0); \
 } while(0)
-#define PASSED(test) MU_LOG_INFO(fp, "Passed Test %s\n", test)
-#define FAILED(test) MU_LOG_ERROR(fp, "Failed Test %s\n", test)
-#define TEST_ALL_FUNCTIONS testString_Utils_capitalize();\
-	testString_Utils_char_at();\
-	testString_Utils_compare();\
-	testString_Utils_concat();\
-	testString_Utils_count();\
-	testString_Utils_ends_with();\
-	testString_Utils_equals();\
-	testString_Utils_from();\
-	testString_Utils_from_token();\
-	testString_Utils_index_of();\
-	testString_Utils_join();\
-	testString_Utils_replace();\
-	testString_Utils_reverse();\
-	testString_Utils_set();\
-	testString_Utils_split();\
-	testString_Utils_starts_with();\
-	testString_Utils_substring();\
-	testString_Utils_to_lowercase();\
-	testString_Utils_to_uppercase();\
-	testString_Utils_trim()
+#define BOOL(number)(number ? "True" : "False")
+#define PASSED(test) MU_LOG_INFO(logger, "Passed Test: %s\n", test)
+#define SKIP(test) MU_LOG_WARNNING(logger, "Skipped Test: %s\n", test)
+#define FAILED(test) MU_LOG_ERROR(logger, "Failed Test: %s\n", test)
+#define SETUP_FUNCTION_PTRS(array, total_tests) do{
+    array[total_tests++] = testString_Utils_capitalize();\
+    array[total_tests++] = testString_Utils_char_at();\
+    array[total_tests++] = testString_Utils_compare();\
+    array[total_tests++] = testString_Utils_concat();\
+    array[total_tests++] = testString_Utils_count();\
+    array[total_tests++] = testString_Utils_ends_with();\
+    array[total_tests++] = testString_Utils_equals();\
+    array[total_tests++] = testString_Utils_from();\
+    array[total_tests++] = testString_Utils_from_token();\
+    array[total_tests++] = testString_Utils_index_of();\
+    array[total_tests++] = testString_Utils_join();\
+    array[total_tests++] = testString_Utils_replace();\
+    array[total_tests++] = testString_Utils_reverse();\
+    array[total_tests++] = testString_Utils_set();\
+    array[total_tests++] = testString_Utils_split();\
+    array[total_tests++] = testString_Utils_starts_with();\
+    array[total_tests++] = testString_Utils_substring();\
+    array[total_tests++] = testString_Utils_to_lowercase();\
+    array[total_tests++] = testString_Utils_to_uppercase();\
+    array[total_tests++] = testString_Utils_trim();\
+    total_tests++;\   
+} while(0)
 
-FILE *fp;
-
+MU_Logger_t *logger;
 int testString_Utils_capitalize() {
     char test[] = "Capitalize";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("hello World");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
+    MU_LOG_VERBOSE(logger, "Capitalizing string: %s\n!", string);
     char *result_one TEMP = String_Utils_capitalize(&string, parameter_one);
+    MU_LOG_VERBOSE(logger, "Result: %s\n!", result_one);
     String_Utils_capitalize(&string, parameter_two);
+    MU_LOG_VERBOSE(logger, "Modified original string: %s\n!", string);
     TEST_EQUAL(result_one, "Hello World", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
+    return 1;
 }
 
 int testString_Utils_char_at() {
     char test[] = "Char_At";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string = "Hello World";
     unsigned int index_one = 100;
     unsigned int index_two = 5;
     char result_one = String_Utils_char_at(string, index_one);
+    MU_LOG_VERBOSE(logger, "Retrieved char in %s at index: %d is %c", string, index_one, result_one);
     char result_two = String_Utils_char_at(string, index_two);
+    MU_LOG_VERBOSE(logger, "Retrieved char in %s at index: %d is %c", string, index_two, result_two);
     TEST(string[10] == result_one, test);
     TEST(string[5] == result_two, test);
     PASSED(test);
+    return 1;
 }
 
 int testString_Utils_compare() {
@@ -67,10 +80,17 @@ int testString_Utils_compare() {
     const char *string_three = "Hello WorlD";
     int parameter_one = SU_IGNORE_CASE;
     int parameter_two = SU_NONE;
-    TEST(String_Utils_compare(string_one, string_two, parameter_two) != 0, test);
-    TEST(String_Utils_compare(string_one, string_three, parameter_one) == 0, test);
-    TEST(String_Utils_compare(string_one, string_three, parameter_two) != 0, test);
+    int result_one = String_Utils_compare(string_one, string_two, parameter_two) != 0;
+    int result_two = String_Utils_compare(string_one, string_three, parameter_one) == 0;
+    int result_three = String_Utils_compare(string_one, string_three, parameter_two) != 0;
+    TEST(result_one, test);
+    MU_LOG_VERBOSE(logger, "Case insensitive comparison of %s and %s: %s", string_one, string_two, BOOL(result_one));
+    TEST(result_two, test);
+    MU_LOG_VERBOSE(logger, "Case sensitive comparison of %s and %s: %s", string_one, string_three, BOOL(result_two));
+    TEST(result_three, test);
+    MU_LOG_VERBOSE(logger, "Case insensitive comparison of %s and %s: %s", string_one, string_three, BOOL(result_three));
     PASSED(test); 
+    return 1;
 }
 
 int  testString_Utils_concat() {
@@ -85,6 +105,7 @@ int  testString_Utils_concat() {
     TEST_EQUAL(result_one, "Hello World", test);
     TEST_EQUAL("Modify this string: Hello World", string_three, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_contains() {
@@ -96,6 +117,7 @@ int  testString_Utils_contains() {
     TEST(String_Utils_contains(string, search, parameter_one) == 1, test);
     TEST(String_Utils_contains(string, search, parameter_two) == 0, test);
     PASSED(test);
+    return 1;
 }
 
 
@@ -108,6 +130,7 @@ int  testString_Utils_count() {
     TEST(String_Utils_count(string, delimiter, parameter_one) == 8, test);
     TEST(String_Utils_count(string, delimiter, parameter_two) == 1, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_ends_with() {
@@ -121,6 +144,7 @@ int  testString_Utils_ends_with() {
     TEST(String_Utils_ends_with(string, find_two, parameter_one) == 1, test);
     TEST(String_Utils_ends_with(string, find_two, parameter_two) == 0, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_equals() {
@@ -132,6 +156,7 @@ int  testString_Utils_equals() {
     TEST(String_Utils_equals(string_one, string_two, parameter_one) == 1, test);
     TEST(String_Utils_equals(string_one, string_two, parameter_two) == 0, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_from() {
@@ -149,6 +174,7 @@ int  testString_Utils_from() {
     TEST_EQUAL(result_two, "!", test);
     TEST_EQUAL(mutable_string, "this!", test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_from_token() {
@@ -167,6 +193,7 @@ int  testString_Utils_from_token() {
     TEST_EQUAL(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_index_of() {
@@ -179,6 +206,7 @@ int  testString_Utils_index_of() {
     TEST(string[String_Utils_index_of(string, token, parameter_one)] == 'A', test); // Should be first character of token.
     TEST(string[String_Utils_index_of(string, token, parameter_two)] == 'T', test); // It should be the very first index of the string.
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_join() {
@@ -192,6 +220,7 @@ int  testString_Utils_join() {
     TEST_EQUAL(result_one, "One prison, One person, One bond, One Power!", test);
     free(array_of_strings);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_replace() {
@@ -209,6 +238,7 @@ int  testString_Utils_replace() {
     TEST_EQUAL(result_two, "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli", test);
     TEST_EQUAL(string, result_two, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_reverse() {
@@ -221,6 +251,7 @@ int  testString_Utils_reverse() {
     TEST_EQUAL(result_one, "desserts", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_set() {
@@ -230,6 +261,7 @@ int  testString_Utils_set() {
     String_Utils_set(&string_one, string_two);
     TEST_EQUAL(string_one, string_two, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_split() {
@@ -247,6 +279,7 @@ int  testString_Utils_split() {
     free(result);
     free(size);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_starts_with() {
@@ -258,6 +291,7 @@ int  testString_Utils_starts_with() {
     TEST(String_Utils_starts_with(string, find, parameter_one) == 1, test);
     TEST(String_Utils_starts_with(string, find, parameter_two) == 0, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_substring() {
@@ -272,6 +306,7 @@ int  testString_Utils_substring() {
     TEST_EQUAL(result, "not just any dragon, the dragon called *gasp* *chokes* *dies*", test);
     TEST_EQUAL(string, result, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_to_lowercase() {
@@ -284,6 +319,7 @@ int  testString_Utils_to_lowercase() {
     TEST_EQUAL(result, "hello world", test);
     TEST_EQUAL(string, result, test);
     PASSED(test);
+    return 1;
 }
 
 int  testString_Utils_to_uppercase() {
@@ -296,6 +332,7 @@ int  testString_Utils_to_uppercase() {
     TEST_EQUAL(result, "HELLO WORLD", test);
     TEST_EQUAL(string, result, test);
     PASSED(test);
+    return 1;
 }
 
 int testString_Utils_trim() {
@@ -308,13 +345,22 @@ int testString_Utils_trim() {
     TEST_EQUAL(result, "asdadadasd", test);
     TEST_EQUAL(string, result, test);
     PASSED(test);
+    return 1;
 }
 
 int main(void){
-    fp = fopen("String_Utils_Test_Log.txt", "w");
+    logger = malloc(sizeof(MU_Logger_t));
+    logger = MU_Logger_init(logger, "String_Utils_Test_Log.txt", "w", MU_ALL);
     Timer_t *timer = Timer_Init(1);
-    TEST_ALL_FUNCTIONS;
-    MU_LOG_INFO(fp, "All tests finished!\n");
+    int result = 0;
+    int total_tests = 0;
+    int (*tests[20])();
+    SETUP_FUNCTION_PTRS(tests, total_tests);
+    int i = 0;
+    for(; i < total_tests; i++){
+        result += tests[i]();
+    }
+    MU_LOG_INFO(fp, "All tests finished!Passed %d/%d\n", result, total_tests);
     Timer_Stop(timer);
     char *total_time = Timer_To_String(timer);
     MU_LOG_INFO(fp, "Total Time: %s\n", total_time);
