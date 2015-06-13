@@ -12,9 +12,9 @@
     MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, fp, 0); \
 } while(0)
 #define BOOL(number)(number ? "True" : "False")
-#define PASSED(test) MU_LOG_INFO(logger, "Passed Test: %s\n", test)
-#define SKIP(test) MU_LOG_WARNNING(logger, "Skipped Test: %s\n", test)
-#define FAILED(test) MU_LOG_ERROR(logger, "Failed Test: %s\n", test)
+#define PASSED(test) MU_LOG_INFO(logger, "Passed Test: \"%s\"\n", test)
+#define SKIP(test) MU_LOG_WARNNING(logger, "Skipped Test: \"%s\"\n", test)
+#define FAILED(test) MU_LOG_ERROR(logger, "Failed Test: \"%s\"\n", test)
 #define SETUP_FUNCTION_PTRS(array, total_tests) do{
     array[total_tests++] = testString_Utils_capitalize();\
     array[total_tests++] = testString_Utils_char_at();\
@@ -44,13 +44,11 @@ int testString_Utils_capitalize() {
     char test[] = "Capitalize";
     MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("hello World");
-    int parameter_one = SU_NONE;
-    int parameter_two = SU_MODIFY;
-    MU_LOG_VERBOSE(logger, "Capitalizing string: %s\n!", string);
-    char *result_one TEMP = String_Utils_capitalize(&string, parameter_one);
-    MU_LOG_VERBOSE(logger, "Result: %s\n!", result_one);
-    String_Utils_capitalize(&string, parameter_two);
-    MU_LOG_VERBOSE(logger, "Modified original string: %s\n!", string);
+    MU_LOG_VERBOSE(logger, "Capitalizing string: \"%s\"\n!", string);
+    char *result_one TEMP = String_Utils_capitalize(&string, SU_NONE);
+    MU_LOG_VERBOSE(logger, "Result: \"%s\"\n!", result_one);
+    String_Utils_capitalize(&string, SU_MODIFY);
+    MU_LOG_VERBOSE(logger, "Modified original string: \"%s\"\n!", string);
     TEST_EQUAL(result_one, "Hello World", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
@@ -64,9 +62,9 @@ int testString_Utils_char_at() {
     unsigned int index_one = 100;
     unsigned int index_two = 5;
     char result_one = String_Utils_char_at(string, index_one);
-    MU_LOG_VERBOSE(logger, "Retrieved char in %s at index: %d is %c", string, index_one, result_one);
+    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'", string, index_one, result_one);
     char result_two = String_Utils_char_at(string, index_two);
-    MU_LOG_VERBOSE(logger, "Retrieved char in %s at index: %d is %c", string, index_two, result_two);
+    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'", string, index_two, result_two);
     TEST(string[10] == result_one, test);
     TEST(string[5] == result_two, test);
     PASSED(test);
@@ -75,34 +73,37 @@ int testString_Utils_char_at() {
 
 int testString_Utils_compare() {
     char test[] = "Compare";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string_one = "Hello World";
     const char *string_two = "Hello_World";
     const char *string_three = "Hello WorlD";
     int parameter_one = SU_IGNORE_CASE;
     int parameter_two = SU_NONE;
-    int result_one = String_Utils_compare(string_one, string_two, parameter_two) != 0;
-    int result_two = String_Utils_compare(string_one, string_three, parameter_one) == 0;
-    int result_three = String_Utils_compare(string_one, string_three, parameter_two) != 0;
-    TEST(result_one, test);
-    MU_LOG_VERBOSE(logger, "Case insensitive comparison of %s and %s: %s", string_one, string_two, BOOL(result_one));
-    TEST(result_two, test);
-    MU_LOG_VERBOSE(logger, "Case sensitive comparison of %s and %s: %s", string_one, string_three, BOOL(result_two));
-    TEST(result_three, test);
-    MU_LOG_VERBOSE(logger, "Case insensitive comparison of %s and %s: %s", string_one, string_three, BOOL(result_three));
+    int result_one = String_Utils_compare(string_one, string_two, SU_NONE);
+    int result_two = String_Utils_compare(string_one, string_three, SU_IGNORE_CASE);
+    int result_three = String_Utils_compare(string_one, string_three, SU_NONE);
+    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_two, BOOL(result_one == 0));
+    TEST(result_one != 0, test);
+    MU_LOG_VERBOSE(logger, "(Insensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_three, BOOL(result_two == 0));
+    TEST(result_two == 0, test);
+    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_three, BOOL(result_three == 0));
+    TEST(result_three != 0, test);
     PASSED(test); 
     return 1;
 }
 
 int  testString_Utils_concat() {
     char test[] = "Concat";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string_one = "Hello ";
     const char *string_two = "World";
-    char *string_three TEMP = strdup("Modify this string: "); // In order to change this value, a copy of the string is returned;
-    int parameter_one = SU_NONE;
-    int parameter_two = SU_MODIFY;
+    char *string_three TEMP = strdup("Modify this string: ");
+    MU_LOG_VERBOSE(logger, "Declared string to be modified: \"%s\"\n", string_three);
     char *result_one TEMP = String_Utils_concat(&string_one, string_two, SU_NONE);
-    String_Utils_concat(&string_three, result_one, parameter_two); // Modifies string_three
+    String_Utils_concat(&string_three, result_one, SU_MODIFY); // Modifies string_three
+    MU_LOG_VERBOSE(logger, "Concatenation of \"%s\" and \"%s\": \"%s\"", string_one, string_two, result_one);
     TEST_EQUAL(result_one, "Hello World", test);
+    MU_LOG_VERBOSE(logger, "Modified declared string: \"%s\"\n", string_three);
     TEST_EQUAL("Modify this string: Hello World", string_three, test);
     PASSED(test);
     return 1;
@@ -110,12 +111,15 @@ int  testString_Utils_concat() {
 
 int  testString_Utils_contains() {
     char test[] = "Contains";
-    const char *string = "Hello World, the weather is nice today, isn't it?";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    const char *string = "Hello World, the weather is nice today, isnt it?";
     const char *search = "The";
-    int parameter_one = SU_IGNORE_CASE;
-    int parameter_two = SU_NONE;
-    TEST(String_Utils_contains(string, search, parameter_one) == 1, test);
-    TEST(String_Utils_contains(string, search, parameter_two) == 0, test);
+    int result_one = String_Utils_contains(string, search, SU_IGNORE_CASE);
+    int result_two = String_Utils_contains(string, search, SU_NONE);
+    MU_LOG_VERBOSE(logger, "Insensitive search in string \"%s\" for \"%s\": %s", string, search, BOOL(result_one));
+    TEST(result_one == 1, test);
+    MU_LOG_VERBOSE(logger, "Sensitive search in string \"%s\" for \"%s\": %s", string, search, BOOL(result_one));
+    TEST(result_two == 0, test);
     PASSED(test);
     return 1;
 }
@@ -123,18 +127,22 @@ int  testString_Utils_contains() {
 
 int  testString_Utils_count() {
     char test[] = "Count";
-    const char *string = "What is the meaning of the word 'the', when there is the person in the mirror staring back at the recipient? The answer is unclear.";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    const char *string = "What is the meaning of the word the, when there is the person in the mirror staring back at the recipient? The answer is unclear.";
     const char *delimiter = "The";
-    int parameter_one = SU_IGNORE_CASE;
-    int parameter_two = SU_NONE;
-    TEST(String_Utils_count(string, delimiter, parameter_one) == 8, test);
-    TEST(String_Utils_count(string, delimiter, parameter_two) == 1, test);
+    int result_one = String_Utils_count(string, delimiter, SU_IGNORE_CASE);
+    int result_two = String_Utils_count(string, delimiter, SU_NONE);
+    MU_LOG_VERBOSE(logger, "(Insensitive) Amount of times the string \"%s\" contains the substring \"%s\": %d\n", string, delimiter, result_one);
+    TEST(result_one == 8, test);
+    MU_LOG_VERBOSE(logger, "(Sensitive) Amount of times the string \"%s\" contains the substring \"%s\": %d\n", string, delimiter, result_two);
+    TEST(result_two == 1, test);
     PASSED(test);
     return 1;
 }
 
 int  testString_Utils_ends_with() {
     char test[] = "Ends_With";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string = "Catch the end of this string";
     const char *find_one = "string";
     const char *find_two = "END OF THIS STRING";
@@ -149,6 +157,7 @@ int  testString_Utils_ends_with() {
 
 int  testString_Utils_equals() {
     char test[] = "Equals";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string_one = "Check to see if this equals another string!";
     const char *string_two = "CHECK TO SEE IF THIS EQUALS ANOTHER STRING!";
     int parameter_one = SU_IGNORE_CASE;
@@ -161,6 +170,7 @@ int  testString_Utils_equals() {
 
 int  testString_Utils_from() {
     char test[] = "From";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string = "Please get everything past here: I am an idiot!";
     char *mutable_string TEMP = strdup("Modify this!");
     unsigned int index_one = 33;
@@ -179,9 +189,10 @@ int  testString_Utils_from() {
 
 int  testString_Utils_from_token() {
     char test[] = "From_Token";
-    MU_LOG_INFO(fp, "Skipping From Token!\n");
+    SKIP(test);
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     return 0;
-    char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:'Hello World';void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
+    char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
     const char *delimiter = "<Parse_Me>";
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -189,7 +200,7 @@ int  testString_Utils_from_token() {
     char *result_one TEMP = String_Utils_from_token(&string, delimiter, parameter_one);
     char *result_two TEMP = String_Utils_from_token(&string, delimiter, parameter_three);
     String_Utils_from_token(&string, delimiter, parameter_two);
-    TEST_EQUAL(result_one, "<Parse_Me>int:32;char*:'Hello World';void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
+    TEST_EQUAL(result_one, "<Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
     TEST_EQUAL(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
@@ -198,19 +209,21 @@ int  testString_Utils_from_token() {
 
 int  testString_Utils_index_of() {
     char test[] = "Index_Of";
-    const char *string = "The person with the best smile goes to: 'Amanda, the Panda!'";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    const char *string = "The person with the best smile goes to: Amanda, the Panda!";
     const char *token = "AMANDA, the Panda";
     int parameter_one = SU_IGNORE_CASE;
     int parameter_two = SU_NONE;
     int result_one = String_Utils_index_of(string, token, parameter_one);
-    TEST(string[String_Utils_index_of(string, token, parameter_one)] == 'A', test); // Should be first character of token.
-    TEST(string[String_Utils_index_of(string, token, parameter_two)] == 'T', test); // It should be the very first index of the string.
+    TEST(string[String_Utils_index_of(string, token, parameter_one)] == A, test); // Should be first character of token.
+    TEST(string[String_Utils_index_of(string, token, parameter_two)] == T, test); // It should be the very first index of the string.
     PASSED(test);
     return 1;
 }
 
 int  testString_Utils_join() {
     char test[] = "Join";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char** array_of_strings = malloc(sizeof(char *) * 4);
     array_of_strings[0] = "One prison"; array_of_strings[1] = "One person";
     array_of_strings[2] = "One bond"; array_of_strings[3] = "One Power!";
@@ -225,9 +238,10 @@ int  testString_Utils_join() {
 
 int  testString_Utils_replace() {
     char test[] = "Replace";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("Lololol I love my soul enough to bowl with a fruit cannoli dipped in ravioli");
-    char old_char = 'O';
-    char new_char = 'e';
+    char old_char = O;
+    char new_char = e;
     int parameter_one = SU_NONE;
     int parameter_two = SU_IGNORE_CASE;
     int parameter_three = SU_MODIFY | SU_IGNORE_CASE; // Multiple parameters
@@ -243,6 +257,7 @@ int  testString_Utils_replace() {
 
 int  testString_Utils_reverse() {
     char test[] = "Reverse";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("stressed");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -256,8 +271,9 @@ int  testString_Utils_reverse() {
 
 int  testString_Utils_set() {
     char test[] = "Set";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string_one TEMP = strdup("SU_MODIFY THIS!");
-    const char *string_two = "Hello world, bloody beautiful day isn't it? Have fun while I'm stuck inside testing for hours, and hours! Bastard.";
+    const char *string_two = "Hello world, bloody beautiful day isnt it? Have fun while Im stuck inside testing for hours, and hours! Bastard.";
     String_Utils_set(&string_one, string_two);
     TEST_EQUAL(string_one, string_two, test);
     PASSED(test);
@@ -266,6 +282,7 @@ int  testString_Utils_set() {
 
 int  testString_Utils_split() {
     char test[] = "Split";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string = "How else, says the Guard, does one continue along the path of righteousness, except by destroying all that is not righteous?";
     const char *delimiter = ",";
     size_t* size = malloc(sizeof(size_t));
@@ -284,6 +301,7 @@ int  testString_Utils_split() {
 
 int  testString_Utils_starts_with() {
     char test[] = "Starts_With";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     const char *string = "Is it me? Who else would it be, fool!";
     const char *find = "is it me?";
     int parameter_one = SU_IGNORE_CASE;
@@ -296,6 +314,7 @@ int  testString_Utils_starts_with() {
 
 int  testString_Utils_substring() {
     char test[] = "Substring";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("Below me lies the dragon... not just any dragon, the dragon called *gasp* *chokes* *dies*");
     unsigned int begin = 28;
     unsigned int end = 9001; // Out of bounds... or is it?
@@ -311,6 +330,7 @@ int  testString_Utils_substring() {
 
 int  testString_Utils_to_lowercase() {
     char test[] = "To_Lowercase";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("HELLO WORLD");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -324,6 +344,7 @@ int  testString_Utils_to_lowercase() {
 
 int  testString_Utils_to_uppercase() {
     char test[] = "To_Uppercase";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("hello world");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -337,6 +358,7 @@ int  testString_Utils_to_uppercase() {
 
 int testString_Utils_trim() {
     char test[] = "Trim";
+    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
     char *string TEMP = strdup("        asdadadasd      ");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -363,7 +385,7 @@ int main(void){
     MU_LOG_INFO(fp, "All tests finished!Passed %d/%d\n", result, total_tests);
     Timer_Stop(timer);
     char *total_time = Timer_To_String(timer);
-    MU_LOG_INFO(fp, "Total Time: %s\n", total_time);
+    MU_LOG_INFO(fp, "Total Time: \"%s\"\n", total_time);
     Timer_Destroy(timer);
     free(total_time);
     fclose(fp);
