@@ -42,7 +42,7 @@
 MU_Logger_t *logger;
 int testString_Utils_capitalize() {
     char test[] = "Capitalize";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("hello World");
     MU_LOG_VERBOSE(logger, "Capitalizing string: \"%s\"\n!", string);
     char *result_one TEMP = String_Utils_capitalize(&string, SU_NONE);
@@ -57,14 +57,14 @@ int testString_Utils_capitalize() {
 
 int testString_Utils_char_at() {
     char test[] = "Char_At";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "Hello World";
     unsigned int index_one = 100;
     unsigned int index_two = 5;
     char result_one = String_Utils_char_at(string, index_one);
-    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'", string, index_one, result_one);
+    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'\n", string, index_one, result_one);
     char result_two = String_Utils_char_at(string, index_two);
-    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'", string, index_two, result_two);
+    MU_LOG_VERBOSE(logger, "Retrieved char in \"%s\" at index: %d is '%c'\n", string, index_two, result_two);
     TEST(string[10] == result_one, test);
     TEST(string[5] == result_two, test);
     PASSED(test);
@@ -73,7 +73,7 @@ int testString_Utils_char_at() {
 
 int testString_Utils_compare() {
     char test[] = "Compare";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string_one = "Hello World";
     const char *string_two = "Hello_World";
     const char *string_three = "Hello WorlD";
@@ -82,11 +82,11 @@ int testString_Utils_compare() {
     int result_one = String_Utils_compare(string_one, string_two, SU_NONE);
     int result_two = String_Utils_compare(string_one, string_three, SU_IGNORE_CASE);
     int result_three = String_Utils_compare(string_one, string_three, SU_NONE);
-    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_two, BOOL(result_one == 0));
+    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s\n", string_one, string_two, BOOL(result_one == 0));
     TEST(result_one != 0, test);
-    MU_LOG_VERBOSE(logger, "(Insensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_three, BOOL(result_two == 0));
+    MU_LOG_VERBOSE(logger, "(Insensitive) The comparison of \"%s\" and \"%s\": %s\n", string_one, string_three, BOOL(result_two == 0));
     TEST(result_two == 0, test);
-    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s", string_one, string_three, BOOL(result_three == 0));
+    MU_LOG_VERBOSE(logger, "(Sensitive) The comparison of \"%s\" and \"%s\": %s\n", string_one, string_three, BOOL(result_three == 0));
     TEST(result_three != 0, test);
     PASSED(test); 
     return 1;
@@ -94,14 +94,14 @@ int testString_Utils_compare() {
 
 int  testString_Utils_concat() {
     char test[] = "Concat";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string_one = "Hello ";
     const char *string_two = "World";
     char *string_three TEMP = strdup("Modify this string: ");
     MU_LOG_VERBOSE(logger, "Declared string to be modified: \"%s\"\n", string_three);
     char *result_one TEMP = String_Utils_concat(&string_one, string_two, SU_NONE);
     String_Utils_concat(&string_three, result_one, SU_MODIFY); // Modifies string_three
-    MU_LOG_VERBOSE(logger, "Concatenation of \"%s\" and \"%s\": \"%s\"", string_one, string_two, result_one);
+    MU_LOG_VERBOSE(logger, "Concatenation of \"%s\" and \"%s\": \"%s\"\n", string_one, string_two, result_one);
     TEST_EQUAL(result_one, "Hello World", test);
     MU_LOG_VERBOSE(logger, "Modified declared string: \"%s\"\n", string_three);
     TEST_EQUAL("Modify this string: Hello World", string_three, test);
@@ -111,14 +111,14 @@ int  testString_Utils_concat() {
 
 int  testString_Utils_contains() {
     char test[] = "Contains";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "Hello World, the weather is nice today, isnt it?";
     const char *search = "The";
     int result_one = String_Utils_contains(string, search, SU_IGNORE_CASE);
     int result_two = String_Utils_contains(string, search, SU_NONE);
-    MU_LOG_VERBOSE(logger, "Insensitive search in string \"%s\" for \"%s\": %s", string, search, BOOL(result_one));
+    MU_LOG_VERBOSE(logger, "Insensitive search in string \"%s\" for \"%s\": %s\n", string, search, BOOL(result_one));
     TEST(result_one == 1, test);
-    MU_LOG_VERBOSE(logger, "Sensitive search in string \"%s\" for \"%s\": %s", string, search, BOOL(result_one));
+    MU_LOG_VERBOSE(logger, "Sensitive search in string \"%s\" for \"%s\": %s\n", string, search, BOOL(result_one));
     TEST(result_two == 0, test);
     PASSED(test);
     return 1;
@@ -127,7 +127,7 @@ int  testString_Utils_contains() {
 
 int  testString_Utils_count() {
     char test[] = "Count";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "What is the meaning of the word the, when there is the person in the mirror staring back at the recipient? The answer is unclear.";
     const char *delimiter = "The";
     int result_one = String_Utils_count(string, delimiter, SU_IGNORE_CASE);
@@ -142,46 +142,54 @@ int  testString_Utils_count() {
 
 int  testString_Utils_ends_with() {
     char test[] = "Ends_With";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "Catch the end of this string";
     const char *find_one = "string";
     const char *find_two = "END OF THIS STRING";
-    int parameter_one = SU_IGNORE_CASE;
-    int parameter_two = SU_NONE;
-    TEST(String_Utils_ends_with(string, find_one, parameter_one) == 1, test);
-    TEST(String_Utils_ends_with(string, find_two, parameter_one) == 1, test);
-    TEST(String_Utils_ends_with(string, find_two, parameter_two) == 0, test);
+    int result_one = String_Utils_ends_with(string, find_one, SU_IGNORE_CASE);
+    int result_two = String_Utils_ends_with(string, find_two, SU_IGNORE_CASE);
+    int result_three = String_Utils_ends_with(string, find_two, SU_NONE);
+    MU_LOG_VERBOSE(logger, "(Insensitive) String \"%s\" ends with \"%s\": %s\n", string, find_one, BOOL(result_one));
+    TEST(result_one == 1, test);
+    MU_LOG_VERBOSE(logger, "(Insensitive) String \"%s\" ends with \"%s\": %s\n", string, find_two, BOOL(result_two));
+    TEST(result_two == 1, test);
+    MU_LOG_VERBOSE(logger, "(Sensitive) String \"%s\" ends with \"%s\": %s\n", string, find_two, BOOL(result_three));
+    TEST(result_three == 0, test);
     PASSED(test);
     return 1;
 }
 
 int  testString_Utils_equals() {
     char test[] = "Equals";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string_one = "Check to see if this equals another string!";
     const char *string_two = "CHECK TO SEE IF THIS EQUALS ANOTHER STRING!";
-    int parameter_one = SU_IGNORE_CASE;
-    int parameter_two = SU_NONE;
-    TEST(String_Utils_equals(string_one, string_two, parameter_one) == 1, test);
-    TEST(String_Utils_equals(string_one, string_two, parameter_two) == 0, test);
+    int result_one = String_Utils_equals(string_one, string_two, SU_IGNORE_CASE);
+    int result_two = String_Utils_equals(string_one, string_two, SU_NONE);
+    MU_LOG_VERBOSE(logger, "(Insensitive) String \"%s\" is equal to \"%s\": %s\n", string_one, string_two, BOOL(result_one));
+    TEST(result_one == 1, test);
+    MU_LOG_VERBOSE(logger, "(Sensitive) String \"%s\" is equal to \"%s\": %s\n", string_one, string_two, BOOL(result_two));
+    TEST(result_two == 0, test);
     PASSED(test);
     return 1;
 }
 
 int  testString_Utils_from() {
     char test[] = "From";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string = "Please get everything past here: I am an idiot!";
     char *mutable_string TEMP = strdup("Modify this!");
+    MU_LOG_VERBOSE(logger, "Declared mutable string: \"%s\"\n", mutable_string);
     unsigned int index_one = 33;
-    unsigned int index_two = 9001; // lol
-    int parameter_one = SU_NONE;
-    int parameter_two = SU_MODIFY;
-    char *result_one TEMP = String_Utils_from(&string, index_one, parameter_one);
-    char *result_two TEMP = String_Utils_from(&string, index_two, parameter_one);
-    String_Utils_from(&mutable_string, 7, parameter_two); // Magic number 7 is where "this!" starts.
+    unsigned int index_two = 9001;
+    char *result_one TEMP = String_Utils_from(&string, index_one, SU_NONE);
+    char *result_two TEMP = String_Utils_from(&string, index_two, SU_NONE);
+    String_Utils_from(&mutable_string, 7, SU_MODIFY);
+    MU_LOG_VERBOSE(logger, "The substring of \"%s\" from index %d is \"%s\"\n", string, index_one, result_one);
     TEST_EQUAL(result_one, "I am an idiot!", test);
+    MU_LOG_VERBOSE(logger, "The substring of \"%s\" from index %d is \"%s\"\n", string, index_two, result_two);
     TEST_EQUAL(result_two, "!", test);
+    MU_LOG_VERBOSE(logger, "The modified declared mutable string from index 7 is \"%s\"", string, mutable_string);
     TEST_EQUAL(mutable_string, "this!", test);
     PASSED(test);
     return 1;
@@ -190,7 +198,7 @@ int  testString_Utils_from() {
 int  testString_Utils_from_token() {
     char test[] = "From_Token";
     SKIP(test);
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     return 0;
     char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
     const char *delimiter = "<Parse_Me>";
@@ -209,7 +217,7 @@ int  testString_Utils_from_token() {
 
 int  testString_Utils_index_of() {
     char test[] = "Index_Of";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "The person with the best smile goes to: Amanda, the Panda!";
     const char *token = "AMANDA, the Panda";
     int parameter_one = SU_IGNORE_CASE;
@@ -223,7 +231,7 @@ int  testString_Utils_index_of() {
 
 int  testString_Utils_join() {
     char test[] = "Join";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char** array_of_strings = malloc(sizeof(char *) * 4);
     array_of_strings[0] = "One prison"; array_of_strings[1] = "One person";
     array_of_strings[2] = "One bond"; array_of_strings[3] = "One Power!";
@@ -238,7 +246,7 @@ int  testString_Utils_join() {
 
 int  testString_Utils_replace() {
     char test[] = "Replace";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("Lololol I love my soul enough to bowl with a fruit cannoli dipped in ravioli");
     char old_char = O;
     char new_char = e;
@@ -257,7 +265,7 @@ int  testString_Utils_replace() {
 
 int  testString_Utils_reverse() {
     char test[] = "Reverse";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("stressed");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -271,7 +279,7 @@ int  testString_Utils_reverse() {
 
 int  testString_Utils_set() {
     char test[] = "Set";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string_one TEMP = strdup("SU_MODIFY THIS!");
     const char *string_two = "Hello world, bloody beautiful day isnt it? Have fun while Im stuck inside testing for hours, and hours! Bastard.";
     String_Utils_set(&string_one, string_two);
@@ -282,7 +290,7 @@ int  testString_Utils_set() {
 
 int  testString_Utils_split() {
     char test[] = "Split";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "How else, says the Guard, does one continue along the path of righteousness, except by destroying all that is not righteous?";
     const char *delimiter = ",";
     size_t* size = malloc(sizeof(size_t));
@@ -301,7 +309,7 @@ int  testString_Utils_split() {
 
 int  testString_Utils_starts_with() {
     char test[] = "Starts_With";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     const char *string = "Is it me? Who else would it be, fool!";
     const char *find = "is it me?";
     int parameter_one = SU_IGNORE_CASE;
@@ -314,7 +322,7 @@ int  testString_Utils_starts_with() {
 
 int  testString_Utils_substring() {
     char test[] = "Substring";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("Below me lies the dragon... not just any dragon, the dragon called *gasp* *chokes* *dies*");
     unsigned int begin = 28;
     unsigned int end = 9001; // Out of bounds... or is it?
@@ -330,7 +338,7 @@ int  testString_Utils_substring() {
 
 int  testString_Utils_to_lowercase() {
     char test[] = "To_Lowercase";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("HELLO WORLD");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -344,7 +352,7 @@ int  testString_Utils_to_lowercase() {
 
 int  testString_Utils_to_uppercase() {
     char test[] = "To_Uppercase";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("hello world");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -358,7 +366,7 @@ int  testString_Utils_to_uppercase() {
 
 int testString_Utils_trim() {
     char test[] = "Trim";
-    MU_LOG_VERBOSE(logger, "Testing: %s!\n", test);
+    MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("        asdadadasd      ");
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
