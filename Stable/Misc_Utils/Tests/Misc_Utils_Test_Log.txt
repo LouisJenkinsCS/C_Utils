@@ -1,21 +1,13 @@
-04:08:42 PM: [INFO](Misc_Utils_Test.c:7) Testing logging info to file.
+05:04:14 PM: [INFO](Misc_Utils_Test.c:8) Testing logging info to file.
 
-04:08:42 PM: [ERROR](Misc_Utils_Test.c:8) Testing logging error to file.
+05:04:14 PM: [ERROR](Misc_Utils_Test.c:9) Testing logging error to file.
 
-04:08:42 PM: [WARNING](Misc_Utils_Test.c:9) Testing logging error to file.
+05:04:14 PM: [WARNING](Misc_Utils_Test.c:10) Testing logging error to file.
 
-04:08:42 PM: [INFO](Misc_Utils_Test.c:11) Testing timer!
+05:04:14 PM: [INFO](Misc_Utils_Test.c:15) Testing timer!
 
-04:08:47 PM: [INFO](Misc_Utils_Test.c:16) Time is 00:00:05
+05:04:19 PM: [INFO](Misc_Utils_Test.c:20) Time is 00:00:05
 
-04:09:15 PM: [INFO](Misc_Utils_Test.c:7) Testing logging info to file.
+05:04:19 PM: [INFO](Misc_Utils_Test.c:22) Testing Assertion!
 
-04:09:15 PM: [ERROR](Misc_Utils_Test.c:8) Testing logging error to file.
-
-04:09:15 PM: [WARNING](Misc_Utils_Test.c:9) Testing logging error to file.
-
-04:09:15 PM: [INFO](Misc_Utils_Test.c:11) Testing timer!
-
-04:09:20 PM: [INFO](Misc_Utils_Test.c:16) Time is 00:00:05
-
-04:09:20 PM: [ASSERT](Misc_Utils_Test.c:19) An Assertion for 'tmp != NULL' has failed!
+05:04:19 PM: [ASSERT](Misc_Utils_Test.c:24) An Assertion for 'tmp != NULL' has failed!

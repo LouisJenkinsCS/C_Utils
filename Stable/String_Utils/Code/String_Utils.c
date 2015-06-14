@@ -108,11 +108,16 @@ char *String_Utils_from_token(char **string, const char *substring, int flags) {
     assert(*string);
     assert(substring);
     char *temp = NULL;
-    char *temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
-    if(!temp_string) return NULL;
+    char *temp_string =  is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+    if(!temp_string) {
+        return NULL;
+    }
+    temp_string = strdup(temp_string);
     if(is_selected(flags, SU_LAST)){
+        temp = temp_string;
+        temp_string++;
         while(temp_string) {
-            temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+            temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp_string, substring) : strstr(temp_string, substring);
             if(temp_string && strlen(temp_string) > strlen(substring)) {
                 temp = temp_string;
                 temp_string += strlen(substring);
@@ -122,8 +127,9 @@ char *String_Utils_from_token(char **string, const char *substring, int flags) {
     }
     if(is_selected(flags, SU_MODIFY)){
         String_Utils_set(string, temp_string);
+        free(temp_string);
         return *string;
-    } else return temp;
+    } else return temp_string;
 }
 
 // Not Thread Safe! Update later to use strtok_r for reentrant and thread-safe splitting.
@@ -201,8 +207,8 @@ char *String_Utils_replace(char **string, char old_char, char new_char, int flag
     char *temp = malloc(length + 1);
     int i = 0;
     if(is_selected(flags, SU_IGNORE_CASE)){
-        for(;i <= length; i++) temp[i] = ((*string)[i] == tolower(old_char)) ? new_char : (*string)[i];
-    } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char: (*string)[i];
+        for(;i <= length; i++) temp[i] = (tolower((*string)[i]) == tolower(old_char)) ? new_char : (*string)[i];
+    } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char : (*string)[i];
     if(is_selected(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
@@ -300,7 +306,8 @@ int String_Utils_index_of(const char *string, const char *substring, int flags){
     temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
     if(!temp || strlen(temp) < strlen(substring)) return strlen(string);
     if(is_selected(flags, SU_LAST)){
-        temp += strlen(substring);
+        old_temp = temp;
+        temp++;
         while(temp) {
             temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);
             if(temp && strlen(temp) > strlen(substring)) {
@@ -340,7 +347,7 @@ char *String_Utils_between(const char *string, const char *start, const char *en
     if(!new_temp) return NULL;
     size_t size_of_substring = strlen(temp) - strlen(new_temp);
     size_t index_of_start = strlen(string) - strlen(temp);
-    new_temp = String_Utils_substring(string, index_of_start, size_of_substring, SU_NONE);
+    new_temp = String_Utils_substring(&string, index_of_start, size_of_substring, SU_NONE);
     return new_temp;
 }
 

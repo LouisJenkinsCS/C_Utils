@@ -2,53 +2,53 @@
 #include <string.h>
 #include <stdlib.h>
 #include <Misc_Utils.h>
+
+MU_Logger_t *logger;
+
 #define TEST(condition, test) do { \
     if(!(condition)) FAILED(test); \
-    MU_ASSERT_RETURN(condition, fp, 0); \
+    MU_ASSERT_RETURN(condition, logger, 0); \
 } while(0)
 #define TEST_EQUAL(string_one, string_two, test) do { \
     int cmp_result = 0; \
     if((cmp_result = strcmp(string_one, string_two)) != 0) FAILED(test); \
-    MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, fp, 0); \
+    MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, logger, 0); \
 } while(0)
 #define BOOL(number)(number ? "True" : "False")
 #define PASSED(test) MU_LOG_INFO(logger, "Passed Test: \"%s\"\n", test)
-#define SKIP(test) MU_LOG_WARNNING(logger, "Skipped Test: \"%s\"\n", test)
+#define SKIP(test) MU_LOG_WARNING(logger, "Skipped Test: \"%s\"\n", test)
 #define FAILED(test) MU_LOG_ERROR(logger, "Failed Test: \"%s\"\n", test)
-#define SETUP_FUNCTION_PTRS(array, total_tests) do{
-    array[total_tests++] = testString_Utils_capitalize();\
-    array[total_tests++] = testString_Utils_char_at();\
-    array[total_tests++] = testString_Utils_compare();\
-    array[total_tests++] = testString_Utils_concat();\
-    array[total_tests++] = testString_Utils_count();\
-    array[total_tests++] = testString_Utils_ends_with();\
-    array[total_tests++] = testString_Utils_equals();\
-    array[total_tests++] = testString_Utils_from();\
-    array[total_tests++] = testString_Utils_from_token();\
-    array[total_tests++] = testString_Utils_index_of();\
-    array[total_tests++] = testString_Utils_join();\
-    array[total_tests++] = testString_Utils_replace();\
-    array[total_tests++] = testString_Utils_reverse();\
-    array[total_tests++] = testString_Utils_set();\
-    array[total_tests++] = testString_Utils_split();\
-    array[total_tests++] = testString_Utils_starts_with();\
-    array[total_tests++] = testString_Utils_substring();\
-    array[total_tests++] = testString_Utils_to_lowercase();\
-    array[total_tests++] = testString_Utils_to_uppercase();\
-    array[total_tests++] = testString_Utils_trim();\
-    total_tests++;\   
+#define TEST_ALL(results) do{\
+    results += testString_Utils_capitalize();\
+    results += testString_Utils_char_at();\
+    results += testString_Utils_compare();\
+    results += testString_Utils_concat();\
+    results += testString_Utils_count();\
+    results += testString_Utils_ends_with();\
+    results += testString_Utils_equals();\
+    results += testString_Utils_from();\
+    results += testString_Utils_from_token();\
+    results += testString_Utils_index_of();\
+    results += testString_Utils_join();\
+    results += testString_Utils_replace();\
+    results += testString_Utils_reverse();\
+    results += testString_Utils_set();\
+    results += testString_Utils_split();\
+    results += testString_Utils_starts_with();\
+    results += testString_Utils_substring();\
+    results += testString_Utils_to_lowercase();\
+    results += testString_Utils_to_uppercase();\
+    results += testString_Utils_trim();\
 } while(0)
-
-MU_Logger_t *logger;
 int testString_Utils_capitalize() {
     char test[] = "Capitalize";
     MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("hello World");
-    MU_LOG_VERBOSE(logger, "Declared string: \"%s\"\n!", string);
+    MU_LOG_VERBOSE(logger, "Declared string: \"%s\"\n", string);
     char *result_one TEMP = String_Utils_capitalize(&string, SU_NONE);
-    MU_LOG_VERBOSE(logger, "Capitalized declared string: \"%s\"\n!", result_one);
+    MU_LOG_VERBOSE(logger, "Capitalized declared string: \"%s\"\n", result_one);
     String_Utils_capitalize(&string, SU_MODIFY);
-    MU_LOG_VERBOSE(logger, "Modified declared string: \"%s\"\n!", string);
+    MU_LOG_VERBOSE(logger, "Modified declared string: \"%s\"\n", string);
     TEST_EQUAL(result_one, "Hello World", test);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
@@ -184,12 +184,12 @@ int  testString_Utils_from() {
     unsigned int index_two = 9001;
     char *result_one TEMP = String_Utils_from(&string, index_one, SU_NONE);
     char *result_two TEMP = String_Utils_from(&string, index_two, SU_NONE);
-    String_Utils_from(&mutable_string, 7, SU_MODIFY);
     MU_LOG_VERBOSE(logger, "The substring of \"%s\" from index %d is \"%s\"\n", string, index_one, result_one);
     TEST_EQUAL(result_one, "I am an idiot!", test);
     MU_LOG_VERBOSE(logger, "The substring of \"%s\" from index %d is \"%s\"\n", string, index_two, result_two);
     TEST_EQUAL(result_two, "!", test);
-    MU_LOG_VERBOSE(logger, "Modified declared string from index 7: \"%s\"", string, mutable_string);
+    String_Utils_from(&mutable_string, 7, SU_MODIFY);
+    MU_LOG_VERBOSE(logger, "Modified declared string from index 7: \"%s\"\n", mutable_string);
     TEST_EQUAL(mutable_string, "this!", test);
     PASSED(test);
     return 1;
@@ -197,23 +197,18 @@ int  testString_Utils_from() {
 
 int  testString_Utils_from_token() {
     char test[] = "From_Token";
-    SKIP(test);
     MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
-    return 0;
     char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
     MU_LOG_VERBOSE(logger, "Declared string: \"%s\"\n", string);
     const char *delimiter = "<Parse_Me>";
-    int parameter_one = SU_NONE;
-    int parameter_two = SU_MODIFY;
-    int parameter_three = SU_LAST;
-    char *result_one TEMP = String_Utils_from_token(&string, delimiter, parameter_one);
-    char *result_two TEMP = String_Utils_from_token(&string, delimiter, parameter_three);
-    String_Utils_from_token(&string, delimiter, parameter_two);
-    MU_LOG_VERBOSE("The string \"%s\" from token \"%s\" is \"%s\"\n", string, delimiter, result_one);
+    char *result_one TEMP = String_Utils_from_token(&string, delimiter, SU_NONE);
+    //char *result_two TEMP = String_Utils_from_token(&string, delimiter, SU_LAST);
+    MU_LOG_VERBOSE(logger, "The string \"%s\" from token \"%s\" is \"%s\"\n", string, delimiter, result_one);
     TEST_EQUAL(result_one, "<Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
-    MU_LOG_VERBOSE("The string \"%s\" from last token \"%s\" is \"%s\"\n", string, delimiter, result_two);
-    TEST_EQUAL(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
-    MU_LOG_VERBOSE("Modified declared string: \"%s\"\n", string);
+    //MU_LOG_VERBOSE(logger, "The string \"%s\" from last token \"%s\" is \"%s\"\n", string, delimiter, result_two);
+    //TEST_EQUAL(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
+    String_Utils_from_token(&string, delimiter, SU_MODIFY);
+    MU_LOG_VERBOSE(logger, "Modified declared string: \"%s\"\n", string);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
     return 1;
@@ -229,10 +224,10 @@ int  testString_Utils_index_of() {
     int result_two = String_Utils_index_of(token, string, SU_NONE);
     int result_three = String_Utils_index_of(string, token, SU_LAST);
     char result_one_char = string[result_one];
-    char result_two_char = string[result_two];
+    char result_two_char = token[result_two];
     char result_three_char = string[result_three];
     MU_LOG_VERBOSE(logger, "(Insensitive) The last token in the string begins with the char '%c'\n", result_one_char);
-    TEST(result_one_char == 'a');
+    TEST(result_one_char == 'a', test);
     MU_LOG_VERBOSE(logger, "Searching for impossible results should return a null terminator: %s\n", BOOL(result_two_char == '\0'));
     TEST(result_two_char == '\0', test);
     MU_LOG_VERBOSE(logger, "(Sensitive) The last token in the string begins with the char '%c'\n", result_three_char);
@@ -264,16 +259,16 @@ int  testString_Utils_replace() {
     MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     char *string TEMP = strdup("LOlOlOl I love my sOul enough to bOwl with a fruit cannOli dipped in raviOli");
     MU_LOG_VERBOSE(logger, "Declared string to be modified and operated on: \"%s\"\n", string);
-    char old_char = O;
-    char new_char = e;
+    char old_char = 'O';
+    char new_char = 'e';
     char *result_one TEMP = String_Utils_replace(&string, old_char, new_char, SU_NONE);
     char *result_two TEMP = String_Utils_replace(&string, old_char, new_char, SU_IGNORE_CASE);
-    MU_LOG_VERBOSE(logger, "(Insensitive) Replaced all chars '%c' with char '%c', resulting in \"%s\"\n", old_char, new_char, result_one);
+    MU_LOG_VERBOSE(logger, "(Sensitive) Replaced all chars '%c' with char '%c', resulting in \"%s\"\n", old_char, new_char, result_one);
     TEST_EQUAL(result_one, "Lelelel I love my seul enough to bewl with a fruit canneli dipped in ravieli", test);
-    MU_LOG_VERBOSE(logger, "(Sensitive) Replaced all chars '%c' with char '%c', resulting in \"%s\"\n", old_char, new_char, result_two);
+    MU_LOG_VERBOSE(logger, "(Insensitive) Replaced all chars '%c' with char '%c', resulting in \"%s\"\n", old_char, new_char, result_two);
     TEST_EQUAL(result_two, "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli", test);
     String_Utils_replace(&string, old_char, new_char, SU_MODIFY | SU_IGNORE_CASE);
-    MU_LOG_VERBOSE(logger, "Replaced declared string with previous result: \"%s\"", string);
+    MU_LOG_VERBOSE(logger, "Replaced declared string with previous result: \"%s\"\n", string);
     TEST_EQUAL(string, result_two, test);
     PASSED(test);
     return 1;
@@ -409,22 +404,17 @@ int testString_Utils_trim() {
 
 int main(void){
     logger = malloc(sizeof(MU_Logger_t));
-    logger = MU_Logger_init(logger, "String_Utils_Test_Log.txt", "w", MU_ALL);
+    MU_Logger_Init(logger, "String_Utils_Test_Log.txt", "w", MU_ALL);
     Timer_t *timer = Timer_Init(1);
     int result = 0;
-    int total_tests = 0;
-    int (*tests[20])();
-    SETUP_FUNCTION_PTRS(tests, total_tests);
-    int i = 0;
-    for(; i < total_tests; i++){
-        result += tests[i]();
-    }
-    MU_LOG_INFO(fp, "All tests finished!Passed %d/%d\n", result, total_tests);
+    const int total_tests = 20;
+    TEST_ALL(result);
+    MU_LOG_INFO(logger, "All tests finished! Passed %d/%d\n", result, total_tests);
     Timer_Stop(timer);
     char *total_time = Timer_To_String(timer);
-    MU_LOG_INFO(fp, "Total Time: \"%s\"\n", total_time);
+    MU_LOG_INFO(logger, "Total Time: \"%s\"\n", total_time);
     Timer_Destroy(timer);
     free(total_time);
-    fclose(fp);
+    MU_Logger_Destroy(logger, 1);
     return 0;
 }
