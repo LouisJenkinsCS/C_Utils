@@ -201,6 +201,7 @@ int  testString_Utils_from_token() {
     MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
     return 0;
     char *string TEMP = strdup("Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!");
+    MU_LOG_VERBOSE(logger, "Declared string \"%s\"\n", string);
     const char *delimiter = "<Parse_Me>";
     int parameter_one = SU_NONE;
     int parameter_two = SU_MODIFY;
@@ -208,8 +209,11 @@ int  testString_Utils_from_token() {
     char *result_one TEMP = String_Utils_from_token(&string, delimiter, parameter_one);
     char *result_two TEMP = String_Utils_from_token(&string, delimiter, parameter_three);
     String_Utils_from_token(&string, delimiter, parameter_two);
+    MU_LOG_VERBOSE("The string \"%s\" from token \"%s\" is \"%s\"\n", string, delimiter, result_one);
     TEST_EQUAL(result_one, "<Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
+    MU_LOG_VERBOSE("The string \"%s\" from last token \"%s\" is \"%s\"\n", string, delimiter, result_two);
     TEST_EQUAL(result_two, "<Parse_Me> BLAH BLAH BLAH USELESS INFO!", test);
+    MU_LOG_VERBOSE("Modified declared string: \"%s\"\n", string);
     TEST_EQUAL(string, result_one, test);
     PASSED(test);
     return 1;
@@ -218,13 +222,21 @@ int  testString_Utils_from_token() {
 int  testString_Utils_index_of() {
     char test[] = "Index_Of";
     MU_LOG_VERBOSE(logger, "\nTesting: %s!\n", test);
-    const char *string = "The person with the best smile goes to: Amanda, the Panda!";
+    const char *string = "AMANDA, the Panda exclaimed that, her name is of high enough importnace to be spelled in all caps: amanda, the panda!";
     const char *token = "AMANDA, the Panda";
-    int parameter_one = SU_IGNORE_CASE;
-    int parameter_two = SU_NONE;
-    int result_one = String_Utils_index_of(string, token, parameter_one);
-    TEST(string[String_Utils_index_of(string, token, parameter_one)] == A, test); // Should be first character of token.
-    TEST(string[String_Utils_index_of(string, token, parameter_two)] == T, test); // It should be the very first index of the string.
+    MU_LOG_VERBOSE(logger, "The string to be searched is \"%s\", the token to be searched for is \"%s\"\n", string, token);
+    int result_one = String_Utils_index_of(string, token, SU_IGNORE_CASE | SU_LAST);
+    int result_two = String_Utils_index_of(token, string, SU_NONE);
+    int result_three = String_Utils_index_of(string, token, SU_LAST);
+    char result_one_char = string[result_one];
+    char result_two_char = string[result_two];
+    char result_three_char = string[result_three];
+    MU_LOG_VERBOSE(logger, "(Insensitive) The last token in the string begins with the char '%c'\n", result_one_char);
+    TEST(result_one_char == 'a');
+    MU_LOG_VERBOSE(logger, "Searching for impossible results should return a null terminator: %s\n", BOOL(result_two_char == '\0'));
+    TEST(result_two_char == '\0', test);
+    MU_LOG_VERBOSE(logger, "(Sensitive) The last token in the string begins with the char '%c'\n", result_three_char);
+    TEST(result_three_char == 'A', test);
     PASSED(test);
     return 1;
 }
@@ -237,7 +249,10 @@ int  testString_Utils_join() {
     array_of_strings[2] = "One bond"; array_of_strings[3] = "One Power!";
     char *delimiter = ", ";
     size_t size = 4;
+    MU_LOG_VERBOSE(logger, "The array of strings to be joined contain the following: \"%s\", \"%s\", \"%s\", \"%s\"\n", 
+        array_of_strings[0], array_of_strings[1], array_of_strings[2], array_of_strings[3]);
     char *result_one TEMP = String_Utils_join(array_of_strings, delimiter, size);
+    MU_LOG_VERBOSE(logger, "The joined string with the delimiter \"%s\" became \"%s\"\n", delimiter, result_one);
     TEST_EQUAL(result_one, "One prison, One person, One bond, One Power!", test);
     free(array_of_strings);
     PASSED(test);

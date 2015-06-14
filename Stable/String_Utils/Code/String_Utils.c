@@ -298,7 +298,7 @@ int String_Utils_index_of(const char *string, const char *substring, int flags){
     char *temp = NULL;
     char *old_temp = NULL;
     temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
-    if(!temp || strlen(temp) < strlen(substring)) return 0;
+    if(!temp || strlen(temp) < strlen(substring)) return strlen(string);
     if(is_selected(flags, SU_LAST)){
         temp += strlen(substring);
         while(temp) {
