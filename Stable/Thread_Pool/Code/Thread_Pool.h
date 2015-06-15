@@ -60,7 +60,9 @@
 /// Flags the task as highest priority.
 #define TP_HIGHEST_PRIORITY 1 << 6
 
-#include "PBQueue.h"
+#include <PBQueue.h>
+#include <stdlib.h>
+#include <Misc_Utils.h>
 
 typedef struct Worker Worker;
 
@@ -111,6 +113,8 @@ struct Thread_Pool {
 	Worker **worker_threads;
 	/// The queue with all jobs assigned to it.
 	PBQueue *queue;
+	/// Logger used to log information, warnings and errors.
+	MU_Logger_t *logger;
 	/// Amount of threads currently created, A.K.A Max amount.
 	unsigned int thread_count;
 	/// Amount of threads currently active.

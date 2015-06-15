@@ -9,7 +9,7 @@ DEPS=-I$(MUPATH) -I$(LLPATH)
 
 
 $(TARGET): $(OBJS)
-	$(CC) $(LIBS) $(OBJS)
+	$(CC) $(LIBS) $(OBJS) -o $(TARGET)
 
 Misc_Utils.o: $(MUPATH)Misc_Utils.c
 	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)Misc_Utils.c

@@ -1,9 +1,0 @@
-05:56:04 PM: [INFO](./Thread_Pool/Code/Thread_Pool.c:101) Queue Finished has been signaled!
-Queue Size : 0, Active Threads: 0Thread Count: 5
-
-05:56:04 PM: [INFO](./Thread_Pool/Code/Thread_Pool.c:280) Thread_Pool_Wait returned!
-Queue Size : 0, Active Threads: 0Thread Count: 5
-
-05:56:04 PM: [INFO](./Thread_Pool/Code/Thread_Pool.c:280) Thread_Pool_Wait returned!
-Queue Size : 0, Active Threads: 0Thread Count: 5
-

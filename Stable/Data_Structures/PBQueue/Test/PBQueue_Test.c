@@ -56,12 +56,12 @@ void *producer_thread(void *args){
 		i[j] = malloc(sizeof(int));
 		*(i[j]) = j;
 		PBQueue_Enqueue(queue, i[j]);
-		MU_LOG_VERBOSE(logger, "Pushed value: %d\n", *(i[j]));
+		MU_LOG_VERBOSE(logger, "Producer: pushed value: %d\n", *(i[j]));
 		j++;
 		i = realloc(i, sizeof(int *) * (j+1));
 	}
 	free(i);
-	MU_LOG_VERBOSE(logger, "Producer returning...\n");
+	MU_LOG_VERBOSE(logger, "Producer: returning...\n");
 	return NULL;
 }
 
@@ -71,10 +71,10 @@ void *consumer_thread(void *args){
 	while(global_var){
 		sleep(1);
 		i = PBQueue_Dequeue(queue);
-		MU_LOG_VERBOSE(logger, "Popped value: %d\n", *i);
+		MU_LOG_VERBOSE(logger, "Consumer: popped value: %d\n", *i);
 		free(i);
 	}
-	MU_LOG_VERBOSE(logger, "Consumer returning...\n");
+	MU_LOG_VERBOSE(logger, "Consumer: returning...\n");
 	return NULL;
 }
 

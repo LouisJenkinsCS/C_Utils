@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <Thread_Pool.h>
+#include <Misc_Utils.h>
 
 /* Define helper macros here. */
 
@@ -13,6 +14,7 @@
 do { \
 	pthread_mutex_lock(mutex); \
 	var++; \
+	MU_LOG_VERBOSE(logger, "Incremented " #var " to %d\n", var); \
 	pthread_mutex_unlock(mutex); \
 } while(0)
 /// Simple macro to atomically decrement an integer on a mutex.
@@ -20,19 +22,17 @@ do { \
 do { \
 	pthread_mutex_lock(mutex); \
 	var--; \
+	MU_LOG_VERBOSE(logger, "Decremented " #var " to %d\n", var); \
 	pthread_mutex_unlock(mutex); \
 } while(0)
-/// Simple macro to enable debug
-#define TP_DEBUG 1
-/// Print a message if and only if TP_DEBUG is enabled.
-#define TP_DEBUG_PRINT(str) (TP_DEBUG ? printf(str) : TP_DEBUG)
-/// Print a formatted message if and only if TP_DEBUG is enabled.
-#define TP_DEBUG_PRINTF(str, ...)(TP_DEBUG ? printf(str, __VA_ARGS__) : TP_DEBUG)
 
 /* End definition of helper macros. */
 
 /* Initialize Thread Pool as static. */
 static Thread_Pool *tp = NULL;
+
+/// Logger used to record events in the thread pool.
+static MU_Logger_t *logger;
 
 /// Constant to determine how long the queue timeout should be.
 static const unsigned int queue_timeout = 5;
@@ -42,10 +42,10 @@ static const unsigned int queue_timeout = 5;
 /// Return the Worker associated with the calling thread.
 static Worker *Get_Self(void){
 	pthread_t self = pthread_self();
+	int thread_count = tp->thread_count;
 	int i = 0;
-	for(;i<tp->thread_count;i++) {
-		if(pthread_equal(*(tp->worker_threads[i]->thread), self)) return tp->worker_threads[i];
-	}
+	for(;i<thread_count;i++) if(pthread_equal(*(tp->worker_threads[i]->thread), self)) return tp->worker_threads[i];
+	MU_LOG_ERROR(logger, "A worker thread could not be identified from pthread_self!\n");
 	return NULL;
 }
 
@@ -53,24 +53,27 @@ static Worker *Get_Self(void){
 static void Pause_Handler(){
 	if(!tp->paused) return;
 	Worker *self = Get_Self();
-	assert(self);
-	if(self && self->task && self->task->no_pause && !self->task->delayed_pause){ 
+	MU_LOG_VERBOSE(logger, "Thread #%d: entered the pause_handler!\n", self->thread_id);
+	if(self && self->task && self->task->no_pause){ 
+		MU_LOG_VERBOSE(logger, "Thread #%d: returning for a delayed pause!\n", self->thread_id);
 		self->task->delayed_pause = 1;
 		return;
 	}
 	pthread_mutex_lock(tp->is_paused);
-	if(tp->seconds_to_pause){
+	if(tp->paused == 2){
 		struct timespec timeout;
 		clock_gettime(CLOCK_REALTIME, &timeout);
 		timeout.tv_sec += tp->seconds_to_pause;
-		tp->seconds_to_pause = 0; 
-		while(tp->paused){ 
+		MU_LOG_VERBOSE(logger, "Thread #%d: timed sleeping for %d seconds!\n", self->thread_id, tp->seconds_to_pause);
+		while(tp->paused == 2){ 
 			int retval = pthread_cond_timedwait(tp->resume, tp->is_paused, &timeout);
 			if(retval == ETIMEDOUT){
 				tp->paused = 0;
+				MU_LOG_VERBOSE(logger, "Thread #%d: woke up from timed_pause!\n", self->thread_id);
 			}
 		}
-	} else while(tp->paused) pthread_cond_wait(tp->resume, tp->is_paused);
+	} else while(tp->paused == 1) pthread_cond_wait(tp->resume, tp->is_paused);
+	MU_LOG_VERBOSE(logger, "Thread #%d: exited pause_handler!\n", self->thread_id);
 	pthread_mutex_unlock(tp->is_paused);
 }
 
@@ -87,15 +90,21 @@ static void Process_Task(Worker *self){
 		pthread_mutex_unlock(task->result->not_ready);
 	}
 	else task->callback(task->args);
-	if(task->delayed_pause) pthread_kill(pthread_self(), SIGUSR1);
 	self->task = NULL;
+	if(task->delayed_pause) {
+		MU_LOG_VERBOSE(logger, "Thread #%d: finished task, pausing self!\n", self->thread_id);
+		pthread_kill(pthread_self(), SIGUSR1);
+	}
 	free(task);
 }
 
 /// Will signal to any thread waiting that all tasks are finished.
 static void signal_if_queue_finished(void){
 	pthread_mutex_lock(tp->no_tasks);
-	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0) pthread_cond_signal(tp->all_tasks_finished);
+	if(PBQueue_Is_Empty(tp->queue) && tp->active_threads == 0){
+		pthread_cond_signal(tp->all_tasks_finished);
+		MU_LOG_VERBOSE(logger, "Queue Finished has been signaled!\nQueue Size : %d, Active Threads: %d, Thread Count: %d\n", tp->queue->size, tp->active_threads, tp->thread_count);
+	}
 	pthread_mutex_unlock(tp->no_tasks);
 }
 
@@ -137,22 +146,26 @@ static void destroy_worker(Worker *worker){
 /// The main thread loop to obtain tasks from the task queue.
 static void *Get_Tasks(void *args){
 	Worker *self = args;
+	MU_LOG_VERBOSE(logger, "Thread #%d: spawned!\n", self->thread_id);
 	// Set up the signal handler to pause.
 	struct sigaction pause_signal;
 	pause_signal.sa_handler = Pause_Handler;
 	pause_signal.sa_flags = SA_RESTART;
 	sigemptyset(&pause_signal.sa_mask);
-	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) fprintf(stderr, "Get_Task callback was unable to initialize a pause_handler\n");
+	if(sigaction(SIGUSR1, &pause_signal, NULL) == -1) MU_LOG_ERROR(logger, "Thread #%d: was unable to initialize a pause_handler\n", self->thread_id);
 	self->is_setup = 1;
 	while(tp->keep_alive){
 		while(tp->keep_alive && !self->task) self->task = PBQueue_Timed_Dequeue(tp->queue, queue_timeout);
 		if(!tp->keep_alive) break;
 		TP_INCREMENT(tp->active_threads, tp->thread_count_change);
+		MU_LOG_VERBOSE(logger, "Thread #%d: received a task!\n", self->thread_id);
 		Process_Task(self);
+		MU_LOG_VERBOSE(logger, "Thread #%d: finished a task!\n", self->thread_id);
 		TP_DECREMENT(tp->active_threads, tp->thread_count_change);
 		signal_if_queue_finished();
 	}
 	TP_DECREMENT(tp->thread_count, tp->thread_count_change);
+	MU_LOG_VERBOSE(logger, "Thread #%d: Exited!\n", self->thread_id);
 	return NULL;
 }
 
@@ -164,6 +177,18 @@ static void Set_Task_Priority(Task *task, int flags){
 	else if(is_selected(flags, TP_HIGHEST_PRIORITY)) task->priority = TP_HIGHEST;
 	else task->priority = TP_MEDIUM;
 
+}
+
+static char *Get_Task_Priority(Task *task){
+	if(task->priority == TP_LOWEST) return "Lowest";
+	else if(task->priority == TP_LOW) return "Low";
+	else if(task->priority == TP_MEDIUM) return "Medium";
+	else if(task->priority == TP_HIGH) return "High";
+	else if(task->priority == TP_HIGHEST) return "Highest";
+	else{
+		MU_LOG_ERROR(logger, "Was unable to retrieve the priority of the task!\n");
+		return NULL;
+	}
 }
 
 /// Simple comparator to compare two task priorities.
@@ -179,6 +204,8 @@ int Thread_Pool_Init(size_t number_of_threads){
 	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
 	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
 	Thread_Pool *temp_tp = malloc(sizeof(Thread_Pool));
+	logger = malloc(sizeof(MU_Logger_t));
+	MU_Logger_Init(logger, "Thread_Pool_Log.txt", "w", MU_ALL);
 	temp_tp->keep_alive = 1;
 	temp_tp->paused = 0;
 	temp_tp->seconds_to_pause = 0;
@@ -228,10 +255,12 @@ Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
 	task->delayed_pause = 0;
 	task->result = result;
 	PBQueue_Enqueue(tp->queue, task);
+	MU_LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!\n", Get_Task_Priority(task));
 	return result;
 }
 
 int Thread_Pool_Clear_Tasks(void){
+	MU_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!\n");
 	return PBQueue_Clear(tp->queue, NULL);
 }
 
@@ -284,7 +313,10 @@ int Thread_Pool_Timed_Wait(unsigned int seconds){
 	pthread_mutex_lock(tp->no_tasks);
 	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) {
 		int retval = pthread_cond_timedwait(tp->all_tasks_finished, tp->no_tasks, &timeout);
-		if(retval == ETIMEDOUT) return 0;
+		if(retval == ETIMEDOUT){
+			pthread_mutex_unlock(tp->no_tasks);
+			return 0;
+		}
 	}
 	pthread_mutex_unlock(tp->no_tasks);
 	return 1;
@@ -296,9 +328,9 @@ int Thread_Pool_Destroy(void){
 	tp->keep_alive = 0;
 	Thread_Pool_Wait();
 	// We wait until all tasks are finished before freeing the Thread Pool and threads.
-	while(tp->thread_count != 0) {
+	/*while(tp->thread_count != 0) {
 		sleep(1);
-	}
+	}*/
 	destroy_mutex(tp->no_tasks);
 	destroy_cond(tp->all_tasks_finished);
 	PBQueue_Destroy(tp->queue);
@@ -310,33 +342,41 @@ int Thread_Pool_Destroy(void){
 	free(tp->worker_threads);
 	free(tp);
 	tp = NULL;
+	MU_LOG_VERBOSE(logger, "Thread pool has been properly destroyed!\n");
+	MU_Logger_Destroy(logger, 1);
 	return 1;
 }
 
 int Thread_Pool_Pause(void){
 	if(!tp || tp->paused) return 0;
+	tp->paused = 1;
 	int successful_pauses = 0;
 	int i = 0;
 	for(;i<tp->thread_count;i++) if (pthread_kill(*tp->worker_threads[i]->thread, SIGUSR1) == 0) successful_pauses++;
 	// The only time this function is successful is if it successfully paused all threads.
-	tp->paused = 1;
 	return successful_pauses == tp->thread_count;
 }
 
 int Thread_Pool_Timed_Pause(unsigned int seconds){
 	if(!tp || tp->paused) return 0;
 	tp->seconds_to_pause = seconds;
-	return Thread_Pool_Pause();
+	tp->paused = 2;
+	int successful_pauses = 0;
+	int i = 0;
+	for(;i<tp->thread_count;i++) if (pthread_kill(*tp->worker_threads[i]->thread, SIGUSR1) == 0) successful_pauses++;
+	// The only time this function is successful is if it successfully paused all threads.
+	return successful_pauses == tp->thread_count;
 }
 
 int Thread_Pool_Resume(void){
 	if(!tp || !tp->paused) return 0;
 	tp->paused = 0;
-	return pthread_cond_broadcast(tp->resume) == 0;	
+	int i = 0;
+	for(;i<tp->thread_count;i++) pthread_cond_broadcast(tp->resume);
+	return 1;
 }
 
 /* Undefine all user macros below. */
 
-#undef TP_DEBUG
-#undef TP_DEBUG_PRINT
-#undef TP_DEBUG_PRINTF
+#undef TP_INCREMENT
+#undef TP_DECREMENT
