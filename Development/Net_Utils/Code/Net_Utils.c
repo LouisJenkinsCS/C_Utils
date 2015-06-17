@@ -137,3 +137,7 @@ char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int ti
 	}
 	return 1;
 }
+
+char *MU_Client_about(MU_Client_t *client){
+	
+}

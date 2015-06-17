@@ -1,20 +1,32 @@
 #ifndef NET_UTILS_H
 #define NET_UTILS_H
 
+/* Client-Server general data structures below */
+
+typedef struct {
+   size_t messages_sent;
+   /// Amount of messages received.
+   size_t messages_received;
+   /// Total amount of data sent.
+   size_t bytes_sent;
+   /// Total amount of data received.
+   size_t bytes_received;
+} NU_Collective_Data_t;
+
 /* Client template and functions declared below! */
 
 typedef struct {
    /// Socket associated with this server.
    int sockfd;
-   /// Amount of messages sent.
-   size_t messages_sent;
-   /// Amount of messages received.
-   size_t messages_received;
-   /// Total amount of data sent.
-   size_t data_sent;
-   /// Total amount of data received.
-   size_t data_received;
-} NU_Client_t;
+   /// Keeps track of data used.
+   NU_Collective_Data_t data;
+   /// Keeps track of the hostname currently connected to.
+   char server_hostname[100];
+   /// Keeps track of the port number currently connected to.
+   char port_num[5];
+   /// Keeps track of your own hostname, for referencing through NU_Server_t.
+   char my_hostname[100]
+;} NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */
 NU_Client_t *NU_Client_create(char *host, char *port, int flags);
