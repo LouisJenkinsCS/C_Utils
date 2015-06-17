@@ -5,14 +5,19 @@
 
 typedef struct {
    /// Socket associated with this server.
-   int socket;
+   int sockfd;
+   /// Amount of messages sent.
+   size_t messages_sent;
+   /// Amount of messages received.
+   size_t messages_received;
+   /// Total amount of data sent.
+   size_t data_sent;
+   /// Total amount of data received.
+   size_t data_received;
 } NU_Client_t;
 
-/*  Creates a basic client template, fully initialized but not connected to the host. */
-NU_Client_t *NU_Client_create(char *host, unsigned int port, int flags);
-
-/* Attemps to connect to the host up to a certain timeout. */
-int NU_Client_connect(NU_Client_t *client, unsigned int timeout);
+/*  Creates a basic client template, fully initialized and connected to the host. */
+NU_Client_t *NU_Client_create(char *host, char *port, int flags);
 
 /* Sends data to the host, up to the given timeout. */
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout);
