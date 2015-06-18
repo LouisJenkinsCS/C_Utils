@@ -1,5 +1,11 @@
 #include <Net_Utils.h>
 #include <Misc_Utils.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <netdb.h>
 
 static MU_Logger_t *logger = NULL;
 
@@ -23,25 +29,31 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
 	int retval, recently_sent = 0;
 	struct timeval tv;
-	fd_set can_send;
+	fd_set can_send, can_send_copy;
 	tv.tv_sec = timeout;
 	tv_tv_usec = 0;
 	FD_ZERO(&can_send);
 	FD_SET(sockfd, &can_send)
-	while(total_sent <= buffer_size){
-		if((retval = select(sockfd+1, NULL, &can_send, NULL, &tv)) < 0){
-			MU_LOG_WARNING(logger, "Select returned the error: \"%s\"", gai_strerror(retval));
+	while(buffer_size > total_sent){
+		can_send_copy = can_send;
+		// Restart timeout.
+		tv.tv_sec = timeout;
+		if((retval = TEMP_FAILURE_RETRY(select(sockfd+1, NULL, &can_send_copy, NULL, &tv))) <= 0){
+			if(!retval){
+				MU_LOG_INFO(logger, "select: timed out!\n");
+				break;
+			}
+			MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
 			break;
 		}
 		if((recently_sent = send(sockfd, message[total_sent], data_left, 0)) <= 0){
-			if(!recently_receieved) MU_LOG_INFO(logger, "The receiver disconnected from the stream!\n");
-			else MU_LOG_WARNING(logger, "send_all: \"%s\"\n", gai_strerror(recently_receieved));
+			if(!recently_receieved) MU_LOG_INFO(logger, "send: disconnected from the stream!\n");
+			else MU_LOG_ERROR(logger, "send: \"%s\"\n", gai_strerror(recently_receieved));
 			break;
 		}
 		total_sent += recently_sent;
 		data_left -= recently_sent;
 	}
-	FD_CLR(sockfd, &can_send);
 	return total_sent;
 }
 
@@ -50,25 +62,31 @@ static size_t receive_all(int sockfd, size_t buffer_size, unsigned int timeout){
 	int retval, recently_receieved = 0;
 	char *message = malloc(buffer_size);
 	struct timeval tv;
-	fd_set can_receive;
+	fd_set can_receive, can_receive_copy;
 	tv.tv_sec = timeout;
 	tv_tv_usec = 0;
 	FD_ZERO(&can_receive);
 	FD_SET(sockfd, &can_receive);
-	while(buffer_size >= total_received){
-		if((retval = select(sockfd + 1, &can_receive, NULL, NULL, &tv)) < 0){
-			MU_LOG_WARNING(logger, "Select returned the error: \"%s\"", gai_strerror(retval));
+	while(buffer_size > total_received){
+		can_receive_copy = can_receive;
+		// After every iteration, timeout is reset.
+		tv.tv_sec = timeout;
+		if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive_copy, NULL, NULL, &tv))) <= 0){
+			if(!retval){
+				MU_LOG_INFO(logger, "select: timed out!\n");
+				break;
+			}
+			MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
 			break;
 		}
 		if((recently_receieved = recv(sockfd, message[total_received], data_left, 0)) <= 0){
-			if(!recently_receieved) MU_LOG_INFO(logger, "The sender disconnected from the stream!\n");
-			else MU_LOG_WARNING(logger, "receive_all: \"%s\"\n", gai_strerror(recently_receieved));
+			if(!recently_receieved) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
+			else MU_LOG_ERROR(logger, "recv: \"%s\"\n", gai_strerror(recently_receieved));
 			break;
 		}
 		total_received += recently_receieved;
 		data_left -= recently_sent;
 	}
-	FD_CLR(sockfd, &can_send);
 	return total_received;
 }
 
@@ -94,9 +112,13 @@ static int get_client_socket(struct addrinfo **results){
 
 /* Client functions defined below! */
 
+/// TODO: Make this a function that only creates the client, but does not connect it!
 NU_Client_t *NU_Client_create(char *host, char *port, int flags){
+	if(!host || !port) return NULL;
 	MU_Client_t *client = malloc(sizeof(MU_Client_t));
-	client->messages_sent = client->messages_received = client->data_sent = client->data_received = 0;
+	client->hostname = host;
+	client->->data.messages_sent = client->data.messages_received = client->data.bytes_sent = client->data.bytes_received = 0;
+	client->timestamp = Misc_Utils_get_timestamp();
 	struct addrinfo socket_options, *results;
 	int retval;
 	memset(&socket_options, 0, sizeof(socket_options));
@@ -117,6 +139,12 @@ NU_Client_t *NU_Client_create(char *host, char *port, int flags){
 	return client;
 }
 
+int MU_Client_connect(char *host, char *port, int flags){
+	/// TODO: Implement in such a way that if it fails to connect, it returns 0, however it
+	/// can be used to connect multiple times with the same client instead of having to constantly destroy
+	/// the client each time. Also a check whether or not the client is connected to a host currently.
+}
+
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message);
 	size_t result = send_all(client->sockfd, message, &data_sent, timeout);
@@ -126,6 +154,8 @@ int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 		MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
 		return 0;
 	}
+	client->data->bytes_sent += result;
+	client->data->messages_sent++;
 	return 1;
 }
 
@@ -135,9 +165,29 @@ char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int ti
 		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
 		return 0;
 	}
+	client->data->bytes_received += result;
+	client->data->messages_received++;
 	return 1;
 }
 
 char *MU_Client_about(MU_Client_t *client){
-	
+	char *message, *timestamp = Misc_Utils_get_timestamp();
+	asprintf(&message, "Connected to: %s:%s\nMessages sent: %d; Total bytes: %d\nMessages received: %d; Total bytes: %d\n
+		Connected from time %s to %s\n", client->host, client->port, client->data->messages_sent, client->data->bytes_sent,
+		client->data->messages_received, client->data->bytes_received, client->timestamp, timestamp);
+	free(timestamp);
+	return message;
+}
+
+int MU_Client_shutdown(MU_Client_t *client){
+	/// TODO: Implement in a way that shuts down the connection to the host, but however does not
+	/// destroy the client! In fact, this should make the client fully reusable to connect to other hosts!
+	return 1;
+}
+
+int MU_Client_destroy(MU_Client_t *client){
+	shutdown(client->sockfd, 2);
+	free(client->timestamp);
+	free(client);
+	return 1;
 }

@@ -21,15 +21,18 @@ typedef struct {
    /// Keeps track of data used.
    NU_Collective_Data_t data;
    /// Keeps track of the hostname currently connected to.
-   char server_hostname[100];
-   /// Keeps track of the port number currently connected to.
+   char host_name[100];
+   /// Port number connecting through.
    char port_num[5];
-   /// Keeps track of your own hostname, for referencing through NU_Server_t.
-   char my_hostname[100]
+   /// The timestamp determining when the client was created.
+   char *timestamp;
 ;} NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */
 NU_Client_t *NU_Client_create(char *host, char *port, int flags);
+
+/* Connects the client to some host! */
+int MU_Client_connect(char *host, char *port, int flags);
 
 /* Sends data to the host, up to the given timeout. */
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout);
