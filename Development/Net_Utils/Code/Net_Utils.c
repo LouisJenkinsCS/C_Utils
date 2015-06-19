@@ -25,6 +25,14 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-Client Helper functions defined below! */
 
+static int reset_client(MU_Client_t *client){
+	const int hostname_length = 100, port_length = 5;
+	memset(client->hostname, '\0', hostname_length);
+	memset(client->port, '\0', port_length);
+	client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
+	return 1;
+}
+
 static size_t send_all(int sockfd, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
 	int retval, recently_sent = 0;
@@ -112,13 +120,16 @@ static int get_client_socket(struct addrinfo **results){
 
 /* Client functions defined below! */
 
-/// TODO: Make this a function that only creates the client, but does not connect it!
-NU_Client_t *NU_Client_create(char *host, char *port, int flags){
-	if(!host || !port) return NULL;
-	MU_Client_t *client = malloc(sizeof(MU_Client_t));
-	client->hostname = host;
-	client->->data.messages_sent = client->data.messages_received = client->data.bytes_sent = client->data.bytes_received = 0;
+NU_Client_t *NU_Client_create(int flags){
+	MU_Client_t *client = calloc(1, sizeof(MU_Client_t));
+	if(!client) return NULL;
 	client->timestamp = Misc_Utils_get_timestamp();
+	return client;
+}
+
+int MU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
+	client->hostname = host;
+	client->port = port;
 	struct addrinfo socket_options, *results;
 	int retval;
 	memset(&socket_options, 0, sizeof(socket_options));
@@ -126,23 +137,15 @@ NU_Client_t *NU_Client_create(char *host, char *port, int flags){
 	socket_options.ai_socktype = SOCK_STREAM;
 	if((retval = getaddrinfo(host, port, &socket_options, &results)) != 0){
 		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(retval));
-		free(client);
 		return NULL;
 	}
 	if((client->sockfd = get_client_socket(results)) == -1){
 		MU_LOG_WARNING(logger, "Was unable to find a valid address!\n");
 		freeaddrinfo(results);
-		free(client);
 		return NULL;
 	}
 	freeaddrinfo(results);
-	return client;
-}
-
-int MU_Client_connect(char *host, char *port, int flags){
-	/// TODO: Implement in such a way that if it fails to connect, it returns 0, however it
-	/// can be used to connect multiple times with the same client instead of having to constantly destroy
-	/// the client each time. Also a check whether or not the client is connected to a host currently.
+	client->
 }
 
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
@@ -180,14 +183,16 @@ char *MU_Client_about(MU_Client_t *client){
 }
 
 int MU_Client_shutdown(MU_Client_t *client){
-	/// TODO: Implement in a way that shuts down the connection to the host, but however does not
-	/// destroy the client! In fact, this should make the client fully reusable to connect to other hosts!
+	shutdown(client->sockfd, 2);
+	MU_LOG_INFO(logger, "Client shutdown!\n");
+	reset_client(client);
 	return 1;
 }
 
 int MU_Client_destroy(MU_Client_t *client){
-	shutdown(client->sockfd, 2);
+	MU_Client_shutdown(client);
 	free(client->timestamp);
 	free(client);
+	MU_LOG_INFO(logger, "Client destroyed!\n");
 	return 1;
 }

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <assert.h>
 #include <time.h>
 
 /*
@@ -57,7 +58,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
 #define MU_ASSERT(condition, logger) do { \
 	if(!(condition)){ \
-		if(logger->level > MU_ERROR) break; \
+		if(!logger && !logger->file && logger->level > MU_ERROR) assert(condition); \
 		char *timestamp = Misc_Utils_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
 		fprintf(logger->file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
@@ -69,7 +70,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 /// An assertion which prints to stderr, the logfile and returns.
 #define MU_ASSERT_RETURN(condition, logger, retval) do { \
 	if(!(condition)){ \
-		if(logger->level > MU_ERROR) break; \
+		if(!logger && !logger->file && logger->level > MU_ERROR) return retval; \
 		char *timestamp = Misc_Utils_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
 		fprintf(logger->file, "%s: [ASSERT](%s:%d) An Assertion for '" #condition "' has failed!\n", Misc_Utils_Get_Timestamp(), __FILE__, __LINE__); \
@@ -80,7 +81,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 } while(0)
 /// Log an error message along with timestamp, file and line of code.
 #define MU_LOG_ERROR(logger, message, ...) do { \
-	if(logger->level > MU_ERROR) break; \
+	if(!logger && !logger->file && logger->level > MU_ERROR) break; \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(logger->file, "%s: [ERROR](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
@@ -88,7 +89,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 } while(0) 
 /// Log a warning message along with timestamp, file and line of code.
 #define MU_LOG_WARNING(logger, message, ...) do { \
-	if(logger->level > MU_WARNING) break; \
+	if(!logger && !logger->file && logger->level > MU_WARNING) break; \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(logger->file, "%s: [WARNING](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
@@ -96,7 +97,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 } while(0)
 /// Log an info message along with timestamp, file and line of code.
 #define MU_LOG_INFO(logger, message, ...) do { \
-	if(logger->level > MU_INFO) break; \
+	if(!logger && !logger->file && logger->level > MU_INFO) break; \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(logger->file, "%s: [INFO](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
@@ -105,7 +106,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 /// Log a verbose message along with timestamp, file and line of code. This differs from INFO in that it is used for
 /// logging almost trivial information, good for if you want to log every single thing without having to remove it later.
 #define MU_LOG_VERBOSE(logger, message, ...) do { \
-	if(logger->level > MU_ALL) break; \
+	if(!logger && !logger->file && logger->level > MU_ALL) break; \
 	char *timestamp = Misc_Utils_Get_Timestamp(); \
 	fprintf(logger->file, "%s: [VERBOSE](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \

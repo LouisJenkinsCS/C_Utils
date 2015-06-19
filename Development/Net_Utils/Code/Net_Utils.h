@@ -26,13 +26,15 @@ typedef struct {
    char port_num[5];
    /// The timestamp determining when the client was created.
    char *timestamp;
+   /// Determines whether or not the client is currently connected or not.
+   unsigned char is_connected;
 ;} NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */
-NU_Client_t *NU_Client_create(char *host, char *port, int flags);
+NU_Client_t *NU_Client_create(int flags);
 
 /* Connects the client to some host! */
-int MU_Client_connect(char *host, char *port, int flags);
+int MU_Client_connect(NU_Client_t *client, char *host, char *port, int flags);
 
 /* Sends data to the host, up to the given timeout. */
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout);
