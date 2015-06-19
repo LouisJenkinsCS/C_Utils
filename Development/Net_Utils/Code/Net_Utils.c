@@ -25,10 +25,29 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-Client Helper functions defined below! */
 
-static int reset_client(MU_Client_t *client){
+static int resize_buffer(NU_Bounded_Buffer_t *bounded_buffer, size_t new_size){
+	if(!bounded_buffer->buffer){
+		bounded_buffer->buffer = calloc(1, new_size);
+		bounded_buffer->size = bounded_buffer->index = 0;
+		MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
+		return 1;
+	}
+	if(bounded_buffer->size == new_size) return 1;
+	bounded_buffer->buffer = realloc(bounded_buffer->buffer, new_size);
+	if(bounded_buffer->index > new_size) {
+		MU_LOG_VERBOSE(logger, "The bounded buffer's index was moved from %d to %d!\n", bounded_buffer->index, new_size - 1);
+		bounded_buffer->index = new_size - 1;
+	}
+	MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bounded_buffer->size, new_size);
+	bounded_buffer->size = new_size;
+	return 1;
+}
+
+static int reset_client(NU_Client_t *client){
 	const int hostname_length = 100, port_length = 5;
 	memset(client->hostname, '\0', hostname_length);
 	memset(client->port, '\0', port_length);
+	memset(client->bounded_buffer, '\0', sizeof(NU_Bounded_Buffer_t));
 	client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
 	return 1;
 }
@@ -65,17 +84,16 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
 	return total_sent;
 }
 
-static size_t receive_all(int sockfd, size_t buffer_size, unsigned int timeout){
-	size_t total_received = 0, data_left = buffer_size;
-	int retval, recently_receieved = 0;
-	char *message = malloc(buffer_size);
+static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bounded_buffer, unsigned int timeout){
+	size_t total_received = 0, data_left = bounded_buffer->size;
+	int retval;
 	struct timeval tv;
 	fd_set can_receive, can_receive_copy;
 	tv.tv_sec = timeout;
 	tv_tv_usec = 0;
 	FD_ZERO(&can_receive);
 	FD_SET(sockfd, &can_receive);
-	while(buffer_size > total_received){
+	while(bounded_buffer->size > total_received){
 		can_receive_copy = can_receive;
 		// After every iteration, timeout is reset.
 		tv.tv_sec = timeout;
@@ -87,13 +105,14 @@ static size_t receive_all(int sockfd, size_t buffer_size, unsigned int timeout){
 			MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
 			break;
 		}
-		if((recently_receieved = recv(sockfd, message[total_received], data_left, 0)) <= 0){
-			if(!recently_receieved) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
-			else MU_LOG_ERROR(logger, "recv: \"%s\"\n", gai_strerror(recently_receieved));
+		if((retval = recv(sockfd, bounded_buffer->buffer[bounded_buffer->index], data_left, 0)) <= 0){
+			if(!retval) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
+			else MU_LOG_ERROR(logger, "recv: \"%s\"\n", gai_strerror(retval));
 			break;
 		}
-		total_received += recently_receieved;
-		data_left -= recently_sent;
+		total_received += retval;
+		bounded_buffer->index += retval;
+		data_left -= retval;
 	}
 	return total_received;
 }
@@ -121,9 +140,10 @@ static int get_client_socket(struct addrinfo **results){
 /* Client functions defined below! */
 
 NU_Client_t *NU_Client_create(int flags){
-	MU_Client_t *client = calloc(1, sizeof(MU_Client_t));
+	MU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) return NULL;
 	client->timestamp = Misc_Utils_get_timestamp();
+	client->bounded_buffer = calloc(1, sizeof(NU_Bounded_Buffer_t));
 	return client;
 }
 
@@ -151,8 +171,6 @@ int MU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message);
 	size_t result = send_all(client->sockfd, message, &data_sent, timeout);
-	client->messages_sent += 1;
-	client->data_sent += result;
 	if(result != buffer_size){
 		MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
 		return 0;
@@ -163,7 +181,9 @@ int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 }
 
 char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout){
-	size_t result = receive_all(client->sockfd, buffer_size, timeout);
+	resize_buffer(client->bounded_buffer, buffer_size);
+	client->bounded_buffer->index = 0;
+	size_t result = receive_all(client->sockfd, client->bounded_buffer, timeout);
 	if(result != buffer_size){
 		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
 		return 0;
@@ -192,6 +212,7 @@ int MU_Client_shutdown(MU_Client_t *client){
 int MU_Client_destroy(MU_Client_t *client){
 	MU_Client_shutdown(client);
 	free(client->timestamp);
+	free(client->bounded_buffer);
 	free(client);
 	MU_LOG_INFO(logger, "Client destroyed!\n");
 	return 1;

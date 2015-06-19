@@ -13,6 +13,15 @@ typedef struct {
    size_t bytes_received;
 } NU_Collective_Data_t;
 
+typedef struct {
+   /// Container for buffer.
+   char *buffer;
+   /// Current size of buffer.
+   size_t size;
+   /// Start position for the buffer.
+   unsigned int index;
+} NU_Bounded_Buffer_t;
+
 /* Client template and functions declared below! */
 
 typedef struct {
@@ -28,16 +37,18 @@ typedef struct {
    char *timestamp;
    /// Determines whether or not the client is currently connected or not.
    unsigned char is_connected;
+   /// Stores bytes read into this to eliminate constant arbitrary allocations.
+   NU_Bounded_Buffer_t *bounded_buffer;
 ;} NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */
 NU_Client_t *NU_Client_create(int flags);
 
 /* Connects the client to some host! */
-int MU_Client_connect(NU_Client_t *client, char *host, char *port, int flags);
+int MU_Client_connect(NU_Client_t *client, const char *host, const char *port, int flags);
 
 /* Sends data to the host, up to the given timeout. */
-int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout);
+int NU_Client_send(NU_Client_t *client, const char *message, unsigned int timeout);
 
 /* Receives data from the host, up to a given timeout. */
 char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout);
