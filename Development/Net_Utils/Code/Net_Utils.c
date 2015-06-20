@@ -60,7 +60,7 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
 	tv.tv_sec = timeout;
 	tv_tv_usec = 0;
 	FD_ZERO(&can_send);
-	FD_SET(sockfd, &can_send)
+	FD_SET(sockfd, &can_send);
 	while(buffer_size > total_sent){
 		can_send_copy = can_send;
 		// Restart timeout.
@@ -147,7 +147,7 @@ NU_Client_t *NU_Client_create(int flags){
 	return client;
 }
 
-int MU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
+int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 	client->hostname = host;
 	client->port = port;
 	struct addrinfo socket_options, *results;
@@ -180,17 +180,18 @@ int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 	return 1;
 }
 
-char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout){
+const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout){
 	resize_buffer(client->bounded_buffer, buffer_size);
 	client->bounded_buffer->index = 0;
 	size_t result = receive_all(client->sockfd, client->bounded_buffer, timeout);
-	if(result != buffer_size){
-		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
-		return 0;
-	}
 	client->data->bytes_received += result;
 	client->data->messages_received++;
-	return 1;
+	if(result != buffer_size){
+		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
+		client->bounded_buffer->buffer[result] = '\0';
+		return (const char *) client->bounded_buffer->buffer;
+	}
+	return (const char *)client->bounded_buffer->buffer;
 }
 
 char *MU_Client_about(MU_Client_t *client){

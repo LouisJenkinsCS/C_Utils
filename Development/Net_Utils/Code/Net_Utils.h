@@ -51,7 +51,7 @@ int MU_Client_connect(NU_Client_t *client, const char *host, const char *port, i
 int NU_Client_send(NU_Client_t *client, const char *message, unsigned int timeout);
 
 /* Receives data from the host, up to a given timeout. */
-char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout);
+const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout);
 
 /* Returns a string representation of the information about this client, including but not limited to:
    1) Host connected to and port number.
