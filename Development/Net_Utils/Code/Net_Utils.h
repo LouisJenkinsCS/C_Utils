@@ -72,20 +72,24 @@ int NU_Client_destroy(NU_Client_t *client);
 
 typedef struct {
    /// Socket associated with this server.
-   int server;
+   int sockfd;
    /// Array of clients currently connected to.
    NU_Client_t **clients;
    /// Size of array connected to.
    size_t amount_of_clients;
+   /// Keep track of overall data-usage.
+   NU_Collective_Data_t data;
+   /// Current port number bound to.
+   char port[5];
 } NU_Server_t;
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(unsigned int port, int flags);
+NU_Server_t *NU_Server_create(int flags);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    client should not be freed, and it is also managed by the server. */
-NU_Client_t *NU_Server_accept(NU_Server_t *server, size_t amount,  unsigned int timeout);
+NU_Client_t *NU_Server_accept(NU_Server_t *server, unsigned int port, size_t amount,  unsigned int timeout);
 
 /* Send data to the requested client. */
 int NU_Server_send(NU_Server_t *server, NU_Client_t *client, char *message, unsigned int timeout);

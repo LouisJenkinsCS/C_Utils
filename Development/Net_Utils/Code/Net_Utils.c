@@ -54,7 +54,7 @@ static int reset_client(NU_Client_t *client){
 
 static size_t send_all(int sockfd, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
-	int retval, recently_sent = 0;
+	int retval;
 	struct timeval tv;
 	fd_set can_send, can_send_copy;
 	tv.tv_sec = timeout;
@@ -73,13 +73,13 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
 			MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
 			break;
 		}
-		if((recently_sent = send(sockfd, message[total_sent], data_left, 0)) <= 0){
-			if(!recently_receieved) MU_LOG_INFO(logger, "send: disconnected from the stream!\n");
-			else MU_LOG_ERROR(logger, "send: \"%s\"\n", gai_strerror(recently_receieved));
+		if((retval = send(sockfd, message[total_sent], data_left, 0)) <= 0){
+			if(!retval) MU_LOG_INFO(logger, "send: disconnected from the stream!\n");
+			else MU_LOG_ERROR(logger, "send: \"%s\"\n", gai_strerror(retval));
 			break;
 		}
-		total_sent += recently_sent;
-		data_left -= recently_sent;
+		total_sent += retval;
+		data_left -= retval;
 	}
 	return total_sent;
 }
@@ -157,15 +157,16 @@ int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 	socket_options.ai_socktype = SOCK_STREAM;
 	if((retval = getaddrinfo(host, port, &socket_options, &results)) != 0){
 		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(retval));
-		return NULL;
+		return 0;
 	}
 	if((client->sockfd = get_client_socket(results)) == -1){
 		MU_LOG_WARNING(logger, "Was unable to find a valid address!\n");
 		freeaddrinfo(results);
-		return NULL;
+		return 0;
 	}
 	freeaddrinfo(results);
-	client->
+	client->is_connected = 1;
+	return 1;
 }
 
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
@@ -194,7 +195,7 @@ const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned 
 	return (const char *)client->bounded_buffer->buffer;
 }
 
-char *MU_Client_about(MU_Client_t *client){
+char *NU_Client_about(MU_Client_t *client){
 	char *message, *timestamp = Misc_Utils_get_timestamp();
 	asprintf(&message, "Connected to: %s:%s\nMessages sent: %d; Total bytes: %d\nMessages received: %d; Total bytes: %d\n
 		Connected from time %s to %s\n", client->host, client->port, client->data->messages_sent, client->data->bytes_sent,
@@ -203,18 +204,25 @@ char *MU_Client_about(MU_Client_t *client){
 	return message;
 }
 
-int MU_Client_shutdown(MU_Client_t *client){
+int NU_Client_shutdown(MU_Client_t *client){
 	shutdown(client->sockfd, 2);
 	MU_LOG_INFO(logger, "Client shutdown!\n");
 	reset_client(client);
 	return 1;
 }
 
-int MU_Client_destroy(MU_Client_t *client){
+int NU_Client_destroy(MU_Client_t *client){
 	MU_Client_shutdown(client);
 	free(client->timestamp);
 	free(client->bounded_buffer);
 	free(client);
 	MU_LOG_INFO(logger, "Client destroyed!\n");
 	return 1;
+}
+
+/* Server functions defined below! */
+
+NU_Server_t *NU_Server_create(int flags){
+	NU_Server_t *server = calloc(1, sizeof(NU_Server_t));
+	return server;
 }
