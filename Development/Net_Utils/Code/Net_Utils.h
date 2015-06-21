@@ -1,6 +1,16 @@
 #ifndef NET_UTILS_H
 #define NET_UTILS_H
 
+#include <Misc_Utils.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <netdb.h>
+
 /* Client-Server general data structures below */
 
 typedef struct {
@@ -22,105 +32,118 @@ typedef struct {
    unsigned int index;
 } NU_Bounded_Buffer_t;
 
-/* Client template and functions declared below! */
+/* Helper functions defined below! */
 
-typedef struct {
-   /// Socket associated with this server.
-   int sockfd;
-   /// Keeps track of data used.
-   NU_Collective_Data_t data;
-   /// Keeps track of the hostname currently connected to.
-   char host_name[100];
-   /// Port number connecting through.
-   char port_num[5];
-   /// The timestamp determining when the client was created.
-   char *timestamp;
-   /// Determines whether or not the client is currently connected or not.
-   unsigned char is_connected;
-   /// Stores bytes read into this to eliminate constant arbitrary allocations.
-   NU_Bounded_Buffer_t *bounded_buffer;
-;} NU_Client_t;
+static int resize_buffer(NU_Bounded_Buffer_t *bounded_buffer, size_t new_size){
+   if(!bounded_buffer->buffer){
+      bounded_buffer->buffer = calloc(1, new_size);
+      bounded_buffer->size = bounded_buffer->index = 0;
+      MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
+      return 1;
+   }
+   if(bounded_buffer->size == new_size) return 1;
+   bounded_buffer->buffer = realloc(bounded_buffer->buffer, new_size);
+   if(bounded_buffer->index > new_size) {
+      MU_LOG_VERBOSE(logger, "The bounded buffer's index was moved from %d to %d!\n", bounded_buffer->index, new_size - 1);
+      bounded_buffer->index = new_size - 1;
+   }
+   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bounded_buffer->size, new_size);
+   bounded_buffer->size = new_size;
+   return 1;
+}
 
-/*  Creates a basic client template, fully initialized and connected to the host. */
-NU_Client_t *NU_Client_create(int flags);
+static int reset_client(NU_Client_t *client){
+   const int hostname_length = 100, port_length = 5;
+   memset(client->hostname, '\0', hostname_length);
+   memset(client->port, '\0', port_length);
+   memset(client->bounded_buffer, '\0', sizeof(NU_Bounded_Buffer_t));
+   client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
+   return 1;
+}
 
-/* Connects the client to some host! */
-int MU_Client_connect(NU_Client_t *client, const char *host, const char *port, int flags);
+static size_t send_all(int sockfd, char *message, unsigned int timeout){
+   size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
+   int retval;
+   struct timeval tv;
+   fd_set can_send, can_send_copy;
+   tv.tv_sec = timeout;
+   tv_tv_usec = 0;
+   FD_ZERO(&can_send);
+   FD_SET(sockfd, &can_send);
+   while(buffer_size > total_sent){
+      can_send_copy = can_send;
+      // Restart timeout.
+      tv.tv_sec = timeout;
+      if((retval = TEMP_FAILURE_RETRY(select(sockfd+1, NULL, &can_send_copy, NULL, &tv))) <= 0){
+         if(!retval){
+            MU_LOG_INFO(logger, "select: timed out!\n");
+            break;
+         }
+         MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
+         break;
+      }
+      if((retval = send(sockfd, message[total_sent], data_left, 0)) <= 0){
+         if(!retval) MU_LOG_INFO(logger, "send: disconnected from the stream!\n");
+         else MU_LOG_ERROR(logger, "send: \"%s\"\n", gai_strerror(retval));
+         break;
+      }
+      total_sent += retval;
+      data_left -= retval;
+   }
+   return total_sent;
+}
 
-/* Sends data to the host, up to the given timeout. */
-int NU_Client_send(NU_Client_t *client, const char *message, unsigned int timeout);
+static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bounded_buffer, unsigned int timeout){
+   size_t total_received = 0, data_left = bounded_buffer->size;
+   int retval;
+   struct timeval tv;
+   fd_set can_receive, can_receive_copy;
+   tv.tv_sec = timeout;
+   tv_tv_usec = 0;
+   FD_ZERO(&can_receive);
+   FD_SET(sockfd, &can_receive);
+   while(bounded_buffer->size > total_received){
+      can_receive_copy = can_receive;
+      // After every iteration, timeout is reset.
+      tv.tv_sec = timeout;
+      if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive_copy, NULL, NULL, &tv))) <= 0){
+         if(!retval){
+            MU_LOG_INFO(logger, "select: timed out!\n");
+            break;
+         }
+         MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
+         break;
+      }
+      if((retval = recv(sockfd, bounded_buffer->buffer[bounded_buffer->index], data_left, 0)) <= 0){
+         if(!retval) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
+         else MU_LOG_ERROR(logger, "recv: \"%s\"\n", gai_strerror(retval));
+         break;
+      }
+      total_received += retval;
+      bounded_buffer->index += retval;
+      data_left -= retval;
+   }
+   return total_received;
+}
 
-/* Receives data from the host, up to a given timeout. */
-const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout);
-
-/* Returns a string representation of the information about this client, including but not limited to:
-   1) Host connected to and port number.
-   2) Client's hostname and local IP
-   3) Amount of data and messages sent.
-   4) Etc.
-*/
-char *NU_Client_about(NU_Client_t *client);
-
-/* Will shutdown the client's socket after the time given has ellapsed.
-   The client is not freed nor deallocated memory and can be reused. */
-int NU_Client_shutdown(NU_Client_t *client, unsigned int when);
-
-/* The client immediately closes it's socket, free up all resources, and destroy itself. */
-int NU_Client_destroy(NU_Client_t *client);
-
-/* Server template and functions declared below! */
-
-typedef struct {
-   /// Socket associated with this server.
-   int sockfd;
-   /// Array of clients currently connected to.
-   NU_Client_t **clients;
-   /// Size of array connected to.
-   size_t amount_of_clients;
-   /// Keep track of overall data-usage.
-   NU_Collective_Data_t data;
-   /// Current port number bound to.
-   char port[5];
-} NU_Server_t;
-
-/* Create a fully initialized server that is unconnected. The socket used is
-   bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(int flags);
-
-/* Accept new connections until the timeout ellapses, up to the given amount. The returned
-   client should not be freed, and it is also managed by the server. */
-NU_Client_t *NU_Server_accept(NU_Server_t *server, unsigned int port, size_t amount,  unsigned int timeout);
-
-/* Send data to the requested client. */
-int NU_Server_send(NU_Server_t *server, NU_Client_t *client, char *message, unsigned int timeout);
-
-/* Receives data from any of current connections. */
-char *NU_Server_recieve(NU_Server_t *server, size_t buffer_size, unsigned int timeout);
-
-/* Returns a string representation about this client, including but not limited to:
-   1) Server's port number binded to as well as local IP.
-   2) List of all client's currently connected to, as well as messages and data sent/received from each individually.
-   3) Total amount of data and messages sent/received. */
-char *NU_Server_about(NU_Server_t *server);
-
-/* The server will no longer be accepting current connections, but will continue dealing with it's
-   current connections until the time specified ellapses, upon which it will close all connections. */
-int NU_Server_shutdown(NU_Server_t *server, unsigned int when);
-
-/* The server will immediately close all connections, free up all resources, and destroy itself. */
-int NU_Server_destroy(NU_Server_t *server);
-
-/* HTTP template and functions declared below! */
-
-typedef struct {
-   /// TODO: Implement!
-} NU_HTTP_t;
-
-/* FTP template and functions declared below! */
-
-typedef struct {
-   /// TODO: Implement!
-} NU_FTP_t;
-
+static int get_client_socket(struct addrinfo **results){
+   struct addrinfo *current = NULL;
+   int sockfd = 0, iteration = 0, retval;
+   for(current = results; current; current = current->ai_next){
+      if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) < 0) {
+         MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", gai_strerror(sockfd), ++iteration);
+         continue;
+      }
+      MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++i);
+      if((retval = connect(sockfd, current->ai_addr, current->ai_addrlen)) < 0){
+         close(sockfd);
+         MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", gai_strerror(retval), ++iteration);
+         continue;
+      }
+      break;
+   }
+   if(!current) return -1;
+   return sockfd;
+}
 
 #endif /* END NET_UTILS_H */
