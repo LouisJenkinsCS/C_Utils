@@ -1,6 +1,6 @@
 #include "Misc_Utils.h"
 
-char *Misc_Utils_Get_Timestamp(void){
+char *MU_Get_Timestamp(void){
 	const int buffer_size = 80;
 	time_t t = time(NULL);
 	struct tm *current_time = localtime(&t);
@@ -9,7 +9,7 @@ char *Misc_Utils_Get_Timestamp(void){
 	return time_and_date;
 }
 
-int MU_Logger_Init(MU_Logger_t *logger, char *filename, char *mode, MU_Logger_Level_t level){
+int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
 	if(!logger) return 0;
 	FILE *file = fopen(filename, mode);
 	if(!file) {
@@ -28,8 +28,8 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr){
 	return 1;
 }
 
-Timer_t *Timer_Init(int start){
-	Timer_t *timer = calloc(1, sizeof(Timer_t));
+MU_Timer_t *MU_Timer_Init(int start){
+	MU_Timer_t *timer = calloc(1, sizeof(MU_Timer_t));
 	timer->start = calloc(1, sizeof(time_t));
 	timer->end = calloc(1 , sizeof(time_t));
 	if(start) {
@@ -40,7 +40,7 @@ Timer_t *Timer_Init(int start){
 	return timer;
 }
 
-int Timer_Start(Timer_t *timer){
+int MU_Timer_Start(MU_Timer_t *timer){
 	if(timer->is_running) return 0;
 	time(timer->start);
 	timer->is_running = 1;
@@ -48,7 +48,7 @@ int Timer_Start(Timer_t *timer){
 	return 1;
 }
 
-int Timer_Stop(Timer_t *timer){
+int MU_Timer_Stop(MU_Timer_t *timer){
 	if(!timer->is_running || timer->is_finished) return 0;
 	time(timer->end);
 	timer->is_running = 0;
@@ -56,7 +56,7 @@ int Timer_Stop(Timer_t *timer){
 	return 1;
 }
 
-char *Timer_To_String(Timer_t *timer){
+char *MU_Timer_To_String(MU_Timer_t *timer){
 	if(!timer->is_finished) return NULL;
 	double total_time = difftime(*timer->end, *timer->start);
 	int hours = 0, minutes = 0, seconds = 0;
@@ -77,7 +77,7 @@ char *Timer_To_String(Timer_t *timer){
 	return formatted_time;
 }
 
-void Timer_Destroy(Timer_t *timer){
+void MU_Timer_Destroy(Timer_t *timer){
 	free(timer->start);
 	free(timer->end);
 	free(timer);
