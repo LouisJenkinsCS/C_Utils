@@ -28,8 +28,6 @@ typedef struct {
    char *buffer;
    /// Current size of buffer.
    size_t size;
-   /// Start position for the buffer.
-   unsigned int index;
 } NU_Bounded_Buffer_t;
 
 /* Helper functions defined below! */

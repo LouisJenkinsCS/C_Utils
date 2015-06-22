@@ -16,11 +16,9 @@ typedef struct NU_Client_Socket_t{
    /// Socket file descriptor associated with a client.
    int sockfd;
    /// The IP address the client is connected on.
-   char *ip_address;
+   char ip_address[INET_ADDRSTRLEN];
    /// The port this client is connected to!
    const char port[6];
-   /// Whether or not this client is connected. If it is not connected, then it is no longer apart of the list.
-   volatile unsigned char is_connected;
    /// Buffer that any data will be read into.
    NU_Bounded_Buffer_t *bbuf;
    /// The next client currently connected to.
@@ -50,9 +48,6 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, char *port, size_t amount
 
 /* Will unbind the server from the port specified in socket. Will free the socket! */
 int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
-
-/* The bound socket will listen and queue pending connections up to the requested amount */
-int NU_Server_listen(NU_Server_t *server, NU_Bound_Socket_t *socket, size_t queue_size);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    clients should not be freed, and it is also managed by the server. */
