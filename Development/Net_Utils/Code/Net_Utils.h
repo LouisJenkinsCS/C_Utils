@@ -34,21 +34,21 @@ typedef struct {
 
 /* Helper functions defined below! */
 
-static int resize_buffer(NU_Bounded_Buffer_t *bounded_buffer, size_t new_size){
-   if(!bounded_buffer->buffer){
-      bounded_buffer->buffer = calloc(1, new_size);
-      bounded_buffer->size = bounded_buffer->index = 0;
+static int resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size){
+   if(!bbuf->buffer){
+      bbuf->buffer = calloc(1, new_size);
+      bbuf->size = bbuf->index = 0;
       MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
       return 1;
    }
-   if(bounded_buffer->size == new_size) return 1;
-   bounded_buffer->buffer = realloc(bounded_buffer->buffer, new_size);
-   if(bounded_buffer->index > new_size) {
-      MU_LOG_VERBOSE(logger, "The bounded buffer's index was moved from %d to %d!\n", bounded_buffer->index, new_size - 1);
-      bounded_buffer->index = new_size - 1;
+   if(bbuf->size == new_size) return 1;
+   bbuf->buffer = realloc(bbuf->buffer, new_size);
+   if(bbuf->index > new_size) {
+      MU_LOG_VERBOSE(logger, "The bounded buffer's index was moved from %d to %d!\n", bbuf->index, new_size - 1);
+      bbuf->index = new_size - 1;
    }
-   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bounded_buffer->size, new_size);
-   bounded_buffer->size = new_size;
+   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bbuf->size, new_size);
+   bbuf->size = new_size;
    return 1;
 }
 
@@ -56,7 +56,7 @@ static int reset_client(NU_Client_t *client){
    const int hostname_length = 100, port_length = 5;
    memset(client->hostname, '\0', hostname_length);
    memset(client->port, '\0', port_length);
-   memset(client->bounded_buffer, '\0', sizeof(NU_Bounded_Buffer_t));
+   memset(client->bbuf, '\0', sizeof(NU_Bounded_Buffer_t));
    client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
    return 1;
 }
@@ -75,16 +75,13 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
       // Restart timeout.
       tv.tv_sec = timeout;
       if((retval = TEMP_FAILURE_RETRY(select(sockfd+1, NULL, &can_send_copy, NULL, &tv))) <= 0){
-         if(!retval){
-            MU_LOG_INFO(logger, "select: timed out!\n");
-            break;
-         }
-         MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
+         if(!retval) MU_LOG_INFO(logger, "select: \"timed out\"\n");
+         else MU_LOG_ERROR(logger, "select: \"%s\"", strerror(retval));
          break;
       }
       if((retval = send(sockfd, message[total_sent], data_left, 0)) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "send: disconnected from the stream!\n");
-         else MU_LOG_ERROR(logger, "send: \"%s\"\n", gai_strerror(retval));
+         if(!retval) MU_LOG_INFO(logger, "send: \"disconnected from the stream\"\n");
+         else MU_LOG_ERROR(logger, "send: \"%s\"\n", strerror(retval));
          break;
       }
       total_sent += retval;
@@ -93,8 +90,8 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
    return total_sent;
 }
 
-static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bounded_buffer, unsigned int timeout){
-   size_t total_received = 0, data_left = bounded_buffer->size;
+static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout){
+   size_t total_received = 0, data_left = bbuf->size;
    int retval;
    struct timeval tv;
    fd_set can_receive, can_receive_copy;
@@ -102,25 +99,22 @@ static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bounded_buffer, unsig
    tv_tv_usec = 0;
    FD_ZERO(&can_receive);
    FD_SET(sockfd, &can_receive);
-   while(bounded_buffer->size > total_received){
+   while(bbuf->size > total_received){
       can_receive_copy = can_receive;
       // After every iteration, timeout is reset.
       tv.tv_sec = timeout;
       if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive_copy, NULL, NULL, &tv))) <= 0){
-         if(!retval){
-            MU_LOG_INFO(logger, "select: timed out!\n");
-            break;
-         }
-         MU_LOG_ERROR(logger, "select: \"%s\"", gai_strerror(retval));
+         if(!retval) MU_LOG_INFO(logger, "select: \"timed out\"\n");
+         else MU_LOG_ERROR(logger, "select: \"%s\"", strerror(retval));
          break;
       }
-      if((retval = recv(sockfd, bounded_buffer->buffer[bounded_buffer->index], data_left, 0)) <= 0){
+      if((retval = recv(sockfd, bbuf->buffer[bbuf->index], data_left, 0)) <= 0){
          if(!retval) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
-         else MU_LOG_ERROR(logger, "recv: \"%s\"\n", gai_strerror(retval));
+         else MU_LOG_ERROR(logger, "recv: \"%s\"\n", strerror(retval));
          break;
       }
       total_received += retval;
-      bounded_buffer->index += retval;
+      bbuf->index += retval;
       data_left -= retval;
    }
    return total_received;
@@ -128,16 +122,16 @@ static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bounded_buffer, unsig
 
 static int get_client_socket(struct addrinfo **results){
    struct addrinfo *current = NULL;
-   int sockfd = 0, iteration = 0, retval;
+   int sockfd = 0, iteration = 0;
    for(current = results; current; current = current->ai_next){
-      if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) < 0) {
-         MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", gai_strerror(sockfd), ++iteration);
+      if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) == -1) {
+         MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(-1), ++iteration);
          continue;
       }
       MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++i);
-      if((retval = connect(sockfd, current->ai_addr, current->ai_addrlen)) < 0){
+      if(connect(sockfd, current->ai_addr, current->ai_addrlen) == -1){
          close(sockfd);
-         MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", gai_strerror(retval), ++iteration);
+         MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", strerror(-1), ++iteration);
          continue;
       }
       break;

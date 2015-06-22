@@ -17,7 +17,7 @@ typedef struct {
    /// Determines whether or not the client is currently connected or not.
    unsigned char is_connected;
    /// Stores bytes read into this to eliminate constant arbitrary allocations.
-   NU_Bounded_Buffer_t *bounded_buffer;
+   NU_Bounded_Buffer_t *bbuf;
 ;} NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */

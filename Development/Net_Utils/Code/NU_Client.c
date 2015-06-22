@@ -16,7 +16,7 @@ NU_Client_t *NU_Client_create(int flags){
 	MU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) return NULL;
 	client->timestamp = Misc_Utils_get_timestamp();
-	client->bounded_buffer = calloc(1, sizeof(NU_Bounded_Buffer_t));
+	client->bbuf = calloc(1, sizeof(NU_Bounded_Buffer_t));
 	return client;
 }
 
@@ -55,24 +55,24 @@ int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 }
 
 const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout){
-	resize_buffer(client->bounded_buffer, buffer_size);
-	client->bounded_buffer->index = 0;
-	size_t result = receive_all(client->sockfd, client->bounded_buffer, timeout);
-	client->data->bytes_received += result;
-	client->data->messages_received++;
+	resize_buffer(client->bbuf, buffer_size);
+	client->bbuf->index = 0;
+	size_t result = receive_all(client->sockfd, client->bbuf, timeout);
+	client->data.bytes_received += result;
+	client->data.messages_received++;
 	if(result != buffer_size){
 		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
-		client->bounded_buffer->buffer[result] = '\0';
-		return (const char *) client->bounded_buffer->buffer;
+		client->bbuf->buffer[result] = '\0';
+		return (const char *) client->bbuf->buffer;
 	}
-	return (const char *)client->bounded_buffer->buffer;
+	return (const char *)client->bbuf->buffer;
 }
 
 char *NU_Client_about(MU_Client_t *client){
 	char *message, *timestamp = Misc_Utils_get_timestamp();
 	asprintf(&message, "Connected to: %s:%s\nMessages sent: %d; Total bytes: %d\nMessages received: %d; Total bytes: %d\n
-		Connected from time %s to %s\n", client->host, client->port, client->data->messages_sent, client->data->bytes_sent,
-		client->data->messages_received, client->data->bytes_received, client->timestamp, timestamp);
+		Connected from time %s to %s\n", client->host, client->port, client->data.messages_sent, client->data.bytes_sent,
+		client->data.messages_received, client->data.bytes_received, client->timestamp, timestamp);
 	free(timestamp);
 	return message;
 }
@@ -87,7 +87,7 @@ int NU_Client_shutdown(MU_Client_t *client){
 int NU_Client_destroy(MU_Client_t *client){
 	MU_Client_shutdown(client);
 	free(client->timestamp);
-	free(client->bounded_buffer);
+	free(client->bbuf);
 	free(client);
 	MU_LOG_INFO(logger, "Client destroyed!\n");
 	return 1;

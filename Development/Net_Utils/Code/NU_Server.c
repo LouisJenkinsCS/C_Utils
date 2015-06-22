@@ -1,3 +1,9 @@
+#include <NU_Server.h>
+#define MU_LOG_BSOCK_ERR(function, bsock) do {\
+	MU_LOG_VERBOSE(logger, "bsock: port->\"%s\", sockfd->%d, has_next: %s\n", bsock->port, bsock->sockfd, bsock->next ? "True" : "False"); \
+	MU_LOG_WARNING(logger, function# ": \"%s\"\n", strerror(-1)); \
+} while(0)
+
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){
@@ -27,7 +33,7 @@ static NU_Bound_Socket_t *create_server_socket(char *port){
 	}
 	if(setsockopt(bsock->sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
 		MU_LOG_WARNING(logger, "setsockopt: \"%s\"\n", strerror(-1));
-		shutdown(bsock->sockfd, 2);
+		shutdown(bsock->sockfd, SHUT_RDWR);
 		free(bsock);
 		return NULL;
 	}
@@ -35,7 +41,7 @@ static NU_Bound_Socket_t *create_server_socket(char *port){
 }
 
 static void destroy_bound_socket(NU_Bound_Socket_t *head_bsock, NU_Bound_Socket_t *current_bsock){
-	shutdown(current_bsock->sockfd, 2);
+	shutdown(current_bsock->sockfd, SHUT_RDWR);
 	// If a bound socket is being destroyed, then the list of bound sockets must be updated.
 	NU_Bound_Socket_t *tmp_bsock = NULL;
 	if(head_bsock == current_bsock){ 
@@ -59,7 +65,6 @@ NU_Server_t *NU_Server_create(int flags){
 
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, char *port, int flags){
 	if(!server || !port) return NULL;
-	int retval;
 	struct sockaddr_in my_addr;
 	NU_Bound_Socket_t *bsock = create_server_socket(port);
 	if(!bsock) return NULL;
@@ -68,8 +73,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, char *port, int flags){
 	my_addr.sin_addr.s_addr = INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
 	if(bind(bsock->sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
-		MU_LOG_VERBOSE(logger, "bsock: port->\"%s\", sockfd->%d", bsock->port, bsock->sockfd);
-		MU_LOG_WARNING(logger, "bind: \"%s\"\n", strerror(-1));
+		MU_LOG_BSOCK_ERR(bind, bsock);
 		shutdown(bsock, 2);
 		free(bsock);
 		return NULL;
@@ -83,4 +87,32 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, char *port, int flags){
 	for(tmp_bsock = server->sockets; tmp_bsock && tmp_bsock->next; tmp_bsock = tmp_bsock->next);
 	tmp_bsock->next = bsock;
 	return bsock;
+}
+
+int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+	if(!server || !bsock || !bsock->sockfd) return 0;
+	if(shutdown(bsock->sockfd, SHUT_RD) == -1){
+		MU_LOG_BSOCK_ERR(shutdown, bsock);
+		return 0;
+	}
+	NU_Client_Socket_t *client = NULL;
+	for(client = server->clients; client; client = client->next){
+		if(client->port == bsock->port){
+			NU_Server_disconnect(server, client);
+		}
+	}
+	if(shutdown(bsock->sockfd, SHUT_RDWR) == -1){
+		MU_LOG_BSOCK_ERR(shutdown, bsock);
+		return 0;
+	}
+	return 1;
+}
+
+int NU_Server_listen(NU_Server_t *server, NU_Bound_Socket_t *bsock, size_t queue_size){
+	if(!server || !bsock || !bsock->sockfd || !queue_size) return 0;
+	if(listen(bsock->sockfd, queue_size) == -1){
+		MU_LOG_BSOCK_ERR(listen, bsock);
+		return 0;
+	}
+	return 1;
 }
