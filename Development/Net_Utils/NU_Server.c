@@ -92,33 +92,27 @@ static size_t send_all(int sockfd, const char *message, unsigned int timeout){
    return total_sent;
 }
 
-static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout){
-   size_t total_received = 0, data_left = bbuf->size - 1;
+static size_t timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout){
    int retval;
    struct timeval tv;
-   fd_set can_receive, can_receive_copy;
+   fd_set can_receive;
    tv.tv_sec = timeout;
    tv.tv_usec = 0;
    FD_ZERO(&can_receive);
    FD_SET(sockfd, &can_receive);
-   while(bbuf->size > total_received){
-      can_receive_copy = can_receive;
-      // After every iteration, timeout is reset.
-      tv.tv_sec = timeout;
-      if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive_copy, NULL, NULL, &tv))) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "receive_all->select: \"timed out\"\n");
-         else MU_LOG_ERROR(logger, "receive_all->select: \"%s\"", strerror(retval));
-         break;
-      }
-      if((retval = recv(sockfd, bbuf->buffer + total_received, data_left, 0)) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
-         else MU_LOG_ERROR(logger, "receive_all->recv: \"%s\"\n", strerror(retval));
-         break;
-      }
-      total_received += retval;
-      data_left -= retval;
+   // After every iteration, timeout is reset.
+   tv.tv_sec = timeout;
+   if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive, NULL, NULL, &tv))) <= 0){
+      if(!retval) MU_LOG_INFO(logger, "receive_all->select: \"timed out\"\n");
+      else MU_LOG_ERROR(logger, "receive_all->select: \"%s\"", strerror(retval));
+      return 0;
    }
-   return total_received;
+   if((retval = recv(sockfd, bbuf->buffer, bbuf->size, 0)) <= 0){
+      if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
+      else MU_LOG_ERROR(logger, "receive_all->recv: \"%s\"\n", strerror(retval));
+      return 0;
+   }
+   return retval;
 }
 
 static int get_socket(struct addrinfo **results){
@@ -292,6 +286,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 }
 
 int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout){
+	if(!server || !client || !message) return 0;
 	size_t buffer_size = strlen(message);
 	size_t result = send_all(client->sockfd, message, timeout);
 	server->data.bytes_sent += result;
@@ -301,10 +296,12 @@ int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *
 }
 
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout){
+	if(!server || !client || !buffer_size) return NULL;
 	resize_buffer(client->bbuf, buffer_size);
-	size_t result = receive_all(client->sockfd, client->bbuf, timeout);
+	size_t result = timed_receive(client->sockfd, client->bbuf, timeout);
+	MU_LOG_VERBOSE(logger, "Total received: %d, Buffer Size: %d\n", result, buffer_size);
+	if(!result) return NULL;
 	client->bbuf->buffer[result] = '\0';
-	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
 	return (const char *)client->bbuf->buffer;
 }
 

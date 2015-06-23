@@ -9,6 +9,8 @@ static char *child_or_parent(int pid){
 }
 
 int main(void){
+	const int buffer_size = 1024;
+	const size_t timeout = 30;
 	logger = calloc(1, sizeof(MU_Logger_t));
 	MU_Logger_Init(logger, "NU_Server_Test_LOg.txt", "w", MU_ALL);
 	NU_Server_t *server = NU_Server_create(0);
@@ -26,31 +28,29 @@ int main(void){
 		exit(EXIT_FAILURE);
 	}
 	if(!pid){
-		const char *id = child_or_parent(pid);
-		MU_DEBUG("Inside of %s;See logs for results!\n", id);
-		const int timeout = 60, buffer_size = 1024;
-		const char *message = "Hello World!";
-		int message_length = strlen(message);
-		MU_LOG_INFO(logger, "%s: started!\n", id);
-		MU_LOG_INFO(logger, "%s: receiving a message from client_one with a %d second timeout!\n", id, timeout);
-		const char *retmsg = NU_Server_receive(server, client_one, buffer_size, timeout);
-		MU_LOG_VERBOSE(logger, "client_one message: \"%s\"\n", retmsg);
-		MU_LOG_INFO(logger, "%s: sending the message \"%s\" to client_one\n", id, message);
-		int retval = NU_Server_send(server, client_one, message, timeout);
-		MU_ASSERT(retval == message_length, logger, "bytes_read: %d, expected %d\n", retval, message_length);
+		int retval;
+		while(1){
+			char *user_name_prefix = "client_one: ";
+			const char *msg = NU_Server_receive(server, client_two, buffer_size, timeout);
+			char *new_msg = calloc(1, strlen(msg) + strlen(user_name_prefix) + 1);
+			strcat(new_msg, user_name_prefix);
+			strcat(new_msg, msg);
+			if(!(retval = NU_Server_send(server, client_one, new_msg, timeout))){
+				break;
+			}
+		}
 	}
 	else{
-		const char *id = child_or_parent(pid);
-		MU_DEBUG("Inside of %s;See logs for results!\n", id);
-		const int timeout = 60, buffer_size = 1024;
-		const char *message = "Goodbye World!";
-		int message_length = strlen(message);
-		MU_LOG_INFO(logger, "%s: started!\n", id);
-		MU_LOG_INFO(logger, "%s: receiving a message from client_two with a %d second timeout!\n", id, timeout);
-		const char *retmsg = NU_Server_receive(server, client_two, buffer_size, timeout);
-		MU_LOG_VERBOSE(logger, "client_one message: \"%s\"\n", retmsg);
-		MU_LOG_INFO(logger, "%s: sending the message \"%s\" to client_two\n", id, message);
-		int retval = NU_Server_send(server, client_two, message, timeout);
-		MU_ASSERT(retval == message_length, logger, "bytes_read: %d, expected %d\n", retval, message_length);
+		int retval;
+		while(1){
+			char *user_name_prefix = "client_two: ";
+			const char *msg = NU_Server_receive(server, client_one, buffer_size, timeout); 
+			char *new_msg = calloc(1, strlen(msg) + strlen(user_name_prefix) + 1);
+			strcat(new_msg, user_name_prefix);
+			strcat(new_msg, msg);
+			if(!(retval = NU_Server_send(server, client_two, new_msg, timeout))){
+				break;
+			}
+		}
 	}
 }

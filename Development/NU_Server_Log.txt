@@ -1,14 +1,22 @@
-03:44:51 PM: [VERBOSE](./Net_Utils/NU_Server.c:190) "Currently existing bsock?: False
+05:48:45 PM: [VERBOSE](./Net_Utils/NU_Server.c:184) "Currently existing bsock?: False
 "
-03:44:51 PM: [VERBOSE](./Net_Utils/NU_Server.c:151) "Currently existing client?: False
+05:48:45 PM: [VERBOSE](./Net_Utils/NU_Server.c:145) "Currently existing client?: False
 "
-03:44:53 PM: [VERBOSE](./Net_Utils/NU_Server.c:151) "Currently existing client?: False
+05:48:47 PM: [VERBOSE](./Net_Utils/NU_Server.c:145) "Currently existing client?: False
 "
-03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
+05:48:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
 "
-03:44:55 PM: [WARNING](./Net_Utils/NU_Server.c:307) "Was unable to recieve enough data to fill the buffer! Total received: 0, Buffer Size: 1024
+05:48:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
 "
-03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
+05:48:52 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 5, Buffer Size: 1024
 "
-03:44:55 PM: [WARNING](./Net_Utils/NU_Server.c:307) "Was unable to recieve enough data to fill the buffer! Total received: 0, Buffer Size: 1024
+05:48:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 14, Buffer Size: 1024
+"
+05:49:22 PM: [INFO](./Net_Utils/NU_Server.c:106) "receive_all->select: "timed out"
+"
+05:49:22 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 0, Buffer Size: 1024
+"
+05:49:26 PM: [INFO](./Net_Utils/NU_Server.c:106) "receive_all->select: "timed out"
+"
+05:49:26 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 0, Buffer Size: 1024
 "
