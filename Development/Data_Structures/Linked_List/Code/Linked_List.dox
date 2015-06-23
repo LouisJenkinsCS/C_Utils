@@ -1,0 +1,26 @@
+/*! \mainpage Linked List implementation for the C Programming Language.
+ * 
+ * @author Louis Jenkins
+ * @version 1.0
+ *
+ * \section list_summary Summary
+ *
+ * This Linked List differs from other minimal implementations in that it is not exactly minimal, in fact it's full of features
+ * normally neglected by others in favor for performance and smaller size. Not to say my Linked List is the slowest, but it surely
+ * isn't the fastest, in fact, it favors for more general and generic everyday use overall. 
+ *
+ * - Adding, Removing and Retrieval
+ * - Sorting
+ * - Iteration
+ * - Thread-Safety
+ * - General-Use
+ *
+ * \section list_features Features
+ *
+ * \subsection general_use In need of a data structure, but don't care which to use?
+ *
+ * Why not try an already tested and implemented linked list? Need to iterate over all items in a list? Covered! Need a dynamically resizing container?
+ * Covered! Need a small or medium amount of items to be sorted with no hassle for performance? Covered! Anything you can think of, it's all here!*
+ *
+ * *Besides optimized performance.
+ */

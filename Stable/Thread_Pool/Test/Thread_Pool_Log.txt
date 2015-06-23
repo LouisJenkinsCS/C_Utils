@@ -1,0 +1,624 @@
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:149) Thread #1: spawned!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:149) Thread #2: spawned!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:149) Thread #3: spawned!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:149) Thread #4: spawned!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #2: entered the pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #1: entered the pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #3: entered the pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #1: exited pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #2: exited pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #3: exited pause_handler!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 2
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 0
+
+02:34:52 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:106) Queue Finished has been signaled!
+Queue Size : 0, Active Threads: 0, Thread Count: 4
+
+02:34:57 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #3: entered the pause_handler!
+
+02:34:57 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #4: entered the pause_handler!
+
+02:34:57 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #2: entered the pause_handler!
+
+02:34:57 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #1: entered the pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #3: exited pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #4: exited pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #3: entered the pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #3: timed sleeping for 3 seconds!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #2: exited pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #2: entered the pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #2: timed sleeping for 3 seconds!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #4: entered the pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #4: timed sleeping for 3 seconds!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #1: exited pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #1: entered the pause_handler!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #1: timed sleeping for 3 seconds!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Medium priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of High priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of High priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of High priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Low priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of Lowest priority has been added to the task_queue!
+
+02:35:02 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:258) A task of High priority has been added to the task_queue!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:72) Thread #3: woke up from timed_pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #3: exited pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 1
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:72) Thread #2: woke up from timed_pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #2: exited pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 2
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:72) Thread #4: woke up from timed_pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #4: exited pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 3
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:72) Thread #1: woke up from timed_pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #1: exited pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #2: entered the pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:58) Thread #2: returning for a delayed pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #4: entered the pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:58) Thread #4: returning for a delayed pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #3: entered the pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:58) Thread #3: returning for a delayed pause!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #1: entered the pause_handler!
+
+02:35:05 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:58) Thread #1: returning for a delayed pause!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:95) Thread #2: finished task, pausing self!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #2: entered the pause_handler!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #2: timed sleeping for 5 seconds!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:95) Thread #1: finished task, pausing self!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:95) Thread #4: finished task, pausing self!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #4: entered the pause_handler!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #4: timed sleeping for 5 seconds!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #1: entered the pause_handler!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #1: timed sleeping for 5 seconds!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:95) Thread #3: finished task, pausing self!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:56) Thread #3: entered the pause_handler!
+
+02:35:06 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:67) Thread #3: timed sleeping for 5 seconds!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #2: exited pause_handler!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #4: exited pause_handler!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #1: exited pause_handler!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:76) Thread #3: exited pause_handler!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:08 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:10 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:12 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:14 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #4: received a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #2: received a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:16 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #1: received a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:160) Incremented tp->active_threads to 4
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:161) Thread #3: received a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #4: finished a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 3
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #2: finished a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 2
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #1: finished a task!
+
+02:35:18 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 1
+
+02:35:20 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:163) Thread #3: finished a task!
+
+02:35:20 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:164) Decremented tp->active_threads to 0
+
+02:35:20 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:106) Queue Finished has been signaled!
+Queue Size : 0, Active Threads: 0, Thread Count: 4
+
+02:35:20 PM: [VERBOSE](./Thread_Pool/Code/Thread_Pool.c:345) Thread pool has been properly destroyed!
+

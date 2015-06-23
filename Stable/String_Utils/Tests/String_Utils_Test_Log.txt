@@ -1,0 +1,216 @@
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:45) 
+Testing: Capitalize!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:47) Declared string: "hello World"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:49) Capitalized declared string: "Hello World"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:51) Modified declared string: "Hello World"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:54) Passed Test: "Capitalize"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:60) 
+Testing: Char_At!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:65) Retrieved char in "Hello World" at index: 100 is 'd'
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:67) Retrieved char in "Hello World" at index: 5 is ' '
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:70) Passed Test: "Char_At"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:76) 
+Testing: Compare!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:85) (Sensitive) The comparison of "Hello World" and "Hello_World": False
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:87) (Insensitive) The comparison of "Hello World" and "Hello WorlD": True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:89) (Sensitive) The comparison of "Hello World" and "Hello WorlD": False
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:91) Passed Test: "Compare"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:97) 
+Testing: Concat!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:101) Declared string: "Modify this string: "
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:104) Concatenation of "Hello " and "World": "Hello World"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:106) Modified declared string: "Modify this string: Hello World"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:108) Passed Test: "Concat"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:130) 
+Testing: Count!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:135) (Insensitive) Amount of times the string "What is the meaning of the word the, when there is the person in the mirror staring back at the recipient? The answer is unclear." contains the substring "The": 8
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:137) (Sensitive) Amount of times the string "What is the meaning of the word the, when there is the person in the mirror staring back at the recipient? The answer is unclear." contains the substring "The": 1
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:139) Passed Test: "Count"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:145) 
+Testing: Ends_With!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:152) (Insensitive) String "Catch the end of this string" ends with "string": True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:154) (Insensitive) String "Catch the end of this string" ends with "END OF THIS STRING": True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:156) (Sensitive) String "Catch the end of this string" ends with "END OF THIS STRING": False
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:158) Passed Test: "Ends_With"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:164) 
+Testing: Equals!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:169) (Insensitive) String "Check to see if this equals another string!" is equal to "CHECK TO SEE IF THIS EQUALS ANOTHER STRING!": True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:171) (Sensitive) String "Check to see if this equals another string!" is equal to "CHECK TO SEE IF THIS EQUALS ANOTHER STRING!": False
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:173) Passed Test: "Equals"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:179) 
+Testing: From!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:182) Declared string: "Modify this!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:187) The substring of "Please get everything past here: I am an idiot!" from index 33 is "I am an idiot!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:189) The substring of "Please get everything past here: I am an idiot!" from index 9001 is "!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:192) Modified declared string from index 7: "this!"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:194) Passed Test: "From"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:200) 
+Testing: From_Token!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:202) Declared string: "Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:206) The string "Please token above: BLAH BLAH BLAH USELESS INFO <Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!" from token "<Parse_Me>" is "<Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:211) Modified declared string: "<Parse_Me>int:32;char*:Hello World;void*:NULL;<Parse_Me> BLAH BLAH BLAH USELESS INFO!"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:213) Passed Test: "From_Token"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:219) 
+Testing: Index_Of!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:222) The string to be searched is "AMANDA, the Panda exclaimed that, her name is of high enough importnace to be spelled in all caps: amanda, the panda!", the token to be searched for is "AMANDA, the Panda"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:229) (Insensitive) The last token in the string begins with the char 'a'
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:231) Searching for impossible results should return a null terminator: True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:233) (Sensitive) The last token in the string begins with the char 'A'
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:235) Passed Test: "Index_Of"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:241) 
+Testing: Join!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:248) The array of strings to be joined contain the following: "One prison", "One person", "One bond", "One Power!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:250) The joined string with the delimiter ", " became "One prison, One person, One bond, One Power!"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:253) Passed Test: "Join"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:259) 
+Testing: Replace!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:261) Declared string to be modified and operated on: "LOlOlOl I love my sOul enough to bOwl with a fruit cannOli dipped in raviOli"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:266) (Sensitive) Replaced all chars 'O' with char 'e', resulting in "Lelelel I love my seul enough to bewl with a fruit canneli dipped in ravieli"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:268) (Insensitive) Replaced all chars 'O' with char 'e', resulting in "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:271) Replaced declared string with previous result: "Lelelel I leve my seul eneugh te bewl with a fruit canneli dipped in ravieli"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:273) Passed Test: "Replace"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:279) 
+Testing: Reverse!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:281) Declared string: "stressed"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:285) Reversed the declared string to "desserts"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:287) Modified declared string: "stressed"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:290) Passed Test: "Reverse"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:296) 
+Testing: Set!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:299) Declared string as "SU_MODIFY THIS!"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:301) Modified declared string: "Hello world, bloody beautiful day isnt it? Have fun while Im stuck inside testing for hours, and hours! Bastard."
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:303) Passed Test: "Set"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:309) 
+Testing: Split!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:312) The string to split with delimiter ",": "How else, says the Guard, does one continue along the path of righteousness, except by destroying all that is not righteous?"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:316) The split strings are "How else", " says the Guard", " does one continue along the path of righteousness", " except by destroying all that is not righteous?"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:324) Passed Test: "Split"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:330) 
+Testing: Starts_With!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:335) (Insensitive) The string "Is it me? Who else would it be, fool!" starts with "is it me?": True
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:337) (Sensitive) The string "Is it me? Who else would it be, fool!" starts with "is it me?": False
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:339) Passed Test: "Starts_With"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:345) 
+Testing: Substring!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:347) Declared string: "Below me lies the dragon... not just any dragon, the dragon called *gasp* *chokes* *dies*"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:351) Parsing out substring from index 28 to 9001: "not just any dragon, the dragon called *gasp* *chokes* *dies*"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:354) Modified declared string: "not just any dragon, the dragon called *gasp* *chokes* *dies*"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:356) Passed Test: "Substring"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:362) 
+Testing: To_Lowercase!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:364) Declared string: "HELLO WORLD"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:366) Lowercase of declared string: "hello world"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:369) Modified declared string: "hello world"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:371) Passed Test: "To_Lowercase"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:377) 
+Testing: To_Uppercase!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:379) Declared string: "hello world"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:381) Lowercase of declared string: "HELLO WORLD"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:384) Modified declared string: "HELLO WORLD"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:386) Passed Test: "To_Uppercase"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:392) 
+Testing: Trim!
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:394) Declared string: "        asdadadasd      "
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:396) Trimmed declared string: "asdadadasd"
+
+03:57:55 PM: [VERBOSE](./String_Utils/Tests/String_Utils_Tests.c:399) Modified declared string: "asdadadasd"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:401) Passed Test: "Trim"
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:412) All tests finished! Passed 20/20
+
+03:57:55 PM: [INFO](./String_Utils/Tests/String_Utils_Tests.c:415) Total Time: "00:00:00"
+
