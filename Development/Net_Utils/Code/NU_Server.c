@@ -69,21 +69,22 @@ static NU_Bound_Socket_t *reuse_existing_socket(NU_Bound_Socket_t *head, char *p
 	return tmp_bsock;
 }
 
-static void destroy_bound_socket(NU_Bound_Socket_t *head_bsock, NU_Bound_Socket_t *current_bsock){
-	shutdown(current_bsock->sockfd, SHUT_RDWR);
+static void destroy_bound_socket(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+	shutdown(bsock->sockfd, SHUT_RDWR);
 	// If a bound socket is being destroyed, then the list of bound sockets must be updated.
 	NU_Bound_Socket_t *tmp_bsock = NULL;
-	if(head_bsock == current_bsock){ 
-		head_bsock = NULL;
+	if(server->sockets == bsock){ 
+		server->sockets = bsock->next;
 		free(current_bsock);
 		return;
 	}
-	for(tmp_bsock = head_bsock; tmp_bsock; tmp_bsock = tmp_bsock->next){
-		if(tmp_bsock->next == current_bsock) {
-			tmp_bsock->next = current_bsock->next;
+	for(tmp_bsock = server->sockets; tmp_bsock; tmp_bsock = tmp_bsock->next){
+		if(tmp_bsock->next == bsock) {
+			tmp_bsock->next = bsock->next;
 			break;
 		}
 	}
+	if(!tmp_bsock) MU_LOG_ERROR(logger, "The bsock to be deleted was not found in the list!\n");
 	free(current_bsock)
 }
 
@@ -138,7 +139,6 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 }
 
 NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock){
-	/// TODO: Create a function which will search for a non-connected (free) client and return that instead.
 	int is_reused = 1;
 	NU_Client_Socket_t *client = reuse_existing_client(server->clients);
 	if(!client) {
@@ -148,7 +148,6 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	}
 	if(!is_reused){
 		client->bbuf = calloc(1, sizeof(NU_Bounded_Buffer_t));
-		// Add it to the list of clients. TODO: Make a function called add_client that handles this.
 		if(!server->clients) server->clients = client;
 		else {
 			NU_Client_Socket_t *tmp_client = NULL;
@@ -168,4 +167,23 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	client->port = bsock->port;
 	server->amount_of_clients++;
 	return client;
+}
+
+int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, char *message, unsigned int timeout){
+	size_t buffer_size = strlen(message);
+	size_t result = send_all(client->sockfd, message, timeout);
+	server->data->bytes_sent += result;
+	server->data->messages_sent++;
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
+	return result;
+}
+
+const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout){
+	resize_buffer(client->bbuf, buffer_size);
+	size_t result = receive_all(client->sockfd, client->bbuf, timeout);
+	client->data.bytes_received += result;
+	client->data.messages_received++;
+	client->bbuf->buffer[result] = '\0';
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
+	return (const char *)client->bbuf->buffer;
 }

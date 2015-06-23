@@ -57,7 +57,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *soc
 int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, char *message, unsigned int timeout);
 
 /* Receives data from any of current connections. */
-char *NU_Server_recieve(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout);
+char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout);
 
 /* Receive data from the socket and feed it into a file. sendfile is used for maximum efficiency. */
 int NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);

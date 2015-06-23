@@ -12,6 +12,15 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
+static int reset_client(NU_Client_t *client){
+   const int hostname_length = 100, port_length = 5;
+   memset(client->hostname, '\0', hostname_length);
+   memset(client->port, '\0', port_length);
+   memset(client->bbuf, '\0', sizeof(NU_Bounded_Buffer_t));
+   client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
+   return 1;
+}
+
 NU_Client_t *NU_Client_create(int flags){
 	MU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) return NULL;
@@ -32,7 +41,7 @@ int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(retval));
 		return 0;
 	}
-	if((client->sockfd = get_client_socket(results)) == -1){
+	if((client->sockfd = get_socket(results)) == -1){
 		MU_LOG_WARNING(logger, "Was unable to find a valid address!\n");
 		freeaddrinfo(results);
 		return 0;
@@ -44,27 +53,20 @@ int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 
 int NU_Client_send(NU_Client_t *client, char *message, unsigned int timeout){
 	size_t buffer_size = strlen(message);
-	size_t result = send_all(client->sockfd, message, &data_sent, timeout);
-	if(result != buffer_size){
-		MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
-		return 0;
-	}
+	size_t result = send_all(client->sockfd, message, timeout);
 	client->data->bytes_sent += result;
 	client->data->messages_sent++;
-	return 1;
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
+	return result;
 }
 
 const char *NU_Client_recieve(NU_Client_t *client, size_t buffer_size, unsigned int timeout){
 	resize_buffer(client->bbuf, buffer_size);
-	client->bbuf->index = 0;
 	size_t result = receive_all(client->sockfd, client->bbuf, timeout);
 	client->data.bytes_received += result;
 	client->data.messages_received++;
-	if(result != buffer_size){
-		MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
-		client->bbuf->buffer[result] = '\0';
-		return (const char *) client->bbuf->buffer;
-	}
+	client->bbuf->buffer[result] = '\0';
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to recieve enough data to fill the buffer! Total received: %d, Buffer Size: %d\n", result, buffer_size);
 	return (const char *)client->bbuf->buffer;
 }
 

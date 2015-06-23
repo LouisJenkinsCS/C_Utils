@@ -35,27 +35,14 @@ typedef struct {
 static int resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size){
    if(!bbuf->buffer){
       bbuf->buffer = calloc(1, new_size);
-      bbuf->size = bbuf->index = 0;
+      bbuf->size = 0;
       MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
       return 1;
    }
    if(bbuf->size == new_size) return 1;
    bbuf->buffer = realloc(bbuf->buffer, new_size);
-   if(bbuf->index > new_size) {
-      MU_LOG_VERBOSE(logger, "The bounded buffer's index was moved from %d to %d!\n", bbuf->index, new_size - 1);
-      bbuf->index = new_size - 1;
-   }
    MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bbuf->size, new_size);
    bbuf->size = new_size;
-   return 1;
-}
-
-static int reset_client(NU_Client_t *client){
-   const int hostname_length = 100, port_length = 5;
-   memset(client->hostname, '\0', hostname_length);
-   memset(client->port, '\0', port_length);
-   memset(client->bbuf, '\0', sizeof(NU_Bounded_Buffer_t));
-   client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
    return 1;
 }
 
@@ -89,7 +76,7 @@ static size_t send_all(int sockfd, char *message, unsigned int timeout){
 }
 
 static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout){
-   size_t total_received = 0, data_left = bbuf->size;
+   size_t total_received = 0, data_left = bbuf->size - 1;
    int retval;
    struct timeval tv;
    fd_set can_receive, can_receive_copy;
@@ -106,7 +93,7 @@ static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int ti
          else MU_LOG_ERROR(logger, "select: \"%s\"", strerror(retval));
          break;
       }
-      if((retval = recv(sockfd, bbuf->buffer[bbuf->index], data_left, 0)) <= 0){
+      if((retval = recv(sockfd, bbuf->buffer[total_received], data_left, 0)) <= 0){
          if(!retval) MU_LOG_INFO(logger, "recv: disconnected from the stream!\n");
          else MU_LOG_ERROR(logger, "recv: \"%s\"\n", strerror(retval));
          break;
@@ -118,7 +105,7 @@ static size_t receive_all(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int ti
    return total_received;
 }
 
-static int get_client_socket(struct addrinfo **results){
+static int get_socket(struct addrinfo **results){
    struct addrinfo *current = NULL;
    int sockfd = 0, iteration = 0;
    for(current = results; current; current = current->ai_next){
