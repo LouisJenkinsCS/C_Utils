@@ -28,11 +28,11 @@ int main(void){
 	if(!pid){
 		const char *id = child_or_parent(pid);
 		MU_DEBUG("Inside of %s;See logs for results!\n", id);
-		const int timeout = 10, buffer_size = 1024;
-		const char *message = "Hello World!\n";
+		const int timeout = 60, buffer_size = 1024;
+		const char *message = "Hello World!";
 		int message_length = strlen(message);
 		MU_LOG_INFO(logger, "%s: started!\n", id);
-		MU_LOG_INFO(logger, "%s: receiving a message from client_one with %d timeout!\n", id, timeout);
+		MU_LOG_INFO(logger, "%s: receiving a message from client_one with a %d second timeout!\n", id, timeout);
 		const char *retmsg = NU_Server_receive(server, client_one, buffer_size, timeout);
 		MU_LOG_VERBOSE(logger, "client_one message: \"%s\"\n", retmsg);
 		MU_LOG_INFO(logger, "%s: sending the message \"%s\" to client_one\n", id, message);
@@ -42,11 +42,11 @@ int main(void){
 	else{
 		const char *id = child_or_parent(pid);
 		MU_DEBUG("Inside of %s;See logs for results!\n", id);
-		const int timeout = 10, buffer_size = 1024;
-		const char *message = "Goodbyte World!\n";
+		const int timeout = 60, buffer_size = 1024;
+		const char *message = "Goodbye World!";
 		int message_length = strlen(message);
 		MU_LOG_INFO(logger, "%s: started!\n", id);
-		MU_LOG_INFO(logger, "%s: receiving a message from client_two with %d timeout!\n", id, timeout);
+		MU_LOG_INFO(logger, "%s: receiving a message from client_two with a %d second timeout!\n", id, timeout);
 		const char *retmsg = NU_Server_receive(server, client_two, buffer_size, timeout);
 		MU_LOG_VERBOSE(logger, "client_one message: \"%s\"\n", retmsg);
 		MU_LOG_INFO(logger, "%s: sending the message \"%s\" to client_two\n", id, message);

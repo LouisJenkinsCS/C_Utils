@@ -52,7 +52,7 @@ static int timed_accept(int sockfd, char **ip_addr, unsigned int timeout){
 static int resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size){
    if(!bbuf->buffer){
       bbuf->buffer = calloc(1, new_size);
-      bbuf->size = 0;
+      bbuf->size = new_size;
       MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
       return 1;
    }
