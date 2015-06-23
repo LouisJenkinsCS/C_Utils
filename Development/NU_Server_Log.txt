@@ -1,0 +1,14 @@
+03:44:51 PM: [VERBOSE](./Net_Utils/NU_Server.c:190) "Currently existing bsock?: False
+"
+03:44:51 PM: [VERBOSE](./Net_Utils/NU_Server.c:151) "Currently existing client?: False
+"
+03:44:53 PM: [VERBOSE](./Net_Utils/NU_Server.c:151) "Currently existing client?: False
+"
+03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
+"
+03:44:55 PM: [WARNING](./Net_Utils/NU_Server.c:307) "Was unable to recieve enough data to fill the buffer! Total received: 0, Buffer Size: 1024
+"
+03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
+"
+03:44:55 PM: [WARNING](./Net_Utils/NU_Server.c:307) "Was unable to recieve enough data to fill the buffer! Total received: 0, Buffer Size: 1024
+"

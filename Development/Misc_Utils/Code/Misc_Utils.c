@@ -77,7 +77,7 @@ char *MU_Timer_To_String(MU_Timer_t *timer){
 	return formatted_time;
 }
 
-void MU_Timer_Destroy(Timer_t *timer){
+void MU_Timer_Destroy(MU_Timer_t *timer){
 	free(timer->start);
 	free(timer->end);
 	free(timer);

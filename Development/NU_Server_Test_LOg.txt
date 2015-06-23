@@ -1,0 +1,18 @@
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:48) "Parent: started!
+"
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:49) "Parent: receiving a message from client_two with 10 timeout!
+"
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:34) "Child: started!
+"
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:35) "Child: receiving a message from client_one with 10 timeout!
+"
+03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server_Test.c:51) "client_one message: ""
+"
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:52) "Parent: sending the message "Goodbyte World!
+" to client_two
+"
+03:44:55 PM: [VERBOSE](./Net_Utils/NU_Server_Test.c:37) "client_one message: ""
+"
+03:44:55 PM: [INFO](./Net_Utils/NU_Server_Test.c:38) "Child: sending the message "Hello World!
+" to client_one
+"

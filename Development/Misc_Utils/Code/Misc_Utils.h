@@ -151,13 +151,13 @@ int MU_Timer_Stop(MU_Timer_t *timer);
  * @param timer Timer to obtain the total time of.
  * @return Formatted total time.
  */
-char *MU_Timer_To_String(Timer_t *timer);
+char *MU_Timer_To_String(MU_Timer_t *timer);
 
 /**
  * Destroys the passed timer.
  * @param timer Timer to be destroyed.
  */
-void MU_Timer_Destroy(Timer_t *timer);
+void MU_Timer_Destroy(MU_Timer_t *timer);
 
 /**
  * Obtain the current timestamp in Hours:Minutes:Seconds AM/PM. (I.E 11:45:30 AM)
