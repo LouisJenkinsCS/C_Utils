@@ -2,6 +2,7 @@
 #define MU_LOG_BSOCK_ERR(function, bsock) do {\
 	MU_LOG_VERBOSE(logger, "bsock: port->\"%s\", sockfd->%d, has_next: %s\n", bsock->port, bsock->sockfd, bsock->next ? "True" : "False"); \
 	MU_LOG_WARNING(logger, function# ": \"%s\"\n", strerror(-1)); \
+	bsock->sockfd = 0; \
 } while(0)
 
 __attribute__((constructor)) static void init_logger(void){
@@ -39,8 +40,8 @@ static int setup_bound_socket(NU_Bound_Socket_t *bsock, char *port){
 		return 0;
 	}
 	if(setsockopt(bsock->sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
-		MU_LOG_BSOCK_ERR(setsockopt, bsock);
 		shutdown(bsock->sockfd, SHUT_RDWR);
+		MU_LOG_BSOCK_ERR(setsockopt, bsock);
 		return 0;
 	}	
 	my_addr.sin_family = AF_INET;
@@ -48,13 +49,13 @@ static int setup_bound_socket(NU_Bound_Socket_t *bsock, char *port){
 	my_addr.sin_addr.s_addr = INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
 	if(bind(bsock->sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
-		MU_LOG_BSOCK_ERR(bind, bsock);
 		shutdown(bsock->sockfd, SHUT_RDWR);
+		MU_LOG_BSOCK_ERR(bind, bsock);
 		return 0;
 	}
 	if(listen(bsock->sockfd, queue_size) == -1){
-		MU_LOG_BSOCK_ERR(listen, bsock);
 		shutdown(bsock->sockfd, SHUT_RDWR);
+		MU_LOG_BSOCK_ERR(listen, bsock);
 		return 0;
 	}
 	return 1;
