@@ -15,6 +15,14 @@
 #include <netdb.h>
 #include <errno.h>
 
+
+/// Default action
+#define NU_NONE 1 << 0
+/// Creates the socket as UDP
+#define NU_UDP 1 << 1
+/// Set socket options to enable broadcasting. Will also flag as UDP.
+#define NU_BROADCAST 1 << 2
+
 /* Client-Server general data structures below */
 
 typedef struct {

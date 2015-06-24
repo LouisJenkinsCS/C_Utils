@@ -8,6 +8,8 @@ MU_Logger_t *logger = NULL;
 	bsock->sockfd = 0; \
 } while(0)
 
+#define MU_LOG_SERVER(logger, message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
+
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){
@@ -21,7 +23,6 @@ __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_Destroy(logger, 1);
 	logger = NULL;
 }
-
 
 static int timed_accept(int sockfd, char **ip_addr, unsigned int timeout){
    fd_set can_accept;
@@ -204,7 +205,7 @@ static void destroy_bound_socket(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	free(bsock);
 }
 
-NU_Server_t *NU_Server_create(int flags){
+NU_Server_t *NU_Server_create(){
 	NU_Server_t *server = calloc(1, sizeof(NU_Server_t));
 	return server;
 }
@@ -282,6 +283,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	free(ip_addr);
 	client->port = bsock->port;
 	server->amount_of_clients++;
+	MU_LOG_SERVER(logger, "%s connected to port %d\n", client->ip_address, client->port);
 	return client;
 }
 
@@ -305,6 +307,14 @@ const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, s
 	return (const char *)client->bbuf->buffer;
 }
 
-int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client){
-	return 0;
+int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message){
+	if(!server || !client) return 0;
+	if(message){
+		shutdown(client->sockfd, SHUT_RD);
+		NU_Server_send(server, client, message, 0);
+		shutdown(client->sockfd, SHUT_RDWR);
+	} else shutdown(client->sockfd, SHUT_RDWR);
+	MU_LOG_SERVER(logger, "%s disconnected from port %d\n", client->ip_address, client->port);
+	client->sockfd = 0;
+	return 1;
 }

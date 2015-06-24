@@ -5,7 +5,7 @@
 
 typedef struct NU_Bound_Socket_t{
    /// The bound socket.
-   int sockfd;
+   volatile int sockfd;
    /// Port the socket is bound to.
    unsigned int port;
    /// The next socket the server is listening on.
@@ -14,7 +14,7 @@ typedef struct NU_Bound_Socket_t{
 
 typedef struct NU_Client_Socket_t{
    /// Socket file descriptor associated with a client.
-   int sockfd;
+   volatile int sockfd;
    /// The IP address the client is connected on.
    char ip_address[INET_ADDRSTRLEN];
    /// The port this client is connected to!
@@ -40,7 +40,7 @@ typedef struct {
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(int flags);
+NU_Server_t *NU_Server_create();
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */

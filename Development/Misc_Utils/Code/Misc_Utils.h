@@ -23,8 +23,10 @@
 typedef enum {
 	/// Display all types of warnings.
 	MU_ALL = 0,
-	/// Display Info, Warnings, Errors and Assertions only.
+	/// Display Info, Custom, Warnings, Errors and Assertions only.
 	MU_INFO,
+	/// Display Custom, Warnings, Errors and Assertions only.
+	MU_CUSTOM,
 	/// Display Warnings, Errors and Assertions only.
 	MU_WARNING,
 	/// Display Errors and Assertions only.
@@ -51,17 +53,17 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 /// Prints a debug message, along with it's timestamp, file and line of code it's on.
 #define MU_DEBUG(message, ...) do { \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(stderr, "%s: [DEBUG]: \"" message "\"\n", timestamp, ##__VA_ARGS__); \
+	fprintf(stderr, "%s: [DEBUG]: " message "\n", timestamp, ##__VA_ARGS__); \
 	free(timestamp); \
 } while(0)
 #endif
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
 #define MU_ASSERT(condition, logger, message, ...) do { \
 	if(!(condition)){ \
-		if(!logger && !logger->file && logger->level > MU_ERROR) assert(condition); \
+		if(!logger || !logger->file || logger->level > MU_ERROR) assert(condition); \
 		char *timestamp = MU_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
-		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: \"" #message "\"\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
+		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \
 		exit(EXIT_FAILURE); \
@@ -70,10 +72,10 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 /// An assertion which prints to stderr, the logfile and returns.
 #define MU_ASSERT_RETURN(condition, logger, retval, message, ...) do { \
 	if(!(condition)){ \
-		if(!logger && !logger->file && logger->level > MU_ERROR) return retval; \
+		if(!logger || !logger->file || logger->level > MU_ERROR) return retval; \
 		char *timestamp = MU_Get_Timestamp(); \
 		MU_DEBUG("Assertion Failed! See log!\n"); \
-		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: \"" #message "\"\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
+		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \
 		return retval; \
@@ -81,34 +83,42 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 } while(0)
 /// Log an error message along with timestamp, file and line of code.
 #define MU_LOG_ERROR(logger, message, ...) do { \
-	if(!logger && !logger->file && logger->level > MU_ERROR) break; \
+	if(!logger || !logger->file || logger->level > MU_ERROR) break; \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(logger->file, "%s: [ERROR](%s:%d) \"" message "\"\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [ERROR](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0) 
 /// Log a warning message along with timestamp, file and line of code.
 #define MU_LOG_WARNING(logger, message, ...) do { \
-	if(!logger && !logger->file && logger->level > MU_WARNING) break; \
+	if(!logger || !logger->file || logger->level > MU_WARNING) break; \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(logger->file, "%s: [WARNING](%s:%d) \"" message "\"\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [WARNING](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fflush(logger->file); \
+	free(timestamp); \
+} while(0)
+/// Log a customer message along with timestamp, without file and line of code.
+#define MU_LOG_CUSTOM(logger, prefix, message, ...) do { \
+	if(!logger || !logger->file || logger->level > MU_CUSTOM) break; \
+	char *timestamp = MU_Get_Timestamp(); \
+	fprintf(logger->file, "%s: [%s] " message "\n", timestamp, prefix, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
 /// Log an info message along with timestamp, file and line of code.
 #define MU_LOG_INFO(logger, message, ...) do { \
-	if(!logger && !logger->file && logger->level > MU_INFO) break; \
+	if(!logger || !logger->file || logger->level > MU_INFO) break; \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(logger->file, "%s: [INFO](%s:%d) \"" message "\"\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [INFO](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
 /// Log a verbose message along with timestamp, file and line of code. This differs from INFO in that it is used for
 /// logging almost trivial information, good for if you want to log every single thing without having to remove it later.
 #define MU_LOG_VERBOSE(logger, message, ...) do { \
-	if(!logger && !logger->file && logger->level > MU_ALL) break; \
+	if(!logger || !logger->file || logger->level > MU_ALL) break; \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(logger->file, "%s: [VERBOSE](%s:%d) \"" message "\"\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [VERBOSE](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
