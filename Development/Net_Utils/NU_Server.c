@@ -235,7 +235,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, unsigned int port, size_t
 	return bsock;
 }
 
-int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock, const char *message){
 	if(!server || !bsock || !bsock->sockfd) return 0;
 	if(shutdown(bsock->sockfd, SHUT_RD) == -1){
 		MU_LOG_BSOCK_ERR(shutdown, bsock);
@@ -243,8 +243,8 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	}
 	NU_Client_Socket_t *client = NULL;
 	for(client = server->clients; client; client = client->next){
-		if(client->port == bsock->port){
-			NU_Server_disconnect(server, client);
+		if(client->sockfd && client->port == bsock->port){
+			NU_Server_disconnect(server, client, message);
 		}
 	}
 	server->amount_of_sockets--;
@@ -293,7 +293,7 @@ int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *
 	size_t result = send_all(client->sockfd, message, timeout);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
-	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to host!Total Sent: %d, Message Size: %d\n", result, buffer_size);
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %d, Message Size: %d\n", result, buffer_size);
 	return result;
 }
 
@@ -307,6 +307,19 @@ const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, s
 	return (const char *)client->bbuf->buffer;
 }
 
+char *NU_Server_about(NU_Server_t *server){
+	char *about_server;
+	/// TODO: Implement these functions.
+	char *bsock_str = bsock_to_string(server->sockets);
+	char *data_str = data_to_string(server->data);
+	char *client_str = clients_to_string(server->clients);
+	asprintf(&about_server, "Bound to %d ports: %s\nData usage: %s\n%d clients connected: %s\n", bsock_str, data_str, client_str);
+	free(bsock_string);
+	free(data_str);
+	free(client_str);
+	MU_LOG_INFO(logger, "About Server: \"%s\"\n", about_server);
+}
+
 int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message){
 	if(!server || !client) return 0;
 	if(message){
@@ -316,5 +329,24 @@ int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const 
 	} else shutdown(client->sockfd, SHUT_RDWR);
 	MU_LOG_SERVER(logger, "%s disconnected from port %d\n", client->ip_address, client->port);
 	client->sockfd = 0;
+	return 1;
+}
+
+int NU_Server_shutdown(NU_Server_t *server, const char *message){
+	if(!server) return 0;
+	NU_Bound_Socket_t *bsock = NULL;
+	for(bsock = server->sockets; bsock; bsock = bsock->next){
+		NU_Server_unbind(server, bsock, message);
+	}
+	return server->amount_of_sockets == 0;
+}
+
+int NU_Server_destroy(NU_Server_t *server, const char *message){
+	if(!server) return 0;
+	if(!server->amount_of_sockets) NU_Server_shutdown(server, message);
+	// TODO: Implement these two functions.
+	delete_all_clients(server->clients);
+	delete_all_sockets(server->sockets);
+	free(server);
 	return 1;
 }

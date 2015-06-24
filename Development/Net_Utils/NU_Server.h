@@ -31,9 +31,9 @@ typedef struct {
    /// List of clients currently connected to.
    NU_Client_Socket_t *clients;
    /// Size of the list of clients that are connected.
-   size_t amount_of_clients;
+   volatile size_t amount_of_clients;
    /// Size of the list of bound sockets to a port.
-   size_t amount_of_sockets;
+   volatile size_t amount_of_sockets;
    /// Keep track of overall data-usage.
    NU_Collective_Data_t data;
 } NU_Server_t;

@@ -101,7 +101,7 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 #define MU_LOG_CUSTOM(logger, prefix, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_CUSTOM) break; \
 	char *timestamp = MU_Get_Timestamp(); \
-	fprintf(logger->file, "%s: [%s] " message "\n", timestamp, prefix, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [%s]: " message "\n", timestamp, prefix, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
