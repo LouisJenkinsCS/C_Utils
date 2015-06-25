@@ -16,7 +16,7 @@ typedef struct NU_Client_Socket_t{
    /// Socket file descriptor associated with a client.
    volatile int sockfd;
    /// The IP address the client is connected on.
-   char ip_address[INET_ADDRSTRLEN];
+   char ip_addr[INET_ADDRSTRLEN];
    /// The port this client is connected to!
    unsigned int port;
    /// Buffer that any data will be read into.

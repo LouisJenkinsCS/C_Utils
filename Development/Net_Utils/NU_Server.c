@@ -24,6 +24,61 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
+static void delete_all_clients(NU_Server_t *server){
+	if(!server->clients) return;
+	NU_Client_Socket_t *client = NULL;
+	for(client = server->clients; client; client = server->clients){
+		server->clients = client->next;
+		server->amount_of_clients--;
+		if(client->bbuf) free(client->bbuf->buffer);
+		free(client->bbuf);
+		free(client);
+	}
+}
+
+static void delete_all_sockets(NU_Server_t *server){
+	if(!server->sockets) return;
+	NU_Bound_Socket_t *bsock = NULL;
+	for(bsock = server->sockets; bsock; bsock = server->sockets){
+		server->sockets = bsock->next;
+		server->amount_of_sockets--;
+		free(bsock);
+	}
+}
+
+static char *bsock_to_string(NU_Bound_Socket_t *head){
+	if(!head) return NULL;
+	char *bsock_str = strdup("{ ");
+	NU_Bound_Socket_t *bsock = NULL;
+	for(bsock = head; bsock; bsock = bsock->next){
+		char *old_str = bsock_str;
+		asprintf(&bsock_str, "%s (port: %d, sockfd: %d),", bsock_str, bsock->port, bsock->sockfd);
+		free(old_str);
+	}
+	return bsock_str;
+}
+
+static char *data_to_string(NU_Collective_Data_t data){
+	char *data_str;
+	asprintf(data_str, "{ messages_sent: %d, bytes_sent: %d, messages_received: %d, bytes_received: %d }",
+		data.messages_sent, data.bytes_sent, data.messages_received, data.bytes_received);
+	return data_str;
+}
+
+static char *clients_to_string(NU_Client_Socket_t *head){
+	if(!head) return NULL;
+	char *clients_str = strdup("{ ");
+	NU_Client_Socket_t *client = NULL;
+	for(client = head; client; client = client->next){
+		char *old_str = clients_str;
+		asprintf(&client_str, "%s (sockfd: %d, ip_addr: %s, port: %d, bbuf: [init?: %s, size: %d])"
+			clients_str, client->sockfd, client->ip_addr, client->port, client->bbuf ? "True" : "False",
+			client->bbuf && client->bbuf->size ? client->bbuf->size : 0);
+		free(old_str);
+	}
+	return clients_str;
+}
+
 static int timed_accept(int sockfd, char **ip_addr, unsigned int timeout){
    fd_set can_accept;
    struct timeval tv;
@@ -278,12 +333,12 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 		// Note that the client isn't freed and even if there is an error, it is still added to the list to be reused.
 		return NULL;
 	}
-	strcpy(client->ip_address, ip_addr);
+	strcpy(client->ip_addr, ip_addr);
 	/// Note to self: Optimize retrieval of IP Address, wasted extra, and very short lived allocation.
 	free(ip_addr);
 	client->port = bsock->port;
 	server->amount_of_clients++;
-	MU_LOG_SERVER(logger, "%s connected to port %d\n", client->ip_address, client->port);
+	MU_LOG_SERVER(logger, "%s connected to port %d\n", client->ip_addr, client->port);
 	return client;
 }
 
@@ -327,7 +382,7 @@ int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const 
 		NU_Server_send(server, client, message, 0);
 		shutdown(client->sockfd, SHUT_RDWR);
 	} else shutdown(client->sockfd, SHUT_RDWR);
-	MU_LOG_SERVER(logger, "%s disconnected from port %d\n", client->ip_address, client->port);
+	MU_LOG_SERVER(logger, "%s disconnected from port %d\n", client->ip_addr, client->port);
 	client->sockfd = 0;
 	return 1;
 }
@@ -345,8 +400,8 @@ int NU_Server_destroy(NU_Server_t *server, const char *message){
 	if(!server) return 0;
 	if(!server->amount_of_sockets) NU_Server_shutdown(server, message);
 	// TODO: Implement these two functions.
-	delete_all_clients(server->clients);
-	delete_all_sockets(server->sockets);
+	delete_all_clients(server);
+	delete_all_sockets(server);
 	free(server);
 	return 1;
 }
