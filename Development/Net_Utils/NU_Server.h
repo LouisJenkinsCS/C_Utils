@@ -3,6 +3,9 @@
 
 #include <Net_Utils.h>
 
+/// Logs server-specific messages to the server's logfile.
+#define MU_LOG_SERVER(logger, message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
+
 typedef struct NU_Bound_Socket_t{
    /// The bound socket.
    volatile int sockfd;
@@ -64,6 +67,12 @@ int NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, F
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
 int NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);
+
+/* Blocks for requested timeout or until one of the client sockets passed are available for receiving. */
+NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout);
+
+/* Blocks for requested timeout or until one of the client sockets passed are available for sending. */
+NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout);
 
 /* Returns a string representation about this client, including but not limited to:
    1) Server's port number binded to as well as local IP.
