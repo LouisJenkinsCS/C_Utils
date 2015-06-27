@@ -1,7 +1,7 @@
 #ifndef NET_UTILS_SERVER_H
 #define NET_UTILS_SERVER_H
 
-#include <Net_Utils.h>
+#include <NU_Helper.h>
 
 /// Logs server-specific messages to the server's logfile.
 #define MU_LOG_SERVER(logger, message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)

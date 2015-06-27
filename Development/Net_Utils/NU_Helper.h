@@ -1,5 +1,5 @@
-#ifndef NET_UTILS_H
-#define NET_UTILS_H
+#ifndef NET_UTILS_HELPER_H
+#define NET_UTILS_HELPER_H
 
 #define _GNU_SOURCE 1
 
@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <errno.h>
 
+/// NUH_* namespace reserved for Net Utils Helper functions.
 
 /// Default action
 #define NU_NONE 1 << 0
@@ -44,4 +45,16 @@ typedef struct {
    size_t size;
 } NU_Bounded_Buffer_t;
 
-#endif /* END NET_UTILS_H */
+int NUH_resize(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *logger);
+ 
+size_t NUH_send_all(int sockfd, const char *message, unsigned int timeout, MU_Logger_t *logger);
+
+size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout, MU_Logger_t *logger);
+
+int NUH_get_socket(struct addrinfo **results, MU_Logger_t *logger);
+
+int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
+
+char *NUH_data_to_string(NU_Collective_Data_t data);
+
+#endif /* END NET_UTILS_HELPER_H */

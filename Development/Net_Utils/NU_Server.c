@@ -22,6 +22,8 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
+/* Server-specific helper functions */
+
 static void delete_all_clients(NU_Server_t *server){
 	if(!server->clients) return;
 	NU_Client_Socket_t *client = NULL;
@@ -56,13 +58,6 @@ static char *bsock_to_string(NU_Bound_Socket_t *head){
 	return bsock_str;
 }
 
-static char *data_to_string(NU_Collective_Data_t data){
-	char *data_str;
-	asprintf(data_str, "{ messages_sent: %d, bytes_sent: %d, messages_received: %d, bytes_received: %d }",
-		data.messages_sent, data.bytes_sent, data.messages_received, data.bytes_received);
-	return data_str;
-}
-
 static char *clients_to_string(NU_Client_Socket_t *head){
 	if(!head) return NULL;
 	char *clients_str = strdup("{ ");
@@ -76,118 +71,6 @@ static char *clients_to_string(NU_Client_Socket_t *head){
 	}
 	return clients_str;
 }
-
-static int timed_accept(int sockfd, char **ip_addr, unsigned int timeout){
-   fd_set can_accept;
-   struct timeval tv;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&can_accept);
-   FD_SET(sockfd, &can_accept);
-   int retval;
-   if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_accept, NULL, NULL, &tv))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "timed_accept->select: \"timeout\"\n");
-      else MU_LOG_ERROR(logger, "timed_accept->select: \"%s\"\n", strerror(errno));
-      return 0;
-   }
-   struct sockaddr_in addr;
-   socklen_t size = sizeof(struct sockaddr_in);
-   if((retval = TEMP_FAILURE_RETRY(accept(sockfd, (struct sockaddr *)&addr, &size))) == -1){
-      MU_LOG_ERROR(logger, "timed_accept->accept: \"%s\"\n", strerror(errno));
-      return 0;
-   }
-   if(ip_addr){
-      *ip_addr = calloc(1, INET_ADDRSTRLEN);
-      if(!inet_ntop(AF_INET, &addr, *ip_addr , INET_ADDRSTRLEN)) MU_LOG_WARNING(logger, "inet_ntop: \"%s\"\n", strerror(errno));
-   }
-   return retval;
-}
-
-static int resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size){
-   if(!bbuf->buffer){
-      bbuf->buffer = calloc(1, new_size);
-      bbuf->size = new_size;
-      MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
-      return 1;
-   }
-   if(bbuf->size == new_size) return 1;
-   bbuf->buffer = realloc(bbuf->buffer, new_size);
-   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bbuf->size, new_size);
-   bbuf->size = new_size;
-   return 1;
-}
-
-static size_t send_all(int sockfd, const char *message, unsigned int timeout){
-   size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
-   int retval;
-   struct timeval tv;
-   fd_set can_send, can_send_copy;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&can_send);
-   FD_SET(sockfd, &can_send);
-   while(buffer_size > total_sent){
-      can_send_copy = can_send;
-      // Restart timeout.
-      tv.tv_sec = timeout;
-      if((retval = TEMP_FAILURE_RETRY(select(sockfd+1, NULL, &can_send_copy, NULL, &tv))) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "send_all->select: \"timed out\"\n");
-         else MU_LOG_ERROR(logger, "send_all->select: \"%s\"", strerror(errno));
-         break;
-      }
-      if((retval = TEMP_FAILURE_RETRY(send(sockfd, message + total_sent, data_left, 0))) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "send_all->send: \"disconnected from the stream\"\n");
-         else MU_LOG_ERROR(logger, "send_all->send: \"%s\"\n", strerror(errno));
-         break;
-      }
-      total_sent += retval;
-      data_left -= retval;
-   }
-   return total_sent;
-}
-
-static size_t timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout){
-   int retval;
-   struct timeval tv;
-   fd_set can_receive;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&can_receive);
-   FD_SET(sockfd, &can_receive);
-   if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive, NULL, NULL, &tv))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "timed_receive->select: \"timed out\"\n");
-      else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
-      return 0;
-   }
-   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, bbuf->size, 0))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
-      else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
-      return 0;
-   }
-   return retval;
-}
-
-static int get_socket(struct addrinfo **results){
-   struct addrinfo *current = NULL;
-   int sockfd = 0, iteration = 0;
-   for(current = *results; current; current = current->ai_next){
-      if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) == -1) {
-         MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
-         continue;
-      }
-      MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++iteration);
-      if(connect(sockfd, current->ai_addr, current->ai_addrlen) == -1){
-         close(sockfd);
-         MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
-         continue;
-      }
-      break;
-   }
-   if(!current) return -1;
-   return sockfd;
-}
-
-/* Server-specific helper functions */
 
 static NU_Client_Socket_t *reuse_existing_client(NU_Client_Socket_t *head){
 	NU_Client_Socket_t *tmp_client = NULL;
@@ -324,7 +207,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 		}
 	}
 	char *ip_addr;
-	if(!(client->sockfd = timed_accept(bsock->sockfd, &ip_addr, timeout))){
+	if(!(client->sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout))){
 		MU_LOG_INFO(logger, "accept->accept: \"timed out\"\n");
 		return NULL;
 	}
@@ -339,7 +222,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout){
 	if(!server || !client || !message) return 0;
 	size_t buffer_size = strlen(message);
-	size_t result = send_all(client->sockfd, message, timeout);
+	size_t result = NUH_send_all(client->sockfd, message, timeout);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
 	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %d, Message Size: %d\n", result, buffer_size);
@@ -360,8 +243,8 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
 	resize_buffer(client->bbuf, buffer_size);
 	size_t result, total_received = 0;
-	int binary_read = is_selected(flags, NU_BINARY);
-	while((result = timed_receive(client->sockfd, client->bbuf, timeout)) == buffer_size){
+	int binary_read = NUH_is_selected(flags, NU_BINARY);
+	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout)) == buffer_size){
 		if(binary_read) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
 		else fprintf(file, "%.*s", buffer_size, client->bbuf->buffer);
 		total_received += result;
@@ -477,7 +360,7 @@ NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket
 char *NU_Server_about(NU_Server_t *server){
 	char *about_server;
 	char *bsock_str = bsock_to_string(server->sockets);
-	char *data_str = data_to_string(server->data);
+	char *data_str = NUH_data_to_string(server->data);
 	char *client_str = clients_to_string(server->clients);
 	asprintf(&about_server, "Bound to %d ports: %s\nData usage: %s\n%d clients connected: %s\n", bsock_str, data_str, client_str);
 	free(bsock_string);
