@@ -92,7 +92,7 @@ static int timed_accept(int sockfd, char **ip_addr, unsigned int timeout){
    }
    struct sockaddr_in addr;
    socklen_t size = sizeof(struct sockaddr_in);
-   if((retval = accept(sockfd, (struct sockaddr *)&addr, &size)) == -1){
+   if((retval = TEMP_FAILURE_RETRY(accept(sockfd, (struct sockaddr *)&addr, &size))) == -1){
       MU_LOG_ERROR(logger, "timed_accept->accept: \"%s\"\n", strerror(errno));
       return 0;
    }
@@ -135,7 +135,7 @@ static size_t send_all(int sockfd, const char *message, unsigned int timeout){
          else MU_LOG_ERROR(logger, "send_all->select: \"%s\"", strerror(errno));
          break;
       }
-      if((retval = send(sockfd, message + total_sent, data_left, 0)) <= 0){
+      if((retval = TEMP_FAILURE_RETRY(send(sockfd, message + total_sent, data_left, 0))) <= 0){
          if(!retval) MU_LOG_INFO(logger, "send_all->send: \"disconnected from the stream\"\n");
          else MU_LOG_ERROR(logger, "send_all->send: \"%s\"\n", strerror(errno));
          break;
@@ -155,13 +155,13 @@ static size_t timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int 
    FD_ZERO(&can_receive);
    FD_SET(sockfd, &can_receive);
    if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive, NULL, NULL, &tv))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "receive_all->select: \"timed out\"\n");
-      else MU_LOG_ERROR(logger, "receive_all->select: \"%s\"", strerror(errno));
+      if(!retval) MU_LOG_INFO(logger, "timed_receive->select: \"timed out\"\n");
+      else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
       return 0;
    }
-   if((retval = recv(sockfd, bbuf->buffer, bbuf->size, 0)) <= 0){
+   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, bbuf->size, 0))) <= 0){
       if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
-      else MU_LOG_ERROR(logger, "receive_all->recv: \"%s\"\n", strerror(errno));
+      else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
       return 0;
    }
    return retval;
@@ -279,7 +279,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, unsigned int port, size_t
 		}
 	}
 	if(!setup_bound_socket(bsock, port, queue_size)){
-		MU_LOG_WARNING(logger, "setup_bound_socket: \"was unable to setup bsock\"\n");
+		MU_LOG_WARNING(logger, "bind->setup_bound_socket: \"was unable to setup bsock\"\n");
 		return NULL;
 	}
 	server->amount_of_sockets++;
@@ -325,12 +325,10 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	}
 	char *ip_addr;
 	if(!(client->sockfd = timed_accept(bsock->sockfd, &ip_addr, timeout))){
-		MU_LOG_INFO(logger, "accept: \"timed out\"\n");
-		// Note that the client isn't freed and even if there is an error, it is still added to the list to be reused.
+		MU_LOG_INFO(logger, "accept->accept: \"timed out\"\n");
 		return NULL;
 	}
 	strcpy(client->ip_addr, ip_addr);
-	/// Note to self: Optimize retrieval of IP Address, wasted extra, and very short lived allocation.
 	free(ip_addr);
 	client->port = bsock->port;
 	server->amount_of_clients++;
@@ -384,20 +382,20 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
 	int file_fd;
 	if((file_fd = fileno(file)) == -1){
-		MU_LOG_WARNING(logger, "fileno: \"%s\"\n", strerror(errno));
+		MU_LOG_WARNING(logger, "send_file->fileno: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	struct stat get_size;
 	size_t file_size;
 	if(fstat(file_fd, &get_size) == -1){
-		MU_LOG_WARNING(logger, "fstat: \"%s\"\n", strerror(errno));
+		MU_LOG_WARNING(logger, "send_file->fstat: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	file_size = get_size.st_size;
 	MU_LOG_VERBOSE(logger, "Passed File Size is %u\n", file_size);
 	ssize_t retval;
 	if((retval = sendfile(client->sockfd, fileno(file), NULL, file_size)) == -1){
-		MU_LOG_WARNING(logger, "sendfile: \"%s\"\n", strerror(errno));
+		MU_LOG_WARNING(logger, "send_file->sendfile: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	return (size_t) retval;
@@ -413,19 +411,66 @@ NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Soc
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 	FD_ZERO(&receive_set);
-	int max_fd = 0;
-	size_t i = 0;
+	int max_fd = 0, retval;
+	size_t i = 0, new_size = 0;
 	for(;i < *size; i++){
 		NU_Client_Socket_t *client = clients[i];
-		if(!client || !client->sockfd){
-			*size = 0;
-			return NULL;
-		}
+		if(!client || !client->sockfd) continue;
 		FD_SET(client->sockfd, &receive_set);
+		new_size++;
 		if(client->sockfd > max_fd) max_fd = client->sockfd);
 	}
-	int retval = select(max_fd + 1, receive_set, NULL, NULL, &tv);
-	// TODO: Continue
+	if(!new_size) {
+		*size = 0;
+		return NULL;
+	}
+	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
+		if(!retval) MU_LOG_INFO(logger, "select_receive->select: \"timeout\"\n");
+		else MU_LOG_WARNING(logger, "select_receive->select: \"%s\"\n", strerror(errno));
+		*size = 0;
+		return NULL;
+	}
+	NU_Client_Socket_t **ready_clients = malloc(sizeof(NU_Client_Socket_t *) * retval);
+	new_size = 0;
+	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &can_receive)) ready_clients[new_size++] = clients;
+	*size = new_size;
+	return ready_clients;
+}
+
+NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout){
+	if(!server || !clients || !size || !*size){
+		*size = 0;
+		return NULL;
+	}
+	fd_set send_set;
+	struct timeval tv;
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+	FD_ZERO(&send_set);
+	int max_fd = 0, retval;
+	size_t i = 0, new_size = 0;
+	for(;i < *size; i++){
+		NU_Client_Socket_t *client = clients[i];
+		if(!client || !client->sockfd) continue;
+		FD_SET(client->sockfd, &send_set);
+		new_size++;
+		if(client->sockfd > max_fd) max_fd = client->sockfd);
+	}
+	if(!new_size) {
+		*size = 0;
+		return NULL;
+	}
+	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
+		if(!retval) MU_LOG_VERBOSE(logger, "select_send->select: \"timeout\"\n", timeout);
+		else MU_LOG_WARNING(logger, "select_send->select: \"%s\"\n", strerror(errno));
+		*size = 0;
+		return NULL;
+	}
+	NU_Client_Socket_t **ready_clients = malloc(sizeof(NU_Client_Socket_t *) * retval);
+	new_size = 0;
+	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &send_set)) ready_clients[new_size++] = clients;
+	*size = new_size;
+	return ready_clients;
 }
 
 
