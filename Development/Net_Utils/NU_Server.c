@@ -1,6 +1,7 @@
 #include <NU_Server.h>
+#include <stdarg.h>
 
-MU_Logger_t *logger = NULL;
+static MU_Logger_t *logger = NULL;
 
 #define MU_LOG_BSOCK_ERR(function, bsock) do { \
 	MU_LOG_VERBOSE(logger, "bsock: port->\"%d\", sockfd->%d, has_next: %s\n", bsock->port, bsock->sockfd, bsock->next ? "True" : "False"); \
@@ -8,13 +9,15 @@ MU_Logger_t *logger = NULL;
 	bsock->sockfd = 0; \
 } while(0)
 
+#define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
+
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){
 		MU_DEBUG("Unable to allocate memory for NU_Server's logger!!!");
 		return;
 	}
-	MU_Logger_Init(logger, "NU_Server_Log.txt", "w", MU_ALL);
+	MU_Logger_Init(logger, "NU_Server_Log.txt", "w", MU_INFO);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -215,7 +218,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	free(ip_addr);
 	client->port = bsock->port;
 	server->amount_of_clients++;
-	MU_LOG_SERVER(logger, "%s connected to port %d\n", client->ip_addr, client->port);
+	MU_LOG_SERVER("%s connected to port %d\n", client->ip_addr, client->port);
 	return client;
 }
 
@@ -373,6 +376,20 @@ char *NU_Server_about(NU_Server_t *server){
 	return about_server;
 }
 
+int NU_Server_log(NU_Server_t *server, const char *message, ...){
+	if(!server || !message) return 0;
+	va_list args;
+	va_start(args, message);
+	const buffer_size = 1024;
+	char buffer[buffer_size];
+	if(vsnprintf(buffer, buffer_size, message, args) < 0){ 
+		MU_LOG_WARNING(logger, "vsnprintf: \"%s\"\n", strerror(errno));
+		return 0;
+	}
+	MU_LOG_SERVER("%s", buffer);
+	return 1;
+}
+
 int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message){
 	if(!server || !client) return 0;
 	if(message){
@@ -380,8 +397,9 @@ int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const 
 		NU_Server_send(server, client, message, 0);
 		shutdown(client->sockfd, SHUT_RDWR);
 	} else shutdown(client->sockfd, SHUT_RDWR);
-	MU_LOG_SERVER(logger, "%s disconnected from port %d\n", client->ip_addr, client->port);
+	MU_LOG_SERVER("%s disconnected from port %d\n", client->ip_addr, client->port);
 	client->sockfd = 0;
+	server->amount_of_clients--;
 	return 1;
 }
 

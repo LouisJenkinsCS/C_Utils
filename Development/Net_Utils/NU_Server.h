@@ -3,9 +3,6 @@
 
 #include <NU_Helper.h>
 
-/// Logs server-specific messages to the server's logfile.
-#define MU_LOG_SERVER(logger, message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
-
 typedef struct NU_Bound_Socket_t{
    /// The bound socket.
    volatile int sockfd;
@@ -86,6 +83,9 @@ int NU_Server_shutdown(NU_Server_t *server, const char *message);
 
 /* Disconnect the server from the client. */
 int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message);
+
+/* Allows the user to log to server's logfile. */
+int NU_Server_log(NU_Server_t *server, const char *message, ...);
 
 /* The server will immediately close all connections, free up all resources, and destroy itself. */
 int NU_Server_destroy(NU_Server_t *server, const char *message);
