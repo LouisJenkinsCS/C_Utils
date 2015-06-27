@@ -1,22 +1,92 @@
-05:48:45 PM: [VERBOSE](./Net_Utils/NU_Server.c:184) "Currently existing bsock?: False
+12:22:00 PM: [VERBOSE](./Net_Utils/NU_Server.c:119) Currently existing bsock?: False
+
+12:22:00 PM: [VERBOSE](./Net_Utils/NU_Server.c:80) Currently existing client?: False
+
+12:22:07 PM: [SERVER]: 2.0.186.132 connected to port 10000
+
+12:22:07 PM: [VERBOSE](./Net_Utils/NU_Server.c:80) Currently existing client?: False
+
+12:22:11 PM: [SERVER]: 2.0.186.134 connected to port 10000
+
+12:22:11 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
+
+12:22:11 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 611, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1002, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:16 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 183, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 611, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 551, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 1024, Buffer Size: 1024
+
+12:22:18 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 634, Buffer Size: 1024
+
+12:22:46 PM: [INFO](./Net_Utils/NU_Helper.c:54) timed_receive->select: "timed out"
+
+12:22:46 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 0, Buffer Size: 1024
+
+12:22:46 PM: [INFO](./Net_Utils/NU_Server.c:372) About Server: "Bound to 1 ports: {  (port: 10000, sockfd: 5)  }
+Data usage: { messages_sent: 15, bytes_sent: 14264, messages_received: 15, bytes_received: 14084 }
+2 clients connected: {  (sockfd: 6, ip_addr: 2.0.186.132, port: 10000, bbuf: [init?: True, size: 0]) (sockfd: 7, ip_addr: 2.0.186.134, port: 10000, bbuf: [init?: True, size: 1025]) }
 "
-05:48:45 PM: [VERBOSE](./Net_Utils/NU_Server.c:145) "Currently existing client?: False
+
+12:22:48 PM: [INFO](./Net_Utils/NU_Helper.c:54) timed_receive->select: "timed out"
+
+12:22:48 PM: [VERBOSE](./Net_Utils/NU_Server.c:236) Total received: 0, Buffer Size: 1024
+
+12:22:48 PM: [INFO](./Net_Utils/NU_Server.c:372) About Server: "Bound to 1 ports: {  (port: 10000, sockfd: 5)  }
+Data usage: { messages_sent: 15, bytes_sent: 14264, messages_received: 15, bytes_received: 14084 }
+2 clients connected: {  (sockfd: 6, ip_addr: 2.0.186.132, port: 10000, bbuf: [init?: True, size: 1025]) (sockfd: 7, ip_addr: 2.0.186.134, port: 10000, bbuf: [init?: True, size: 0]) }
 "
-05:48:47 PM: [VERBOSE](./Net_Utils/NU_Server.c:145) "Currently existing client?: False
-"
-05:48:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
-"
-05:48:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:56) "Bounded buffer was allocated to size: 1024
-"
-05:48:52 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 5, Buffer Size: 1024
-"
-05:48:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 14, Buffer Size: 1024
-"
-05:49:22 PM: [INFO](./Net_Utils/NU_Server.c:106) "receive_all->select: "timed out"
-"
-05:49:22 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 0, Buffer Size: 1024
-"
-05:49:26 PM: [INFO](./Net_Utils/NU_Server.c:106) "receive_all->select: "timed out"
-"
-05:49:26 PM: [VERBOSE](./Net_Utils/NU_Server.c:302) "Total received: 0, Buffer Size: 1024
-"
+

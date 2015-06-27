@@ -50,23 +50,23 @@ NU_Server_t *NU_Server_create();
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, unsigned int port, size_t amount,  int flags);
 
 /* Will unbind the server from the port specified in socket. Will free the socket! */
-int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
+int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket, const char *message);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    clients should not be freed, and it is also managed by the server. */
 NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket,  unsigned int timeout);
 
 /* Send data to the requested client. */
-int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout);
+size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout);
 
 /* Receives data from any of current connections. */
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout);
 
 /* Receive data from the socket and feed it into a file. sendfile is used for maximum efficiency. */
-int NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);
+size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout, int flags);
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
-int NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);
+size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);
 
 /* Blocks for requested timeout or until one of the client sockets passed are available for receiving. */
 NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout);
@@ -82,12 +82,12 @@ char *NU_Server_about(NU_Server_t *server);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */
-int NU_Server_shutdown(NU_Server_t *server, unsigned int when);
+int NU_Server_shutdown(NU_Server_t *server, const char *message);
 
 /* Disconnect the server from the client. */
-int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client);
+int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message);
 
 /* The server will immediately close all connections, free up all resources, and destroy itself. */
-int NU_Server_destroy(NU_Server_t *server);
+int NU_Server_destroy(NU_Server_t *server, const char *message);
 
 #endif /* endif NET_UTILS_SERVER_H */

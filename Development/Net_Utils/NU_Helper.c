@@ -1,5 +1,5 @@
 #include <NU_Helper.h>
-int NUH_resize(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *logger){
+int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *logger){
    if(!bbuf->buffer){
       bbuf->buffer = calloc(1, new_size);
       bbuf->size = new_size;
@@ -55,11 +55,12 @@ size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int tim
       else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
       return 0;
    }
-   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, bbuf->size, 0))) <= 0){
+   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, bbuf->size-1, 0))) <= 0){
       if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
       else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
       return 0;
    }
+   bbuf->buffer[retval] = '\0';
    return retval;
 }
 
@@ -111,7 +112,11 @@ int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger
 
 char *NUH_data_to_string(NU_Collective_Data_t data){
    char *data_str;
-   asprintf(data_str, "{ messages_sent: %d, bytes_sent: %d, messages_received: %d, bytes_received: %d }",
+   asprintf(&data_str, "messages_sent: %u, bytes_sent: %u, messages_received: %u, bytes_received: %u",
       data.messages_sent, data.bytes_sent, data.messages_received, data.bytes_received);
    return data_str;
+}
+
+int NUH_is_selected(int flags, int mask){
+   return flags & mask;
 }

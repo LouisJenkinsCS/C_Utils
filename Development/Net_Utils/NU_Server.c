@@ -48,11 +48,11 @@ static void delete_all_sockets(NU_Server_t *server){
 
 static char *bsock_to_string(NU_Bound_Socket_t *head){
 	if(!head) return NULL;
-	char *bsock_str = strdup("{ ");
+	char *bsock_str = NULL;
 	NU_Bound_Socket_t *bsock = NULL;
 	for(bsock = head; bsock; bsock = bsock->next){
 		char *old_str = bsock_str;
-		asprintf(&bsock_str, "%s (port: %d, sockfd: %d),", bsock_str, bsock->port, bsock->sockfd);
+		asprintf(&bsock_str, "%s (port: %d, sockfd: %d) %s", old_str ? old_str : "", bsock->port, bsock->sockfd, bsock->next ? "," : "");
 		free(old_str);
 	}
 	return bsock_str;
@@ -60,12 +60,12 @@ static char *bsock_to_string(NU_Bound_Socket_t *head){
 
 static char *clients_to_string(NU_Client_Socket_t *head){
 	if(!head) return NULL;
-	char *clients_str = strdup("{ ");
+	char *clients_str = NULL;
 	NU_Client_Socket_t *client = NULL;
 	for(client = head; client; client = client->next){
 		char *old_str = clients_str;
-		asprintf(&client_str, "%s (sockfd: %d, ip_addr: %s, port: %d, bbuf: [init?: %s, size: %d])"
-			clients_str, client->sockfd, client->ip_addr, client->port, client->bbuf ? "True" : "False",
+		asprintf(&clients_str, "%s (sockfd: %d, ip_addr: %s, port: %d, bbuf: [init?: %s, size: %d])",
+			clients_str ? clients_str : "", client->sockfd, client->ip_addr, client->port, client->bbuf ? "True" : "False",
 			client->bbuf && client->bbuf->size ? client->bbuf->size : 0);
 		free(old_str);
 	}
@@ -207,7 +207,7 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 		}
 	}
 	char *ip_addr;
-	if(!(client->sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout))){
+	if(!(client->sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout, logger))){
 		MU_LOG_INFO(logger, "accept->accept: \"timed out\"\n");
 		return NULL;
 	}
@@ -219,10 +219,10 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	return client;
 }
 
-int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout){
+size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout){
 	if(!server || !client || !message) return 0;
 	size_t buffer_size = strlen(message);
-	size_t result = NUH_send_all(client->sockfd, message, timeout);
+	size_t result = NUH_send_all(client->sockfd, message, timeout, logger);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
 	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %d, Message Size: %d\n", result, buffer_size);
@@ -231,20 +231,21 @@ int NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *
 
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout){
 	if(!server || !client || !buffer_size) return NULL;
-	resize_buffer(client->bbuf, buffer_size);
-	size_t result = timed_receive(client->sockfd, client->bbuf, timeout);
+	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
+	size_t result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %d, Buffer Size: %d\n", result, buffer_size);
 	if(!result) return NULL;
-	client->bbuf->buffer[result] = '\0';
+	server->data.bytes_received += result;
+	server->data.messages_received++;
 	return (const char *)client->bbuf->buffer;
 }
 
 size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout, int flags){
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
-	resize_buffer(client->bbuf, buffer_size);
+	NUH_resize_buffer(client->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
 	int binary_read = NUH_is_selected(flags, NU_BINARY);
-	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout)) == buffer_size){
+	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger)) == buffer_size){
 		if(binary_read) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
 		else fprintf(file, "%.*s", buffer_size, client->bbuf->buffer);
 		total_received += result;
@@ -281,6 +282,8 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 		MU_LOG_WARNING(logger, "send_file->sendfile: \"%s\"\n", strerror(errno));
 		return 0;
 	}
+	server->data.messages_sent++;
+	server->data.bytes_sent += (size_t) retval;
 	return (size_t) retval;
 }
 
@@ -301,7 +304,7 @@ NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Soc
 		if(!client || !client->sockfd) continue;
 		FD_SET(client->sockfd, &receive_set);
 		new_size++;
-		if(client->sockfd > max_fd) max_fd = client->sockfd);
+		if(client->sockfd > max_fd) max_fd = client->sockfd;
 	}
 	if(!new_size) {
 		*size = 0;
@@ -315,7 +318,7 @@ NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Soc
 	}
 	NU_Client_Socket_t **ready_clients = malloc(sizeof(NU_Client_Socket_t *) * retval);
 	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &can_receive)) ready_clients[new_size++] = clients;
+	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &receive_set)) ready_clients[new_size++] = clients[i];
 	*size = new_size;
 	return ready_clients;
 }
@@ -337,7 +340,7 @@ NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket
 		if(!client || !client->sockfd) continue;
 		FD_SET(client->sockfd, &send_set);
 		new_size++;
-		if(client->sockfd > max_fd) max_fd = client->sockfd);
+		if(client->sockfd > max_fd) max_fd = client->sockfd;
 	}
 	if(!new_size) {
 		*size = 0;
@@ -351,7 +354,7 @@ NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket
 	}
 	NU_Client_Socket_t **ready_clients = malloc(sizeof(NU_Client_Socket_t *) * retval);
 	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &send_set)) ready_clients[new_size++] = clients;
+	for(i = 0;i < *size;i++) if(FD_ISSET(clients[i]->sockfd, &send_set)) ready_clients[new_size++] = clients[i];
 	*size = new_size;
 	return ready_clients;
 }
@@ -362,11 +365,12 @@ char *NU_Server_about(NU_Server_t *server){
 	char *bsock_str = bsock_to_string(server->sockets);
 	char *data_str = NUH_data_to_string(server->data);
 	char *client_str = clients_to_string(server->clients);
-	asprintf(&about_server, "Bound to %d ports: %s\nData usage: %s\n%d clients connected: %s\n", bsock_str, data_str, client_str);
-	free(bsock_string);
+	asprintf(&about_server, "Bound to %d ports: { %s }\nData usage: { %s }\n%d clients connected: { %s }\n", server->amount_of_sockets, bsock_str, data_str, server->amount_of_clients, client_str);
+	free(bsock_str);
 	free(data_str);
 	free(client_str);
 	MU_LOG_INFO(logger, "About Server: \"%s\"\n", about_server);
+	return about_server;
 }
 
 int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const char *message){
