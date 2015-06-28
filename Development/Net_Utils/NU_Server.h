@@ -3,6 +3,20 @@
 
 #include <NU_Helper.h>
 
+/**
+ * @brief Wraps a bound socket on a given port.
+ * 
+ * This type keeps track of the sockfd that was created from socket() and bind(), and is used
+ * when attempting to accept a new connection on the socket encapsulated within. It keeps track of
+ * the port it is bound to, as well as function as a list for multiple bound socket. 
+ * 
+ * This type is reusable, and is good for if you wish to create more than one socket, as it helps
+ * make managing them easier. Also, if you happen to unbind or shutdown a server without destroying it,
+ * as an example, and wish to rebind it to new ports, these types will be recycled, minimizing the overhead
+ * of creation.
+ * 
+ * This type must NOT be freed, as it will cause undefined behavior; instead, it is freed when the server is destroyed.
+ */
 typedef struct NU_Bound_Socket_t{
    /// The bound socket.
    volatile int sockfd;
@@ -12,6 +26,20 @@ typedef struct NU_Bound_Socket_t{
    struct NU_Bound_Socket_t *next;
 } NU_Bound_Socket_t;
 
+/**
+ * @brief Wraps a client's socket accepted from a bound port.
+ * 
+ * This type will keep track of the client's sockfd received from accept() call, as well
+ * as the connected client's IP address and the port it is bound on. Each client contains their own 
+ * NU_Bounded_Buffer_t object, where each client reduces the overhead of receive calls by dynamically
+ * resizing and reusing it; it is initialized at creation and later it's buffer on first use.
+ * 
+ * This type is reusable, making it a great feature for servers with multiple clients. Say for example
+ * you have on average 100 - 250 clients per minute accessing your web server, then, all initialized
+ * instances of this type will be cached for reuse.
+ * 
+ * Like NU_Bound_Socket_t, it functions as a list, allowing ease of use for multiple clients.
+ */
 typedef struct NU_Client_Socket_t{
    /// Socket file descriptor associated with a client.
    volatile int sockfd;
@@ -25,6 +53,14 @@ typedef struct NU_Client_Socket_t{
    struct NU_Client_Socket_t *next;
 } NU_Client_Socket_t;
 
+/**
+ * @brief Wraps a server's created, bound and listening socket as well keeping track of connected clients.
+ * 
+ * This type is reusable, in the sense that not only can you bind more than one socket, but also that it's
+ * bound sockets are reusable, as well as it's clients. This type allows the user to create a robust server
+ * which allows it to easily keep track of more than one bound socket, and clients connected, as well as 
+ * the total data sent and received from/to this server. 
+ */
 typedef struct {
    /// List of bound sockets owned by this server; I.E How many bound ports.
    NU_Bound_Socket_t *sockets;
