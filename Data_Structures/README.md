@@ -2,7 +2,7 @@
 
 ### Summary
 
-This package will pretty much be my attempts at creating bare-bones, although well-test data structures, such as a double linked list, hash map, and binary heap (binary tree). I plan on creating them so as they are as general and easy to use as humanly possible.
+Basic datastructures that are thread safe and reusable.
 
 ### Priority Blocking Queue
 
