@@ -3,12 +3,12 @@ int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *l
    if(!bbuf->buffer){
       bbuf->buffer = calloc(1, new_size);
       bbuf->size = new_size;
-      MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %d\n", new_size);
+      MU_LOG_VERBOSE(logger, "Bounded buffer was allocated to size: %zu\n", new_size);
       return 1;
    }
    if(bbuf->size == new_size) return 1;
    bbuf->buffer = realloc(bbuf->buffer, new_size);
-   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %d to %d!\n", bbuf->size, new_size);
+   MU_LOG_VERBOSE(logger, "The bounded buffer's size is being increased from %zu to %zu!\n", bbuf->size, new_size);
    bbuf->size = new_size;
    return 1;
 }
@@ -112,7 +112,7 @@ int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger
 
 char *NUH_data_to_string(NU_Collective_Data_t data){
    char *data_str;
-   asprintf(&data_str, "messages_sent: %u, bytes_sent: %u, messages_received: %u, bytes_received: %u",
+   asprintf(&data_str, "messages_sent: %zu, bytes_sent: %zu, messages_received: %zu, bytes_received: %zu",
       data.messages_sent, data.bytes_sent, data.messages_received, data.bytes_received);
    return data_str;
 }

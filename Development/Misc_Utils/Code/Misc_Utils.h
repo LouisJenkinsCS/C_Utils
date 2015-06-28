@@ -42,8 +42,29 @@ typedef struct {
 	MU_Logger_Level_t level;
 } MU_Logger_t;
 
+/**
+ * @brief Initialize a logger passed to it.
+ * 
+ * Will initialize a logger passed to it, as long as logger, filename and the mode passed
+ * are not NULL. Hence, logger must be allocated before being passed to this function.
+ * If the filename or mode are invalid, and file isn't able to be created, then it returns 0
+ * for failure. The level passed determines whether or not the log macros actually log the
+ * message to file; if the level is not greater than the macro's level, it will log it to file.
+ * 
+ * @param logger Logger to Initialize.
+ * @param filename Name of the log file to be created.
+ * @param mode Mode to open the file in, I.E 'w', 'r', 'rw'.
+ * @param level The minimum level of logging to be processed. Anything below it will be ignored.
+ * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
+ */
 int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level);
 
+/**
+ * @brief Destroys the logger passed to it, freeing it if flagged.
+ * @param logger Logger to be destroyed.
+ * @param free_ptr Flag for whether or not the logger gets freed.
+ * @return 1 on success, 0 if logger is NULL.
+ */
 int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 
 #ifdef NDEBUG

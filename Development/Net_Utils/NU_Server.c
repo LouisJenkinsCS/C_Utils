@@ -67,9 +67,9 @@ static char *clients_to_string(NU_Client_Socket_t *head){
 	NU_Client_Socket_t *client = NULL;
 	for(client = head; client; client = client->next){
 		char *old_str = clients_str;
-		asprintf(&clients_str, "%s (sockfd: %d, ip_addr: %s, port: %d, bbuf: [init?: %s, size: %d])",
+		asprintf(&clients_str, "%s (sockfd: %d, ip_addr: %s, port: %u, bbuf: [init?: %s, size: %zu])",
 			clients_str ? clients_str : "", client->sockfd, client->ip_addr, client->port, client->bbuf ? "True" : "False",
-			client->bbuf && client->bbuf->size ? client->bbuf->size : 0);
+			(client->bbuf && client->bbuf->size ? client->bbuf->size : 0));
 		free(old_str);
 	}
 	return clients_str;
@@ -228,7 +228,7 @@ size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const cha
 	size_t result = NUH_send_all(client->sockfd, message, timeout, logger);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
-	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %d, Message Size: %d\n", result, buffer_size);
+	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %zu, Message Size: %zu\n", result, buffer_size);
 	return result;
 }
 
@@ -236,7 +236,7 @@ const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, s
 	if(!server || !client || !buffer_size) return NULL;
 	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
 	size_t result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger);
-	MU_LOG_VERBOSE(logger, "Total received: %d, Buffer Size: %d\n", result, buffer_size);
+	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buffer_size);
 	if(!result) return NULL;
 	server->data.bytes_received += result;
 	server->data.messages_received++;
@@ -250,12 +250,12 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 	int binary_read = NUH_is_selected(flags, NU_BINARY);
 	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger)) == buffer_size){
 		if(binary_read) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
-		else fprintf(file, "%.*s", buffer_size, client->bbuf->buffer);
+		else fprintf(file, "%.*s", (int)buffer_size, client->bbuf->buffer);
 		total_received += result;
 	}
 	if(result){
 		if(binary_read) fwrite(client->bbuf->buffer, 1, result, file);
-		else fprintf(file, "%.*s", result, client->bbuf->buffer);
+		else fprintf(file, "%.*s", (int)result, client->bbuf->buffer);
 		total_received += result;
 	}
 	server->data.bytes_received += total_received;
@@ -279,7 +279,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 		return 0;
 	}
 	file_size = get_size.st_size;
-	MU_LOG_VERBOSE(logger, "Passed File Size is %u\n", file_size);
+	MU_LOG_VERBOSE(logger, "Passed File Size is %zu\n", file_size);
 	ssize_t retval;
 	if((retval = sendfile(client->sockfd, fileno(file), NULL, file_size)) == -1){
 		MU_LOG_WARNING(logger, "send_file->sendfile: \"%s\"\n", strerror(errno));
@@ -350,7 +350,7 @@ NU_Client_Socket_t **NU_Server_select_send(NU_Server_t *server, NU_Client_Socket
 		return NULL;
 	}
 	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
-		if(!retval) MU_LOG_VERBOSE(logger, "select_send->select: \"timeout\"\n", timeout);
+		if(!retval) MU_LOG_VERBOSE(logger, "select_send->select: \"timeout\"\n");
 		else MU_LOG_WARNING(logger, "select_send->select: \"%s\"\n", strerror(errno));
 		*size = 0;
 		return NULL;
@@ -368,7 +368,7 @@ char *NU_Server_about(NU_Server_t *server){
 	char *bsock_str = bsock_to_string(server->sockets);
 	char *data_str = NUH_data_to_string(server->data);
 	char *client_str = clients_to_string(server->clients);
-	asprintf(&about_server, "Bound to %d ports: { %s }\nData usage: { %s }\n%d clients connected: { %s }\n", server->amount_of_sockets, bsock_str, data_str, server->amount_of_clients, client_str);
+	asprintf(&about_server, "Bound to %zu ports: { %s }\nData usage: { %s }\n%zu clients connected: { %s }\n", server->amount_of_sockets, bsock_str, data_str, server->amount_of_clients, client_str);
 	free(bsock_str);
 	free(data_str);
 	free(client_str);

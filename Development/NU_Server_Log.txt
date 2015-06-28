@@ -1,4 +1,2 @@
-12:57:50 AM: [INFO](./Net_Utils/NU_Helper.c:96) timed_accept->select: "timeout"
-
-12:57:50 AM: [INFO](./Net_Utils/NU_Server.c:214) accept->accept: "timed out"
+12:07:05 PM: [SERVER]: 2.0.220.106 connected to port 10000
 
