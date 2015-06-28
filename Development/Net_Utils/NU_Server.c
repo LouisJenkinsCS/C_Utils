@@ -84,7 +84,7 @@ static NU_Client_Socket_t *reuse_existing_client(NU_Client_Socket_t *head){
 	return tmp_client;
 }
 
-static int setup_bound_socket(NU_Bound_Socket_t *bsock, unsigned int port, size_t queue_size){
+static int setup_bound_socket(NU_Bound_Socket_t *bsock, const char *ip_addr, unsigned int port, size_t queue_size){
 	int i = 0, flag = 1;
 	struct sockaddr_in my_addr;
 	bsock->port = port;
@@ -99,7 +99,7 @@ static int setup_bound_socket(NU_Bound_Socket_t *bsock, unsigned int port, size_
 	}	
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(bsock->port);
-	my_addr.sin_addr.s_addr = INADDR_ANY;
+	my_addr.sin_addr.s_addr = ip_addr ? inet_addr(ip_addr) : INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
 	if(bind(bsock->sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
 		shutdown(bsock->sockfd, SHUT_RDWR);
@@ -147,7 +147,7 @@ NU_Server_t *NU_Server_create(){
 	return server;
 }
 
-NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, unsigned int port, size_t queue_size, int flags){
+NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t queue_size, int flags){
 	if(!server || !port || !queue_size) return NULL;
 	int is_reused = 1;
 	NU_Bound_Socket_t *bsock = reuse_existing_socket(server->sockets);
@@ -164,7 +164,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, unsigned int port, size_t
 			tmp_bsock->next = bsock;
 		}
 	}
-	if(!setup_bound_socket(bsock, port, queue_size)){
+	if(!setup_bound_socket(bsock, ip_addr, port, queue_size)){
 		MU_LOG_WARNING(logger, "bind->setup_bound_socket: \"was unable to setup bsock\"\n");
 		return NULL;
 	}

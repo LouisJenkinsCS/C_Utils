@@ -1,23 +1,4 @@
-04:01:13 PM: [SERVER]: 2.0.185.68 connected to port 10000
+12:57:50 AM: [INFO](./Net_Utils/NU_Helper.c:96) timed_accept->select: "timeout"
 
-04:01:27 PM: [SERVER]: 2.0.185.70 connected to port 10000
-
-04:02:22 PM: [INFO](./Net_Utils/NU_Helper.c:54) timed_receive->select: "timed out"
-
-04:02:22 PM: [SERVER]: 2.0.185.70 disconnected from port 10000
-
-04:02:26 PM: [ERROR](./Net_Utils/NU_Helper.c:36) send_all->send: "Socket operation on non-socket"
-
-04:02:26 PM: [WARNING](./Net_Utils/NU_Server.c:231) Was unable to send all data to client!Total Sent: 0, Message Size: 21
-
-04:02:26 PM: [SERVER]: 2.0.185.68 disconnected from port 10000
-
-04:02:26 PM: [INFO](./Net_Utils/NU_Server.c:375) About Server: "Bound to 1 ports: {  (port: 10000, sockfd: 5)  }
-Data usage: { messages_sent: 10, bytes_sent: 201, messages_received: 8, bytes_received: 76 }
-0 clients connected: {  (sockfd: 0, ip_addr: 2.0.185.68, port: 10000, bbuf: [init?: True, size: 4097]) (sockfd: 0, ip_addr: 2.0.185.70, port: 10000, bbuf: [init?: True, size: 4097]) }
-"
-
-04:02:26 PM: [SERVER]: Server being shutdown!
-
-04:02:26 PM: [WARNING](./Net_Utils/NU_Server.c:189) shutdown: "Transport endpoint is not connected"
+12:57:50 AM: [INFO](./Net_Utils/NU_Server.c:214) accept->accept: "timed out"
 
