@@ -1,7 +1,5 @@
 # Data_Structures
 
-## Summary
-
 Basic datastructures that are thread safe and reusable.
 
 ## Priority Blocking Queue
