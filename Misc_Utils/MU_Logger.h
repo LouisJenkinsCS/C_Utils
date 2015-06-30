@@ -3,9 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <assert.h>
-#include <time.h>
 
 /*
  * Miscallaneous Utilities for the C Programming Language, or Misc_Utils, is a collection,
@@ -41,31 +39,6 @@ typedef struct {
 	/// The level determining what messages will be printed.
 	MU_Logger_Level_t level;
 } MU_Logger_t;
-
-/**
- * @brief Initialize a logger passed to it.
- * 
- * Will initialize a logger passed to it, as long as logger, filename and the mode passed
- * are not NULL. Hence, logger must be allocated before being passed to this function.
- * If the filename or mode are invalid, and file isn't able to be created, then it returns 0
- * for failure. The level passed determines whether or not the log macros actually log the
- * message to file; if the level is not greater than the macro's level, it will log it to file.
- * 
- * @param logger Logger to Initialize.
- * @param filename Name of the log file to be created.
- * @param mode Mode to open the file in, I.E 'w', 'r', 'rw'.
- * @param level The minimum level of logging to be processed. Anything below it will be ignored.
- * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
- */
-int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level);
-
-/**
- * @brief Destroys the logger passed to it, freeing it if flagged.
- * @param logger Logger to be destroyed.
- * @param free_ptr Flag for whether or not the logger gets freed.
- * @return 1 on success, 0 if logger is NULL.
- */
-int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 
 #ifdef NDEBUG
 /// If NDEBUG is defined, then MU_DEBUG becomes a NOP.
@@ -144,55 +117,36 @@ int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 	free(timestamp); \
 } while(0)
 
-typedef struct {
-    /// Keeps track of the start time.
-	time_t *start;
-    /// Keeps track of the end time.
-	time_t *end;
-	/// Whether or not the timer is started, to prevent undefined behavior if it isn't.
-	volatile unsigned char is_running;
-	/// Whether or not the timer has been finished, to prevent undefined behavior if it isn't.
-	volatile unsigned char is_finished;
-} MU_Timer_t;
 
 /**
- * Creates a new Timer_t struct with an option to start it on initialization.
- * @param start If 1, starts the timer on initialization.
- * @return Initialized Timer_t struct.
+ * @brief Initialize a logger passed to it.
+ * 
+ * Will initialize a logger passed to it, as long as logger, filename and the mode passed
+ * are not NULL. Hence, logger must be allocated before being passed to this function.
+ * If the filename or mode are invalid, and file isn't able to be created, then it returns 0
+ * for failure. The level passed determines whether or not the log macros actually log the
+ * message to file; if the level is not greater than the macro's level, it will log it to file.
+ * 
+ * @param logger Logger to Initialize.
+ * @param filename Name of the log file to be created.
+ * @param mode Mode to open the file in, I.E 'w', 'r', 'rw'.
+ * @param level The minimum level of logging to be processed. Anything below it will be ignored.
+ * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
  */
-MU_Timer_t *MU_Timer_Init(int start);
+int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level);
 
 /**
- * Start the timer.
- * @param timer Timer to start.
- * @return 1 on success.
+ * @brief Destroys the logger passed to it, freeing it if flagged.
+ * @param logger Logger to be destroyed.
+ * @param free_ptr Flag for whether or not the logger gets freed.
+ * @return 1 on success, 0 if logger is NULL.
  */
-int MU_Timer_Start(MU_Timer_t *timer);
-
-/**
- * Stops the timer.
- * @param timer Timer to stop.
- * @return 1 on success.
- */
-int MU_Timer_Stop(MU_Timer_t *timer);
-
-/**
- * Returns the total time in Hours:Minutes:Seconds. (I.E 00:04:30)
- * Note: If you do not stop the timer, it will produce undefined behavior.
- * @param timer Timer to obtain the total time of.
- * @return Formatted total time.
- */
-char *MU_Timer_To_String(MU_Timer_t *timer);
-
-/**
- * Destroys the passed timer.
- * @param timer Timer to be destroyed.
- */
-void MU_Timer_Destroy(MU_Timer_t *timer);
+int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr);
 
 /**
  * Obtain the current timestamp in Hours:Minutes:Seconds AM/PM. (I.E 11:45:30 AM)
  * @return Formatted timestamp.
  */
 char *MU_Get_Timestamp(void);
+
 #endif
