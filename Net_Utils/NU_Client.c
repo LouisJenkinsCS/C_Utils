@@ -16,6 +16,41 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
+static int get_server_socket(const char *host, unsigned int port, char **ip_addr, unsigned int is_udp){
+	struct addrinfo hints, *results, *current;
+	int retval, sockfd = 0, iteration = 0;
+	char *port_str;
+	asprintf(&port_str, "%u", port);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = is_udp ? SOCK_DGRAM : SOCK_STREAM;
+	if(retval = getaddrinfo(host, port_str, &hints, &results)){
+		MU_LOG_WARNING(logger, "getaddrinfo: %s\n", gai_strerror(retval));
+		return 0;
+	}
+	for(current = results; current; current = current->ai_next){
+	    if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) == -1) {
+	      MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
+	      continue;
+	    }
+	    MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++iteration);
+	    if(connect(sockfd, current->ai_addr, current->ai_addrlen) == -1){
+	      close(sockfd);
+	      MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
+	      continue;
+	    }
+	    break;
+	}
+	if(!current) return 0;
+	if(ip_addr){
+	  *ip_addr = calloc(1, INET_ADDRSTRLEN);
+	  if(!inet_ntop(current->ai_family, current, *ip_addr, INET_ADDRSTRLEN)){
+	    MU_LOG_WARNING(logger, "get_server_socket->inet_ntop: \"%s\"\n", strerror(errno));
+	  }
+	}
+	return current ? sockfd : 0;
+}
+
 NU_Client_t *NU_Client_create(int flags){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) MU_LOG_ERROR(logger, "Was unable to allocate memory for client!\n");
@@ -39,21 +74,6 @@ NU_Server_Socket_t *NU_Client_connect(MU_Client_t *client, const char *host, uns
 		}
 	}
 	// TODO: Continue here
-	struct addrinfo *results;
-	int retval;
-	memset(&socket_options, 0, sizeof(socket_options));
-	socket_options.ai_family = AF_INET;
-	socket_options.ai_socktype = SOCK_STREAM;
-	if(getaddrinfo(host, port, &socket_options, &results) == -1){
-		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(errno));
-		return 0;
-	}
-	if((client->sockfd = get_socket(results)) == -1){
-		MU_LOG_WARNING(logger, "Was unable to find a valid address!\n");
-		freeaddrinfo(results);
-		return 0;
-	}
-	freeaddrinfo(results);
 	return 1;
 }
 
