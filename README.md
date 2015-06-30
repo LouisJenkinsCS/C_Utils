@@ -65,7 +65,17 @@ Documentation for version 1.0 available [here](http://theif519.github.io/Data_St
 
 ### Misc Utils
 
-Beautiful but basic and verbose logging based on log-levels. Use pre-defined prefixes (I.E VERBOSE|INFO|ERROR) or ones of your own!
+####Logger
+
+A basic logging utility with support for logging based on levels.
+
+####Timer
+
+A basic timer utility, allowing you to start and stop a timer and get a string representation of the total time.
+
+####Notes
+
+Documentation will be split between the two later, as originally they both were contained within one file. However, the original documentation can be found below!
 
 Documentation for version 1.0 available [here](http://theif519.github.io/Misc_Utils_Documentation/).
 
