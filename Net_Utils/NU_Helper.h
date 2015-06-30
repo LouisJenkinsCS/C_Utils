@@ -52,8 +52,6 @@ size_t NUH_send_all(int sockfd, const char *message, unsigned int timeout, MU_Lo
 
 size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout, MU_Logger_t *logger);
 
-int NUH_get_socket(struct addrinfo *results, MU_Logger_t *logger);
-
 int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
 char *NUH_data_to_string(NU_Collective_Data_t data);
