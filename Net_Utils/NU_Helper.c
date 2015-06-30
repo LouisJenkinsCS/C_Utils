@@ -64,10 +64,10 @@ size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int tim
    return retval;
 }
 
-int NUH_get_socket(struct addrinfo **results, MU_Logger_t *logger){
+int NUH_get_socket(struct addrinfo *results, MU_Logger_t *logger){
    struct addrinfo *current = NULL;
    int sockfd = 0, iteration = 0;
-   for(current = *results; current; current = current->ai_next){
+   for(current = results; current; current = current->ai_next){
       if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) == -1) {
          MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
          continue;

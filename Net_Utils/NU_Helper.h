@@ -25,8 +25,6 @@
 #define NU_UDP 1 << 1
 /// Set socket options to enable broadcasting. Will also flag as UDP.
 #define NU_BROADCAST 1 << 2
-/// Writes data to a binary file.
-#define NU_BINARY 1 << 3
 
 /* Client-Server general data structures below */
 

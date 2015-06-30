@@ -144,6 +144,7 @@ static void destroy_bound_socket(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 
 NU_Server_t *NU_Server_create(){
 	NU_Server_t *server = calloc(1, sizeof(NU_Server_t));
+	if(!server) MU_LOG_ERROR(logger, "Was unable to allocate memory for server!\n");
 	return server;
 }
 
@@ -243,18 +244,17 @@ const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, s
 	return (const char *)client->bbuf->buffer;
 }
 
-size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout, int flags){
+size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(client->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
-	int binary_read = NUH_is_selected(flags, NU_BINARY);
 	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger)) == buffer_size){
-		if(binary_read) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
+		if(is_binary) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
 		else fprintf(file, "%.*s", (int)buffer_size, client->bbuf->buffer);
 		total_received += result;
 	}
 	if(result){
-		if(binary_read) fwrite(client->bbuf->buffer, 1, result, file);
+		if(is_binary) fwrite(client->bbuf->buffer, 1, result, file);
 		else fprintf(file, "%.*s", (int)result, client->bbuf->buffer);
 		total_received += result;
 	}
@@ -383,7 +383,7 @@ int NU_Server_log(NU_Server_t *server, const char *message, ...){
 	const buffer_size = 1024;
 	char buffer[buffer_size];
 	if(vsnprintf(buffer, buffer_size, message, args) < 0){ 
-		MU_LOG_WARNING(logger, "vsnprintf: \"%s\"\n", strerror(errno));
+		MU_LOG_WARNING(logger, "log->vsnprintf: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	MU_LOG_SERVER("%s", buffer);

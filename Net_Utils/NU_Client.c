@@ -12,33 +12,36 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
-static int reset_client(NU_Client_t *client){
-   const int hostname_length = 100, port_length = 5;
-   memset(client->hostname, '\0', hostname_length);
-   memset(client->port, '\0', port_length);
-   memset(client->bbuf, '\0', sizeof(NU_Bounded_Buffer_t));
-   client->data->messages_sent = client->data->messages_received = client->data->bytes_sent = client->data->bytes_received = client->is_connected = 0;
-   return 1;
-}
-
 NU_Client_t *NU_Client_create(int flags){
 	MU_Client_t *client = calloc(1, sizeof(NU_Client_t));
-	if(!client) return NULL;
-	client->timestamp = Misc_Utils_get_timestamp();
-	client->bbuf = calloc(1, sizeof(NU_Bounded_Buffer_t));
+	if(!client) MU_LOG_ERROR(logger, "Was unable to allocate memory for client!\n");
 	return client;
 }
 
-int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
-	client->hostname = host;
-	client->port = port;
-	struct addrinfo socket_options, *results;
+NU_Server_Socket_t *NU_Client_connect(MU_Client_t *client, const char *host, unsigned int port, int flags){
+	NU_Server_Socket_t *server = reuse_existing_server(client);
+	int is_reused = 1;
+	if(!server){ 
+		server = calloc(1, sizeof(NU_Server_Socket_t));
+		MU_ASSERT_RETURN(server, logger, NULL, "Was unable to allocate memory for server socket!\n");
+		is_reused--;
+	}
+	if(!is_reused){
+		if(!client->servers) client->servers = server;
+		else{
+			NU_Server_Socket_t *tmp_server = NULL;
+			for(tmp_server = client->servers; tmp_server; tmp_server = tmp_server->next);
+			tmp_server->next = server;
+		}
+	}
+	// TODO: Continue here
+	struct addrinfo *results;
 	int retval;
 	memset(&socket_options, 0, sizeof(socket_options));
 	socket_options.ai_family = AF_INET;
 	socket_options.ai_socktype = SOCK_STREAM;
-	if((retval = getaddrinfo(host, port, &socket_options, &results)) != 0){
-		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(retval));
+	if(getaddrinfo(host, port, &socket_options, &results) == -1){
+		MU_LOG_WARNING(logger, "Unable to get addrinfo: %s\n", gai_strerror(errno));
 		return 0;
 	}
 	if((client->sockfd = get_socket(results)) == -1){
@@ -47,7 +50,6 @@ int NU_Client_connect(MU_Client_t *client, char *host, char *port, int flags){
 		return 0;
 	}
 	freeaddrinfo(results);
-	client->is_connected = 1;
 	return 1;
 }
 
