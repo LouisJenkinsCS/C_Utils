@@ -64,26 +64,6 @@ size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int tim
    return retval;
 }
 
-int NUH_get_socket(struct addrinfo *results, MU_Logger_t *logger){
-   struct addrinfo *current = NULL;
-   int sockfd = 0, iteration = 0;
-   for(current = results; current; current = current->ai_next){
-      if((sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol)) == -1) {
-         MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
-         continue;
-      }
-      MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++iteration);
-      if(connect(sockfd, current->ai_addr, current->ai_addrlen) == -1){
-         close(sockfd);
-         MU_LOG_VERBOSE(logger, "Unable to connect to socket with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
-         continue;
-      }
-      break;
-   }
-   if(!current) return -1;
-   return sockfd;
-}
-
 int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger){
    fd_set can_accept;
    struct timeval tv;
