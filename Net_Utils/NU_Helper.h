@@ -4,7 +4,7 @@
 #define _GNU_SOURCE 1
 
 #include <unistd.h>
-#include <Misc_Utils.h>
+#include <MU_Logger.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/sendfile.h>
@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
@@ -51,7 +52,7 @@ size_t NUH_send_all(int sockfd, const char *message, unsigned int timeout, MU_Lo
 
 size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout, MU_Logger_t *logger);
 
-int NUH_get_socket(struct addrinfo **results, MU_Logger_t *logger);
+int NUH_get_socket(struct addrinfo *results, MU_Logger_t *logger);
 
 int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
 

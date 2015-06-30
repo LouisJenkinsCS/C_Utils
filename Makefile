@@ -1,18 +1,18 @@
 CC=gcc
 CFLAGS=-c -g -D_GNU_SOURCE
 LIBS=-pthread
-OBJS=NU_Server.o NU_Helper.o  NU_Server_Test_Client_Chat.o Misc_Utils.o
+OBJS=NU_Server.o NU_Helper.o  NU_Server_Test_Client_Chat.o MU_Logger.o
 TARGET=NU_Server_Test
 NUPATH=./Net_Utils/
-MUPATH=./Misc_Utils/Code/
+MUPATH=./Misc_Utils/
 DEPS=-I$(MUPATH) -I$(NUPATH)
 
 
 $(TARGET): $(OBJS)
 	$(CC) $(LIBS) $(OBJS) -o $(TARGET)
 
-Misc_Utils.o: $(MUPATH)Misc_Utils.c
-	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)Misc_Utils.c
+MU_Logger.o: $(MUPATH)MU_Logger.c
+	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)MU_Logger.c
 
 NU_Helper.o: $(NUPATH)NU_Helper.c
 	$(CC) $(CFLAGS) $(DEPS) $(NUPATH)NU_Helper.c

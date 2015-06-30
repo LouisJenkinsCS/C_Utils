@@ -1,5 +1,4 @@
 #include <NU_Server.h>
-#include <stdarg.h>
 
 static MU_Logger_t *logger = NULL;
 

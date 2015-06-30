@@ -1,4 +1,4 @@
-#include <Misc_Utils.h>
+#include <MU_Logger.h>
 #include <pthread.h>
 #include <NU_Server.h>
 #include <unistd.h>
@@ -51,7 +51,7 @@ static void *redirector_thread(void *args){
 	strcat(username_prefix, prefix);
 	username_prefix[username_prefix_size] = '\0';
 	while(1){
-		const char *msg = NU_Server_receive(server, task->sender->client, task->buffer_size, task->timeout);
+		char *msg = strdup(NU_Server_receive(server, task->sender->client, task->buffer_size, task->timeout));
 		if(!msg) break;
 		strtok(msg, "\r\n");
 		size_t new_msg_size = strlen(username_prefix) + strlen(msg) + strlen(suffix);
@@ -64,7 +64,9 @@ static void *redirector_thread(void *args){
 		if(!NU_Server_send(server, task->receiver->client, (const char *)new_msg, task->timeout)) {
 			free(new_msg);
 			break;
-		} free(new_msg);
+		}
+		free(msg);
+		free(new_msg);
 	}
 	char *end_msg;
 	asprintf(&end_msg, "%s: Shutting down!\n", task->sender->username);

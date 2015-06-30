@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <assert.h>
 
 /*
@@ -18,6 +19,14 @@
  * to start, stop and obtain the total time in string format.
  */
 
+/**
+ * @brief The logger level associated with each logging macro.
+ * 
+ * The logger level determines precisely what gets printed, as any log macros that's minimum-requirement is below
+ * the logger's level, will not log a message. For instance, if you select MU_ALL, then all messages are displayed, however
+ * if you choose MU_ERROR, then only ERROR and ASSERT messages are displayed. MU_CUSTOM allows the user to define the prefix
+ * to appear inside of the brackets, and also does not contain the file and line number.
+ */
 typedef enum {
 	/// Display all types of warnings.
 	MU_ALL = 0,
@@ -33,6 +42,17 @@ typedef enum {
 	MU_NONE
 } MU_Logger_Level_t;
 
+/**
+ * @brief Logger utility to log various types of messages according to different MU_Logger_Level_t levels.
+ * 
+ * The logger will log any messages that are above the logger level, and if any are above, is macro dependent.
+ * For exmaple, MU_LOG_WARNING will do nothing if the logger level is above MU_WARNING level, but something like
+ * MU_ASSERT or MU_ASSERT_RETURN will call assert or return respectively while not logging the condition at all.
+ * 
+ * It should also be noted that, if the logger has not been created or if errors occur during initialization barring
+ * ones that cause a segmentation fault, as in the cases where *alloc return NULL or if the logfile failed to be created,
+ * then it would count as if the logger level was above the macro's minimum-required level.
+ */
 typedef struct {
 	/// The log file to write to.
 	FILE *file;

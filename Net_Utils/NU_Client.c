@@ -1,3 +1,7 @@
+#include <NU_Client.h>
+
+static MU_Logger_t *logger = NULL;
+
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){
@@ -13,7 +17,7 @@ __attribute__((destructor)) static void destroy_logger(void){
 }
 
 NU_Client_t *NU_Client_create(int flags){
-	MU_Client_t *client = calloc(1, sizeof(NU_Client_t));
+	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) MU_LOG_ERROR(logger, "Was unable to allocate memory for client!\n");
 	return client;
 }

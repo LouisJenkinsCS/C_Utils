@@ -96,7 +96,7 @@ size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const cha
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout);
 
 /* Receive data from the socket and feed it into a file. sendfile is used for maximum efficiency. */
-size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout, int flags);
+size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout);
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
 size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);

@@ -11,12 +11,11 @@ char *MU_Get_Timestamp(void){
 
 int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
 	if(!logger) return 0;
-	FILE *file = fopen(filename, mode);
-	if(!file) {
+	logger->file = fopen(filename, mode);
+	if(!logger->file) {
 		MU_DEBUG("Unable to create logfile!\n");
 		return 0;
 	}
-	logger->file = file;
 	logger->level = level;
 	return 1;
 }
