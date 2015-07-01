@@ -30,7 +30,7 @@ Choose between a static amount of threads or dynamically changing ones (future).
 
 Documentation for version 1.1 available [here](http://theif519.github.io/Thread_Pool_Documentation/).
 
-### String Utils [<b>Unstable</b>] -- All but from_token work, which produces a memory leak.
+### String Utils [<b>Stable</b>]
 
 A basic, non-intrusive and well-tested string manipulations library as well as parsing strings with regular expressions (future).
 
@@ -78,7 +78,7 @@ Documentation for version 1.0 available [here](http://theif519.github.io/Data_St
 
 A basic logging utility with support for logging based on levels.
 
-####Timer [<b>Unstable</b>] -- Timer doesn't make any checks for whether it's already running or not.
+####Timer [<b>Unstable</b>]
 
 A basic timer utility, allowing you to start and stop a timer and get a string representation of the total time.
 
