@@ -22,6 +22,8 @@ typedef struct NU_Server_Socket_t {
 typedef struct {
    /// Socket associated with this server.
    NU_Server_Socket_t *servers;
+   /// Amount of servers currently connected to.
+   size_t amount_of_servers;
    /// Keeps track of data used.
    NU_Collective_Data_t data;
 } NU_Client_t;
@@ -41,10 +43,6 @@ size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server
 
 /* Receives data from the host, up to a given timeout. */
 const char *NU_Client_recieve(NU_Client_t *client, NU_Server_Socket_t *server, size_t buffer_size, unsigned int timeout);
-
-NU_Server_Socket_t **NU_Client_select_read(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout);
-
-NU_Server_Socket_t **NU_Client_select_write(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout);
 
 /* Returns a string representation of the information about this client, including but not limited to:
    1) Host connected to and port number.

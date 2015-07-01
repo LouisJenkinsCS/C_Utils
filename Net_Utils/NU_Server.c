@@ -260,7 +260,6 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 	server->data.bytes_received += total_received;
 	server->data.messages_received++;
 	return total_received;
-
 }
 
 
@@ -280,7 +279,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 	file_size = get_size.st_size;
 	MU_LOG_VERBOSE(logger, "Passed File Size is %zu\n", file_size);
 	ssize_t retval;
-	if((retval = sendfile(client->sockfd, fileno(file), NULL, file_size)) == -1){
+	if((retval = sendfile(client->sockfd, file_fd, NULL, file_size)) == -1){
 		MU_LOG_WARNING(logger, "send_file->sendfile: \"%s\"\n", strerror(errno));
 		return 0;
 	}
