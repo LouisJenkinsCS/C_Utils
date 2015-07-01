@@ -60,6 +60,12 @@ static int get_server_socket(const char *host, unsigned int port, unsigned int i
 	return current ? sockfd : 0;
 }
 
+static NU_Server_Socket_t *reuse_existing_server(NU_Client_t *client){
+  NU_Server_Socket_t *server = NULL;
+  for(server = client->servers; server; server = server->next) if(!server->sockfd) break;
+  return server;
+}
+
 NU_Client_t *NU_Client_create(int flags){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	if(!client) MU_LOG_ERROR(logger, "Was unable to allocate memory for client!\n");
@@ -241,12 +247,12 @@ char *NU_Client_about(MU_Client_t *client){
 int NU_Client_shutdown(MU_Client_t *client){
 	shutdown(client->sockfd, 2);
 	MU_LOG_INFO(logger, "Client shutdown!\n");
-	reset_client(client);
+	//reset_client(client);
 	return 1;
 }
 
 int NU_Client_destroy(MU_Client_t *client){
-	MU_Client_shutdown(client);
+	//MU_Client_shutdown(client);
 	free(client->timestamp);
 	free(client->bbuf);
 	free(client);

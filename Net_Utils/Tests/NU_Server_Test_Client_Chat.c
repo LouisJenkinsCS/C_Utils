@@ -7,11 +7,11 @@ static MU_Logger_t *logger = NULL;
 
 NU_Server_t *server = NULL;
 
-const int username_max_length = 16;
-const unsigned int avg_timeout = 30;
-const unsigned int generous_timeout = 60;
-const unsigned int port_num = 10000;
-const unsigned int queue_max = 2;
+static const int username_max_length = 16;
+static const unsigned int avg_timeout = 30;
+static const unsigned int generous_timeout = 60;
+static const unsigned int port_num = 10000;
+static const unsigned int queue_max = 2;
 
 typedef struct {
 	NU_Client_Socket_t *client;

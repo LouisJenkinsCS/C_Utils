@@ -263,8 +263,8 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 }
 
 
-size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout){
-	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
+size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, unsigned int timeout){
+	if(!server || !client || !client->sockfd || !file) return 0;
 	int file_fd;
 	if((file_fd = fileno(file)) == -1){
 		MU_LOG_WARNING(logger, "send_file->fileno: \"%s\"\n", strerror(errno));

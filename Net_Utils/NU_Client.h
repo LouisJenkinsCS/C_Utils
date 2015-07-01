@@ -8,7 +8,7 @@
 */
 typedef struct NU_Server_Socket_t {
    /// Socket file descriptor associated with host.
-   volatile int sockfd,
+   volatile int sockfd;
    /// The IP Address of the host connected to.
    char ip_addr[INET_ADDRSTRLEN];
    /// Port number that the host is bound to.
