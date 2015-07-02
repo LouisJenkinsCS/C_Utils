@@ -37,9 +37,13 @@ NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, uns
 /* Sends data to the host, up to the given timeout. */
 size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, unsigned int timeout);
 
-size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, unsigned int timeout);
+size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int timeout);
 
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout);
+
+NU_Server_Socket_t **NU_Client_select_send(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout);
+
+NU_Server_Socket_t **NU_Client_select_send(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout)
 
 /* Receives data from the host, up to a given timeout. */
 const char *NU_Client_receive(NU_Client_t *client, NU_Server_Socket_t *server, size_t buffer_size, unsigned int timeout);

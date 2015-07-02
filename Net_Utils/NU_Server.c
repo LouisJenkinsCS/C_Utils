@@ -265,28 +265,23 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 
 size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, unsigned int timeout){
 	if(!server || !client || !client->sockfd || !file) return 0;
-	int file_fd;
-	if((file_fd = fileno(file)) == -1){
-		MU_LOG_WARNING(logger, "send_file->fileno: \"%s\"\n", strerror(errno));
-		return 0;
+	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
+	size_t retval, total_sent = 0;
+	while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
+		client->bbuf->buffer[retval] = '\0';
+		if(NU_Client_send(client, server, server->bbuf->buffer, timeout) == 0){
+			MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
+			return total_sent;
+		}
+		total_sent += retval;
 	}
-	struct stat get_size;
-	size_t file_size;
-	if(fstat(file_fd, &get_size) == -1){
-		MU_LOG_WARNING(logger, "send_file->fstat: \"%s\"\n", strerror(errno));
-		return 0;
-	}
-	file_size = get_size.st_size;
-	MU_LOG_VERBOSE(logger, "Passed File Size is %zu\n", file_size);
-	ssize_t retval;
-	if((retval = sendfile(client->sockfd, file_fd, NULL, file_size)) == -1){
-		MU_LOG_WARNING(logger, "send_file->sendfile: \"%s\"\n", strerror(errno));
-		return 0;
-	}
-	server->data.messages_sent++;
-	server->data.bytes_sent += (size_t) retval;
-	return (size_t) retval;
+	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to server!\n");
+	else server->data.messages_sent++;
+	server->data.bytes_sent += (size_t) total_sent;
+	return (size_t) total_sent;
 }
+
+
 
 NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout){
 	if(!server || !clients || !size || !*size){
