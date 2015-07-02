@@ -66,6 +66,8 @@ Also known as PBQueue in my library, is a data structure which allows you to enq
 
 Documentation for version 1.0 available [here](http://theif519.github.io/Data_Structures_Documentation/Priority_Blocking_Queue/).
 
+####Vector [<b>Unimplemented</b>]
+
 ####Ring Buffer [<b>Unimplemented</b>]
 
 ####Hash Map [<b>Unimplemented</b>]
