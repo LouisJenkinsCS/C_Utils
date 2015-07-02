@@ -16,7 +16,7 @@ __attribute__((constructor)) static void init_logger(void){
 		MU_DEBUG("Unable to allocate memory for NU_Server's logger!!!");
 		return;
 	}
-	MU_Logger_Init(logger, "NU_Server_Log.txt", "w", MU_INFO);
+	MU_Logger_Init(logger, "NU_Server_Log.txt", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -222,13 +222,12 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 	return client;
 }
 
-size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout){
-	if(!server || !client || !message) return 0;
-	size_t buffer_size = strlen(message);
-	size_t result = NUH_send_all(client->sockfd, message, timeout, logger);
+size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, size_t msg_size, unsigned int timeout){
+	if(!server || !client || !message || !msg_size) return 0;
+	size_t result = NUH_send_all(client->sockfd, message, msg_size, timeout, logger);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
-	if(result != buffer_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %zu, Message Size: %zu\n", result, buffer_size);
+	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
 	return result;
 }
 
@@ -269,7 +268,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 	size_t retval, total_sent = 0;
 	while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
 		client->bbuf->buffer[retval] = '\0';
-		if(NU_Server_send(server, client, client->bbuf->buffer, timeout) == 0){
+		if(NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout) == 0){
 			MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
 			return total_sent;
 		}
@@ -387,7 +386,7 @@ int NU_Server_disconnect(NU_Server_t *server, NU_Client_Socket_t *client, const 
 	if(!server || !client) return 0;
 	if(message){
 		shutdown(client->sockfd, SHUT_RD);
-		NU_Server_send(server, client, message, 0);
+		NU_Server_send(server, client, message, strlen(message), 0);
 		shutdown(client->sockfd, SHUT_RDWR);
 	} else shutdown(client->sockfd, SHUT_RDWR);
 	MU_LOG_SERVER("%s disconnected from port %d\n", client->ip_addr, client->port);

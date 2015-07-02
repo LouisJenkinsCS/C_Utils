@@ -35,7 +35,7 @@ NU_Client_t *NU_Client_create();
 NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout);
 
 /* Sends data to the host, up to the given timeout. */
-size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, unsigned int timeout);
+size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, size_t msg_size, unsigned int timeout);
 
 size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int timeout);
 

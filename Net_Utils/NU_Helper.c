@@ -13,8 +13,8 @@ int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *l
    return 1;
 }
  
-size_t NUH_send_all(int sockfd, const char *message, unsigned int timeout, MU_Logger_t *logger){
-   size_t buffer_size = strlen(message), total_sent = 0, data_left = buffer_size;
+size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned int timeout, MU_Logger_t *logger){
+   size_t buffer_size = msg_size, total_sent = 0, data_left = buffer_size;
    int retval;
    struct timeval tv;
    fd_set can_send, can_send_copy;

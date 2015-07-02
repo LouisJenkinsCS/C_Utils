@@ -12,7 +12,7 @@ static const unsigned int port_num = 10000;
 static const unsigned int queue_max = 2;
 
 static const char *assert_get_info(NU_Client_Socket_t *client, const char *inquiry){
-  size_t bytes_sent = NU_Server_send(server, client, (const char *)inquiry, timeout);
+  size_t bytes_sent = NU_Server_send(server, client, (const char *)inquiry, strlen(inquiry), timeout);
   MU_ASSERT((bytes_sent == strlen(inquiry)), logger,
 	    "Not all bytes were sent to client!\nbytes_sent: %zu, message_bytes: %zu\n", bytes_sent, strlen(inquiry));
   const char *retval = NU_Server_receive(server, client, buffer_size, timeout);
@@ -27,16 +27,22 @@ static void redirect_file(NU_Client_Socket_t *client_one, NU_Client_Socket_t *cl
   size_t size = 2;
   NU_Client_Socket_t **ready = NU_Server_select_send(server, arr, &size, timeout);
   MU_ASSERT(ready && size, logger, "Neither clients were sending any data!\n");
+  MU_DEBUG("Asking Client %s for filename!\n", arr[0] == client_one ? "One" : "Two");
   NU_Client_Socket_t *sender = arr[0] == client_one ? client_one : client_two;
   NU_Client_Socket_t *receiver = arr[0] == client_one ? client_two : client_one;
   const char *filename = assert_get_info(sender, "Filename...\n");
+  MU_DEBUG("Received filename: %s\n", filename);
   FILE *file = tmpfile();
   MU_ASSERT(file, logger, "Was unable to create temporary file!\n");
   size_t retval = NU_Server_receive_to_file(server, sender, file, buffer_size, 1, timeout);
+  MU_DEBUG("Received %zu bytes into temporary file from sender!\n", retval);
   MU_ASSERT(retval, logger, "Was unable to receive file from sender!\n");
-  retval = NU_Server_send(server, receiver, filename, timeout);
+  retval = NU_Server_send(server, receiver, filename, sizeof(filename), timeout);
+  MU_DEBUG("Sent filename to receiver!\n");
+  sleep(1);
   MU_ASSERT(retval, logger, "Was unable to send filename to receiver!\n");
-  retval = NU_Server_send_file(server, receiver, file, timeout);
+  MU_DEBUG("Sent %zu bytes to receiver!\n", retval);
+  retval = NU_Server_send_file(server, receiver, file, buffer_size, timeout);
   MU_ASSERT(retval, logger, "Was unable to send file to receiver!\n");
 }
 
@@ -49,7 +55,7 @@ int main(void){
   MU_ASSERT(server, logger, "Was unable to create server!\n");
   char ip_addr[INET_ADDRSTRLEN];
   MU_DEBUG("IP Address:");
-  scanf("%s", ip_addr);
+  MU_ASSERT(fgets(ip_addr, INET_ADDRSTRLEN, stdin), logger, "Invalid input from user!\n");
   NU_Bound_Socket_t *bsock = NU_Server_bind(server, ip_addr, port_num, queue_max, NU_NONE);
   MU_ASSERT(bsock, logger, "Failed while attempting to bind a socket!");
   NU_Client_Socket_t *client_one = NU_Server_accept(server, bsock, timeout);

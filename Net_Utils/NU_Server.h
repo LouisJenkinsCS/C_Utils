@@ -90,7 +90,7 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket, const char 
 NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket,  unsigned int timeout);
 
 /* Send data to the requested client. */
-size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, unsigned int timeout);
+size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, size_t msg_size, unsigned int timeout);
 
 /* Receives data from any of current connections. */
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout);
