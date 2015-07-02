@@ -14,7 +14,7 @@ int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *l
 }
  
 size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned int timeout, MU_Logger_t *logger){
-   size_t buffer_size = msg_size, total_sent = 0, data_left = buffer_size;
+   size_t buffer_size = msg_size, total_sent = 0, data_left = msg_size;
    int retval;
    struct timeval tv;
    fd_set can_send, can_send_copy;
@@ -42,7 +42,7 @@ size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned i
    return total_sent;
 }
 
-size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout, MU_Logger_t *logger){
+size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, size_t buffer_size, unsigned int timeout, MU_Logger_t *logger){
    int retval;
    struct timeval tv;
    fd_set can_receive;
@@ -55,12 +55,11 @@ size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int tim
       else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
       return 0;
    }
-   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, bbuf->size-1, 0))) <= 0){
+   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, buffer_size, 0))) <= 0){
       if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
       else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
       return 0;
    }
-   bbuf->buffer[retval] = '\0';
    return retval;
 }
 

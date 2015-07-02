@@ -225,18 +225,19 @@ NU_Client_Socket_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bso
 size_t NU_Server_send(NU_Server_t *server, NU_Client_Socket_t *client, const char *message, size_t msg_size, unsigned int timeout){
 	if(!server || !client || !message || !msg_size) return 0;
 	size_t result = NUH_send_all(client->sockfd, message, msg_size, timeout, logger);
+	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
 	server->data.bytes_sent += result;
 	server->data.messages_sent++;
-	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to client!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
 	return result;
 }
 
 const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, size_t buffer_size, unsigned int timeout){
 	if(!server || !client || !buffer_size) return NULL;
 	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
-	size_t result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger);
+	size_t result = NUH_timed_receive(client->sockfd, client->bbuf, buffer_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buffer_size);
 	if(!result) return NULL;
+	client->bbuf->buffer[result] = '\0';
 	server->data.bytes_received += result;
 	server->data.messages_received++;
 	return (const char *)client->bbuf->buffer;
@@ -246,7 +247,7 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(client->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
-	while((result = NUH_timed_receive(client->sockfd, client->bbuf, timeout, logger)) == buffer_size){
+	while((result = NUH_timed_receive(client->sockfd, client->bbuf, buffer_size, timeout, logger)) == buffer_size){
 		if(is_binary) fwrite(client->bbuf->buffer, 1, client->bbuf->size, file);
 		else fprintf(file, "%.*s", (int)buffer_size, client->bbuf->buffer);
 		total_received += result;
@@ -262,17 +263,27 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 }
 
 
-size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout){
+size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
 	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
-	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
+	NUH_resize_buffer(client->bbuf, buffer_size, logger);
 	size_t retval, total_sent = 0;
-	while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
-		client->bbuf->buffer[retval] = '\0';
-		if(NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout) == 0){
-			MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
-			return total_sent;
-		}
-		total_sent += retval;
+	char *str_retval;
+	if(is_binary){
+	  while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
+	    if(NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout) == 0){
+		    MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
+		    return total_sent;
+	    }
+	    total_sent += retval;
+	  } 
+	} else {
+	    while((str_retval = fgets(client->bbuf->buffer, buffer_size, file)) != NULL){
+	      if(!NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout)){
+		MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to server!\n");
+		return total_sent;
+	      }
+	      total_sent += strlen(str_retval);
+	    }
 	}
 	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to server!\n");
 	else server->data.messages_sent++;

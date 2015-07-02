@@ -27,10 +27,11 @@ static void send_file(NU_Server_Socket_t *server){
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
   size_t retval = NU_Client_send(client, server, filename, strlen(filename), timeout);
+  MU_DEBUG("Sent filename %s of size %zu", filename, strlen(filename));
   MU_ASSERT(retval, logger, "Was unable to send filename to server!\n");
   //MU_DEBUG("File Path:");
   //MU_ASSERT(fgets(filepath, 255, stdin), logger, "Invalid input from user!\n");
-  retval = NU_Client_send_file(client, server, file, buffer_size, timeout);
+  retval = NU_Client_send_file(client, server, file, buffer_size, 1, timeout);
   MU_DEBUG("Sent %zu bytes to server!\n", retval);
   MU_ASSERT(retval, logger, "Was unable to send file to server!\n");
 }

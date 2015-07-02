@@ -1,6 +1,22 @@
-08:33:56 PM: [SERVER]: 2.0.227.14 connected to port 10000
+07:28:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:121) Currently existing bsock?: False
 
-08:34:01 PM: [SERVER]: 2.0.227.15 connected to port 10000
+07:28:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
 
-08:34:27 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
+07:29:00 PM: [SERVER]: 2.0.143.126 connected to port 10000
+
+07:29:00 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
+
+07:29:03 PM: [SERVER]: 2.0.143.127 connected to port 10000
+
+07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
+
+07:29:03 PM: [VERBOSE](./Net_Utils/NU_Server.c:238) Total received: 10, Buffer Size: 1024
+
+07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:11) The bounded buffer's size is being increased from 1025 to 1024!
+
+07:29:03 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
+
+07:29:04 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+
+07:29:04 PM: [WARNING](./Net_Utils/NU_Server.c:288) No data was sent to server!
 

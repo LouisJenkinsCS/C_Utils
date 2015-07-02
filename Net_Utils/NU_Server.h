@@ -99,7 +99,7 @@ const char *NU_Server_receive(NU_Server_t *server, NU_Client_Socket_t *client, s
 size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout);
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
-size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout);
+size_t NU_Server_send_file(NU_Server_t* server, NU_Client_Socket_t* client, FILE* file, size_t buffer_size, unsigned int is_binary, unsigned int timeout);
 
 /* Blocks for requested timeout or until one of the client sockets passed are available for receiving. */
 NU_Client_Socket_t **NU_Server_select_receive(NU_Server_t *server, NU_Client_Socket_t **clients, size_t *size, unsigned int timeout);

@@ -50,7 +50,7 @@ int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *l
  
 size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned int timeout, MU_Logger_t *logger);
 
-size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, unsigned int timeout, MU_Logger_t *logger);
+size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, size_t buffer_size, unsigned int timeout, MU_Logger_t *logger);
 
 int NUH_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
 

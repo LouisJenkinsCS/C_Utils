@@ -31,18 +31,18 @@ static void redirect_file(NU_Client_Socket_t *client_one, NU_Client_Socket_t *cl
   NU_Client_Socket_t *sender = arr[0] == client_one ? client_one : client_two;
   NU_Client_Socket_t *receiver = arr[0] == client_one ? client_two : client_one;
   const char *filename = assert_get_info(sender, "Filename...\n");
-  MU_DEBUG("Received filename: %s\n", filename);
+  MU_DEBUG("Received filename: \"%s\" with length %zu\n", filename, strlen(filename));
   FILE *file = tmpfile();
   MU_ASSERT(file, logger, "Was unable to create temporary file!\n");
   size_t retval = NU_Server_receive_to_file(server, sender, file, buffer_size, 1, timeout);
   MU_DEBUG("Received %zu bytes into temporary file from sender!\n", retval);
   MU_ASSERT(retval, logger, "Was unable to receive file from sender!\n");
-  retval = NU_Server_send(server, receiver, filename, sizeof(filename), timeout);
+  retval = NU_Server_send(server, receiver, filename, strlen(filename), timeout);
   MU_DEBUG("Sent filename to receiver!\n");
   sleep(1);
   MU_ASSERT(retval, logger, "Was unable to send filename to receiver!\n");
   MU_DEBUG("Sent %zu bytes to receiver!\n", retval);
-  retval = NU_Server_send_file(server, receiver, file, buffer_size, timeout);
+  retval = NU_Server_send_file(server, receiver, file, buffer_size, 1, timeout);
   MU_ASSERT(retval, logger, "Was unable to send file to receiver!\n");
 }
 
