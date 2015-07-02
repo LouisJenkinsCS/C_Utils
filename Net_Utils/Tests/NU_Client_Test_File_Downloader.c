@@ -21,14 +21,15 @@ static const char *assert_get_info(NU_Server_Socket_t *server, const char *inqui
 
 static void send_file(NU_Server_Socket_t *server){
   char *filepath;
-  asprintf(&filepath, "%s/%s", getenv("HOME"), "Pictures/kitten.jpg");
+  char *filename = "kitten.jpg";
+  asprintf(&filepath, "%s/%s/%s", getenv("HOME"), "Pictures", filename);
   MU_DEBUG("Opening \"%s\"\n", filepath);
-  size_t retval = NU_Client_send(client, server, filepath, strlen(filepath), timeout);
+  FILE *file = fopen(filepath, "rb");
+  MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
+  size_t retval = NU_Client_send(client, server, filename, strlen(filename), timeout);
   MU_ASSERT(retval, logger, "Was unable to send filename to server!\n");
   //MU_DEBUG("File Path:");
   //MU_ASSERT(fgets(filepath, 255, stdin), logger, "Invalid input from user!\n");
-  FILE *file = fopen(filepath, "rb");
-  MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
   retval = NU_Client_send_file(client, server, file, buffer_size, timeout);
   MU_DEBUG("Sent %zu bytes to server!\n", retval);
   MU_ASSERT(retval, logger, "Was unable to send file to server!\n");
@@ -42,6 +43,7 @@ static void obtain_file(NU_Server_Socket_t *server, const char *msg){
   MU_DEBUG("Created file!\n");
   MU_ASSERT(retval, logger, "Was unable to receive file from server!\n");
 }
+
 int main(void){
   size_t bytes_sent;
   char *client_inquiry;
