@@ -1,0 +1,12 @@
+08:34:01 PM: [VERBOSE](./Net_Utils/NU_Client.c:44) Obtained a socket from a result: Iteration #1
+
+08:34:01 PM: [CLIENT]: Connected to 10.0.2.15 on port 10000
+
+08:34:01 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+
+08:34:27 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
+
+08:34:27 PM: [VERBOSE](./Net_Utils/NU_Client.c:115) Total received: 0, Buffer Size: 1024
+
+G](./Net_Utils/NU_Client.c:139) send_file->sendfile: "Invalid argument"
+
