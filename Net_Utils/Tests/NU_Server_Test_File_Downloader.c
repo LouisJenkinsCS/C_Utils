@@ -25,7 +25,7 @@ static void redirect_file(NU_Client_Socket_t *client_one, NU_Client_Socket_t *cl
   arr[0] = client_one;
   arr[1] = client_two;
   size_t size = 2;
-  NU_Client_Socket_t **ready = NU_Server_select_receive(server, arr, &size, timeout);
+  NU_Client_Socket_t **ready = NU_Server_select_send(server, arr, &size, timeout);
   MU_ASSERT(ready && size, logger, "Neither clients were sending any data!\n");
   NU_Client_Socket_t *sender = arr[0] == client_one ? client_one : client_two;
   NU_Client_Socket_t *receiver = arr[0] == client_one ? client_two : client_one;

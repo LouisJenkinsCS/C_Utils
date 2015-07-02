@@ -14,7 +14,7 @@ typedef struct NU_Server_Socket_t {
    /// Port number that the host is bound to.
    unsigned int port;
    /// A reusable buffer for each connection.
-   NU_Bounded_Buffer_t *buffer;
+   NU_Bounded_Buffer_t *bbuf;
    /// The next server socket in the list.
    struct NU_Server_Socket_t *next;
 } NU_Server_Socket_t;
@@ -32,7 +32,7 @@ typedef struct {
 NU_Client_t *NU_Client_create();
 
 /* Connects the client to some host! */
-int MU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, int flags);
+NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout);
 
 /* Sends data to the host, up to the given timeout. */
 size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, unsigned int timeout);
@@ -42,7 +42,7 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout);
 
 /* Receives data from the host, up to a given timeout. */
-const char *NU_Client_recieve(NU_Client_t *client, NU_Server_Socket_t *server, size_t buffer_size, unsigned int timeout);
+const char *NU_Client_receive(NU_Client_t *client, NU_Server_Socket_t *server, size_t buffer_size, unsigned int timeout);
 
 /* Returns a string representation of the information about this client, including but not limited to:
    1) Host connected to and port number.
