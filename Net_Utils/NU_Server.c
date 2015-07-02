@@ -263,13 +263,13 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 }
 
 
-size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, unsigned int timeout){
-	if(!server || !client || !client->sockfd || !file) return 0;
+size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE *file, size_t buffer_size, unsigned int timeout){
+	if(!server || !client || !client->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(client->bbuf, buffer_size+1, logger);
 	size_t retval, total_sent = 0;
 	while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
 		client->bbuf->buffer[retval] = '\0';
-		if(NU_Client_send(client, server, server->bbuf->buffer, timeout) == 0){
+		if(NU_Server_send(server, client, client->bbuf->buffer, timeout) == 0){
 			MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
 			return total_sent;
 		}
