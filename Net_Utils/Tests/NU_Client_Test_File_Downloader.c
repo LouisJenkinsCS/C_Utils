@@ -21,7 +21,7 @@ static const char *assert_get_info(NU_Server_Socket_t *server, const char *inqui
 
 static void send_file(NU_Server_Socket_t *server){
   char *filepath;
-  char *filename = "kitten.jpg";
+  char *filename = "";
   asprintf(&filepath, "%s/%s/%s", getenv("HOME"), "Pictures", filename);
   MU_DEBUG("Opening \"%s\"\n", filepath);
   FILE *file = fopen(filepath, "rb");
@@ -43,12 +43,18 @@ int main(void){
   MU_Logger_Init(logger, "NU_Client_Test_File_Downloader_Log.txt", "w", MU_ALL);
   client = NU_Client_create(0);
   MU_ASSERT(client, logger, "Was unable to create client!\n");
-  char *ip_addr = calloc(1, INET_ADDRSTRLEN);
+  //char *ip_addr = calloc(1, INET_ADDRSTRLEN);
   //MU_DEBUG("IP Address:");
   //MU_ASSERT(fgets(ip_addr, INET_ADDRSTRLEN, stdin), logger, "Invalid input from user!\n");
   NU_Server_Socket_t *server = NU_Client_connect(client, "10.0.2.15", port_num, 0, timeout);
   MU_ASSERT(server, logger, "Failed while attempting to connect to server!");
-  send_file(server);
-  free(ip_addr);
+  //send_file(server);
+  //free(ip_addr);
+  char *filename = "Barebones_File_Server.c";
+  char *mode = "wb";
+  FILE *file = fopen(filename, mode);
+  MU_ASSERT(file, logger, "Was unable to create file \"%s\" with mode \"%s\"\n", filename, mode); 
+  size_t retval = NU_Client_receive_to_file(client, server, file, buffer_size, 1, timeout);
+  MU_ASSERT(retval, logger, "Client was unable to receive file from server!\n");
   NU_Client_destroy(client, "Shutting down!\n");
 }

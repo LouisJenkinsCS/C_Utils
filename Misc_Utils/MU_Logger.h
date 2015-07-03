@@ -76,7 +76,7 @@ typedef struct {
 	if(!(condition)){ \
 		if(!logger || !logger->file || logger->level > MU_ERROR) assert(condition); \
 		char *timestamp = MU_Get_Timestamp(); \
-		MU_DEBUG("Assertion Failed! See log!\n"); \
+		MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
 		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \

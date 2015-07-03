@@ -14,7 +14,7 @@ int NUH_resize_buffer(NU_Bounded_Buffer_t *bbuf, size_t new_size, MU_Logger_t *l
 }
  
 size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned int timeout, MU_Logger_t *logger){
-   size_t buffer_size = msg_size, total_sent = 0, data_left = msg_size;
+   size_t buffer_size = msg_size, total_sent = 0, data_left = buffer_size;
    int retval;
    struct timeval tv;
    fd_set can_send, can_send_copy;
@@ -36,6 +36,10 @@ size_t NUH_send_all(int sockfd, const char *message, size_t msg_size, unsigned i
          else MU_LOG_ERROR(logger, "send_all->send: \"%s\"\n", strerror(errno));
          break;
       }
+      char *test_str = calloc(1, retval);
+      memcpy(test_str, message + total_sent, data_left);
+      MU_LOG_VERBOSE(logger, "%s", test_str);
+      free(test_str);
       total_sent += retval;
       data_left -= retval;
    }

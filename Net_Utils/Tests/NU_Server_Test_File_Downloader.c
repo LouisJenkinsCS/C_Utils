@@ -42,9 +42,16 @@ int main(void){
   NU_Client_Socket_t *client = NU_Server_accept(server, bsock, timeout);
   MU_ASSERT(client, logger, "Client did not connect in time!\n");
   MU_DEBUG("Client connected...\n");
-  const char *filename = NU_Server_receive(server, client, buffer_size, timeout);
-  MU_ASSERT(filename, logger, "Was unable to retrieve filename from client!\n");
-  MU_DEBUG("Received filename: \"%s\"\n", filename);
-  recv_file(client, filename);
-  NU_Server_destroy(server, "Shutting down!\n");
+  //const char *filename = NU_Server_receive(server, client, buffer_size, timeout);
+  //MU_ASSERT(filename, logger, "Was unable to retrieve filename from client!\n");
+  //MU_DEBUG("Received filename: \"%s\"\n", filename);
+  //recv_file(client, filename);
+  char *filepath = "/home/theif519/Pictures/Barebones_File_Server.C";
+  MU_DEBUG("Opening \"%s\"\n", filepath);
+  FILE *file = fopen(filepath, "rb");
+  MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
+  size_t retval = NU_Server_send_file(server, client, file, buffer_size, 1, timeout);
+  MU_ASSERT(retval, logger, "Was unable to send data to client!\n");
+  MU_DEBUG("Sent %zu bytes to client!\n", retval);
+  NU_Server_destroy(server, NULL);
 }

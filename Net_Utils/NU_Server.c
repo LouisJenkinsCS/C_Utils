@@ -271,6 +271,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 		    return total_sent;
 	    }
 	    total_sent += retval;
+	    MU_DEBUG("%.*s", (int) retval, client->bbuf->buffer);
 	  } 
 	} else {
 	    while((str_retval = fgets(client->bbuf->buffer, buffer_size, file)) != NULL){
@@ -279,6 +280,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 		return total_sent;
 	      }
 	      total_sent += strlen(str_retval);
+	      MU_DEBUG("%s", str_retval);
 	    }
 	}
 	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to client!\n");
