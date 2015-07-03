@@ -46,7 +46,7 @@ int main(void){
   char *ip_addr = calloc(1, INET_ADDRSTRLEN);
   //MU_DEBUG("IP Address:");
   //MU_ASSERT(fgets(ip_addr, INET_ADDRSTRLEN, stdin), logger, "Invalid input from user!\n");
-  NU_Server_Socket_t *server = NU_Client_connect(client, "10.0.2.15", port_num, 0, timeout);
+  NU_Server_Socket_t *server = NU_Client_connect(client, "192.168.1.137", port_num, 0, timeout);
   MU_ASSERT(server, logger, "Failed while attempting to connect to server!");
   send_file(server);
   free(ip_addr);

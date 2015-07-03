@@ -1,8 +1,8 @@
-08:17:38 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
+08:34:10 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
 
-08:17:38 PM: [CLIENT]: Connected to 10.0.2.15 on port 10000
+08:34:10 PM: [CLIENT]: Connected to 192.168.1.137 on port 10000
 
-08:17:38 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+08:34:10 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
 
-08:17:38 PM: [VERBOSE](./Net_Utils/NU_Client.c:147) Sent file of total size 147456 to server!
+08:34:11 PM: [VERBOSE](./Net_Utils/NU_Client.c:147) Sent file of total size 148011 to server!
 
