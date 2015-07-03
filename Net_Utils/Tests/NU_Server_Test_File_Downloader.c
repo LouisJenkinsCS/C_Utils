@@ -46,7 +46,7 @@ int main(void){
   //MU_ASSERT(filename, logger, "Was unable to retrieve filename from client!\n");
   //MU_DEBUG("Received filename: \"%s\"\n", filename);
   //recv_file(client, filename);
-  char *filepath = "/home/theif519/Pictures/kitten.jpg";
+  char *filepath = "/home/theif519/Pictures/index.html";
   MU_DEBUG("Opening \"%s\"\n", filepath);
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
