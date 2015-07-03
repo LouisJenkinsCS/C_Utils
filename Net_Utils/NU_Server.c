@@ -265,8 +265,8 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 	size_t retval, total_sent = 0;
 	char *str_retval;
 	if(is_binary){
-	  while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) == buffer_size){
-	    if(NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout) == 0){
+	  while((retval = fread(client->bbuf->buffer, 1, buffer_size, file)) > 0){
+	    if(NU_Server_send(server, client, client->bbuf->buffer, retval, timeout) == 0){
 		    MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
 		    return total_sent;
 	    }

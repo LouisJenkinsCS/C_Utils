@@ -152,12 +152,7 @@ size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server
 	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(server->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
-	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) == buffer_size){
-		if(is_binary) fwrite(server->bbuf->buffer, 1, server->bbuf->size, file);
-		else fprintf(file, "%.*s", (int)buffer_size, server->bbuf->buffer);
-		total_received += result;
-	}
-	if(result){
+	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) > 0){
 		if(is_binary) fwrite(server->bbuf->buffer, 1, result, file);
 		else fprintf(file, "%.*s", (int)result, server->bbuf->buffer);
 		total_received += result;
