@@ -1,10 +1,10 @@
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
+03:31:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
 
-02:59:39 PM: [CLIENT]: Connected to 10.0.2.15 on port 10000
+03:31:03 PM: [CLIENT]: Connected to 192.168.1.112 on port 10000
 
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+03:31:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
 
-02:59:39 PM: [INFO](./Net_Utils/NU_Helper.c:63) receive_all->recv: "disconnected from the stream"
+03:31:03 PM: [INFO](./Net_Utils/NU_Helper.c:63) receive_all->recv: "disconnected from the stream"
 
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Client.c:162) Received file of total size 7312 from server!
+03:31:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:162) Received file of total size 148011 from server!
 
