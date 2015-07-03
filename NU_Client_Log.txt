@@ -1,10 +1,6 @@
-03:31:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
+03:37:18 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
 
-03:31:03 PM: [CLIENT]: Connected to 192.168.1.112 on port 10000
+03:37:18 PM: [VERBOSE](./Net_Utils/NU_Client.c:61) connect->connect: "Connection refused"; Iteration #2
 
-03:31:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
-
-03:31:03 PM: [INFO](./Net_Utils/NU_Helper.c:63) receive_all->recv: "disconnected from the stream"
-
-03:31:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:162) Received file of total size 148011 from server!
+03:37:18 PM: [WARNING](./Net_Utils/NU_Client.c:93) connect->get_server_socket: "Unable to connect to host"
 

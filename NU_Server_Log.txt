@@ -1,182 +1,239 @@
-02:59:36 PM: [VERBOSE](./Net_Utils/NU_Server.c:121) Currently existing bsock?: False
+03:30:47 PM: [VERBOSE](./Net_Utils/NU_Server.c:121) Currently existing bsock?: False
 
-02:59:36 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
+03:30:47 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
 
-02:59:39 PM: [SERVER]: 2.0.178.128 connected to port 10000
+03:30:50 PM: [SERVER]: 2.0.167.144 connected to port 10000
 
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
 
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) // NU_* is the Net_Utils namespace
-//NUH_* is the Net_Utils_Helper namespace, used for helper functions Client, Server and later HTTP can use.
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÿØÿà
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ö©G@:û]c§ÌrzûÖÍ®°OFÍpVóŒäú×³¼ Œ’3XÊ:èVš™;y?S[vZ‰éŸÀWazA¥oY]#çÈì3Y¸êÍ½Îò:õªÌ“‚y®nŞó
+>ltïW>Ø~õ.CD¬WÖ$Â+…Õ¥
+ÏÖº½Vè0>õÃk“23UØ%±‡¨NK)¶ç§Ó§Z£rÌówäç®[FÅ‡Òµ–Æf‚089)ê¤‘ZXlİ†
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) <-¬ó8ïUd‹¾ìc ö¯RÔ¼?²˜é÷k‘Ô|;,š5,£¯ëS®§¹Ü«sîrRFW ãùUi=½h]‚Ÿ.Ò;sYÒuş•êSwWGJm•åÇ<õê(Ü©nàÕcbœ–ØqÆkI4uCÌX’sÏÖ­Cåë×ùS„ àƒî*ÔP€:ı8®yM#fÆÅi»¿r+PqÏZ(‚ÉÉÇJµ pqÎl›\¦`ûG€c#võ­$¯9é×^e!O9>´£"¹
+¡U@`Nî•~Ô€àdf³ğwœp+RÁc<çô­Ûº0œ,tZjçf3œç¥uZbÉ!
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ê}oá…¹vqÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ³ÔaòÆH¯&°×
+ñ‚=h¾ñÊ[/úÀ;âäläjç©ŞkpÆŒ¹ñµÆëz¼2ù†GlŠóMWâNNòO|ö¬i<b÷C— õÉ4§R•6t:íò³°9í\&«n$Ãõ«’k	31w3Šï"¹È>‚¼ª••Œ¤š9{7q$/_N•‘}¤‚¤ííÉWwäÄÀãƒßŠÎ¼²­úã½U,_+"5Oñ/‡Õ÷€np·kÛ±äg¨¯sÕôs+7ËŸ|W	®è¥8Îké°˜ë®VÏ[_K3†İ‡*s
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) X7ØVÔ§yáõ¸BBóês÷º<Ğ1 3Ş½Ş<ÀÁı)·:tS‚1ƒÓ¥56·&ç•HŒ¹0zÔ;pH'œ×{ !nzÖ×‡¶çnGµtFh‹³Ÿ9lñƒŒuÇø\£äòúÕ‰t÷…°TãÖ (AèxõïVä˜¹ÃB–;…Pp[¸÷¯BĞí¨Ê‚kÇôkæ³¹S»
+Mzÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ”döõ®ÛN
+œŞ”ù’G#f@¶(9PqÅE$xÉ=»Vä–ø÷ë>æ€ñ‚já+‘©0Æ8¨Nvbèò}*¹=zÜŞ$±Jµ§aTc?1Ï'¦jÒJRzzñYIjhÑj6ÚF(çhù@ªâ|¯\Ô2Ÿ0sIFæm\Šk‡s‘“Ÿj¯óíøU†ÀÆ;ÔL03ıj”QQ²#RW5f;€:œcŞ¨ÈyÇµFoŒzTNŸ1RŠ‘ÓXÜä;õ­Ë[•ÈÈàúWcrÀäk£Óä,O«ÃÄÑQ<ºÑI`H cÔ’B0N0qM´ûµxF6ğ?:ñœYç“Ù—|
+±e¥íl…Ï½iN~í\¶ŒÛ¥tÂ³Ø®gb}6İ`ÚÀŠé¬õ4…1Ğ£5Îù‚ 
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ôôéø×ck~Œ úñ×½yî’È‘¯·l×Emr0vƒ­y•$p¶ÍÙîÙsŸ­súíËˆUÆ¿òöƒÓß½`ë·ù‡ ûV)÷¶rÚŒ…‰Ü0sWã21É'ßµo\J7dEb]•w|Ÿ¯½Zg\_C2äìûÙÏ¹¬ë©pÄdÑ»o\Õ—t‡
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÙGLWµüÑâÔ5e¸„,ŒË}séNÊ¬’G©‚£í*$zÇ…í£ğo‡\Ìo#ù°gïGê>™¬½CÅ7zÀqw#åyYŒ{Òø¯Q}ZäÆªBpœmöúU{9 )VŒŒC^’J+•¦á¨F”KA%æ$Špn1ÕVß†|g©xKPêÊáàdo8÷zV4pyS¹õ#¡ä¬„«ªÈ\u=qõ¦­º;\Vhú"¼?û@øV[MV8£Õf$”¸d,ö¯~7üÖ>ü@†ÓP¶-k*3[\¨ùfSÃ€}+èïêš‡†µxŠ<jÀl–>Y9èkİ<[áİ#ãÏ‚•OªÛ/›o9«ã¨úô5Ö¤ª-~/ÌùÜnŞôvøóªiFJuQœ±e?Zªºs7U qÚ½‡â¿ÃÛø ÙÏg%¤ŠLnêò5Äÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 	Å(f°ÏA^¶£ŠµÏS7Åd³Ë
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) qdŠæ9HË9®	>]ÎWîêª¬5FXÃàŒŒ
+Ûµ×åùˆã¿Àxbñ¯ôèÎrÀ`œô®Üë¤W,ª\º¹Ò_ß+Å»¯¨®UÔS‘3[·wA-YsïÉ¯9Öu3Ø÷®yI3JÆ‰¯<èˆÜyæ¼&y>µİjWĞäç+–ĞM8ÈÎOzÖ/•\"¬`éŞ$©-µ§‡€”¶ÑŒôÇÑZéè6
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ‘•È{™­‚p1èNj	:ñÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) çñ¦JŒå8ô®ªÓB+÷OZ½ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Á=t«úTÖ²\•—`IÔÄÄ/L‘ƒø6)CMö&	ct7Ç3ÆG!±ÍOky"’ö²p¬¤sìj›Á`Í"’±ÌŒT‚§ ŠsjVéo²h£<™3ƒJhQwGUáMNëI™&S³Nº,‹œˆ¤	ö®çã£ø±ğ¾æeT}RÆ3<N8'
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÒbAÎj¶¤`rùéíXæB­î}ëÇšw>V¤w=J×ÚDÚ['ùU›‹ğcÏ<ds\›¨¼.xÍlM«ñBúâµ¥5}Nu.äZåß›)^qŞ¼£Ä–V*qÏJïuMU
+œJó¯\«9¯¢ÂÍ3ÚÃÔG?qrU²|Vÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) D]Í7Ô¯š¬ Óÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ©=9®ñ¬YáùGëŸÕlÌJäGÏ®+hÎçTdŞç	­E•=së^wâpû_Â½YBÎã$
+âu‹	$ÀŒ‚=kºœÒ7LóNr2¼ıÚÌ#Á<~5Ôk|¥ö”#¹ÈéT-ôüíÎy¯V5)×+í^To”ãŒ]—†õÉmÙT±w¬»m§g9êÇØ3¸ı+U>¤Hõ½ÄÃj–qCë]âuP?z8s_<%åÕ¸ù\zV¾™âÀØgÈ3Ö³œ“&çÒV^#I@ù‡ 9­5ÕQŠA¯Ñµ¹J¨g=+°°Ö$
+âyõZ±›gÈ`çĞgµL‡“Ø1Q€KŒu?ˆ¯§‘é²í´x'¯¡ıkRœ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¾·VP[F¸U‚Äs“\¢Ì²xÁê;×sŞ‡ê¸Hû:1B;É­¦ÂHTNAúÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) bÎr:ªúU¸cVşäœuúWl`}5’Ø¯ RÅÁb:Àfr?9>êÜ1©RH
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¨ÆAë‘\O‡cY
+‘ƒú×¥h0„Uéšò+®„]½Û}&@@Ãj¯q£½³gn?
+è´åã¡Æ®Ü@²ƒ•Éí^K¹IPB8æ¬@ŒøŞµwR±XËéš‚Ò7ãò¢×:Û½ÇÇJŠæÑJ·fµa\E†
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) œBLg!À¯Ïßx´ENˆ0}Ó/~½ëôá®¢²İŞ[¶yŒgï~áß>Æş,º5Ë8'±çÎ¦rVR<LFVæ‚ZîßÃ.$˜*èqÔu& oË:»ùm€B ÇR{şUïVóâES»xvñ²µ5ß‡^\@@˜ÛvUƒ’lñ–LŞ§ÉÎŒÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) °‰©GI#„Õ-‹Ë·û×EáMp®@ø¨R×íaôÍu;8õ>ÕªvG¾§hF‘`bQÆ==k«±¶ ÈíÍciê:^¹®†ÚL/P=|ıi¶õ<Ú“,¼{b?6æªII××Œ
+tÓù´6½_´ŒLèG5Œ^¤CŞ+ÚÙ98œóÒµ-´"øf\“ùV…¬1¡Ò¶-dP6‘À®¸Êç©jÚ™¶Ú"ÀC`Ÿb*ã[„PP
+ÓeGN£µJwdà
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¡W±Fò,ãŒÖ]ÄE#½o¼À9ÅR–ßæÀï]1vÜÕK±Ê^!\pq•“ È'½u•®Aã5ÎİÂc#Ú½sM\ÊxŒØŠĞ³„n_éPÆ£vAçŠÕ³PTtçè­SC
+’/ÚAœg>•­ãòªö‘åùé¤ô­˜“jã?¯«QÜóç;‘,`»rJ½¾FxãÚšŠ7`à×zL}qÍyufr91©‚=zô¨gRàcù¶ä*ã?¥Sä’IÈ4Ó“Şå„`ŒTóúÖC»Êş^Â\ôãŞµ®¤ó¹Àö®ŸÂ[ÇY%MçÔó_AJ*1=
+k˜ÊÑ|,±	71ëï_@üÒ!µ¹`Š$kdd‚*–á@‘¢ˆ[`ñÈ¯Lğ.…ëş8]Û_"úƒŞ»èIÜöğtíQ3©ÔÕùÁ7~Uæºâu)i
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ñ-CáÄ3´m{'pC* õy> Ò#&×^Túz]Î¥oo
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) LŒîã#Ş­®ªH9lz·ò£ÄõcSC³KµÚ0ST/µ(ÀbØû×0Ú£¸á¸õŸuvXrXg=ë)WiÎ¥Í›­R0¤Î8æ±®µ5AÆ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Sßõ®sûC<)ç¦sVb»Ûòî=+–x{ne*gBgó×ñ¨¥a"uã¡Ç­Q`ëÁ8ô&¬ÆNìc ÷5ÍìäJ…™
+Â|õÎZöß†ºtsÄ˜Æ0y-µ©2<W³|)™#a61Ö»]d´=
+R³±êÚfŠªWx!Há…mÚ'‘Då˜€LfPHzÔğb†y\g=ş´HZ_,D¡áóÇİ`pš×E
+r´OWÜª«|%·´®˜P}r¥×4	=²ù‘È>hë¢…-4ÕŠTÌe€ó<{Õ]c\…KáB¡÷à×Ñ'Ğû¨/ã>kE‹b´D¶=ëÏ¯5›Ë[©#7’ÆÊN|â½‹Æ:Œ2ÚJs¹ÇÌ
+õáúåòÉ¨Ê&H%ŞxŞ¥[şú_ëU$’ĞéƒèË–¾)¿€nœÉ}?y0=Èé]“ã—[˜ä‚ê÷M‰†ÖbâD'Ğ‚8ÅAon“©‚ylXõ2âh?ŞQ‘øŠéKš’Kl|·àÉnpA°´$ãØõTÕà»Ó¢7°@áÇH»ûäqNÑôÈ´Oíö4–ò!æÏªÍuÇ¸=ˆ®GÃvpöº‰–=À5´İîéÒ»DÑ¤²™]–÷Y6õª\’ÜÊİÒMàø­o-Ï%³ºÍ´¼+òL„ve<0=}iSN]*häxL§ahùP{;Z¾×m¦µ:F²Á´é›Ì[…û4ı¥Ç0G=©ºÍ¤š-äö—ùûB¨\¡Êº‘xà‚9¸êTĞºwæ³ÜŠÂHï&±yÖ;mHª«ô6×#&&9í’Tû5K,·v‘Ëvq±!ŠPO*Á†àk˜’g¹Á~S³wCÈş•×ê$kVkªÂØ2ÀÖ÷ñ)ûÓ*®?ßOÕH®‰İ±|®ÄÓëoåÄ9;ZFWÈê3O¸Í_ğŞ¼^c½¶dzk‹ŠiçÔæEB“Û«|İ©šŸÎ´%¸h+˜“jD2@ş÷®YêÎ¨³±ÖüL–÷2„Ïï¼¾xÆÌb¸İÕ…µ½ÏO5˜—ïÇ5“­jm<–'vv!“Æ2zæŸ¤İÉnöÖ–ç
+¨Ê9Á=qùŠ”hİFm`\ÚZ"¹Eó$òşµ…©ÜOn„¤›ã9
+=­E¾´³†<«Fª„c‘É$ş$Õ4±H¶ø
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 6'°A’Ñƒ·¶*R²4æ:kv;M68×jï;@ ª3ÛYİéÊŠ£2ÌqÎĞ­pÒê“êş1[H*sµ3À+´„&•¾ix— `wè¢¥0V1õˆ Ó£Y|¨2¨;œp*†—eäZ†“YHv$u=z}8ª:Ş¬×÷–À²Ìr ñíúT²³Hê¨Iw\–şêŠ[ê+!*¹Š>P'1‚¨£¶:şu'<?+¹Ôg€¡ ãŒVôè­ïfsq‚víÜG@üë°íËı|¶
+º(ë®±É8£Tºb¾^@`qÎ1Œ×5{+7Éõ·©É±Ëd³§­såRä³´…cİ“Ëjèº™¥b¢ÆdûäÅÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) õíK{¶=¬fÖø;X`óøÖN£©4¤Ç8¡>Sxèfëî“ò×:aÀ zt­-NçÌùzf²I%NNÔ¹®ÍS)¡Ê9ô©²“Áâƒ;gv9Á©Tö¢ö/q<„Ïİc¥<GŒŒÑ°†9é€8§+ytÛ.(³nv€N*q6oÆ³ä˜ 'Š"¸Şr~SJ×*æÜdn=°j8†Á$
+Ë¶¹è3œÕ§`G½H"îàı)ã×Ö¡=
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) .ÔHøİùõÏ	\\iVñK-Í¼Ÿ$Î7+C^5§Âí3	1ıåô¯Wğœï–ªºH#­c&ĞOS¿±ğõ¦²w£‚58tš[ó$‹½İå€éš¦&6¨ƒÌÏ*WƒŸJÄ¸ÔšIàDÀ†ÜŒC#B9¹«sêÃÄS£lY/åp€´œuönõ¯>£»&	£eµ¡´Í	(Vºİ'ÄÑø¿O‡HšPšÕªìù¸˜“nÄúó´‡Šñ÷¹–9Z ùŒ”7ÊxìGjb_,å˜)9ViF·½qJFé_SĞF¤%¤%£¹³$lq†ÚÌÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 3zØÔ´™¶œv9æµ"–uÜ+’â[m¹.
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ²$LíîO|Š­,˜ÉÚ}Í)lƒÍVv©±	ÌıxéP# ÷ÍI3“´Æ •+1VĞ’9
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) û,>SéM-C®‚jö] f¥ˆJrñºs$|7Â«êˆ³ie!`…‘d+ºİÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 
+üø‰¬OãêúµÂ2µÕÃ¸VÇ=+õö1é/-·1\_’v[/.1ĞŸJü¾Ô4éîU‘pÁÊGOjÑË‘&~yÖæœb™ßÏ¯jÒµFB~¤íÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Hï[V²3\ÒŠd4nIxU1œQg~UÉÆ}gÊßºÏñÕ“%ëÁ)ùˆş”£ÚKàóYÎà¸$õ5—kª	#9<çÔÍvª¤‡zÖÊ$Rñ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) s$îÍ¯±Éj¦š| Á»†:4¿yÈúgô©…³ê&Úò5r±C$e€Ï^Ÿ®ßÊ±µek‹çÙ¸YE‹~yo›k?âÎy®ßÃMÊhÂŞQˆŞF@§¨Û!9÷û¸ük4µ»4L­âe-|«8˜‰fQ'©ÇòÍPğG†nµ;!0bZæAÆÕ`XŸÈUH4é5_jY“o½‘ßktıkÚ|'¡>—¤[F#ÄˆÂ?î€ª½~„ştÒ¾¬wIhsZî‡x;PXsp"‹¡Ÿ,Gà¸¬+Ãë¦Î’È<ÕÇİ\ŸlŠôÏÚm½†İ¶”(¦8ZçfA¨T1M‘€pKéèSRõz¾›\ÜÚl°³
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 7/^sTõ[ êW
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ªÇwµeÑŸaïV5ta:×<ÎÙäs] ¤µ÷5dÔˆ‡­TkÂìqUÏA“üéÁs·ü+¡SH®Kã¸$ã¯lÕëuyWâ³ì­Y•vûqÖ»}/C),Ÿ†+½HÓB’G32I$‚;ÕC>òk¼›Ã"
+íÍrú†ˆC€©ó+:RC®&¨´€Àjït}{rØÏZò½’Û9ÈÀÏ³¦İÈØ<sJ¾3W2•+Ùg¯Œ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) PXi’Ä€Ióqœú‘]İ¾6­â"l«E<Î¬½·"ycÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) çÚöòñœòJ´—$cÅ9’qš'Vş/Ö¹ynÎ¸êµ,]aˆ<Ì¹¸íÆï­Y–RTóÒ²î¥“ÀÏNk¢+3MŠ—Rç8À¬ÉNNsÃWd˜2½ê´©óÔ×¤¡cTV³ª7ìJÑµ·ò#–)-æã“øUçP¼
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) RÜæSw<ïSÒ³qÕÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Û™"‹ëĞ–?ˆé]Mïút’±U3Œ×øTœ~€â¹íKFŸU¹—2›x‰`U
 
-// Basic data structures
+¬h¸îp¤şuâT=ˆ¤Ì
+é÷uõ›#í··X‹¶r
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) õ­£(ãsX1(
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) )bo1¢˜‡½k—ñĞÈâº½BO!XÃœWøŠèˆ%$v­h«ÊÃ°¾	ñÛŞº1?{#œWÒŸüH$9Ææ¾EĞ•„ë"ıål;W¸øZki–8?tgÚ½zÔÕ´.KKŸMÁª*ªœ€‡ ş•“­Ü,ñ:œŠætíq¤‡alã‘“P]ë9ÈÏ ÍpIÙKcñEš™HÏ­sï§şì¼ñ®»P+q0ã5Mì†1·ô¯¤y§sG]L4°Ä(§JèôıÍ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ve¼I«.«sÕ'xÕ03–
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) |Éÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) šVeVÏ&º}¯,u(µmb|µIs§Îs+sK¶®GN¸ÅhÜi»¢ m>Õç&å!¥sÄüCjÑ—Ü95É\ÃˆA$°¯bñG‡<Õf#¼Öÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ²<©á\¶>KÓ¾itâk³ÚÆÇ*ÌGé[wŞ%Ò<¦ÉŠ«I’v8ÜúÕôß³¯†%¤x’\|Ê3ãëÖ…ø)á,	-ôH&pxg‡péï]«ÔÉ`¥ÕŸÚx;ÄõRš}„òéáòÓÈ„'ÓqëÔ×Ôßü€,"€ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) !»z)ûÙ-íV,ç±ÄÊ§§<Õ^Ì‹­œÖÙ
+IsèI­qgæ&ä# g•Èé~c6Y‚‚r×q¦HĞH“ßI¶fÍ/iâK ÌXz+Õáµ<í•ï^}£§—p"òs¤W[©Ü¢i®í‘ÔkĞÂµÛ<ll\¥–>7ÙuyâY…«;Àä¼×„Üè–¶7,S(n	e'ù×Ğ¿4¸ê^VÉù·g>õãZæ°JNáıáÏµpU¨ã>dsV¢¬q×Zù>XıIÁ"°5}422/%{úW]-Ô³FÑí*W ÏZÉ{I’Açõ®ØWR§ÏbD2ÖßÊ˜rI:õÒÀ‡bíPM§ˆ§#n<}kKO±í8;Ojò«4äxÍY™Z¬'È8Ÿ¥svVfI±ÏJô»í	å·äW?ˆ`›•ÛÏ\Vj¦–gH^Fö(iwmÈéõr×Mh§)\zñ]X,p28ÅÂ€À·Šã”­vŠFß‡à¯Æ»Û$¸È‘ÍqFØdPz×©øZ!*.ãŸzñÛr™»—.å)<>Xgn}2+&óÃE·|Œ	¯Z·ÑDİ¹Òªj: Eä`úÒ½º9R¹Å'w¡àºç„Ñƒ,:W©ø-|ÂUvöÏô>±¢•Üvšä5=·Ê
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ›‰_ÃÖ³G‡ÔóŒŸA]åÕ‡Ì>SôÇ5Liù
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ª²µŠØ§u¨Fò6åg=‚&	õ¨Í´wÌÎĞËŒ|ì1ŠŠRA‘w’1ò²~‚©»jH·”*ƒÊs¸şf¸êFÇD$º6’Ë†·Nº\{â½D¿şÒQ
+İX=â¨ÈBÊ&Œä†¼‡Bº{w&àMk#Öá‡©
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) wÂƒ„9!»(øñcÌ¢òİpÙHoóï^%ã(â’Eu‘û•ÈïÖºü@’íÀywêÎ#ß
++ƒ»¾ûL¡ËÆŸùgÔšøúÕ9ç¡ôxx:tÒ‘Ê\i¦Ò6t€ÆIáÜòOjÎñ ?ñ“õÀ®î÷M–K=ÄO°‘Ì„F2}sŠæ/tˆÃ¾éòÃªÅbúÖq‡s¡ÊìŸÃ³Åvê¦p®+³‚Ì.Â…ıAÆIÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ç“^)ZZŠÇ/2F¡y€tõ©
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Êe#’I¯g	SI#ÛÃY#2êÛí,%G°æº–ÎLC'\ó[÷æVÃ.;óÅqË>â¤íQ×Õ-£¢Y¼ÖJL’?ÙÍ`_ëBR·$`‚@”-g_<Ò±TÜÊ:zVL–3LwX×ÖCŸÒ„Ü‘ÔÒGKium,›Å¤€v“Ì.OáÒ·ôİnÎ	-¬ÓÉ“ş³j.;täW™<¨®ä*8Ûíõ$ñZd‚ÒV–F.ì‘üª¥c;¤îÎÆïQ†Wßö 
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) UÕ
+ÜÜ°…Á}÷Eøçğ©êÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ®‚Ë‚vó§µo&6óƒëô®-.2ryÈ­»Czl''ß½y·5˜Ù¬ÛCvÔUk‚†ÅA,œcvàUQvˆ'+ıkèpò¼lÇsbÕEÑeéÁ«o§„+Ÿ¶ÔM¼ªşõÓA|—–êàäô®«+4_/s.à+©è0µ-‹ªuF1Ïj}Ô “ŒŸ¥Vó<¬îkÃÄípåFÅµÂs·‚=;ÕÑzTcv½rğ\”‘Û#ïShÁ{æ¼IÊL™+®ç-)!‰Ş™j†V=K~uHÎeæ´ôÂÊWƒøW4Te/xÌòólì™ÁÏ^*”ğ<xÈéë]<ËåóUî,·gŒ¥}o+•;<!ıÉÏj’6ŒsÇcVç…Tîr1T[ä8­'ga’¬ø'§Ö§PYNàj´ìNvœQZpYÃƒÛÑ^^ñ¹‘¨Ã„è3õíXÆ­ƒŠê¯lØ’6çëYsØ”|ãšÏîÈ9PšZààç¡®‚%À
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) øvîÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) †AæwÀãÒ²¥S—¼1ë±©i§C%›,éò‘Õr^2ğ¥œÖÒÍIláñö’ŠÄ)íŒtú×¦Çh±Ä7€îSÖ¸ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) G=z«\˜*:èo4æ*ØäFkKw…¾eÆ={W«BQ«f‡=Í9Õ²˜ê8'µQÔÒ7½¹«À
+ùöªW“œ±cÏNk²MÓh„c]ië»!AÇZ}¢£‚·zº¬	Çø¦¬ˆŒG¡­}¶¶¸Èï¬«2x4ÄÂ–èGQÇ5SQ¹	1=WÈ.ƒ6sĞà÷®˜ÏA=Š¾`#¦OzšÚf·rı­2ûÁq×™z¥¤Î?×UòÊâ¹zKĞÃ95B[–>£*¸vûÌİ9ô©ä€08=z×~£qÔ´ìMÙ )ëïZÚ]ô’
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¸uä/æü§v{U9ˆl ûŠ½ö!$Åp§Ò¶ìôô™åçºÖµŒt&ÌÌL€6•ad+ÔŒw­TğõÅÁu·PÈ£/#©õfì*3¨iúÉ#ÔoÁÇö…Ê~ê3ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ;î9îséZ"–‡m®xöúåÅ	™É–E;‡ÔóŒÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ‹(ş¢³t×rùnú6‘¾E@Åc\Ú²Nw÷®¾ïN‘!ÈÁûŒk˜¿³ÜIóp¾Â¹¥±Ç[•˜÷©ÈûÇĞÇ¹ˆÆ¤ş`V¹HÚ {Ş³¯Q¼—fÆ¥Rö‰£ã±ÔyºÖ¥s‘ÆçY¶÷È³/Á÷§ë’íS†#½q’jl'ùX’®hAÑ‘òÒ+±èöí´u
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Vº2‰n´ËŒ#<uj7¡ÆàÈ¨²`óÖ½
+öqdì6%Ø­ÈéToÈ!‡ùéZkOÎ¨ÜÛ4œ†èk‚0obÌÜådÃtÎj{I(äúõ¢òÒe™ˆå{ŒsM†ÎHÀ$>õÑ*rê„_X‰ˆ‘œVmÜ…ş\¿	hâ+’sÚ¨^©
+r8ë\òI0i£»¹=¹8#¨âµt»¢q“Éõ¬»Í¬ÃGz³¤7ïT{÷®¸Fñ¸ÚÆïf	a§Òº=;P¶ğØàv®DZ1Œ2¬yÁ«]I
+âO”â¹ª.WtUÙéöS¬‘¸×Šeä"@¬>†¹M'W Œœö ×]lÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) N¥´™ÀÃgpd]©õWÏ?CŞ»ï[*Ê-£¶Ün	óÂ´¼9àƒ$áOÌ¼¡éĞô¯SĞ|$°¤.è±°YQz}iBƒlÖU¢—‘gÃÚv—2…rù‘SqŞ®_Å5§Ëm;'Œó·ÛéZ²iÀ®­ÇÂ«I§ÆÒ€®ö÷÷Iæ6>•è:O–Çí¢ß3wG=>¡0FÜ>qŒ§#ò¬=Rêõãy¦´åq4U¿V<P—S)û"¬Û²Àn{W}â[¢|™­dÉ¾AıkÎ”œtg­N1œT’"ÔµVij®ŒyÄÃ¯ĞÕ[7r…Œ„àò€ñOûa»GL´¨Ã!~d>Æ¡·‘ÀÚë´zŠâ›;áSRÜ©8Æó­[I¡bĞéX–Ş@ã<VÕ•´…A#n+4Í£ÉQ•ÏM§ª)˜”fbzæ5b?­<E®IzPÈ0.
+1ùKóòÖEìÂ%É]Ç·Öí…X€£Ú³n–%ÉtÈê3\ò¹-&kƒ.JÅ×®Ecj·¤O”ãÚ»;à|µP8¬N–V=©Óæ½®xXÊ-­'×²HGµÄLÏ“ƒ» ŠõcM$@ïé\%Õš£¶?QK‘©]Ÿˆ¥Ë-Giš…¶‚@?©®¯GÕJ(BÙZâşÎgäcµY±»;
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ò=zU¨oN;UÄ\aÆMgKw‰2¤ã¯>•òØˆ7ª!ìw:v¢ ‘X0ÇµtöóÆÊ$Ş¹'Jó>ø²çûİo­m[ê­mnW$òÕyRv{5s½˜$˜ÈàÓ¢¸äÇÒ™ª[¹l„ò:T+ UéÈï_U^æl¶ìM3²Œ|Vlğ!=I5}]g^
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 0‹¤ÒGu(hlC,‰ÈU
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) |¨Øzâ½ƒìFÉƒ"†P
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ã9ÏZÅFtf=T{ÓÌ¬
+ğ3µãArKŞù½(RC¼Ò&¢]úgÜÈ¸•üÃıqÚ§±›qU÷Á¯~N%-†ŞúF@3œv&¡¼>d}HçŒdP¸rÃÓ½G+ÁÈâ±7plÅ¾fŒäYŠd¹çæëŠÖ¼ŒÇ<{Ö|)°>½k´B¹fa9åAõ5z27g9Ç8¨cA$]ˆî=)ËòŒgö¯
+tnõ)jUÔsæ³7=ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ‘ìW·ùÅV–Xao—ç=qQ<Ê3“»iÎÍA˜Õƒ¨	ä•Ïœ®Jœ/f‘ĞhPÊ—©
+-“÷DŸùlÁ„|ú.ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÌÜ?Î²ìmãvÛ€`a–ŒzzŠt–mûÕo51–PyÇcD¦Ñ‹§Úúô2¯%šÂO³–-´‘î>µÊë0\KpRÚb“à¸·›æITrv“ßÛ·Òº^â=N)™Ä¨r„pøë­q/{'Úd³¹œˆ‰C1ûñ·b=+È«%{=r…9r©-ÎsşX!’hn²†
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) f¼zé'b72­¯Õc»ø‰æ¤k¥,¤}EcÜ+Âø`àÓRä³c¸¬Õ%%t$Íù/»#€8üªÜ—
+ûd6õ®vòà‚AÉ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ĞÈäd¨Èè¢µ¤Û’°ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) îz0­»‰£I¬¦ØcË<e¸<òEdO¨İMpQ‰@ÁaĞŠó%©ëD­=«`y1õô©ía”(ÏÊyæŸ9•£WósØRA$Œ0_ VE—m­ŒcsHN+RÚ0ûwgéY)&Á…bçÜuö©¬î¦WÃœƒ±ª%³£H°Ù€1W T\±Ş³bšYÀ'Æ´-ãU •?—ZÑ.Ä]#N)##€:ÔœíÂœéIgÁ%zzÕ¶xQFqG-Èr±wn¬rNOµršõ¢¢39
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) öëY‘+d8<wâ·´ÖYU	ã¥y°„£!·:{o,n×½S²¸Ëì•—¦»¨ôç!s¸ç¥Gsà•»âÊ¹ç§J÷ğÔŞè–š3mnÇŒrQÔq#z¥:uÎ“peb£øKsÃ9ì+iÙ½AêqZŠ´%†ª+9xÎx"º}^Ô\)Î8•ÄM!µ¹dÇ•5is+¢.:îr¼îíT–bÓƒ@ç4³I¹ñ¦i¯Û¸d~*N/Tl¯#¨ÓfÜG¥o	„•ÏZæô¨çƒv~eàzê-gœ+ÙöåL-mÌg¹h$e'sV#¼e!”š­¯Ç¶Pè0j„%ğ2A=+Ê¯I™³¸°¼óTr×ŒÕÙ§!NsÇø×óC`q†éMkI©,öÄ—ÉÇcÖ±¡%ã OAú•Ôr£p:×<Ò„v”ÛıCvà
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ğj’’êbsó·hû¢µmü4Q†Wn[åïÖ¦Àdé:CÏ"–w;Kw¯IÒ4uX"óŒnöö¦¬{0Í£©=«­Ò¤O–Ú±¨ßÖ© 2µ+,Ê#P@BpcWôíœ+`©ïéSØXµÍûné#g×šêíì–Ô‚€u]Ş½êlZiâVÄcvGjæõ8\j¨øSĞz•é}¢•}Ãi“€Ol×8úY‹P•Xnp[
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) EB&À÷­{™·ØÎ})vN_µe^Z…ùÛû¸Ín’XòùÇj«-±™Ë«õ¬ß`Jûœ¦eU#c=8¯2ñ\LÌÅË/¶	Í{ #!£‘
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ç5ÆİZ"9º+~;Ø°zšæ5)
+HJ‘ƒÉ¦"P—¼»êcßB69Æ;W«Á‹¼2‚	à÷®öâàÌÇ­eÍ 5Ëù…sÏµçQ¯ÌùHÑœšé¤€ÃœòG¥>æØ$uõÍuK¥#uÅdkVëc‚:q]³n+S²ŠG%k¨*ïpâ20Ãñ®¿LÕDê¥0Aç­yöµ¹	Ú	ç$ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) äNÍØ~Xû¦a4¨*ïE=‡­Iy,CácÙ»o¶qıkrÙÀ…Ërä`ËíU¦´3L\’›‰¹àSèú–áÍÎ7:vÆkm6yÍ¿­giÍı›0°9—	øjüÅVPß¼rF>”’¸,_zèÌ;Yº…¦5ï9AÚ@gµhhŒ”s¸*ìpj+wC¨¤n~n€ã5 I§·2†^8¥dË½£İ€’qzÏ»AmzŒ8#ƒş×5:F—Îò‡¨~‡­HÍÈgxäš):p}EhZŞo
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) I#R°e]ÙÉÆrq"Óã’Ù÷a›ë^—>—6ÖVeÇ¹®#Åš4¾QòHŞ}ëHS¹æbçîŸ3øúÍáyëÅyíğŠäƒ×=«Û~#iWHÒ	¾VúW„kz{Åpä±ä÷Íˆ\ìøLKr•Í¸'ó#­ŒÇ¡¯Gø­$¬‘JFøğ=ıëÇt«†Š7]Ùô½a5ÊMmd÷ë]1–±Éê}à¨m¯V?ï××Ş»ëï
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) è"¹@9 Jd—f@ä“Çë$uP…w/N+_MĞã{°d9ÁèzT{9Y]–O¡ø6{×Ê°şœ×Oqá9‘Ç-Šíü%§¬"ì×m¨év‘éD:¨Èí^…<wH|§ËÚµºÙ»eq·ØÅpšÀK¬Œã¶GÖ½Wân,Ñæ·mÑ– Œÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) J…³ˆ×ØÉ5§goöRT]å6¨=‡l
+[:5tFä¬fGcÑ}*ìò‰£†Ú0|¸÷ s»Hí2áÌLOÌş`ã=ºfºE´hğÍË•ÏáÚ¹ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Jg•Ù¨Ş[
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) İåmŠ¬[o>•éĞÅ{-jVv5µ&·=©º%›61ŒŒŠtQ+Æ	`I÷ü*åÀ·™
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) î{×6<B[Iµ²³í2b¿1°ö¨¼ItÖ¶ñYC!f
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) $¬˜ÅFnö)PÙ§š´ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ìŒW›é7’Ùİ”#äqÁ÷ÕÚê-,{rH5Û…«ÍxIó#Ï<D†	äR93èk;H4û}+¦ñU§˜wãŞ¸¹Y¬îA{×=Zqm“³=óÀº
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) LesnŸd¶³C¬ ³Ø¦»OÇÅq><°–PxÚJåt˜S3Îå]œ^ysÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ­ŸZ±ØfN½'5³bãï&aëL%KG„'ŒÁ¯)ñv•wm¸ Ü½øşUî÷v	$LWœZó¯Fcn+Î+6¹u—<t>e×$–+¶W\6q×©¬aç20Aè@¯\×ô¯K,ç•ş"¸{Í4ØJK!ÇŠé„#5cæq”¥.ŠÊcqŒ•ıƒ:“N*{¸Cİ'–¸nşõ»a§›˜¶°¯"®©h|æÒgø“K$3t8¯=Ôo>ÊÌ$8€w¯¡üEámĞ¾ù¯ñ¿‡	
+£dj©IÁÚ@Î1µq¸~µÔ­’2IãŠ¢¶$¬­”ô8ÏçZšO†.ïeÜÑ“ş!ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Š»à9nX¤‹‘é]¡áÏ±ñ}Üg
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ô;5ÜØèXzúó\¾‰i2éğ[k©–g_º ö®ÎŞşßÃújÃ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) [Üiò7§^r®Ä:€(w)¡¯O¿ºû[•K+t WxÖÁV"
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÖºË“)ù¹ëUîî–ù1Á'±ë^Óª§"šæV<M.Kiw<uâµôûâA8#®+©Ô4U)¸`q‘\İÖ˜Èã‚§éŠá©jJIúf¢ìNÖ'bµÎf µËèÑ<sÎzŠêalGòıà:5a­ìtA«jS»‡d€`óUÃä`)ïV'É1Êàâª\ƒpÆáÅ`¥Ë#½w8šrYÈìpN=MQIL’n>¾µ×i¶«,JÄb½EMT‰“ZØå§²š6fÚzæŸÜ¨¸ÉÛÜ
+ìßLŒät÷5¨hâŞ*í±¯6®Á^%(w2­åi’GµhÅ&OÍÉö¬â
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Fİ$‡'ÜûV­ŸüKÅ™€ÁLÎÓ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ©4‚Là·_­>]DWÃc>ØÍy”>(I$ÆòYG ŒV„ÚË²'ƒĞV1­R¶û¥rş¡¨(,0OJåoõ¥I3…È"ªkš¥Â®WG8Ç\jÓÊÄ§ƒÍRÁFZ¡;-ÁµØ%©WğU¿Zâò:¨Ü@ïNıéÆ7©8­Ú0G¦iS>øÎ{×š8Ú-È˜½k‡Ñ5}ğ&ü§œµÓEª…Œ|Ãnq€k*´•yŒıZÔ¬…€ÇzÄ‘ƒg×â·5KÏ6VRã
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) h¶ñÁÇµaŞY©‡
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÛEr ½·°Ó¤·‹ıiQ•ï•™wx«§j7²œ˜œ$xïµGL”Oª>[%ÁlÜğ?­PñV¬‘ÛØØE’³ÎÅ‰àëôà×<çsXÇQú\Š.‘Øä³.ô5SÄîÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) QÏÈÃ#Šî“XH”¨n#šëŒ!ìrÂÍ]‰â(ìùÒ¹%s}ßQŠêõA.  ÈÍeCh®x w¬Óå{“-^…k[eqÈ"­­€a_Î¯[Ú)€3Ö´!‰bëĞv­”âİ®‹1­´÷ƒœdAÅM-Ì°©\‚Hë]½²Ìœ/Ö‹­d‹¿Åéõ¥Zƒ«#g¯ö,¦)rŞ	,i÷ú,ÖÒ¶)×8éRYé…œÉB>î:{×ÍÎ—³•™
+”ª5ÊG”·î<¸÷±8p+§Ò¼yvNå8`8Ånø_O‚&Fp¸#5êšDöpÂ‡
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) *™ÅwNGš&’–†•¶ «2Ã<ÔzáºL`g±5È®«$,¡<Õèoä–A6õÉ®ªUy©Ù•ÌÒ±a‘Èe'ƒÅA%¦2Ei4‰; ÆĞ8¨/#aÀÇ¼šµ.Ú.3²'ÒîJå	É_»šêlnT`?ˆb¸(¦e‘ô®CÖ¥ÔeÉÛœ>}+l=[û²2r\ÇO¨ø7íÖ†EP¯Jó[KawåH¸`zcµ{œ:Ä)Q‚¤dsÔó¯ÛEwr®£ƒÈ¯J­Â<É‘U_Tqºuº™UóĞdÒÕ­wÙü¤±QœŠ£g·r7coë[Kq°í#<qšê¤ã8r‘²±Çi¯öV£œ‘ü­ïÍz~•ª.Á¹uõçÖ”…™”§½?MÖÚİ"’O™8=EyòJh¸>W©é¬S5Nr*]T!XØãë\í¿ˆDÑ.	jÎ¬¾Yà†q^k­*U/tÓ=	c‘r¤zÓo4Øµ 
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) úÕêö5ÏË,‡øWĞUß	ÚˆPİ4xñ–Enäğ?ƒ\Ïsu±©`ï†yÆó[·{Ö¶ss”/1k¼™°\?­Wmoaoİ×SÍÏB{~µ­ía·ÔmüÍn¤€OBxÍfïr“Ç~™kq#e®]v®?€U+»!«[‚wx‹èMiêÒ¥½ºÆ™bíØg&ª9eıĞoˆ,}½bÍ‘L7aÁ%c?.?ˆÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 9Òd“8¬Ş'Ù®Sç«UnGÑzş¯
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) `e¨5¯®ë=«©l‚;W«G¥K•—Í¥–È¬¬¤r§ö©–V‰CpN0Şõ£yûSI<{ŠÉ»,„àıiáª©7$î[±Ô^Gûİ:ŒÖÃN$<é\|R<s2ñÅj@…Psß4VÂ¦îS×bìHÉUçQV/ax~p9ög~¥²¼¸5±Ø¹ˆ“Î=ë’•veÈÓ¹Z?]CE¼ü™Ş•jMFKÈ•åê3Ş¨L‹ Ü jĞSöL+¾RrF‰i©ŸtÍIÁíZ6ğ(9ç=sŞ²äºEÚ®pzó[—m‚‚äÒ&4´2nÌM7ìGóTõŸ‘’:Öö‹}syLGÌsÇÖºÈPŒŒ‘ÆOZq«ûÅGSÄ‘ÒvBpÈy«W ©®ÇPğTzÔ’"•fäàW'©h—:D»Y—8äuœcQ\»r£¥i\€Çp÷®—Â¾ ¹Ò¥’ÉèÕË+ˆ/Ğ÷®®ÂÌKp2g>¢²Pp|Ğ3^ó=GLñ,W¶ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) <ßzL°
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) sÓÒ·`°´Uj†¼¶_4åˆ“ìjİ§ÄOİíxˆ#Ğæº%ì·cV=ôˆ.â%
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÙIW7â…/¤b
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ü^3ŸJÇME|´fã-ÅoZÎ—^c€W 
+ÂQE§aÛÌAùà‘Ş´V!å¸ÇğÖu¡2Ÿ,åBğhbAÈÉã5*š4ç)=¨21_LqüêKkO-Wå
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¤Õ¥PŒFgÛLñ¢ämçó¨µ¢ğrzWU*jŠ3’÷‘ÉëÊ%BpÏ¥aÛØ‰dÀ“Šèîíu/#¡' 4ºVŒÛ·8àt«eo3V—-ÈìtÁÇKèì£1Ä@99¢=9S³‘ÎH­;v©·kÍsö›˜4‘HÁ)lsÏµbj6’Ã3°JôË]íW9U}{Âò,M"Àvã²šµOªE+/sxöW*üõ­ÛkÄuV@>•Ÿâ­-£
+{U=s*Œ	(xâ½:0RF±Ğë™¼Ø¥d™
+ÉŒœ¢µ,¦Ÿ6:pg_á%cŒ}+yÅ@ÎjîèË¸İ8*
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) íŒ‘\ıÕÑPIxhÏt‡NY¡8V§§`IÎUtlÚtµ=[ÀÔQÙ(\|§©=}ëÔ¦º†˜BŸ˜c¥|Ëáı^K#å†Âç½—Áz±4W çÔ×¤¥Í9Tec'âŒÏnd
+ryô®F¿–Õ¶“•={Ïˆ´¥¼°È¾\ô¯Öì“¨2IÕäÔ&¨Š°¾¨ìô…õ~eçñÅO{¤*DÏ´äç½gø3RDÜ‚xú×K©Ü‡´“ªk©r{/3šç'	òØ‘zÔ•ÊI<«y<ÕiîŠŸBOª_M¾20AÇa\g8¶K¹Ëjšx¸¹/Œ÷ª/§í)Ú;cŒVÃ¬×2ylF1œPúTë%HQ×ÒîÙµ:Š;™ö2OnvŒ°Á­k{Ö+ğ;f£³²‘›…Ûõ«é­ 8ëô5
+*úÏ^dné÷`ŒœÕ=kFK´$ò1Ò©[Ü3†nõ|kQË"„å	*œËSÏµo´3pŞÔ¶Q€qŸ­uòGqÈÉ'ÓšÏk!· úWLª¶´2ç[1aQ$jTõjZ0E
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) #vqúÖ5Ksr±i¦[Ø/Rw1¯Ö¶|;©*Í>y*¥AÍrÚ$op“]8{q[úM²¥¬Î+f#Ô×W©ÙORõ–¶Ò¯–2X€s×­YY’-N[w}Áb-Ç~MszbÈÊ¹ÀW~
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Œ[Pˆ-ƒc¶kĞÃb©¸ÚÅEœ/ÄÏÙ$;ãÍÛ¯*‹Lò%o—ÇJöO¥ÅñÎ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ¯Wq•¤r'®§=ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ö³”\´4‹¶¬álÃ«`9SéÏ5­öw™yŠß“Ã£Ëf
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÁÏ½QòD’	üs]]Ö‹Œ¶=…Qû
+E†8®z•nrN.,©©jJíƒÓ±÷ª6—E$Ôâ«½¼®Ç#§5]Òl†*x«Ğöm+"å«¹İé:ªÛí9FkªÓµè˜pØî@¯şÕ¹¶bv¶=k[Jñ^Ù,2zî5ÃS4ù‘r“’=ºmF˜°qŠå5ø“id?-QÓõå¸‹†~µ§xY[ı;Ò§9^Í\Â¹—l¹RAşur-MÂlsÉèeÜ¡rNpsP“ÊÜãŠŞ¦5ÅZ'@’«0?.Oi/®1Tê{V ¹vû¼Â¥ı›*q¸{×›,'+º¬`êVO4‘œƒõM,ä€ä®s´ö®±cn¸Ï­Gq§¤˜Œ×}<G³V2oR–‹nd•da…¿zô:ÅDK"ÈyÁıkŒÑ´õ‰™\¹àû×k¡Ü‹QöyîØğÇ¨­¡ŒN¢‹6[~&ğÁ’/´B¤ãæÀŠä†©>˜ä‚pNõê÷Kå´d‚H¯0ñE“-Ä_)?•zU#Õ(³[Iñ\7YôïZƒÅßdÊ™3>½+Ç§’[)K‡*{ã¡ª²ø†WÀŞI5ƒæ{\÷};Ä-¬†'nzâ­Ÿİ›¥tHI#¨¯2ømâD–ğZÏ.Ş›X•ôÇ€"†ó÷R0#¹®¨PuU™¢MîW°ğƒ‹”ƒÂu5æ3–}!Ù•ˆç÷¯©/´{};Jc’So3Ò¾nø•
+Ï}0Ù%Ú²Æáã
+Vd¸Øãtÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) è*Rå1êwZt1´d€2=jÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) jKû¨D^Q,Ê=RÓíGÛHÉW$uë]rº±Ï¹ÜXÛ:`pF:
+Û°¶òœ¼ÎÓÀeS’XZél‚<a_†=ëzq¹Ã^|¨»~ïıëŒñ‰-4Õ–9ÙTß§ã]EÄÍ§ÌwGı+Âş:ßÇwe$JTã–SÓ¯jéi¥dyÔıÖæxÆ¿Emw3ZÎQ[?.ìâ¾fñ.£¨‘–ÏqÍu?u¹&M“´ıàzŠó›XßQ¸*À<äñ\•*t‘æÕr“0.t©îîV(²î;
+ôh‰¦ÀŠ«SÒ®iš6ë„ê}zš³«İ¦Ÿi„À
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ³C01çó«V2İMòíbN95ĞÙè¦Tß É÷§)$9Et(éZ€(lçÔÖôWÆeNj´šLVé‘Ë*KoÜÜzW”bîL`Ş¥÷·Y°>•‘{bèü}ŞœóZ¨"ƒØúŠ¹aå^
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) NÕ—u¥Ë:`ôÈ®úKe–2G±$µÊÀ€ËŸ»^o¶qeÆ)œ¤bH†ÌäzæªÌ²#99ì+º›ÃÍà·OÊ¹^ÆM>]§$tVËå°õ£´éŒGçr;ÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) |qñ{âŒÉy$jçHÆ8Í{·Ä¸yå(åÔó·=+Â|QàÈõ	Îœ÷È­rÑeov;ª]É®9y¨'î‘ÁRm@Ú9ïŞ½nßáÉ¸p¹ïŠÚ?eº‡>Q<u¯xjÓz³‹‘w®¥¡1óV¥u5â“óé^÷wğ7lÇ|"Cô5×Áö¶BRß)éƒN8E
+tœ‘òŞ§£Épäª1#Òµ|;á—N"éê+è+…Œd´Àê~Zé,<Šs
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) F*éÒö¯Vn©¹«£³ºñŒ3Ul·×­T"fc·…ôÍy½‹Ê$È<qÍtVÄª‚HÁ®™a"‘¤U–§Qı«æôm‡8ëÅMiâhÀ™3ƒĞ\÷›±@=íÖ¨O#&IÎ­e
+|CJú£§xŞ¸wcÒ´äñH–Û¡Áõë^3ìˆI¥i[øãÆNæÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Jœ‚yV-Ö’¾g(X‚y5Ë<»šá
+[yâl…pØÀ>•æ>'gûaòÑIí^¿·(„G†ÀÏÖ†øv·R	J¯<óYÃ,ièÍ-(Ğ¬IUİŒŠÕ“GH2¼zâ½!<¶cøJÌÔ-E©Âª·á]QÀ¸»Ü¨ÒkCÏIeŒ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Šñ»¿k{6Û)
+‡<ú×Úzg€mÔÈ2}ElZ|8±äÆƒœğ+İåMY›*=Yğ¼>ÖA
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) sU4ò-àòú‚Ù¶|±¥ë‘ĞzÖV6{’¨1ÈHä
+âüEœ¯òã+±Q†À®GZ”şğvÅuC±Ë3Ã¼e´¸v*ßx¦¼úíƒIòt9àW¦øºDšwÆ=yİÅ™7'<úW§¡çÉXÕğÍ³Ë4d)äkÚü/¤‹¸S9Æ=+Î|d¨ÊdÏs^«¥jğZªªN•×Læ¥¹44·c‘€M>;Tmúš‚çÄˆd
+]qœu¥»Ô„–§aˆ­Z¶ä'©›{«,NLûÌ¡OAT´išc$ÒeaœgŞ³f<ì¡·3u=–¶á"±ùQFYó÷y5µ‘İO¹aï$¼Ë2ùQâäÉx\©+GjŠÊar‹`Æ¬k}
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) [ÔÖ>¡ádxÜ!ãÜâ¥¡™V(TÚğ½Ksâa)À”Æ¹cÃW)òTOŞSÒªZøsRR£Î{æ‹Î®º“ûÆçMtš<’j%pÄ“ÇL×9¤èS«,aG~àWi¤À¶%•äâ‹ä×£,>bxGjÅ“ÃWJøbÍõÙÃâhå\nRG'¥9µ8eQ eÉî(lg^xrDò{dô®GP/e!'qP^µ«?Ã.zæ¹ôG¸0RŒ}jnIË[ë'n#¦+JÙŒçx`ìkE|'}ìœñN—IHW÷lxê;ÑÌ&rş"Ô11GÓüñ\u¦²ßipxç½t~#ÓŒŞb‚Ø'Æ
+Kk‚T±êi©6#Ô|=­¬1€d·¨xµ<‚ îíÀÅy®—•ÚùÏ¸­4ÓŒˆ~r=ê¹†´«ê7ws6Évöªúe®¡»ç>ùÍM4o÷ÉÍhXêF?yÇ¦O¹„Î“IfŠ5Üã¥nE0í 8Ã\”~$²ÀÌƒ¸5j=~İPdzš\Ìgå—pb»
+I({õ®úÎÒ‹LõÈë\Æƒá™ïgVT ƒé^Ÿ¡x=Ğ€Àò:b¼?«Nnñ9!yåşğË¾%,}…U—Jšhˆ9î+à„•îòO|UË?F@õ"ºÖ§Vu(+3Íà;‹‚ÇÊaÛ‘L_†·¬6¬'ò¯¬cğ,!FQ*ÂpFÜ¯Jì†QÑ²>\³ø[¨nË)ÇÓi
+®‚ëÇ¡¯£`ğ½ºàù…:]820
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41)  šx X‰Ú2>•É$VÛ·ÆséY3ŞÉ,l3Ï©â˜®C;[	ˆgîš«qki0cm>æ³®â{©
+‘±½AÍ>ÎÒKHË3o^¸¢öœ×ˆ ¸¶ÜĞœç¶8¬M5n¯e"C·Õkœr–Œ‚µeØ‰‰ÆÕ©¦Ø·#’	áW9ëÇJl—&È|öïZ“ê°àd®jÂÔî–áN
+{
+*½ÂÍr³å´…ÎèHQ·<
+ÈS [°©>ÖD˜
+\ĞAĞÚß"Æºã©5~Şd# O®k‘ód=ÓÜU”¼xv’§=¨¦³l×ˆÁzsÚ¹+	,Ì²2Œç“œ×H5­ÈCòOLÖ=î«¸`Pô@~oj§qÜE…úZ2„HªgUh°1ózŠÌyy¹÷4ŸE»¸º|m$t®ëKÑÀ;)É•ÊøN	%•ƒôÅzö—cåÛÀ“JŞ1MsÇKKtÇz­$*N
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 4ôğÂ^ÊOjìlKO³9Ü¿•biP$Ñ.o^µÙøwNKÉD|©ŞìúÑÜøSLûJ##÷»Ëhš"ãù{ÍaøgK6‘Œ®
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) òÛ6P¶_J4[’ãsÉdøC¨1İË ô­Í+áv¬ˆ¡¦vrG5èiwp„/”Ì¨­?Wòˆ/=ê•™.'ç/‡¼ª+í^İtæÚ;`@GØ€:Ñ&ùÎpkee±)X’+Œ·LjÕ³“8à*½ƒã§XŒOÈ<zS¹w4ì÷²=*2Pä‚{T>Fõ8©ìì^F\äúæ‹‰—l­Ì€`çŞ¯9Ps×Š-íÅ¨äqøUëyÔ‘•-ˆtÄAxÇaM’¹
+r*Ì×
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) !«±G;¾î+¡ÖµQ„MdIn5@WfXŒgµaœ¥ÆÓóµ-œM6dqû±÷Sšélüò8VfR8ç½uzOÃ)Án2+‚´\¸=NGHÓw –UòÁ8
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) µpêµgNÇw}á[i|j	ö¬»í ÚE„ã€Hª‘ëÓÙ½‹>µ±/‹m/lLD†cÀQ×ëEî'¨Ç€«’²tô®zÒøGtbLŒõ¿wb×S|¬È=¹wL{+˜„+“X6(ŞÇH’ùPƒœwÉ®‡OğÚ¤I¸ØïXşŠt´Gîòk¨:ƒ)
+ 9¢öÜ,K™cFäâ§¶½fe?7¿5–úÃ‘†
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Pq@$ŞÆ´·QZ[óŒã‘\´×ò\Ü3F€¨8é]=ÎŒ—Q¿sP6Œ¶qaWÌ8¥sHÆÚ³ŞÉï	èjÊh;aYñOŠI¬§İ$eF}+¯Ñ/í&OßŸ›ÜRlĞåBÁSåœúÓ.4&’>I§5ŞßŞØG2²g`é¬ÚÕû"
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) J”¢ÍHÍ_‰f§)‘kÇõõI.Š’6ç‘^¯âK°:ôq^3â[ÕW|7'"½0<Ú’+}‚ÛÌQÃ÷4—z} #÷e¹çitkûUƒ¹Ï½iM{ f3½¿3]ìäßsûeeÛ¸»oèñÀ±n ‘êišfÛ”UØ7uÀæº«"W •P½@«¥í¡¤·,K|¢X÷`F½¹«ŒÓe°2¨ÕJğ’İ\G$ØSÀPÇ5İøgáÌ:„ùšEÚdv®7EÈìU”NÓÃ··ÄD¤"õÀxÒÇá«ËHi#`d”"¨ï_DÂc¥µ±1¯î—ï("£>“vÈŒFØæmÆEWÕ#mCëœF›à©£´·&#ÌlpoÚü9¸ndØDØÇ]ÜW³h6Q®ª9'¿u¦Aör ._œ(æ´Xx‹ÛÈùÚ\Fè#R¯!ùQA­İ3Âš¢Ÿ)3†G®+ØôıÙå,‹ûÎ›˜t®ÓÂpÍ$›®H¨ú¢{õ®]Ï'ğşöæ	ä©¯Wğ¼J®Ç‚ÃµWÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) X,:
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) RÑíuv"=ª¸ÈUâ…bu7¼Ö£\“•ëèk»:5©l<ã¶Eç¯5çş¹—Hÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) FtéŞIÁç=krï_‚êõÀ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Šßmœ‡ìkgÀbòòõLîò
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) dÙ¦¡®9tÕ‚àË‚\QÜÃ,ò\w4„iË#îP²© õ§7Û (¹gÇS\ÌV¦I‹-Ã3áô«PhzŒÌòÇ½2Ç1Ü½$“¤ ‚¸ô¬÷¾–NDTqòÔ _ØHèäÌOW‘VYµ,‹
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) >•­¤ÎâE20XÓ©=MJšPÎ['°­(´èŠ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) –ZêãÓ-W§ÈÇ¦
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ç¸\ æ‹‰«êšÄÖqB‰éŞşºXu$¸€™@pFyªµÕ¼ò¨g,ı³PMªÚX,›¶£íÓõ¤2öŸ«ØÙoUŒï$r}jvñ´ˆdP2€àlô®NW’öÕŒ,§$Œ é[š&“mö#ö†+1{ÓõâëLq1Œã'­[¼ñÛ§šv°ìøUHì<ôSç6ÑÇ#ŒúUI¬e*ê°‰1ÑÎ8¢ÀR»×,VMÍ	-ëŒŠ†-n[”am–­ÆqÉ¥Ö­LZwÍ†Ç
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Nâ?ˆW9ãïÅun®“ÎG5àúÎ‰âX- 26vãô¬™aÕµÛd‰æ–‡š±Û;OüE1Øî7;¶äg=ëÂ|iñ
+û[ŠXFk»o‡÷íÖI&fë»½d·Â‹Å}å9Î@ÇJ.6ÑãWZeÄæ=Ù;ãš–ÏAd“(„ƒ×<×­Úø>6èÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) %³IY3Œ*óôâ¡¼Ò5¯X<Zs,6 Åp	õ}tõÒNÙ4øŠ©Ş.â;†;Õï
+ø»DÔ[+iŠdäüq@ú'@šÆ­Òb®£“×'Ş´WLÔä² £ºµª³iWï"í$~uQ].‘©,DşA‡pÉVl…¦3“ŸÀ³këæN%¶1óû²sK¦xbõ%û4:£FW€²q]ßü$ºyĞ‡÷aş5’ˆ™ó³VEnG½‚8Èío4íE¢–S0;Û¥7S¹Ôâ¼2C*c˜Ôä‘Uu_éë,–M}‰±´¿‰ªšOŠáWrErwÉæ`Š@jØXK«~ğF u:ÖŸÚoôô˜„êxÊŠóûßêpŞHú:¬ªæFì~5<o¢h…Æ‹9™x;G‹ŒïÛ ‹-{b³.!.ÙÁzgœı+÷Ä×¡â)Z	şX÷¨¥×58SırXàÆİ(¸†¦·•Ô‘»J­œdügßjVêå£¹vİÔcü+*mwZƒÆš|sGŸõƒ ­­>ÍšO2ö£İĞ·j)[ê¦HŸÈäQ¤•Ø;/#e=s]DzM¤0;”ÇŸ½Œ
+f«§Y¾œ¦İD21ÏÒÀÆ²Ñµµ‡t\p¨2E>ßFóÙ…Õ¸<ãi9ı*´Ş7Ô|9(¶Î[•#(ÁãØWA¢øªÃS€yûÑÇŞÜ¸4ìĞ–’mI’D#ôP8«ÑGexB,j­Ø°ãõª÷:ÄRÍ±÷$úqLš(e}Ğ~½i=Æ™gmxÎ;°8¨­4Ëe¹ÌráW¥¹¢Öê%•ck¡"¹çqéLÔ#1ŠÒ|¸êTç@·úlfßä‰ONœÖ[	´‰›dT=§øÕ$ÕZ]a-QÄòÆ¹òÁ4ƒ]°¹»ŞWİv„¯–NBÕ-èj>µe"Ÿ´É±“ƒ·šã5ÍNoí 4ÈÄÑã;ÇQùVíÍÅ£bHšáÇİÖ±.,£¤’8·˜
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ätéëE€é/Ò+«şºwè¢¯Zé«uÃ*ˆ†GÊ3\¬7:‘»ó¤p9Î9´ºÄÒÊ¬@Ï&“DømşÔÁ]¤ü!x4ûm,Ít«sÒ‡åÕ /¼ÄrÆ?¼xªöêF–Y`18•ÄZÊ=â(%!C´äÔí©yWò
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ÏjkˆGK¹M‡µKlGãm-Ínv,3§<@¬İ2DkV•Bg p+ ñ´É`Ì³
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) Ó-m•’i%d`çüë¯ŠvŞeHGtêj”Ví‘)tF¶h˜c~¹’k5ü3Ô‹/šêÈ>uV!XöâºK:IQ RN[œÔPyÖö®³=²ÊNã°ãŠ›"ÔŠ6VfóDP¬jr0½*y.£r	UyşJ±n%q#HñË_—gUô¨ìíã¦  ‚2[xûÑ`ØÊ¿·óƒ“XñàsYvÒÁ(ò—”¹!Œ}ı+°{6T•Ğ åUzšÅ¾µ¶»
+!œ†SóFıiXWG=x·Ğ[¹Ş)£“ˆO™*¦5áó,wZ?]’¿…tP­İ²»årÁqĞV¹â	áfu·™]†>l"‹‚_¾§n'¿¥¹-åâ©Zø<vwn“¯8o˜ô4ºµŞ½y§³°!œ)WgëMµ†úÏJ«+L‹—™d,ÎÄúÑÌ¯b‘wB¸‚8‹ës‹vV*7œÇCŠÆñiwÒ§Ù/-aÁ..ìÂ¯é±Ãs*ÉoHÊqæùÇãµ#Ôb³±·“JğìZ‹Œò
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) åŸN½;|ü¹mÎGÓ ®’ßÁ—VsGq(ˆ·|¤ûÓµ€ÄÖô9–Ñ'·"vfùyş•ŒÚ|°H¶Ó|¦^\äN•ˆ4ë¿^„EºÔq÷eÈ_Àéô_ims-²´j3±ï?•R“}spëGI»6ú¢Ãil‡÷EœÔÛß.²LBæ+xÔğwãğ®#ã¿¨Yj‘höš;4(74»Iqì7Áú¢Lë¶_1Ld9Ş§ÈWGB5{;k²Í1xÓïp~qÅ$¾+±¶»ûeªİˆ@ÁM¤Â¬évzµÑ·½€¥Ê>JÆ£÷­/Û[Ck3-™XĞmXâ-Bƒ]E{ô*øgÆ÷Iq„ÓLrªÂ>Wñª7pßÁ©5âil’9ÉfÎ¡ğ?„5»ÉÓT}>Ûxÿ
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:289) Sent file of total size 148011 to client!
 
-typedef struct {
-   size_t messages_sent;
-   /// Amount of messages received.
-   size_t messages_received;
-   /// Total amount of data sent.
-   size_t bytes_sent;
-   /// Total amount of data received.
-   size_t bytes_received;
-} NU_Collective_Data_t;
+03:30:50 PM: [SERVER]: 2.0.167.144 disconnected from port 10000
 
-// The bounded buffer is my wanna-be ring/circular buffer, expect linear. Each time I use it I just start at the beginning of the buffer.
-typedef struct {
-   /// Container for buffer.
-   char *buffer;
-   /// Current size of buffer.
-   size_t size;
-} NU_Bounded_Buffer_t;
+03:30:50 PM: [VERBOSE](./Net_Utils/NU_Server.c:189) bsock: port->"10000", sockfd->5, has_next: False
 
-// This is a reusable data structure, which gets reused when the client disconnects from a host, it gets recycled if available.
-typedef struct NU_Server_Socket_t {
-   /// Socket file descriptor associated with host.
-   volatile int sockfd;
-   /// The IP Address of the host connected to.
-   char ip_addr[INET_ADDRSTRLEN];
-   /// P
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) ort number that the host is bound to.
-   unsigned int port;
-   /// A reusable buffer for each connection.
-   NU_Bounded_Buffer_t *bbuf;
-   /// The next server socket in the list.
-   struct NU_Server_Socket_t *next;
-} NU_Server_Socket_t;
-
-/* The reason for making such complex data structures to represent a simple socket is that it follows these philosophies.
-1) Reusability: A client may connect to as many hosts as it wants, and when it disconnects from one, it is recycled.
-2) Information: A server or even a client should maintain the information needed to maintain it.
-3) Thread-Safety[Not Implemented]: A structure allows the client to keep track of it's own locks and atomic data.*/
-typedef struct {
-   /// Socket associated with this server.
-   NU_Server_Socket_t *servers;
-   /// Amount of servers currently connected to.
-   size_t amount_of_servers;
-   /// Keeps track of data used.
-   NU_Collective_Data_t data;
-} NU_Client_t;
-
-// Function definitions below.
-
-// Essentially attempts to retrieve as much as possib
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) le until either the sockfd disconnects, or a timeout ellapses.
-// This function uses a sockfd and bbuf directly because both client and server use it.
-size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, size_t buffer_size, unsigned int timeout, MU_Logger_t *logger){
-   int retval;
-   struct timeval tv;
-   fd_set can_receive;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&can_receive);
-   FD_SET(sockfd, &can_receive);
-   if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive, NULL, NULL, &tv))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "timed_receive->select: \"timed out\"\n");
-      else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
-      return 0;
-   }
-   if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, buffer_size, 0))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
-      else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
-      return 0;
-   }
-   return retval;
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) 
-}
-
-// Function that basically reads as much from a socket, into a buffer, then writes to file.
-size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
-	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
-	NUH_resize_buffer(server->bbuf, buffer_size, logger);
-	size_t result, total_received = 0;
-	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) > 0){
-		if(is_binary) fwrite(server->bbuf->buffer, 1, result, file);
-		else fprintf(file, "%.*s", (int)result, server->bbuf->buffer);
-		total_received += result;
-	}
-	client->data.bytes_received += total_received;
-	client->data.messages_received++;
-	MU_LOG_VERBOSE(logger, "Received file of total size %zu from server!\n", total_received);
-	return total_received;
-}
-
-// Basic function which sends all of a message, or until an error or timeout. 
-size_t NUH_send_all(int sockfd, const char *message, size
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) _t msg_size, unsigned int timeout, MU_Logger_t *logger){
-   size_t buffer_size = msg_size, total_sent = 0, data_left = msg_size;
-   int retval;
-   struct timeval tv;
-   fd_set can_send, can_send_copy;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&can_send);
-   FD_SET(sockfd, &can_send);
-   while(buffer_size > total_sent){
-      can_send_copy = can_send;
-      // Restart timeout.
-      tv.tv_sec = timeout;
-      if((retval = TEMP_FAILURE_RETRY(select(sockfd+1, NULL, &can_send_copy, NULL, &tv))) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "send_all->select: \"timed out\"\n");
-         else MU_LOG_ERROR(logger, "send_all->select: \"%s\"", strerror(errno));
-         break;
-      }
-      if((retval = TEMP_FAILURE_RETRY(send(sockfd, message + total_sent, data_left, 0))) <= 0){
-         if(!retval) MU_LOG_INFO(logger, "send_all->send: \"disconnected from the stream\"\n");
-         else MU_LOG_ERROR(logger, "send_all->send: \"%s\"\n", strerror(errno));
-         break;
-      }
-      total_sent += retval;
-
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41)       data_left -= retval;
-   }
-   return total_sent;
-}
-
-// The function that sends general messages to a host. Does nothing special.
-size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, size_t msg_size, unsigned int timeout){
-	size_t result = NUH_send_all(server->sockfd, message, msg_size, timeout, logger);
-	client->data.bytes_sent += result;
-	client->data.messages_sent++;
-	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to server!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
-	return result;
-}
-
-// The function that sends files, below, only loops until no more data can be read from the file into the buffer, or until a timeout ellapses.
-size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
-	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
-	NUH_resize_buffer(server->bbuf, buffer_size, logger); // Assume it w
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) orks
-	size_t retval, total_sent = 0;
-	char *str_retval;
-	if(is_binary){ // Since text files and binary files are sent differently they're handled conditionally below.
-	  while((retval = fread(server->bbuf->buffer, 1, buffer_size, file)) > 0){
-		  if(NU_Client_send(client, server, server->bbuf->buffer, retval, timeout) == 0){
-			  MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to server!\n");
-			  return total_sent;
-		  }
-		  total_sent += retval;
-	  }
-	} else {
-	    while((str_retval = fgets(server->bbuf->buffer, buffer_size, file)) != NULL){
-	      if(!NU_Client_send(client, server, server->bbuf->buffer, strlen(str_retval), timeout)){
-		MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to server!\n");
-		return total_sent;
-	      }
-	      total_sent += strlen(str_retval);
-	    }
-	}
-	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to server!\n");
-	else client->data.messages_sent++;
-	client->data.by
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Helper.c:41) tes_sent += (size_t) total_sent;
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to server!\n", total_sent);
-	return (size_t) total_sent;
-}
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Server.c:289) Sent file of total size 7312 to client!
-
-02:59:39 PM: [SERVER]: 2.0.178.128 disconnected from port 10000
-
-02:59:39 PM: [VERBOSE](./Net_Utils/NU_Server.c:189) bsock: port->"10000", sockfd->5, has_next: False
-
-02:59:39 PM: [WARNING](./Net_Utils/NU_Server.c:189) shutdown: "Transport endpoint is not connected"
+03:30:50 PM: [WARNING](./Net_Utils/NU_Server.c:189) shutdown: "Transport endpoint is not connected"
 
