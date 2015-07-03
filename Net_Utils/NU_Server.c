@@ -259,6 +259,7 @@ size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Client_Socket_t *client
 	}
 	server->data.bytes_received += total_received;
 	server->data.messages_received++;
+	MU_LOG_VERBOSE(logger, "Received file of total size %zu from client!\n", total_received);
 	return total_received;
 }
 
@@ -279,15 +280,16 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Client_Socket_t *client, FILE
 	} else {
 	    while((str_retval = fgets(client->bbuf->buffer, buffer_size, file)) != NULL){
 	      if(!NU_Server_send(server, client, client->bbuf->buffer, buffer_size, timeout)){
-		MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to server!\n");
+		MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to client!\n");
 		return total_sent;
 	      }
 	      total_sent += strlen(str_retval);
 	    }
 	}
-	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to server!\n");
+	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to client!\n");
 	else server->data.messages_sent++;
 	server->data.bytes_sent += (size_t) total_sent;
+	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to client!\n", total_sent);
 	return (size_t) total_sent;
 }
 

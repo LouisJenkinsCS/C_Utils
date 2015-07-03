@@ -27,22 +27,13 @@ static void send_file(NU_Server_Socket_t *server){
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
   size_t retval = NU_Client_send(client, server, filename, strlen(filename), timeout);
-  MU_DEBUG("Sent filename %s of size %zu", filename, strlen(filename));
+  MU_DEBUG("Sent filename \"%s\"", filename);
   MU_ASSERT(retval, logger, "Was unable to send filename to server!\n");
   //MU_DEBUG("File Path:");
   //MU_ASSERT(fgets(filepath, 255, stdin), logger, "Invalid input from user!\n");
   retval = NU_Client_send_file(client, server, file, buffer_size, 1, timeout);
   MU_DEBUG("Sent %zu bytes to server!\n", retval);
   MU_ASSERT(retval, logger, "Was unable to send file to server!\n");
-}
-
-static void obtain_file(NU_Server_Socket_t *server, const char *msg){
-  MU_DEBUG("Creating filename of \"%s\"\n", msg);
-  FILE *file = fopen(msg, "wb+");
-  MU_ASSERT(file, logger, "Was unable to create file: \"%s\" with mode \"%s\"", msg, "wb+");
-  size_t retval = NU_Client_receive_to_file(client, server, file, buffer_size, 1, timeout);
-  MU_DEBUG("Created file!\n");
-  MU_ASSERT(retval, logger, "Was unable to receive file from server!\n");
 }
 
 int main(void){
@@ -57,10 +48,7 @@ int main(void){
   //MU_ASSERT(fgets(ip_addr, INET_ADDRSTRLEN, stdin), logger, "Invalid input from user!\n");
   NU_Server_Socket_t *server = NU_Client_connect(client, "10.0.2.15", port_num, 0, timeout);
   MU_ASSERT(server, logger, "Failed while attempting to connect to server!");
-  const char *msg = NU_Client_receive(client, server, buffer_size, timeout);
-  MU_ASSERT(msg, logger, "Was unable to receive message from server!");
-  if(strcmp(msg, "Filename...\n") == 0) send_file(server);
-  else obtain_file(server, msg);
+  send_file(server);
   free(ip_addr);
   NU_Client_destroy(client, "Shutting down!\n");
 }

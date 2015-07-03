@@ -1,12 +1,8 @@
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
 
-07:29:03 PM: [CLIENT]: Connected to 10.0.2.15 on port 10000
+08:17:38 PM: [CLIENT]: Connected to 10.0.2.15 on port 10000
 
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
 
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Client.c:114) Total received: 10, Buffer Size: 1024
-
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:11) The bounded buffer's size is being increased from 1025 to 1024!
-
-07:29:04 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Client.c:147) Sent file of total size 147456 to server!
 

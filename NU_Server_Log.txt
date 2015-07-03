@@ -1,22 +1,22 @@
-07:28:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:121) Currently existing bsock?: False
+08:17:35 PM: [VERBOSE](./Net_Utils/NU_Server.c:121) Currently existing bsock?: False
 
-07:28:56 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
+08:17:35 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
 
-07:29:00 PM: [SERVER]: 2.0.143.126 connected to port 10000
+08:17:38 PM: [SERVER]: 2.0.143.140 connected to port 10000
 
-07:29:00 PM: [VERBOSE](./Net_Utils/NU_Server.c:82) Currently existing client?: False
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
 
-07:29:03 PM: [SERVER]: 2.0.143.127 connected to port 10000
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Server.c:238) Total received: 10, Buffer Size: 1024
 
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1025
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Helper.c:11) The bounded buffer's size is being increased from 1025 to 1024!
 
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Server.c:238) Total received: 10, Buffer Size: 1024
+08:17:38 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
 
-07:29:03 PM: [VERBOSE](./Net_Utils/NU_Helper.c:11) The bounded buffer's size is being increased from 1025 to 1024!
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Server.c:262) Received file of total size 147456 from client!
 
-07:29:03 PM: [INFO](./Net_Utils/NU_Helper.c:59) receive_all->recv: "disconnected from the stream"
+08:17:38 PM: [SERVER]: 2.0.143.140 disconnected from port 10000
 
-07:29:04 PM: [VERBOSE](./Net_Utils/NU_Helper.c:6) Bounded buffer was allocated to size: 1024
+08:17:38 PM: [VERBOSE](./Net_Utils/NU_Server.c:189) bsock: port->"10000", sockfd->5, has_next: False
 
-07:29:04 PM: [WARNING](./Net_Utils/NU_Server.c:288) No data was sent to server!
+08:17:38 PM: [WARNING](./Net_Utils/NU_Server.c:189) shutdown: "Transport endpoint is not connected"
 
