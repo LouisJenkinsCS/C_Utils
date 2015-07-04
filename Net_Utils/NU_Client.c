@@ -18,12 +18,6 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
-static NU_Server_Socket_t *reuse_existing_server(NU_Client_t *client){
-  NU_Server_Socket_t *server = NULL;
-  for(server = client->servers; server; server = server->next) if(!server->sockfd) break;
-  return server;
-}
-
 static int get_server_socket(const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout){
 	struct addrinfo hints, *results, *current;
 	fd_set connect_set;
@@ -72,8 +66,9 @@ NU_Client_t *NU_Client_create(int flags){
 	return client;
 }
 
-NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout){
-	NU_Server_Socket_t *server = reuse_existing_server(client);
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout){
+	NU_Connection_t *conn = NU_Connection_reuse(client->connections)
+	/// Pick up here and optimize!
 	int is_reused = 1;
 	if(!server){ 
 		server = calloc(1, sizeof(NU_Server_Socket_t));
@@ -83,7 +78,7 @@ NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, uns
 	if(!is_reused){
 		if(!client->servers) client->servers = server;
 		else{
-			NU_Server_Socket_t *tmp_server = NULL;
+			NU_Connection_t *tmp_server = NULL;
 			for(tmp_server = client->servers; tmp_server && tmp_server->next; tmp_server = tmp_server->next);
 			tmp_server->next = server;
 		}
@@ -100,7 +95,7 @@ NU_Server_Socket_t *NU_Client_connect(NU_Client_t *client, const char *host, uns
 	return server;
 }
 
-size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const char *message, size_t msg_size, unsigned int timeout){
+size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const char *message, size_t msg_size, unsigned int timeout){
 	size_t result = NUH_send_all(server->sockfd, message, msg_size, timeout, logger);
 	client->data.bytes_sent += result;
 	client->data.messages_sent++;
@@ -108,7 +103,7 @@ size_t NU_Client_send(NU_Client_t *client, NU_Server_Socket_t *server, const cha
 	return result;
 }
 
-const char *NU_Client_receive(NU_Client_t *client, NU_Server_Socket_t *server, size_t buffer_size, unsigned int timeout){
+const char *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t buffer_size, unsigned int timeout){
 	NUH_resize_buffer(server->bbuf, buffer_size+1, logger);
 	size_t result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buffer_size);
@@ -119,51 +114,40 @@ const char *NU_Client_receive(NU_Client_t *client, NU_Server_Socket_t *server, s
 	return (const char *)server->bbuf->buffer;
 }
 
-size_t NU_Client_send_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
+size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout){
 	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(server->bbuf, buffer_size, logger);
 	size_t retval, total_sent = 0;
 	char *str_retval;
-	if(is_binary){
-	  while((retval = fread(server->bbuf->buffer, 1, buffer_size, file)) > 0){
-		  if(NU_Client_send(client, server, server->bbuf->buffer, retval, timeout) == 0){
-			  MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to server!\n");
-			  return total_sent;
-		  }
-		  total_sent += retval;
-	  }
-	} else {
-	    while((str_retval = fgets(server->bbuf->buffer, buffer_size, file)) != NULL){
-	      if(!NU_Client_send(client, server, server->bbuf->buffer, strlen(str_retval), timeout)){
-		MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to server!\n");
-		return total_sent;
-	      }
-	      total_sent += strlen(str_retval);
-	    }
+	while((retval = fread(server->bbuf->buffer, 1, buffer_size, file)) > 0){
+		if(NU_Client_send(client, server, server->bbuf->buffer, retval, timeout) == 0){
+			MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to %s!\n", conn->ip_addr);
+			return total_sent;
+		}
+		total_sent += retval;
 	}
-	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to server!\n");
+	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to %s!\n", conn->ip_addr);
 	else client->data.messages_sent++;
 	client->data.bytes_sent += (size_t) total_sent;
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to server!\n", total_sent);
+	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, conn->ip_addr);
 	return (size_t) total_sent;
 }
 
-size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Server_Socket_t *server, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
+size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout){
 	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
 	NUH_resize_buffer(server->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
 	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) > 0){
-		if(is_binary) fwrite(server->bbuf->buffer, 1, result, file);
-		else fprintf(file, "%.*s", (int)result, server->bbuf->buffer);
+		fwrite(server->bbuf->buffer, 1, result, file);
 		total_received += result;
 	}
 	client->data.bytes_received += total_received;
 	client->data.messages_received++;
-	MU_LOG_VERBOSE(logger, "Received file of total size %zu from server!\n", total_received);
+	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
 }
 
-NU_Server_Socket_t **NU_Client_select_receive(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout){
+NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
 	if(!servers || !client || !size || !*size){
 		*size = 0;
 		return NULL;
@@ -176,7 +160,7 @@ NU_Server_Socket_t **NU_Client_select_receive(NU_Client_t *client, NU_Server_Soc
 	int max_fd = 0, retval;
 	size_t i = 0, new_size = 0;
 	for(;i < *size; i++){
-		NU_Server_Socket_t *server = servers[i];
+		NU_Connection_t *conn = servers[i];
 		if(!server || !server->sockfd) continue;
 		FD_SET(server->sockfd, &receive_set);
 		new_size++;
@@ -192,14 +176,14 @@ NU_Server_Socket_t **NU_Client_select_receive(NU_Client_t *client, NU_Server_Soc
 		*size = 0;
 		return NULL;
 	}
-	NU_Server_Socket_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
+	NU_Connection_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
 	new_size = 0;
 	for(i = 0;i < *size;i++) if(FD_ISSET(servers[i]->sockfd, &receive_set)) ready_servers[new_size++] = servers[i];
 	*size = new_size;
 	return ready_servers;
 }
 
-NU_Server_Socket_t **NU_Client_select_send(NU_Client_t *client, NU_Server_Socket_t **servers, size_t *size, unsigned int timeout){
+NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
 	if(!servers || !client || !size || !*size){
 		*size = 0;
 		return NULL;
@@ -212,7 +196,7 @@ NU_Server_Socket_t **NU_Client_select_send(NU_Client_t *client, NU_Server_Socket
 	int max_fd = 0, retval;
 	size_t i = 0, new_size = 0;
 	for(;i < *size; i++){
-		NU_Server_Socket_t *server = servers[i];
+		NU_Connection_t *conn = servers[i];
 		if(!server || !server->sockfd) continue;
 		FD_SET(server->sockfd, &send_set);
 		new_size++;
@@ -228,7 +212,7 @@ NU_Server_Socket_t **NU_Client_select_send(NU_Client_t *client, NU_Server_Socket
 		*size = 0;
 		return NULL;
 	}
-	NU_Server_Socket_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
+	NU_Connection_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
 	new_size = 0;
 	for(i = 0;i < *size;i++) if(FD_ISSET(servers[i]->sockfd, &send_set)) ready_servers[new_size++] = servers[i];
 	*size = new_size;
