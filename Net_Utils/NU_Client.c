@@ -18,7 +18,7 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
-static int get_server_socket(const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout){
+static int get_server_socket(const char *host, unsigned int port, unsigned int timeout){
 	struct addrinfo hints, *results, *current;
 	fd_set connect_set;
 	struct timeval tv;
@@ -29,93 +29,86 @@ static int get_server_socket(const char *host, unsigned int port, unsigned int i
 	asprintf(&port_str, "%u", port);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = is_udp ? SOCK_DGRAM : SOCK_STREAM;
+	hints.ai_socktype = SOCK_STREAM;
 	if(retval = getaddrinfo(host, port_str, &hints, &results)){
 		MU_LOG_WARNING(logger, "get_server_socket->getaddrinfo: %s\n", gai_strerror(retval));
 		free(port_str);
 		return 0;
 	}
 	free(port_str);
+	// Loop through all potential results to find a valid connection.
 	for(current = results; current; current = current->ai_next){
-	    if((sockfd = TEMP_FAILURE_RETRY(socket(current->ai_family, current->ai_socktype, current->ai_protocol))) == -1) {
-	      MU_LOG_VERBOSE(logger, "Skipped result with error \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
+	    if((sockfd = TEMP_FAILURE_RETRY(socket(current->ai_family, current->ai_socktype, current->ai_protocol))) == -1){
+	      MU_LOG_VERBOSE(logger, "get_server_socket->socket: \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
 	      continue;
 	    }
-	    MU_LOG_VERBOSE(logger, "Obtained a socket from a result: Iteration #%d\n", ++iteration);
+	    MU_LOG_VERBOSE(logger, "get_server_socket: \"Received a socket!\": Iteration #%d\n", ++iteration);
 	    FD_ZERO(&connect_set);
 	    FD_SET(sockfd, &connect_set);
 	    if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &connect_set, NULL, NULL, &tv))) <= 0){
-	    	if(!retval) MU_LOG_VERBOSE(logger, "select: \"Timed out\"\n"); 
-	    	else MU_LOG_VERBOSE(logger, "select: \"%s\"\n", strerror(errno));
-	    	MU_LOG_VERBOSE(logger, "Iteration: #%d\n", ++iteration);
+	    	if(!retval) MU_LOG_VERBOSE(logger, "get_server_socket->select: \"Timed out!\": Iteration: #%d\n", ++iteration);
+	    	else MU_LOG_VERBOSE(logger, "get_server_socket->select: \"%s\": Iteration: #%d\n", strerror(errno), ++iteration);
+	    	TEMP_FAILURE_RETRY(close(sockfd));
 	    	continue;
 	    }
 	    if(TEMP_FAILURE_RETRY(connect(sockfd, current->ai_addr, current->ai_addrlen)) == -1){
-	      close(sockfd);
-	      MU_LOG_VERBOSE(logger, "connect->connect: \"%s\"; Iteration #%d\n", strerror(errno), ++iteration);
+	      MU_LOG_VERBOSE(logger, "get_server_socket->connect: \"%s\"; Iteration #%d\n", strerror(errno), ++iteration);
+	      TEMP_FAILURE_RETRY(close(sockfd));
 	      continue;
 	    }
 	    break;
-	}
+	} 	
+	/* 
+		Note: If current is not NULL, then it succeeded in finding a socket, hence it is safe to return it.
+		0 as a file descriptor represents stdin, which is impossible to have as an output fd.
+	*/
 	return current ? sockfd : 0;
 }
 
-NU_Client_t *NU_Client_create(int flags){
+NU_Client_t *NU_Client_create(void){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
-	if(!client) MU_LOG_ERROR(logger, "Was unable to allocate memory for client!\n");
+	MU_ASSERT_RETURN(client, logger, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
 	return client;
 }
 
-NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout){
-	NU_Connection_t *conn = NU_Connection_reuse(client->connections)
-	/// Pick up here and optimize!
-	int is_reused = 1;
-	if(!server){ 
-		server = calloc(1, sizeof(NU_Server_Socket_t));
-		MU_ASSERT_RETURN(server, logger, NULL, "connect->calloc: \"Unable to allocate memory for server!\"\n");
-		is_reused--;
-	}
-	if(!is_reused){
-		if(!client->servers) client->servers = server;
-		else{
-			NU_Connection_t *tmp_server = NULL;
-			for(tmp_server = client->servers; tmp_server && tmp_server->next; tmp_server = tmp_server->next);
-			tmp_server->next = server;
-		}
-		server->bbuf = calloc(1, sizeof(NU_Bounded_Buffer_t));
-	}
-	if(!(server->sockfd = get_server_socket(host, port, is_udp, timeout))){
-		MU_LOG_WARNING(logger, "connect->get_server_socket: \"Unable to connect to host\"\n");
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *ip_addr, unsigned int port, unsigned int timeout){
+	if(!client || !ip_addr || !port) return NULL;
+	// NU_Connection_reuse should return a new connection if there is none to find, else return a recycled one.
+	NU_Connection_t *conn = NU_Connection_reuse(client->connections, logger);
+	MU_ASSERT_RETURN(conn, logger, "NU_Client_connect->NU_Connection_reuse: \"Was unable to reuse or create a new connection!\"\n");
+	if(!(connection->sockfd = get_server_socket(ip_addr, port, timeout))){
+		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Unable to form a connection!\"\n");
 		return NULL;
 	}
-	server->port = port;
-	strcpy(server->ip_addr, host);
+	conn->port = port;
+	strcpy(conn->ip_addr, ip_addr);
 	client->amount_of_servers++;
-	MU_LOG_CLIENT("Connected to %s on port %u\n", host, port);
-	return server;
+	MU_LOG_CLIENT("Connected to %s on port %u\n", ip_addr, port);
+	return conn;
 }
 
-size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const char *message, size_t msg_size, unsigned int timeout){
-	size_t result = NUH_send_all(server->sockfd, message, msg_size, timeout, logger);
+size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
+	if(!client || !conn || !conn->sockfd || !buffer || !buf_size) return 0;
+	size_t result = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
 	client->data.bytes_sent += result;
 	client->data.messages_sent++;
-	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to server!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
+	if(result != buf_size) MU_LOG_WARNING(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
 	return result;
 }
 
-const char *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t buffer_size, unsigned int timeout){
-	NUH_resize_buffer(server->bbuf, buffer_size+1, logger);
-	size_t result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger);
-	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buffer_size);
+const void *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t buf_size, unsigned int timeout){
+	if(!client || !conn || !conn->sockfd || !buf_size) return NULL;
+	NU_Buffer_resize(conn->buf, buf_size, logger);
+	size_t result = NU_timed_receive(conn->sockfd, conn->bbuf, buf_size, timeout, logger);
+	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
 	if(!result) return NULL;
-	server->bbuf->buffer[result] = '\0';
 	client->data.bytes_received += result;
 	client->data.messages_received++;
-	return (const char *)server->bbuf->buffer;
+	return (const void *)conn->bbuf->buffer;
 }
 
-size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout){
-	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
+size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
+	if(!client || !conn || !conn->sockfd || !file || !buf_size) return 0;
 	NUH_resize_buffer(server->bbuf, buffer_size, logger);
 	size_t retval, total_sent = 0;
 	char *str_retval;
@@ -133,8 +126,9 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 	return (size_t) total_sent;
 }
 
-size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout){
+size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
+	size_t result = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
 	NUH_resize_buffer(server->bbuf, buffer_size, logger);
 	size_t result, total_received = 0;
 	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) > 0){

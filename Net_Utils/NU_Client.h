@@ -2,6 +2,7 @@
 #define NET_UTILS_CLIENT_H
 
 #include <NU_Helper.h>
+#include <NU_Connection.h>
 
 typedef struct {
    /// Socket associated with this server.
@@ -16,7 +17,7 @@ typedef struct {
 NU_Client_t *NU_Client_create();
 
 /* Connects the client to some host! */
-NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int is_udp, unsigned int timeout);
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int timeout);
 
 /* Sends data to the host, up to the given timeout. */
 size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *connection, const char *message, size_t msg_size, unsigned int timeout);
