@@ -60,6 +60,15 @@ size_t NU_timed_receive(int sockfd, NU_Buffer_t *buf, size_t buf_size, unsigned 
 
 int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
+// Implement. Note to self: Needs to externally locked before calling.
+NU_Connection_t *NU_reuse_connection(NU_Connection_t *head, MU_Logger_t *logger);
+
+// Implement
+NU_Connection_t **NU_select_receive_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
+
+// Implement
+NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
+
 // Implement
 char *NU_Collective_Data_to_string(NU_Collective_Data_t data);
 

@@ -74,8 +74,8 @@ NU_Client_t *NU_Client_create(void){
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *ip_addr, unsigned int port, unsigned int timeout){
 	if(!client || !ip_addr || !port) return NULL;
 	// NU_Connection_reuse should return a new connection if there is none to find, else return a recycled one.
-	NU_Connection_t *conn = NU_Connection_reuse(client->connections, logger);
-	MU_ASSERT_RETURN(conn, logger, "NU_Client_connect->NU_Connection_reuse: \"Was unable to reuse or create a new connection!\"\n");
+	NU_Connection_t *conn = NU_reuse_connection(client->connections, logger);
+	MU_ASSERT_RETURN(conn, logger, "NU_Client_connect->NU_reuse_connection: \"Was unable to reuse or create a new connection!\"\n");
 	if(!(connection->sockfd = get_server_socket(ip_addr, port, timeout))){
 		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Unable to form a connection!\"\n");
 		return NULL;
@@ -88,8 +88,8 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *ip_addr, uns
 }
 
 size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || !conn->sockfd || !buffer || !buf_size) return 0;
-	size_t result = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
+	if(!client || !conn || conn->type != NU_Client) return 0;
+	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
 	client->data.bytes_sent += result;
 	client->data.messages_sent++;
 	if(result != buf_size) MU_LOG_WARNING(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
@@ -97,9 +97,8 @@ size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *bu
 }
 
 const void *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || !conn->sockfd || !buf_size) return NULL;
-	NU_Buffer_resize(conn->buf, buf_size, logger);
-	size_t result = NU_timed_receive(conn->sockfd, conn->bbuf, buf_size, timeout, logger);
+	if(!client || !conn || conn->type != NU_Client) return NULL;
+	size_t result = NU_Connection_receive(conn, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
 	if(!result) return NULL;
 	client->data.bytes_received += result;
@@ -108,22 +107,24 @@ const void *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t
 }
 
 size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || !conn->sockfd || !file || !buf_size) return 0;
-	NUH_resize_buffer(server->bbuf, buffer_size, logger);
-	size_t retval, total_sent = 0;
-	char *str_retval;
-	while((retval = fread(server->bbuf->buffer, 1, buffer_size, file)) > 0){
-		if(NU_Client_send(client, server, server->bbuf->buffer, retval, timeout) == 0){
-			MU_LOG_WARNING(logger, "client_send_file->client_send: \"%s\"\n", "Was unable to send all of message to %s!\n", conn->ip_addr);
-			return total_sent;
-		}
-		total_sent += retval;
+	if(!client || !conn || conn->type != NU_Client) return 0;
+	// Obtain the file size to aid in determining whether or not the send was successful or not.
+	struct stat file_stats;
+	int file_fd = fileno(file);
+	size_t file_size = 0;
+	if(fstat(file, &file_stats) < 0) MU_LOG_WARNING(logger, "NU_Client_send_file->fstat: \"%s\"\n", strerror(errno));
+	else file_size = file_stats.st_size;
+	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
+	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
+	if(!total_sent) MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
+	else if(file_size && file_size != total_sent){ 
+		MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
+			file_size, total_sent, NU_Connection_get_ip_addr(conn));
 	}
-	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to %s!\n", conn->ip_addr);
 	else client->data.messages_sent++;
-	client->data.bytes_sent += (size_t) total_sent;
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, conn->ip_addr);
-	return (size_t) total_sent;
+	client->data.bytes_sent += total_sent;
+	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn));
+	return total_sent;
 }
 
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
