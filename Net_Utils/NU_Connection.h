@@ -29,6 +29,8 @@ typedef struct NU_Connection_t {
    unsigned int port;
    /// The type of connection this is.
    NU_Connection_Type_t type;
+   /// Read-Write lock to use for synchronization if initialized.
+   pthread_rwlock_t lock;
    /// A reusable buffer for each connection.
    NU_Buffer_t *buf;
    /// The next server socket in the list.
@@ -36,7 +38,7 @@ typedef struct NU_Connection_t {
 } NU_Connection_t;
 
 // Implement
-NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks);
+NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks, MU_Logger_t *logger);
 
 // Implement
 size_t NU_Connection_send(NU_Connect_t *conn, const void *message, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
@@ -53,12 +55,31 @@ size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_siz
 // Implement
 char *NU_Connection_to_string(NU_Connection_t *connection);
 
-void NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd);
-
+// Implement
 int NU_Connection_get_sockfd(NU_Connection_t *conn);
 
+// Implement
+void NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd);
+
+// Implement
+const char *NU_Connection_get_ip_addr(NU_Connection_t *conn);
+
+// Implement
+void NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr);
+
+// Implement
+unsigned int NU_Connection_get_port(NU_Connection_t *conn);
+
+// Implement
+void NU_Connection_set_port(NU_Connection_t *conn, unsigned int port);
+
+// Implement
+int NU_Connection_is_valid(NU_Connection_t *conn);
+
+// Implement
 void NU_Connection_disconnect(NU_Connection_t *conn);
 
+// Implement
 void NU_Connection_destroy(NU_Connection_t *conn);
 
 #endif /* END NU_CONNECTION_H */

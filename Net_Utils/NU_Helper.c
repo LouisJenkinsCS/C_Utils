@@ -103,3 +103,78 @@ char *NUH_data_to_string(NU_Collective_Data_t data){
 int NUH_is_selected(int flags, int mask){
    return flags & mask;
 }
+
+NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
+   if(!connections || !size || !*size){
+      *size = 0;
+      return NULL;
+   }
+   fd_set receive_set;
+   struct timeval tv;
+   tv.tv_sec = timeout;
+   tv.tv_usec = 0;
+   FD_ZERO(&receive_set);
+   int max_fd = 0, are_ready;
+   size_t i = 0, new_size = 0;
+   for(;i < *size; i++){
+      NU_Connection_t *conn = connections[i];
+      if(!NU_Connection_is_valid(conn)) continue;
+      int sockfd = NU_Connection_get_sockfd(conn);
+      FD_SET(sockfd, &receive_set);
+      new_size++;
+      if(sockfd > max_fd) max_fd = sockfd;
+   }
+   if(!new_size) {
+      *size = 0;
+      return NULL;
+   }
+   if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
+      if(!are_ready) MU_LOG_INFO(logger, "NU_select_receive_connections->select: \"Timed out!\"\n");
+      else MU_LOG_WARNING(logger, "NU_select_receive_connections->select: \"%s\"\n", strerror(errno));
+      *size = 0;
+      return NULL;
+   }
+   NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+   new_size = 0;
+   for(i = 0;i < *size;i++) if(FD_ISSET(connections[i]->sockfd, &receive_set)) ready_connections[new_size++] = connections[i];
+   *size = new_size;
+   return ready_connections;
+}
+
+
+NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
+   if(!connections || !size || !*size){
+      *size = 0;
+      return NULL;
+   }
+   fd_set send_set;
+   struct timeval tv;
+   tv.tv_sec = timeout;
+   tv.tv_usec = 0;
+   FD_ZERO(&send_set);
+   int max_fd = 0, are_ready;
+   size_t i = 0, new_size = 0;
+   for(;i < *size; i++){
+      NU_Connection_t *conn = connections[i];
+      if(!NU_Connection_is_valid(conn)) continue;
+      int sockfd = NU_Connection_get_sockfd(conn);
+      FD_SET(sockfd, &send_set);
+      new_size++;
+      if(sockfd > max_fd) max_fd = sockfd;
+   }
+   if(!new_size) {
+      *size = 0;
+      return NULL;
+   }
+   if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
+      if(!are_ready) MU_LOG_VERBOSE(logger, "NU_select_send_connections->select: \"Timed out!\"\n");
+      else MU_LOG_WARNING(logger, "NU_select_send_connections->select: \"%s\"\n", strerror(errno));
+      *size = 0;
+      return NULL;
+   }
+   NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+   new_size = 0;
+   for(i = 0;i < *size;i++) if(FD_ISSET(NU_Connection_get_sockfd(connections[i]), &send_set)) ready_connections[new_size++] = connections[i];
+   *size = new_size;
+   return ready_connections;
+}

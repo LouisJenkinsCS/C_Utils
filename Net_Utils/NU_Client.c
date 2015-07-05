@@ -129,15 +129,10 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
-	size_t result = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
-	NUH_resize_buffer(server->bbuf, buffer_size, logger);
-	size_t result, total_received = 0;
-	while((result = NUH_timed_receive(server->sockfd, server->bbuf, buffer_size, timeout, logger)) > 0){
-		fwrite(server->bbuf->buffer, 1, result, file);
-		total_received += result;
-	}
+	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
+	if(!total_received) MU_LOG_WARNING(logger, "NU_Client_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
+	else client->data.messages_received++;
 	client->data.bytes_received += total_received;
-	client->data.messages_received++;
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
 }
