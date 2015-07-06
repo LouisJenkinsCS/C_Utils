@@ -35,6 +35,8 @@ typedef struct {
    size_t bytes_received;
 } NU_Collective_Data_t;
 
+
+/// This data structure needs to allow concurrent access!
 typedef struct {
    /// Container for buffer.
    void *buffer;
@@ -91,8 +93,6 @@ NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t 
 
 // Implement
 char *NU_Collective_Data_to_string(NU_Collective_Data_t data);
-
-
 
 int NU_is_selected(int flags, int mask);
 

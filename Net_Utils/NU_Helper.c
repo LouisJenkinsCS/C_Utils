@@ -55,12 +55,12 @@ size_t NUH_timed_receive(int sockfd, NU_Bounded_Buffer_t *bbuf, size_t buffer_si
    FD_ZERO(&can_receive);
    FD_SET(sockfd, &can_receive);
    if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &can_receive, NULL, NULL, &tv))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "timed_receive->select: \"timed out\"\n");
-      else MU_LOG_ERROR(logger, "timed_receive->select: \"%s\"", strerror(errno));
+      if(!retval) MU_LOG_INFO(logger, "NU_timed_receive->select: \"Timed out!\"\n");
+      else MU_LOG_ERROR(logger, "NU_timed_receive->select: \"%s\"", strerror(errno));
       return 0;
    }
    if((retval = TEMP_FAILURE_RETRY(recv(sockfd, bbuf->buffer, buffer_size, 0))) <= 0){
-      if(!retval) MU_LOG_INFO(logger, "receive_all->recv: \"disconnected from the stream\"\n");
+      if(!retval) MU_LOG_INFO(logger, "NU_timed_receive->recv: \"Disconnected from the stream!\"\n");
       else MU_LOG_ERROR(logger, "timed_receive->recv: \"%s\"\n", strerror(errno));
       return 0;
    }
@@ -136,7 +136,7 @@ NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, s
    }
    NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
    new_size = 0;
-   for(i = 0;i < *size;i++) if(FD_ISSET(connections[i]->sockfd, &receive_set)) ready_connections[new_size++] = connections[i];
+   for(i = 0;i < *size;i++) if(FD_ISSET(NU_Connections_get_sockfd(connections[i]), &receive_set)) ready_connections[new_size++] = connections[i];
    *size = new_size;
    return ready_connections;
 }

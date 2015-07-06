@@ -29,61 +29,137 @@ NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char i
 
 // Implement
 size_t NU_Connection_send(NU_Connect_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	if(!conn || !conn->sockfd || !buffer || !buf_size) return 0;
-	// Lock and Unlock 
-	return NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
+	if(!conn || !buffer | !buf_size) return 0;
+	NU_lock_rdlock(conn->lock);
+	if(!conn->sockfd){
+		NU_unlock_rdlock(conn->lock);
+		return 0;
+	}
+	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
+	NU_unlock_rdlock(conn->lock);
+	return total_sent;
 }
 
 // Implement
-void *NU_Connect_receive(NU_Connect_t *conn, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	if(!conn || !conn->sockfd || !buf_size) return NULL;
-	NU_Buffer_resize(conn->buf, buf_size, logger);
-	// Lock and Unlock
-	return NU_timed_receive(conn->sockfd, conn->bbuf, buf_size, timeout, logger);
+size_t NU_Connect_receive(NU_Connect_t *conn, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
+	if(!conn || !buf_size) return NULL;
+	NU_lock_rdlock(conn->lock)
+	if(!conn->sockfd){
+		NU_unlock_rdlock(conn->lock);
+		MU_LOG_INFO(logger, "NU_Connection_send_file: \"Connection contained bad sockfd!\"\n");
+		*buf_size = 0;
+		return NULL;
+	}
+	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, logger);
+	NU_unlock_rdlock(conn->lock);
+	return amount_received;
 }
 
 // Implement
 size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	if(!conn || || !conn->sockfd || !file || !buf_size) return 0;
-	NU_Buffer_resize(conn->buf, buf_size, logger);
+	if(!conn || !file || !buf_size) return 0;
+	NU_lock_rdlock(conn->lock);
+	if(!conn->sockfd){
+		NU_unlock_rdlock(conn->lock);
+		MU_LOG_INFO(logger, "NU_Connection_send_file: \"Connection contained bad sockfd!\"\n");
+		return 0;
+	}
+	char buf[buf_size];
 	size_t buf_read, total_sent = 0;
-	while((buf_read = fread(conn->buf->buffer, 1, buf_size, file)) > 0){
-		if(NU_Connection_send(conn, conn->buf->buffer, buf_read, timeout, logger) == 0){
-			MU_LOG_WARNING(logger, "NU_Connection_send_file->NU_Connection_send: \"Was unable to send all of message to %s\"\n", conn->ip_addr);
+	while((buf_read = TEMP_FAILURE_RETRY(fread(buf, 1, buf_size, file))) > 0){
+		if(NU_send_all(conn, buf, buf_read, timeout, logger) == 0){
+			MU_LOG_WARNING(logger, "NU_Connection_send_file->NU_send_all: \"Was unable to send all of message to %s\"\n", conn->ip_addr);
+			NU_unlock_rdlock(conn->lock);
 			return total_sent;
 		}
-		total_sent += retval;
+		total_sent += buf_read;
 	}
+	NU_unlock_rdlock(conn->lock);
 	return total_sent;
 }
 
 // Implement
 size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !file || !buf_size) return 0;
-	NU_Buffer_resize(conn->bbuf, buf_size, logger);
+	NU_lock_rdlock(conn->lock);
+	if(!conn->sockfd){
+		NU_unlock_rdlock(conn->lock);
+		MU_LOG_INFO(logger, "NU_Connection_receive_file: \"Connection contained bad sockfd!\"\n");
+		return 0;
+	}
+	char buf[buf_size];
 	size_t result, total_received = 0;
-	while((result = NU_timed_receive(conn->sockfd, conn->bbuf, buf_size, timeout, logger)) > 0){
-		fwrite(client->bbuf->buffer, 1, result, file);
+	while((result = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, logger)) > 0){
+		size_t written = 0;
+		if((written = TEMP_FAILURE_RETRY(fwrite(buf, 1, result, file))) != result){
+			MU_LOG_ERROR(logger, "NU_Connection_receive_file->fwrite: \"Written only %zu bytes, expected %zu bytes!\n%s\"\n", written, result, strerror(errno));
+			return total_received += written;
+		}
 		total_received += result;
 	}
+	NU_unlock_rdlock(conn->lock);
 	return total_received;
 }
 
 // Implement
 char *NU_Connection_to_string(NU_Connection_t *connection);
 
-void NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd);
+void NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd){
+	if(!conn || sockfd < 0) return;
+	NU_lock_wrlock(conn->lock);
+	conn->sockfd = sockfd;
+	NU_unlock_wrlock(conn->lock);
+}
 
-int NU_Connection_get_sockfd(NU_Connection_t *conn);
+int NU_Connection_get_sockfd(NU_Connection_t *conn){
+	if(!conn) return -1;
+	NU_lock_rdlock(conn->lock);
+	int sockfd = conn->sockfd;
+	NU_unlock_rdlock(conn->lock);
+	return sockfd;
+}
 
-const char *NU_Connection_get_ip_addr(NU_Connection_t *conn);
+void NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr){
+	if(!conn || !ip_addr) return;
+	NU_lock_wrlock(conn->lock);
+	conn->ip_addr = ip_addr;
+	NU_unlock_wrlock(conn->lock);
+}
 
-void NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr);
+const char *NU_Connection_get_ip_addr(NU_Connection_t *conn){
+	if(!conn) return NULL;
+	NU_lock_rdlock(conn->lock);
+	const char *ip_addr  = conn->ip_addr;
+	NU_unlock_rdlock(conn->lock);
+	return ip_addr;
+}
 
-unsigned int NU_Connection_get_port(NU_Connection_t *conn);
+unsigned int NU_Connection_get_port(NU_Connection_t *conn){
+	if(!conn) return 0;
+	NU_lock_rdlock(conn->lock);
+	unsigned int port  = conn->port;
+	NU_unlock_rdlock(conn->lock);
+	return port;
+}
 
-void NU_Connection_set_port(NU_Connection_t *conn, unsigned int port);
+void NU_Connection_set_port(NU_Connection_t *conn, unsigned int port){
+	if(!conn || !port) return;
+	NU_lock_wrlock(conn->lock);
+	conn->port = port;
+	NU_unlock_wrlock(conn->lock);
+}
 
-void NU_Connection_disconnect(NU_Connection_t *conn);
+void NU_Connection_disconnect(NU_Connection_t *conn, MU_Logger_t *logger){
+	if(!conn) return;
+	NU_lock_wrlock(conn->lock);
+	if(!conn->sockfd){
+		NU_unlock_wrlock(conn->lock);
+		return;
+	}
+	if(TEMP_FAILURE_RETRY(close(conn->sockfd)) == -1){
+		MU_LOG_WARNING(logger, "NU_Connection_disconnect->close: \"%s\"\n", strerror(errno));
+
+	}
+}
 
 void NU_Connection_destroy(NU_Connection_t *conn);

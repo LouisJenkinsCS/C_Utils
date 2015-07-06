@@ -33,7 +33,7 @@ typedef struct NU_Connection_t {
    pthread_rwlock_t lock;
    /// A reusable buffer for each connection.
    NU_Buffer_t *buf;
-   /// The next server socket in the list.
+   /// The next connection in the list.
    NU_Connect_t *next;
 } NU_Connection_t;
 
@@ -53,9 +53,6 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_siz
 size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
-char *NU_Connection_to_string(NU_Connection_t *connection);
-
-// Implement
 int NU_Connection_get_sockfd(NU_Connection_t *conn);
 
 // Implement
@@ -72,6 +69,9 @@ unsigned int NU_Connection_get_port(NU_Connection_t *conn);
 
 // Implement
 void NU_Connection_set_port(NU_Connection_t *conn, unsigned int port);
+
+// Implement
+char *NU_Connection_to_string(NU_Connection_t *connection);
 
 // Implement
 int NU_Connection_is_valid(NU_Connection_t *conn);
