@@ -48,22 +48,24 @@ typedef enum {
 } NU_Data_Size_t;
 
 /// Locks the rwlock iff not NULL.
-void MU_lock_rdlock(pthread_rwlock_t *lock, unsigned int timeout, MU_Logger_t *logger);
+void NU_lock_rdlock(pthread_rwlock_t *lock);
 
-void MU_lock_wrlock(pthread_rwlock_t *lock, unsigned int timeout, MU_Logger_t *logger);
+void NU_lock_wrlock(pthread_rwlock_t *lock);
 
-void MU_unlock_rwlock(pthread_rwlock_t *lock, MU_Logger_t *logger);
+void NU_unlock_rwlock(pthread_rwlock_t *lock);
 
-void MU_lock_mutex(pthread_mutex_t *lock, unsigned int timeout, MU_Logger_t *logger);
+void NU_lock_mutex(pthread_mutex_t *lock);
 
-void MU_unlock_mutex(pthread_mutex_t *lock, MU_Logger_t *logger);
+void NU_unlock_mutex(pthread_mutex_t *lock);
 
-size_t NU_timed_receive(int sockfd, NU_Buffer_t *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
+size_t NU_send_all(int sockfd, const void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
+
+size_t NU_timed_receive(int sockfd, void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
 int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement. Note to self: Needs to externally locked before calling.
-NU_Connection_t *NU_reuse_connection(NU_Connection_t *head, MU_Logger_t *logger);
+NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, MU_Logger_t *logger);
 
 // Implement
 NU_Connection_t **NU_select_receive_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
