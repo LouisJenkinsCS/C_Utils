@@ -35,17 +35,6 @@ typedef struct {
    size_t bytes_received;
 } NU_Collective_Data_t;
 
-
-/// This data structure needs to allow concurrent access!
-typedef struct {
-   /// Container for buffer.
-   void *buffer;
-   /// Current size of buffer.
-   size_t size;
-   /// Read-Write lock for synchronization when initialized.
-   pthread_mutex_t lock;
-} NU_Buffer_t;
-
 /// Helper to make determining buffer and file sizes a lot easier.
 typedef enum {
    /// Represents a byte.
@@ -57,15 +46,6 @@ typedef enum {
    /// Represents a gigabyte
    NU_GIGABYTE = 1,073,741,824
 } NU_Data_Size_t;
-
-/// Create and initialize the buffer.
-NU_Buffer_t *NU_Buffer_create(size_t size, unsigned char init_locks, MU_Logger_t *logger);
-
-/// Resize the buffer.
-int NU_Buffer_resize(NU_Buffer_t *buf, size_t new_size, MU_Logger_t *logger);
-
-/// Destroys the buffer.
-void NU_Buffer_destroy(NU_Buffer_t *buf);
 
 /// Locks the rwlock iff not NULL.
 void MU_lock_rdlock(pthread_rwlock_t *lock, unsigned int timeout, MU_Logger_t *logger);

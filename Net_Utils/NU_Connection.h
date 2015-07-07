@@ -11,18 +11,18 @@
 
 typedef enum {
    /// Client type of connection.
-   NU_Client,
+   NU_CLIENT,
    /// Server type of connection.
-   NU_Server,
+   NU_SERVER,
    /// HTTP type of connection.
    NU_HTTP,
    /// A user defined connection type.
-   NU_Custom
+   NU_OTHER
 } NU_Connection_Type_t;
 
 typedef struct NU_Connection_t {
    /// Socket file descriptor associated with host.
-   volatile int sockfd;
+   int sockfd;
    /// The IP Address of the host connected to.
    char ip_addr[INET_ADDRSTRLEN];
    /// Port number that the host is bound to.
@@ -32,9 +32,7 @@ typedef struct NU_Connection_t {
    /// Read-Write lock to use for synchronization if initialized.
    pthread_rwlock_t lock;
    /// A reusable buffer for each connection.
-   NU_Buffer_t *buf;
-   /// The next connection in the list.
-   NU_Connect_t *next;
+   volatile unsigned char in_use;
 } NU_Connection_t;
 
 // Implement
@@ -76,10 +74,14 @@ char *NU_Connection_to_string(NU_Connection_t *connection);
 // Implement
 int NU_Connection_is_valid(NU_Connection_t *conn);
 
-// Implement
-void NU_Connection_disconnect(NU_Connection_t *conn);
+int NU_Connection_in_use(NU_Connection_t *conn);
+
+int NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
 
 // Implement
-void NU_Connection_destroy(NU_Connection_t *conn);
+void NU_Connection_disconnect(NU_Connection_t *conn, MU_Logger_t *logger);
+
+// Implement
+void NU_Connection_destroy(NU_Connection_t *conn, MU_Logger_t *logger);
 
 #endif /* END NU_CONNECTION_H */
