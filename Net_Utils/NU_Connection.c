@@ -23,6 +23,7 @@ NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char i
 		}
 		int retval;
 		if((retval = pthread_rwlock_init(conn->lock, NULL)) < 0){
+			free(conn->lock);
 			free(conn);
 			MU_LOG_ERROR(logger, "NU_Connection_create->pthread_rwlock_init: \"%s\"\n", strerror(retval));
 			return NULL;

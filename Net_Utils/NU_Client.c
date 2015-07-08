@@ -18,7 +18,7 @@ __attribute__((destructor)) static void destroy_logger(void){
 	logger = NULL;
 }
 
-static int get_server_socket(const char *host, unsigned int port, unsigned int timeout){
+static int get_connection_socket(const char *host, unsigned int port, unsigned int timeout){
 	struct addrinfo hints, *results, *current;
 	fd_set connect_set;
 	struct timeval tv;
@@ -31,7 +31,7 @@ static int get_server_socket(const char *host, unsigned int port, unsigned int t
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	if(retval = getaddrinfo(host, port_str, &hints, &results)){
-		MU_LOG_WARNING(logger, "get_server_socket->getaddrinfo: %s\n", gai_strerror(retval));
+		MU_LOG_WARNING(logger, "get_connection_socket->getaddrinfo: \"%s\"\n", gai_strerror(retval));
 		free(port_str);
 		return 0;
 	}
@@ -39,20 +39,20 @@ static int get_server_socket(const char *host, unsigned int port, unsigned int t
 	// Loop through all potential results to find a valid connection.
 	for(current = results; current; current = current->ai_next){
 	    if((sockfd = TEMP_FAILURE_RETRY(socket(current->ai_family, current->ai_socktype, current->ai_protocol))) == -1){
-	      MU_LOG_VERBOSE(logger, "get_server_socket->socket: \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
+	      MU_LOG_VERBOSE(logger, "get_connection_socket->socket: \"%s\": Iteration #%d\n", strerror(errno), ++iteration);
 	      continue;
 	    }
-	    MU_LOG_VERBOSE(logger, "get_server_socket: \"Received a socket!\": Iteration #%d\n", ++iteration);
+	    MU_LOG_VERBOSE(logger, "get_connection_socket: \"Received a socket!\": Iteration #%d\n", ++iteration);
 	    FD_ZERO(&connect_set);
 	    FD_SET(sockfd, &connect_set);
 	    if((retval = TEMP_FAILURE_RETRY(select(sockfd + 1, &connect_set, NULL, NULL, &tv))) <= 0){
-	    	if(!retval) MU_LOG_VERBOSE(logger, "get_server_socket->select: \"Timed out!\": Iteration: #%d\n", ++iteration);
-	    	else MU_LOG_VERBOSE(logger, "get_server_socket->select: \"%s\": Iteration: #%d\n", strerror(errno), ++iteration);
+	    	if(!retval) MU_LOG_VERBOSE(logger, "get_connection_socket->select: \"Timed out!\": Iteration: #%d\n", ++iteration);
+	    	else MU_LOG_VERBOSE(logger, "get_connection_socket->select: \"%s\": Iteration: #%d\n", strerror(errno), ++iteration);
 	    	TEMP_FAILURE_RETRY(close(sockfd));
 	    	continue;
 	    }
 	    if(TEMP_FAILURE_RETRY(connect(sockfd, current->ai_addr, current->ai_addrlen)) == -1){
-	      MU_LOG_VERBOSE(logger, "get_server_socket->connect: \"%s\"; Iteration #%d\n", strerror(errno), ++iteration);
+	      MU_LOG_VERBOSE(logger, "get_connection_socket->connect: \"%s\"; Iteration #%d\n", strerror(errno), ++iteration);
 	      TEMP_FAILURE_RETRY(close(sockfd));
 	      continue;
 	    }
@@ -65,9 +65,43 @@ static int get_server_socket(const char *host, unsigned int port, unsigned int t
 	return current ? sockfd : 0;
 }
 
-NU_Client_t *NU_Client_create(void){
+NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
 	MU_ASSERT_RETURN(client, logger, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
+	if(init_locks){
+		client->lock = malloc(sizeof(pthread_rwlock_t));
+		MU_ASSERT_RETURN(client, logger, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
+		int retval;
+		if((retval = pthread_rwlock_init(clinet->lock, NULL)) < 0){
+			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(retval));
+			free(client->lock);
+			free(client);
+			return NULL;
+		}
+	}
+	client->amount_of_connections = initial_size;
+	size_t i = 0;
+	for(;i < initial_size; i++){
+		NU_Connection_t *conn = NU_Connection_create(NU_CLIENT, init_locks, logger);
+		/// If the connection failed to be created, then we must deallocate all memory we attempted to allocate before.
+		if(!conn){
+			size_t j = 0;
+			for(;j < i; j++){
+				NU_Connection_destroy(client->connections[j], logger);
+			}
+			free(client->connections);
+			if(init_locks){
+				int retval;
+				if((retval = pthread_rwlock_destroy(conn->lock)) < 0){
+					MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_destroy: \"%s\"\n", strerror(retval));
+				}
+				free(conn->lock);
+			}
+			free(conn);
+			return NULL;
+		}
+		client->connections[i] = conn;
+	}
 	return client;
 }
 

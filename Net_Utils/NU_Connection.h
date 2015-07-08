@@ -39,7 +39,7 @@ typedef struct NU_Connection_t {
 NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks, MU_Logger_t *logger);
 
 // Implement
-size_t NU_Connection_send(NU_Connect_t *conn, const void *message, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
+size_t NU_Connection_send(NU_Connect_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
 const void *NU_Connect_receive(NU_Connect_t *conn, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
