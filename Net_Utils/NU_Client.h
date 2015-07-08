@@ -19,7 +19,7 @@ typedef struct {
 NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks);
 
 /* Connects the client to some host! */
-NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int timeout);
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *host, unsigned int port, unsigned int timeout);
 
 /* Sends data to the host, up to the given timeout. */
 size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *connection, const void *buffer, size_t buf_size, unsigned int timeout);

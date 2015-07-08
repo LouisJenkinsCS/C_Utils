@@ -210,6 +210,10 @@ void NU_Connection_disconnect(NU_Connection_t *conn, MU_Logger_t *logger){
 void NU_Connection_destroy(NU_Connection_t *conn, MU_Logger_t *logger){
 	if(!conn) return;
 	NU_Connection_disconnect(conn, logger);
-	if(conn->lock) pthread_rwlock_destroy(conn->lock, logger);
+	if(conn->lock){
+		int retval = pthread_rwlock_destroy(conn->lock, logger);
+		if(retval) MU_LOG_ERROR(logger, "NU_Connection_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(retval));
+		free(conn->lock);
+	}
 	free(conn);
 }

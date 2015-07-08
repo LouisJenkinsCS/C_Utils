@@ -67,10 +67,10 @@ static int get_connection_socket(const char *host, unsigned int port, unsigned i
 
 NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
-	MU_ASSERT_RETURN(client, logger, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
+	MU_ASSERT_RETURN(client, logger, NULL, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
 	if(init_locks){
 		client->lock = malloc(sizeof(pthread_rwlock_t));
-		MU_ASSERT_RETURN(client, logger, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
+		MU_ASSERT_RETURN(client, logger, NULL, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
 		int retval;
 		if((retval = pthread_rwlock_init(clinet->lock, NULL)) < 0){
 			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(retval));
@@ -80,6 +80,7 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 		}
 	}
 	client->amount_of_connections = initial_size;
+	client->connections = malloc(sizeof(NU_Connection_t *) * (initial_size ? initial_size : 1));
 	size_t i = 0;
 	for(;i < initial_size; i++){
 		NU_Connection_t *conn = NU_Connection_create(NU_CLIENT, init_locks, logger);
@@ -97,27 +98,34 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 				}
 				free(conn->lock);
 			}
-			free(conn);
-			return NULL;
+			MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
 		}
 		client->connections[i] = conn;
 	}
 	return client;
 }
 
-NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *ip_addr, unsigned int port, unsigned int timeout){
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *ip_addr, unsigned int port, unsigned int timeout){
 	if(!client || !ip_addr || !port) return NULL;
-	// NU_Connection_reuse should return a new connection if there is none to find, else return a recycled one.
+	NU_rwlock_wrlock(client->lock, logger);
+	int sockfd;
 	NU_Connection_t *conn = NU_reuse_connection(client->connections, logger);
-	MU_ASSERT_RETURN(conn, logger, "NU_Client_connect->NU_reuse_connection: \"Was unable to reuse or create a new connection!\"\n");
-	if(!(connection->sockfd = get_server_socket(ip_addr, port, timeout))){
-		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Unable to form a connection!\"\n");
+	if(!conn){
+		conn = NU_Connection_create(NU_CLIENT,init_locks, logger);
+		MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_connect->NU_Connection_create: \"Was unable to create connection!\"\n");
+		NU_Connection_t **tmp_connections = realloc(client->connections, sizeof(NU_Connection_t *) * client->amount_of_connections + 1);
+		MU_ASSERT_RETURN(tmp_connections, logger, NULL, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
+		client->connections = tmp_connections;
+		client->connections[client->amount_of_connections] = conn;
+		client->amount_of_connections++;
+	}
+	if(!(sockfd = get_server_socket(ip_addr, port, timeout))){
+		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Was unable to form a connection!\"\n");
 		return NULL;
 	}
 	conn->port = port;
 	strcpy(conn->ip_addr, ip_addr);
-	client->amount_of_servers++;
-	MU_LOG_CLIENT("Connected to %s on port %u\n", ip_addr, port);
+	MU_LOG_INFO(logger, "Connected to %s on port %u\n", ip_addr, port);
 	return conn;
 }
 
