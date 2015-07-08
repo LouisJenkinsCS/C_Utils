@@ -173,7 +173,6 @@ NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, size_t size,
       NU_Connection_t *conn = connections[i];
       NU_lock_wrlock(conn->lock, logger);
       if(conn && !conn->in_use){
-         conn->in_use = 1;
          NU_unlock_rwlock(conn->lock, logger);
          return conn;
       }
@@ -184,53 +183,55 @@ NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, size_t size,
 
 int NU_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      int retval = pthread_rwlock_rdlock(lock);
-      if(retval){
-         MU_LOG_ERROR(logger, "NU_rwlock_rdlock->pthread_rwlock_rdlock: \"%s\"\n", strerror(retval));
+      int failure = pthread_rwlock_rdlock(lock);
+      if(failure){
+         MU_LOG_ERROR(logger, "NU_rwlock_rdlock->pthread_rwlock_rdlock: \"%s\"\n", strerror(failure));
       }
+      return failure;
    }
+   return 0;
 }
 
 int NU_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      int retval = pthread_rwlock_wrlock(lock);
-      if(retval){
-         MU_LOG_ERROR(logger, "NU_rwlock_wrlock->pthread_rwlock_wrlock: \"%s\"\n", strerror(retval));
+      int failure = pthread_rwlock_wrlock(lock);
+      if(failure){
+         MU_LOG_ERROR(logger, "NU_rwlock_wrlock->pthread_rwlock_wrlock: \"%s\"\n", strerror(failure));
       }
-      return retval;
+      return failure;
    }
    return 0;
 }
 
 int NU_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      int retval = pthread_rwlock_unlock(lock);
-      if(retval){
-         MU_LOG_ERROR(logger, "NU_rwlock_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(retval));
+      int failure = pthread_rwlock_unlock(lock);
+      if(failure){
+         MU_LOG_ERROR(logger, "NU_rwlock_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(failure));
       }
-      return retval;
+      return failure;
    }
    return 0;
 }
 
 int NU_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
    if(lock){
-      int retval = pthread_mutex_lock(lock);
-      if(retval){
-         MU_LOG_ERROR(logger, "NU_mutex_lock->pthread_mutex_lock: \"%s\"\n", strerror(retval));
+      int failure = pthread_mutex_lock(lock);
+      if(failure){
+         MU_LOG_ERROR(logger, "NU_mutex_lock->pthread_mutex_lock: \"%s\"\n", strerror(failure));
       }
-      return retval;
+      return failure;
    }
    return 0;
 }
 
 int NU_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
    if(lock){
-      int retval = pthread_mutex_unlock(lock);
-      if(retval){
-         MU_LOG_ERROR(logger, "NU_mutex_unlock->pthread_mutex_unlock: \"%s\"\n", strerror(retval));
+      int failure = pthread_mutex_unlock(lock);
+      if(failure){
+         MU_LOG_ERROR(logger, "NU_mutex_unlock->pthread_mutex_unlock: \"%s\"\n", strerror(failure));
       }
-      return retval;
+      return failure;
    }
    return 0;
 }

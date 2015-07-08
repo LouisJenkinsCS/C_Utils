@@ -33,7 +33,7 @@ static int get_connection_socket(const char *host, unsigned int port, unsigned i
 	if(retval = getaddrinfo(host, port_str, &hints, &results)){
 		MU_LOG_WARNING(logger, "get_connection_socket->getaddrinfo: \"%s\"\n", gai_strerror(retval));
 		free(port_str);
-		return 0;
+		return -1;
 	}
 	free(port_str);
 	// Loop through all potential results to find a valid connection.
@@ -62,7 +62,7 @@ static int get_connection_socket(const char *host, unsigned int port, unsigned i
 		Note: If current is not NULL, then it succeeded in finding a socket, hence it is safe to return it.
 		0 as a file descriptor represents stdin, which is impossible to have as an output fd.
 	*/
-	return current ? sockfd : 0;
+	return current ? sockfd : -1;
 }
 
 NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
@@ -70,10 +70,13 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 	MU_ASSERT_RETURN(client, logger, NULL, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
 	if(init_locks){
 		client->lock = malloc(sizeof(pthread_rwlock_t));
-		MU_ASSERT_RETURN(client, logger, NULL, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
-		int retval;
-		if((retval = pthread_rwlock_init(clinet->lock, NULL)) < 0){
-			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(retval));
+		if(!client->lock){
+			free(client);
+			MU_ASSERT_RETURN(client->lock, logger, NULL, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
+		}
+		int failure = pthread_rwlock_init(clinet->lock, NULL);
+		if(failure){
+			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(failure));
 			free(client->lock);
 			free(client);
 			return NULL;
@@ -92,9 +95,9 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 			}
 			free(client->connections);
 			if(init_locks){
-				int retval;
-				if((retval = pthread_rwlock_destroy(conn->lock)) < 0){
-					MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_destroy: \"%s\"\n", strerror(retval));
+				int failure = pthread_rwlock_destroy(conn->lock);
+				if(failure){
+					MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_destroy: \"%s\"\n", strerror(failure));
 				}
 				free(conn->lock);
 			}
@@ -107,24 +110,35 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *ip_addr, unsigned int port, unsigned int timeout){
 	if(!client || !ip_addr || !port) return NULL;
+	int sockfd = get_connection_socket(ip_addr, port, timeout);
+	if(sockfd == -1){
+		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Was unable to form a connection!\"\n");
+		NU_rwlock_unlock(client->lock, logger);
+		return NULL;
+	}
 	NU_rwlock_wrlock(client->lock, logger);
-	int sockfd;
 	NU_Connection_t *conn = NU_reuse_connection(client->connections, logger);
 	if(!conn){
 		conn = NU_Connection_create(NU_CLIENT,init_locks, logger);
-		MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_connect->NU_Connection_create: \"Was unable to create connection!\"\n");
+		if(!conn){
+			NU_rwlock_unlock(client->lock, logger);
+			MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_connect->NU_Connection_create: \"Was unable to create connection!\"\n");
+		}
 		NU_Connection_t **tmp_connections = realloc(client->connections, sizeof(NU_Connection_t *) * client->amount_of_connections + 1);
-		MU_ASSERT_RETURN(tmp_connections, logger, NULL, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
+		if(!tmp_connections){
+			NU_rwlock_unlock(client->lock, logger);
+			MU_ASSERT_RETURN(tmp_connections, logger, NULL, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
+		}
 		client->connections = tmp_connections;
 		client->connections[client->amount_of_connections] = conn;
 		client->amount_of_connections++;
 	}
-	if(!(sockfd = get_server_socket(ip_addr, port, timeout))){
-		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Was unable to form a connection!\"\n");
+	int successful = NU_Connection_init(conn, sockfd, port, ip_addr, logger);
+	NU_rwlock_unlock(client->lock, logger);
+	if(!successful){
+		MU_LOG_WARNING(logger, "NU_Client_connect->NU_Connection_init: \"Was unable to iniitalize client!\"\n");
 		return NULL;
 	}
-	conn->port = port;
-	strcpy(conn->ip_addr, ip_addr);
 	MU_LOG_INFO(logger, "Connected to %s on port %u\n", ip_addr, port);
 	return conn;
 }
@@ -134,7 +148,9 @@ size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *bu
 	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
 	client->data.bytes_sent += result;
 	client->data.messages_sent++;
-	if(result != buf_size) MU_LOG_WARNING(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
+	if(result != buf_size){
+		MU_LOG_WARNING(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
+	}
 	return result;
 }
 

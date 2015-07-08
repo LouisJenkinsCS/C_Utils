@@ -36,10 +36,6 @@ NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char i
 size_t NU_Connection_send(NU_Connect_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !buffer | !buf_size) return 0;
 	NU_lock_rdlock(conn->lock, logger);
-	if(!conn->sockfd){
-		NU_unlock_rwlock(conn->lock, logger);
-		return 0;
-	}
 	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
 	NU_unlock_rwlock(conn->lock, logger);
 	return total_sent;
@@ -49,12 +45,6 @@ size_t NU_Connection_send(NU_Connect_t *conn, const void *buffer, size_t buf_siz
 size_t NU_Connect_receive(NU_Connect_t *conn, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !buffer || !buf_size) return NULL;
 	NU_lock_rdlock(conn->lock, logger)
-	if(!conn->sockfd){
-		NU_unlock_rwlock(conn->lock, logger);
-		MU_LOG_INFO(logger, "NU_Connection_send_file: \"Connection contained bad sockfd!\"\n");
-		*buf_size = 0;
-		return NULL;
-	}
 	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, logger);
 	NU_unlock_rwlock(conn->lock, logger);
 	return amount_received;
@@ -64,11 +54,6 @@ size_t NU_Connect_receive(NU_Connect_t *conn, void *buffer, size_t buf_size, uns
 size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !file || !buf_size) return 0;
 	NU_lock_rdlock(conn->lock, logger);
-	if(!conn->sockfd){
-		NU_unlock_rwlock(conn->lock, logger);
-		MU_LOG_WARNING(logger, "NU_Connection_send_file: \"Bad sockfd!\"\n");
-		return 0;
-	}
 	char buf[buf_size];
 	size_t buf_read, total_sent = 0;
 	while((buf_read = TEMP_FAILURE_RETRY(fread(buf, 1, buf_size, file))) > 0){
@@ -87,20 +72,15 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_siz
 size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !file || !buf_size) return 0;
 	NU_lock_rdlock(conn->lock, logger);
-	if(!conn->sockfd){
-		NU_unlock_rwlock(conn->lock, logger);
-		MU_LOG_WARNING(logger, "NU_Connection_receive_file: \"Bad sockfd!\"\n");
-		return 0;
-	}
 	char buf[buf_size];
-	size_t result, total_received = 0;
-	while((result = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, logger)) > 0){
-		size_t written = 0;
-		if((written = TEMP_FAILURE_RETRY(fwrite(buf, 1, result, file))) != result){
+	size_t received, total_received = 0;
+	while((received = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, logger)) > 0){
+		size_t written = TEMP_FAILURE_RETRY(fwrite(buf, 1, received, file);
+		if(written != received){
 			MU_LOG_ERROR(logger, "NU_Connection_receive_file->fwrite: \"Written only %zu bytes, expected %zu bytes!\n%s\"\n", written, result, strerror(errno));
 			return total_received += written;
 		}
-		total_received += result;
+		total_received += received;
 	}
 	NU_unlock_rwlock(conn->lock, logger);
 	return total_received;
@@ -135,7 +115,7 @@ int NU_Connection_get_sockfd(NU_Connection_t *conn){
 void NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr){
 	if(!conn || !ip_addr) return;
 	NU_lock_wrlock(conn->lock, logger);
-	conn->ip_addr = ip_addr;
+	strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
 	NU_unlock_rwlock(conn->lock, logger);
 }
 
