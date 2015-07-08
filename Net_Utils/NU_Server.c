@@ -16,7 +16,7 @@ __attribute__((constructor)) static void init_logger(void){
 		MU_DEBUG("Unable to allocate memory for NU_Server's logger!!!");
 		return;
 	}
-	MU_Logger_Init(logger, "NU_Server_Log.txt", "w", MU_ALL);
+	MU_Logger_Init(logger, "NU_Server.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){

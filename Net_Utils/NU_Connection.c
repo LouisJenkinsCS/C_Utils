@@ -1,6 +1,6 @@
 #include <NU_Connection.h>
 
-static char *type_to_string(NU_Connection_Type_t type){
+char *NU_Connection_Type_to_string(NU_Connection_Type_t type){
 	switch(type){
 		case NU_CLIENT: return "Client";
 		case NU_SERVER: return "Server";

@@ -35,6 +35,8 @@ typedef struct NU_Connection_t {
    volatile unsigned char in_use;
 } NU_Connection_t;
 
+char *NU_Connection_Type_to_string(NU_Connection_Type_t type);
+
 // Implement
 NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks, MU_Logger_t *logger);
 

@@ -10,7 +10,7 @@ __attribute__((constructor)) static void init_logger(void){
 		MU_DEBUG("Unable to allocate memory for NU_Client's logger!!!");
 		return;
 	}
-	MU_Logger_Init(logger, "NU_Client_Log.txt", "w", MU_ALL);
+	MU_Logger_Init(logger, "NU_Client.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -109,7 +109,11 @@ NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
 }
 
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *ip_addr, unsigned int port, unsigned int timeout){
-	if(!client || !ip_addr || !port) return NULL;
+	if(!client || !ip_addr || !port){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;IP Address: %s;Port: %s\"\n",
+			client ? "OK!" : "NULL", ip_addr ? "OK!" : "NULL", port ? "OK!" : "NULL");
+		return NULL;
+	}
 	int sockfd = get_connection_socket(ip_addr, port, timeout);
 	if(sockfd == -1){
 		MU_LOG_WARNING(logger, "NU_Client_connect->get_server_socket: \"Was unable to form a connection!\"\n");
@@ -144,34 +148,62 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks,
 }
 
 size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || conn->type != NU_Client) return 0;
+	if(!client || !conn || conn->type != NU_CLIENT){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	NU_rwlock_rdlock(client->lock);
 	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
+	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
 	client->data.bytes_sent += result;
 	client->data.messages_sent++;
 	if(result != buf_size){
-		MU_LOG_WARNING(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
+		MU_LOG_WARNING(logger, "NU_Client_send->NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn));
 	}
+	NU_rwlock_unlock(client->lock);
 	return result;
 }
 
-const void *NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || conn->type != NU_Client) return NULL;
+size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
+	if(!client || !conn || conn->type != NU_Client){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	NU_rwlock_rdlock(client->lock);
 	size_t result = NU_Connection_receive(conn, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
-	if(!result) return NULL;
+	if(!result){
+		MU_LOG_WARNING(logger, "NU_Client_receive->NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn));
+		return 0;
+	}
 	client->data.bytes_received += result;
 	client->data.messages_received++;
-	return (const void *)conn->bbuf->buffer;
+	NU_rwlock_unlock(client->lock);
+	return result;
 }
 
 size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || conn->type != NU_Client) return 0;
+	if(!client || !conn || !file || conn->type != NU_CLIENT){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;File: %s;Connection: %s;Connection-Type: %s\"\n",
+			client ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
 	// Obtain the file size to aid in determining whether or not the send was successful or not.
 	struct stat file_stats;
 	int file_fd = fileno(file);
+	if(file_fd == -1){
+		MU_LOG_WARNING(logger, "NU_Client_send_file->fileno: \"%s\"\n", strerror(errno));
+	}
 	size_t file_size = 0;
-	if(fstat(file, &file_stats) < 0) MU_LOG_WARNING(logger, "NU_Client_send_file->fstat: \"%s\"\n", strerror(errno));
-	else file_size = file_stats.st_size;
+	if(fstat(file_fd, &file_stats) == -1){
+		MU_LOG_WARNING(logger, "NU_Client_send_file->fstat: \"%s\"\n", strerror(errno));
+	}
+	else {
+		file_size = file_stats.st_size;
+	}
+	NU_rwlock_rdlock(client->lock);
 	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
 	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
 	if(!total_sent) MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
@@ -181,16 +213,23 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 	}
 	else client->data.messages_sent++;
 	client->data.bytes_sent += total_sent;
+	NU_rwlock_unlock(client->lock);
 	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn));
 	return total_sent;
 }
 
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	if(!server || !client || !server->sockfd || !file || !buffer_size) return 0;
+	if(!client || !conn || conn->type != NU_CLIENT){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	NU_rwlock_rdlock(clinet->lock);
 	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
 	if(!total_received) MU_LOG_WARNING(logger, "NU_Client_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
 	else client->data.messages_received++;
 	client->data.bytes_received += total_received;
+	NU_rwlock_unlock(client->lock);
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
 }

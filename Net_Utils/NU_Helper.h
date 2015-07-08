@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 #include <stdarg.h>
 #include <string.h>
 #include <netdb.h>
@@ -25,13 +26,13 @@
 
 typedef struct {
    /// Amount of messages sent.
-   size_t messages_sent;
+   atomic_size_t messages_sent;
    /// Amount of messages received.
-   size_t messages_received;
+   atomic_size_t messages_received;
    /// Total amount of data sent.
-   size_t bytes_sent;
+   atomic_size_t bytes_sent;
    /// Total amount of data received.
-   size_t bytes_received;
+   atomic_size_t bytes_received;
 } NU_Collective_Data_t;
 
 /// Helper to make determining buffer and file sizes a lot easier.
