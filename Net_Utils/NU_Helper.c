@@ -171,43 +171,66 @@ NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, size_t size,
    size_t i = 0;
    for(;i < size; i++){
       NU_Connection_t *conn = connections[i];
-      NU_lock_wrlock(conn->lock);
+      NU_lock_wrlock(conn->lock, logger);
       if(conn && !conn->in_use){
          conn->in_use = 1;
-         NU_unlock_rwlock(conn->lock);
+         NU_unlock_rwlock(conn->lock, logger);
          return conn;
       }
-      NU_unlock_rwlock(conn->lock);
+      NU_unlock_rwlock(conn->lock, logger);
    }
    return NULL;
 }
 
-void NU_lock_rdlock(pthread_rwlock_t *lock){
+int NU_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      pthread_rwlock_rdlock(lock);
+      int retval = pthread_rwlock_rdlock(lock);
+      if(retval){
+         MU_LOG_ERROR(logger, "NU_rwlock_rdlock->pthread_rwlock_rdlock: \"%s\"\n", strerror(retval));
+      }
    }
 }
 
-void NU_lock_wrlock(pthread_rwlock_t *lock){
+int NU_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      pthread_rwlock_wrlock(lock);
+      int retval = pthread_rwlock_wrlock(lock);
+      if(retval){
+         MU_LOG_ERROR(logger, "NU_rwlock_wrlock->pthread_rwlock_wrlock: \"%s\"\n", strerror(retval));
+      }
+      return retval;
    }
+   return 0;
 }
 
-void NU_unlock_rwlock(pthread_rwlock_t *lock){
+int NU_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
    if(lock){
-      pthread_rwlock_unlock(lock);
+      int retval = pthread_rwlock_unlock(lock);
+      if(retval){
+         MU_LOG_ERROR(logger, "NU_rwlock_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(retval));
+      }
+      return retval;
    }
+   return 0;
 }
 
-void NU_lock_mutex(pthread_mutex_t *lock){
+int NU_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
    if(lock){
-      pthread_mutex_lock(lock);
+      int retval = pthread_mutex_lock(lock);
+      if(retval){
+         MU_LOG_ERROR(logger, "NU_mutex_lock->pthread_mutex_lock: \"%s\"\n", strerror(retval));
+      }
+      return retval;
    }
+   return 0;
 }
 
-void NU_unlock_mutex(pthread_mutex_t *lock, MU_Logger_t *logger){
+int NU_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
    if(lock){
-      pthread_mutex_unlock(lock);
+      int retval = pthread_mutex_unlock(lock);
+      if(retval){
+         MU_LOG_ERROR(logger, "NU_mutex_unlock->pthread_mutex_unlock: \"%s\"\n", strerror(retval));
+      }
+      return retval;
    }
+   return 0;
 }
