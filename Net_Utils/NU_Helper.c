@@ -76,11 +76,32 @@ int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_
    return retval;
 }
 
-char *NU_Collective_Data_to_string(NU_Collective_Data_t data){
+char *NU_Atomic_Data_to_string(NU_Atomic_Data_t *data){
    char *data_str;
    asprintf(&data_str, "messages_sent: %zu, bytes_sent: %zu, messages_received: %zu, bytes_received: %zu",
-      data.messages_sent, data.bytes_sent, data.messages_received, data.bytes_received);
+      data->messages_sent, data->bytes_sent, data->messages_received, data->bytes_received);
    return data_str;
+}
+
+void NU_Atomic_Data_increment_received(NU_Atomic_Data_t *data, unsigned int bytes){
+   atomic_fetch_add(&data->bytes_received, bytes);
+   atomic_fetch_add(&data->messages_received, 1);
+}
+
+void NU_Atomic_Data_increment_sent(NU_Atomic_Data_t *data, unsigned int bytes){
+   atomic_fetch_add(&data->bytes_sent, bytes);
+   atomic_fetch_add(&data->messages_sent, 1);
+}
+
+NU_Atomic_Data_t *NU_Atomic_Data_create(void){
+   NU_Atomic_Data_t *data = calloc(1, sizeof(NU_Atomic_Data_t));
+   if(!data) return NULL;
+   // To avoid using locks, I must initialize them as atomic.
+   data->bytes_sent = ATOMIC_VAR_INIT(0);
+   data->bytes_received = ATOMIC_VAR_INIT(0);
+   data->messages_received = ATOMIC_VAR_INIT(0);
+   data->messages_sent = ATOMIC_VAR_INIT(0);
+   return data;
 }
 
 int NUH_is_selected(int flags, int mask){

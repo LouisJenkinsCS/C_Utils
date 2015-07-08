@@ -10,7 +10,7 @@ typedef struct {
    /// Amount of servers currently connected to.
    size_t amount_of_connections;
    /// Keeps track of data used.
-   NU_Collective_Data_t data;
+   NU_Atomic_Data_t *data;
    /// RWLock to ensure thread safety on modifying connections and amount;
    pthread_rwlock_t lock;
 } NU_Client_t;

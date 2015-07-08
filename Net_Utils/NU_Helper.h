@@ -33,7 +33,7 @@ typedef struct {
    atomic_size_t bytes_sent;
    /// Total amount of data received.
    atomic_size_t bytes_received;
-} NU_Collective_Data_t;
+} NU_Atomic_Data_t;
 
 /// Helper to make determining buffer and file sizes a lot easier.
 typedef enum {
@@ -74,7 +74,13 @@ NU_Connection_t **NU_select_receive_connections(NU_Connect_t **connections, size
 NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
-char *NU_Collective_Data_to_string(NU_Collective_Data_t data);
+char *NU_Atomic_Data_to_string(NU_Atomic_Data_t *data);
+
+void NU_Atomic_Data_increment_received(NU_Atomic_Data_t *data, unsigned int bytes);
+
+void NU_Atomic_Data_increment_sent(NU_Atomic_Data_t *data, unsigned int bytes);
+
+NU_Atomic_Data_t *NU_Atomic_Data_create(void);
 
 int NU_is_selected(int flags, int mask);
 
