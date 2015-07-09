@@ -1,6 +1,0 @@
-03:37:18 PM: [VERBOSE](./Net_Utils/NU_Client.c:50) Obtained a socket from a result: Iteration #1
-
-03:37:18 PM: [VERBOSE](./Net_Utils/NU_Client.c:61) connect->connect: "Connection refused"; Iteration #2
-
-03:37:18 PM: [WARNING](./Net_Utils/NU_Client.c:93) connect->get_server_socket: "Unable to connect to host"
-
