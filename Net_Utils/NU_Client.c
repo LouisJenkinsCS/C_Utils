@@ -250,7 +250,7 @@ NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t 
 
 NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "Invalid Argument: \"Client: %s\"\n", client ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
@@ -258,13 +258,70 @@ NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **c
 }
 
 char *NU_Client_about(NU_Client_t *client){
-	return NULL;
+	if(!client){
+		MU_LOG_ERROR(logger, "Invalid Argument: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		return NULL;
+	}
+	NU_rwlock_rdlock(client->lock);
+	char *client_str = "{ ", *old_client_str;
+	size_t i = 0;
+	for(;i < client->amount_of_connections; i++){
+		old_client_str = client_str;
+		asprintf(&client_str, "%s%s%s", client_str, NU_Connection_to_string(client->connections[i]), i < client->amount_of_connections - 1 ? "," : "");
+		// Since client_str is originally a string literal, freeing it would cause a segmentation fault, so we only skip the first one.
+		if(i > 0){
+			free(old_client_str);
+		}
+	}
+	old_client_str = client_str;
+	asprintf(&client_str, "%s }", client_str);
+	free(old_client_str);
+	NU_rwlock_unlock(client->lock);
+	return client_str;
 }
 
-int NU_Client_shutdown(NU_Client_t *client, const char *msg){
-	return 0;
+int NU_Client_shutdown(NU_Client_t *client){
+	if(!client){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		return 0;
+	}
+	NU_rwlock_wrlock(client->lock);
+	size_t i = 0;
+	for(;i < client->amount_of_connections; i++){
+		NU_Connection_disconnect(client->connections[i]);
+	}
+	NU_rwlock_unlock(client->lock);
+	return 1;
 }
 
-int NU_Client_destroy(NU_Client_t *client, const char *msg){
-	return 0;
+int NU_Client_destroy(NU_Client_t *client){
+	if(!client){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		return 0;
+	}
+	int fully_destroyed = 1;
+	NU_rwlock_wrlock(client->lock);
+	size_t i = 0;
+	for(;i < client->amount_of_connections; i++){
+		int successful = NU_Connection_destroy(client->connections[i]);
+		if(!successful){
+			fully_destroyed = 0;
+			MU_LOG_ERROR(logger, "NU_Client_destroy->NU_Connection_destroy: \"Was unable to fully destroy a connection!\"\n");
+		}
+	}
+	NU_rwlock_unlock(client->lock);
+	if(conn->lock){
+		int successful = pthread_rwlock_destroy(conn->lock);
+		if(!successful){
+			MU_LOG_ERROR(logger, "NU_Client_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(successful));
+			fully_destroyed = 0;
+		}
+		else{
+			// Note that the lock is only freed if it successfull deallocates it. If EBUSY ends up being returned, then it's only a memory leak and not
+			// undefined behavior.
+			free(conn->lock);
+		}
+	}
+	free(client->data);
+	return fully_destroyed;
 }
