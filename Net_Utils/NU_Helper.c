@@ -110,6 +110,8 @@ int NUH_is_selected(int flags, int mask){
 
 NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
    if(!connections || !size || !*size){
+      MU_LOG_ERROR(logger, "Invalid Arguments: \"Connections: %s;Size Ptr: %s;Size > 0: %s\"\n",
+         connections ? "OK!" : "NULL", size ? "OK!" : "NO!", *size ? "OK!" : "NO!");
       *size = 0;
       return NULL;
    }
@@ -128,7 +130,8 @@ NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, s
       new_size++;
       if(sockfd > max_fd) max_fd = sockfd;
    }
-   if(!new_size) {
+   if(!new_size){
+      MU_LOG_WARNING(logger, "NU_select_send_connections: \"Was unable to find a valid connection in array!\"\n");
       *size = 0;
       return NULL;
    }
@@ -139,6 +142,10 @@ NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, s
       return NULL;
    }
    NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+   if(!ready_connections){
+      *size = 0;
+      MU_ASSERT_RETURN(ready_connections, logger, NULL, "NU_select_send_connections->malloc: \"%s\"\n", strerror(errno));
+   }
    new_size = 0;
    for(i = 0;i < *size;i++) if(FD_ISSET(NU_Connections_get_sockfd(connections[i]), &receive_set)) ready_connections[new_size++] = connections[i];
    *size = new_size;
@@ -148,6 +155,8 @@ NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, s
 
 NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
    if(!connections || !size || !*size){
+      MU_LOG_ERROR(logger, "Invalid Arguments: \"Connections: %s;Size Ptr: %s;Size > 0: %s\"\n",
+         connections ? "OK!" : "NULL", size ? "OK!" : "NO!", *size ? "OK!" : "NO!");
       *size = 0;
       return NULL;
    }
@@ -166,17 +175,22 @@ NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t 
       new_size++;
       if(sockfd > max_fd) max_fd = sockfd;
    }
-   if(!new_size) {
+   if(!new_size){
+      MU_LOG_WARNING(logger, "NU_select_send_connections: \"Was unable to find a valid connection in array!\"\n");
       *size = 0;
       return NULL;
    }
    if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
-      if(!are_ready) MU_LOG_VERBOSE(logger, "NU_select_send_connections->select: \"Timed out!\"\n");
+      if(!are_ready) MU_LOG_INFO(logger, "NU_select_send_connections->select: \"Timed out!\"\n");
       else MU_LOG_WARNING(logger, "NU_select_send_connections->select: \"%s\"\n", strerror(errno));
       *size = 0;
       return NULL;
    }
    NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+   if(!ready_connections){
+      *size = 0;
+      MU_ASSERT_RETURN(ready_connections, logger, NULL, "NU_select_send_connections->malloc: \"%s\"\n", strerror(errno));
+   }
    new_size = 0;
    for(i = 0;i < *size;i++){
       if(FD_ISSET(NU_Connection_get_sockfd(connections[i]), &send_set)){

@@ -209,7 +209,11 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 	NU_rwlock_rdlock(client->lock);
 	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
 	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
-	if(!total_sent) MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
+	if(!total_sent){
+		MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
+		NU_rwlock_unlock(client->lock);
+		return 0;
+	}
 	else if(file_size && file_size != total_sent){ 
 		MU_LOG_WARNING(logger, "NU_Client_send_file->NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
 			file_size, total_sent, NU_Connection_get_ip_addr(conn));
@@ -236,75 +240,21 @@ size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FIL
 }
 
 NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!servers || !client || !size || !*size){
+	if(!client){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
-	fd_set receive_set;
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	FD_ZERO(&receive_set);
-	int max_fd = 0, retval;
-	size_t i = 0, new_size = 0;
-	for(;i < *size; i++){
-		NU_Connection_t *conn = servers[i];
-		if(!server || !server->sockfd) continue;
-		FD_SET(server->sockfd, &receive_set);
-		new_size++;
-		if(server->sockfd > max_fd) max_fd = server->sockfd;
-	}
-	if(!new_size) {
-		*size = 0;
-		return NULL;
-	}
-	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
-		if(!retval) MU_LOG_INFO(logger, "select_receive->select: \"timeout\"\n");
-		else MU_LOG_WARNING(logger, "select_receive->select: \"%s\"\n", strerror(errno));
-		*size = 0;
-		return NULL;
-	}
-	NU_Connection_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
-	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(servers[i]->sockfd, &receive_set)) ready_servers[new_size++] = servers[i];
-	*size = new_size;
-	return ready_servers;
+	return NU_select_receive_connections(connections, size, timeout, logger);
 }
 
 NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!servers || !client || !size || !*size){
+	if(!client){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
-	fd_set send_set;
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	FD_ZERO(&send_set);
-	int max_fd = 0, retval;
-	size_t i = 0, new_size = 0;
-	for(;i < *size; i++){
-		NU_Connection_t *conn = servers[i];
-		if(!server || !server->sockfd) continue;
-		FD_SET(server->sockfd, &send_set);
-		new_size++;
-		if(server->sockfd > max_fd) max_fd = server->sockfd;
-	}
-	if(!new_size) {
-		*size = 0;
-		return NULL;
-	}
-	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
-		if(!retval) MU_LOG_VERBOSE(logger, "select_send->select: \"timeout\"\n");
-		else MU_LOG_WARNING(logger, "select_send->select: \"%s\"\n", strerror(errno));
-		*size = 0;
-		return NULL;
-	}
-	NU_Connection_t **ready_servers = malloc(sizeof(NU_Server_Socket_t *) * retval);
-	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(servers[i]->sockfd, &send_set)) ready_servers[new_size++] = servers[i];
-	*size = new_size;
-	return ready_servers;
+	return NU_select_send_connections(connections, size, timeout, logger);
 }
 
 char *NU_Client_about(NU_Client_t *client){
