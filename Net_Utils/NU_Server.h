@@ -53,7 +53,7 @@ typedef struct {
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(size_t initial_connections, size_t initial_sockets);
+NU_Server_t *NU_Server_create(size_t initial_connections, unsigned char init_locks);
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */

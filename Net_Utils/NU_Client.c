@@ -65,52 +65,69 @@ static int get_connection_socket(const char *host, unsigned int port, unsigned i
 	return current ? sockfd : -1;
 }
 
-NU_Client_t *NU_Client_create(size_t initial_size, unsigned char init_locks){
+NU_Client_t *NU_Client_create(size_t connection_pool_size, unsigned char init_locks){
 	NU_Client_t *client = calloc(1, sizeof(NU_Client_t));
-	MU_ASSERT_RETURN(client, logger, NULL, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
-	client->data = NU_Collective_Data_create();
+	if(!client){
+		MU_LOG_ASSERT(logger, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	size_t connections_allocated = 0;
+	client->data = NU_Atomic_Data_create();
 	if(!client->data){
-		free(client);
-		MU_LOG_ERROR(logger, "NU_Client_create->NU_Collective_Data_create: \"Was unable to allocate atomic data\"\n");
+		MU_LOG_ASSERT(logger, "NU_Client_create->NU_Collective_Data_create: \"Was unable to allocate atomic data\"\n");
+		goto error;
 	}
 	if(init_locks){
 		client->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!client->lock){
-			free(client);
-			MU_ASSERT_RETURN(client->lock, logger, NULL, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
+			MU_LOG_ASSERT(logger, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
+			goto error;
 		}
 		int failure = pthread_rwlock_init(clinet->lock, NULL);
 		if(failure){
 			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(failure));
-			free(client->lock);
-			free(client);
-			return NULL;
+			goto error;
 		}
 	}
-	client->amount_of_connections = initial_size;
-	client->connections = malloc(sizeof(NU_Connection_t *) * (initial_size ? initial_size : 1));
+	client->amount_of_connections = connection_pool_size ? connection_pool_size : 1;
+	client->connections = calloc(client->amount_of_connections, sizeof(NU_Connection_t *));
+	if(!client->connections){
+		MU_LOG_ASSERT(logger, "NU_Client_create->calloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
 	size_t i = 0;
-	for(;i < initial_size; i++){
+	for(;i < client->connections; i++){
 		NU_Connection_t *conn = NU_Connection_create(NU_CLIENT, init_locks, logger);
-		/// If the connection failed to be created, then we must deallocate all memory we attempted to allocate before.
 		if(!conn){
-			size_t j = 0;
-			for(;j < i; j++){
-				NU_Connection_destroy(client->connections[j], logger);
-			}
-			free(client->connections);
-			if(init_locks){
-				int failure = pthread_rwlock_destroy(conn->lock);
-				if(failure){
-					MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_destroy: \"%s\"\n", strerror(failure));
-				}
-				free(conn->lock);
-			}
-			MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
+			MU_LOG_ASSERT(logger, "NU_Client_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
+			goto error;
 		}
 		client->connections[i] = conn;
 	}
 	return client;
+	/// Deallocate all memory allocated if anything fails!
+	error:
+		if(client->connections){
+			size_t i = 0;
+			for(;i < connections_allocated; i++){
+				int is_destroyed = NU_Connection_destroy(client->connections[i], logger);
+				if(!is_destroyed){
+					MU_LOG_ERROR(logger, "NU_Client_create->NU_Connection_destroy: \"Was unable to destroy a connection\"\n");
+				}
+			}
+			free(client->connections);
+		}
+		if(init_locks){
+			NU_rwlock_destroy(server->lock);
+		}
+		if(client->data){
+			free(client->data);
+		}
+		if(client){
+			free(client);
+		}
+		return NULL;
+
 }
 
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *ip_addr, unsigned int port, unsigned int timeout){

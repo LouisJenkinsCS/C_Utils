@@ -13,7 +13,7 @@ static MU_Logger_t *logger = NULL;
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){
-		MU_DEBUG("Unable to allocate memory for NU_Server's logger!!!");
+		MU_DEBUG("init_logger->malloc: \"%s\"\n", strerror(errno));
 		return;
 	}
 	MU_Logger_Init(logger, "NU_Server.log", "w", MU_ALL);
@@ -36,29 +36,6 @@ static char *bsock_to_string(NU_Bound_Socket_t *head){
 		free(old_str);
 	}
 	return bsock_str;
-}
-
-static char *clients_to_string(NU_Connection_t *head){
-	if(!head) return NULL;
-	char *clients_str = NULL;
-	NU_Connection_t *conn = NULL;
-	for(conn = head; conn; conn = conn->next){
-		char *old_str = clients_str;
-		asprintf(&clients_str, "%s (sockfd: %d, ip_addr: %s, port: %u, bbuf: [init?: %s, size: %zu])",
-			clients_str ? clients_str : "", conn->sockfd, conn->ip_addr, conn->port, conn->bbuf ? "True" : "False",
-			(conn->bbuf && conn->bbuf->size ? conn->bbuf->size : 0));
-		free(old_str);
-	}
-	return clients_str;
-}
-
-static NU_Connection_t *reuse_existing_client(NU_Connection_t *head){
-	NU_Connection_t *tmp_client = NULL;
-	for(tmp_client = head; tmp_client; tmp_client = tmp_client->next){
-		if(!tmp_client->sockfd) break;
-	}
-	MU_LOG_VERBOSE(logger, "Currently existing conn?: %s\n", tmp_client ? "True" : "False");
-	return tmp_client;
 }
 
 static int setup_bound_socket(NU_Bound_Socket_t *bsock, const char *ip_addr, unsigned int port, size_t queue_size){
@@ -119,10 +96,97 @@ static void destroy_bound_socket(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	free(bsock);
 }
 
-NU_Server_t *NU_Server_create(){
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, unsigned char init_locks){
 	NU_Server_t *server = calloc(1, sizeof(NU_Server_t));
-	if(!server) MU_LOG_ERROR(logger, "Was unable to allocate memory for server!\n");
+	if(!server){
+		MU_LOG_ASSERT(logger, "NU_Server_create->calloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	// Keep track of everything allocated. If anything fails to allocate, we will free up all memory allocated in this (very long) block.
+	size_t connections_allocated = 0, bsocks_allocated = 0;
+	server->data = NU_Atomic_Data_create();
+	if(!server->data){
+		MU_LOG_ERROR(logger, "NU_Server_create->NU_Collective_Data_create: \"Was unable to allocate atomic data\"\n");
+		goto error;
+	}
+	if(init_locks){
+		server->lock = malloc(sizeof(pthread_rwlock_t));
+		if(!server->lock){
+			MU_LOG_ASSERT(logger, "NU_Server_create->malloc: \"%s\"\n", strerror(errno));
+			goto error;
+		}
+		int failure = pthread_rwlock_init(clinet->lock, NULL);
+		if(failure){
+			MU_LOG_ERROR(logger, "NU_Server_create->pthread_rwlock_init: \"%s\"\n", strerror(failure));
+			goto error;
+		}
+	}
+	server->amount_of_sockets = bsock_pool_size ? bsock_pool_size : 1;
+	server->sockets = calloc(server->amount_of_sockets, sizeof(NU_Bound_Socket_t *));
+	if(!server->sockets){
+		MU_LOG_ASSERT(logger, "NU_Server_create->malloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	size_t i = 0;
+	for(;i < server->amount_of_sockets; i++){
+		NU_Bound_Socket_t *bsock = NU_Bound_Socket_create(init_locks, logger);
+		if(!bsock){
+			MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_create: \"Was unable to create bound socket #%d\"\n", ++i);
+			goto error;
+		}
+		server->sockets[i] = bsock;
+		bsocks_allocated++;
+	}
+	server->amount_of_connections = connection_pool_size ? connection_pool_size : 1;
+	server->connections = calloc(server->amount_of_connections, sizeof(NU_Connection_t *));
+	if(!server->connections){
+		MU_LOG_ASSERT(logger, "NU_Server_create->malloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	i = 0;
+	for(;i < server->amount_of_connections; i++){
+		NU_Connection_t *conn = NU_Connection_create(NU_SERVER, init_locks, logger);
+		if(!conn){
+			MU_LOG_ASSERT(conn, logger, NULL, "NU_Server_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
+			goto error;
+		}
+		server->connections[i] = conn;
+		connections_allocated++;
+	}
 	return server;
+	/// Deallocate all memory allocated if something were to fail!
+	error:
+		if(server->connections){
+			size_t i = 0;
+			for(;i < connections_allocated; i++){
+				int is_destroyed = NU_Connection_destroy(server->connections[i], logger);
+				if(!is_destroyed){
+					MU_LOG_ERROR(logger, "NU_Server_create->NU_Connection_destroy: \"Was unable to destroy a connection\"\n");
+				}
+
+			}
+			free(server->connections);
+		}
+		if(server->sockets){
+			size_t i = 0;
+			for(;i < bsocks_allocated; i++){
+				int is_destroyed = NU_Bound_Socket_destroy(server->sockets[i], logger);
+				if(!is_destroyed){
+					MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_destroy: \"Was unable to destroy a socket!\"\n");
+				}
+			}
+			free(server->sockets);
+		}
+		if(init_locks){
+			NU_rwlock_destroy(server->lock);
+		}
+		if(server->data){
+			free(server->data);
+		}
+		if(server){
+			free(server);
+		}
+		return NULL;
 }
 
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t queue_size, int flags){
@@ -320,8 +384,8 @@ NU_Connection_t **NU_Server_select_send(NU_Server_t *server, NU_Connection_t **c
 	size_t i = 0, new_size = 0;
 	for(;i < *size; i++){
 		NU_Connection_t *conn = connections[i];
-		if(!conn || !conn->sockfd) continue;
-		FD_SET(conn->sockfd, &send_set);
+		if(!conn || !conn->sockfd) continue
+;		FD_SET(conn->sockfd, &send_set);
 		new_size++;
 		if(conn->sockfd > max_fd) max_fd = conn->sockfd;
 	}

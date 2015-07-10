@@ -88,12 +88,21 @@ typedef struct {
 	if(!(condition)){ \
 		if(!logger || !logger->file || logger->level > MU_ERROR) return retval; \
 		char *timestamp = MU_Get_Timestamp(); \
-		MU_DEBUG("Assertion Failed! See log!\n"); \
+		MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
 		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", MU_Get_Timestamp(), __FILE__, __LINE__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \
 		return retval; \
 	} \
+} while(0)
+/// Simply log an assertion to the logfile rather than doing anything.
+#define MU_LOG_ASSERT(logger, message, ...) do { \
+	if(!logger || !logger->file || logger->level > MU_ERROR) break; \
+	char *timestamp = MU_Get_Timestamp(); \
+	MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [ASSERT](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fflush(logger->file); \
+	free(timestamp); \
 } while(0)
 /// Log an error message along with timestamp, file and line of code.
 #define MU_LOG_ERROR(logger, message, ...) do { \
