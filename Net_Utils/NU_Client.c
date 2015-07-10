@@ -194,8 +194,8 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 		return 0;
 	}
 	// Obtain the file size to aid in determining whether or not the send was successful or not.
-	struct stat file_stats;
-	int file_fd = fileno(file);
+	struct stat file_stats
+;	int file_fd = fileno(file);
 	if(file_fd == -1){
 		MU_LOG_WARNING(logger, "NU_Client_send_file->fileno: \"%s\"\n", strerror(errno));
 	}
@@ -284,6 +284,23 @@ char *NU_Client_about(NU_Client_t *client){
 	free(old_client_str);
 	NU_rwlock_unlock(client->lock, logger);
 	return client_str;
+}
+
+int NU_Client_log(NU_Server_t *server, const char *message, ...){
+	if(!client || !message){
+		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Message: %s\"\n", client ? "OK!" : "NULL", message ? "OK!" : "NULL");
+		return 0;
+	}
+	va_list args;
+	va_start(args, message);
+	const int buf_size = 1024;
+	char buffer[buf_size];
+	if(vsnprintf(buffer, buf_size, message, args) < 0){ 
+		MU_LOG_WARNING(logger, "NU_Client_log->vsnprintf: \"%s\"\n", strerror(errno));
+		return 0;
+	}
+	MU_LOG_CLIENT("%s", buffer);
+	return 1;
 }
 
 int NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection){

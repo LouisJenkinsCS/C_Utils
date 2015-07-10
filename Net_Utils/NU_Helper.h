@@ -47,6 +47,31 @@ typedef enum {
    NU_GIGABYTE = 1,073,741,824
 } NU_Data_Size_t;
 
+/**
+ * @brief Wraps a bound socket on a given port.
+ * 
+ * This type keeps track of the sockfd that was created from socket() and bind(), and is used
+ * when attempting to accept a new conn on the socket encapsulated within. It keeps track of
+ * the port it is bound to, as well as function as a list for multiple bound socket. 
+ * 
+ * This type is reusable, and is good for if you wish to create more than one socket, as it helps
+ * make managing them easier. Also, if you happen to unbind or shutdown a server without destroying it,
+ * as an example, and wish to rebind it to new ports, these types will be recycled, minimizing the overhead
+ * of creation.
+ * 
+ * This type must NOT be freed, as it will cause undefined behavior; instead, it is freed when the server is destroyed.
+ */
+typedef struct NU_Bound_Socket_t{
+   /// The bound socket.
+   volatile int sockfd;
+   /// Port the socket is bound to.
+   unsigned int port;
+   /// RWLock to ensure thread safety.
+   pthread_rwlock_t *lock;
+   /// Flag to determine if it is bound.
+   volatile unsigned char is_bound;
+} NU_Bound_Socket_t;
+
 /// Locks the rwlock iff not NULL.
 void NU_lock_rdlock(pthread_rwlock_t *lock);
 

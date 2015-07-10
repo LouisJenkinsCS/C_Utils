@@ -22,7 +22,7 @@ typedef enum {
 
 typedef struct NU_Connection_t {
    /// Socket file descriptor associated with host.
-   int sockfd;
+   volatile int sockfd;
    /// The IP Address of the host connected to.
    char ip_addr[INET_ADDRSTRLEN];
    /// Port number that the host is bound to.

@@ -110,7 +110,7 @@ char *NU_Connection_to_string(NU_Connection_t *connection, MU_Logger_t *logger){
 	}
 	NU_rwlock_rdlock(conn->lock, logger);
 	char *conn_str;
-	asprintf(&conn_str, "sockfd: %d, port: %u, ip_addr: %s, type: %s, has_lock: %s, in_use: %s",
+	asprintf(&conn_str, "(sockfd: %d, port: %u, ip_addr: %s, type: %s, has_lock: %s, in_use: %s)",
 		conn->sockfd, conn->port, conn->ip_addr, type_to_string(conn->type), conn->lock ? "True" : "False", conn->in_use : "True" : "False");
 	NU_rwlock_unlock(conn->lock, logger);
 	return conn_str;
