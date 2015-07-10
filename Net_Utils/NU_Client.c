@@ -132,7 +132,7 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, unsigned char init_lo
 
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks, const char *ip_addr, unsigned int port, unsigned int timeout){
 	if(!client || !ip_addr || !port){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;IP Address: %s;Port: %s\"\n",
+		MU_LOG_ERROR(logger, "NU_Client_connect: Invalid Arguments=> \"Client: %s;IP Address: %s;Port: %s\"\n",
 			client ? "OK!" : "NULL", ip_addr ? "OK!" : "NULL", port ? "OK!" : "NULL");
 		return NULL;
 	}
@@ -156,8 +156,7 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks,
 			MU_ASSERT_RETURN(tmp_connections, logger, NULL, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
 		}
 		client->connections = tmp_connections;
-		client->connections[client->amount_of_connections] = conn;
-		client->amount_of_connections++;
+		client->connections[client->amount_of_connections++] = conn;
 	}
 	int successful = NU_Connection_init(conn, sockfd, port, ip_addr, logger);
 	NU_rwlock_unlock(client->lock, logger);
@@ -171,7 +170,7 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks,
 
 size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
 	if(!client || !conn || conn->type != NU_CLIENT){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+		MU_LOG_ERROR(logger, "NU_Client_send: Invalid Arguments=> \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
@@ -188,7 +187,7 @@ size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *bu
 
 size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
 	if(!client || !conn || conn->type != NU_Client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+		MU_LOG_ERROR(logger, "NU_Client_receive: Invalid Arguments=> \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
@@ -206,7 +205,7 @@ size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffe
 
 size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!client || !conn || !file || conn->type != NU_CLIENT){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;File: %s;Connection: %s;Connection-Type: %s\"\n",
+		MU_LOG_ERROR(logger, "NU_Client_send_file: Invalid Arguments=> \"Client: %s;File: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
@@ -243,7 +242,7 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 
 size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!client || !conn || conn->type != NU_CLIENT){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
+		MU_LOG_ERROR(logger, "NU_Client_receive_to_file: Invalid Arguments=> \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
@@ -258,7 +257,7 @@ size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FIL
 
 NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_select_receive: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
@@ -270,7 +269,7 @@ NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t 
 
 NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Argument: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_select_send: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
@@ -282,7 +281,7 @@ NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **c
 
 char *NU_Client_about(NU_Client_t *client){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Argument: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_about: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		return NULL;
 	}
 	NU_rwlock_rdlock(client->lock, logger);
@@ -305,7 +304,7 @@ char *NU_Client_about(NU_Client_t *client){
 
 int NU_Client_log(NU_Server_t *server, const char *message, ...){
 	if(!client || !message){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s;Message: %s\"\n", client ? "OK!" : "NULL", message ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_log: Invalid Arguments=> \"Client: %s;Message: %s\"\n", client ? "OK!" : "NULL", message ? "OK!" : "NULL");
 		return 0;
 	}
 	va_list args;
@@ -322,7 +321,7 @@ int NU_Client_log(NU_Server_t *server, const char *message, ...){
 
 int NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_disconnect: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		return 0;
 	}
 	NU_rwlock_wrlock(client->lock, logger);
@@ -335,7 +334,7 @@ int NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection){
 
 int NU_Client_shutdown(NU_Client_t *client){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_shutdown: Invalid Arguments=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		return 0;
 	}
 	int fully_shutdown = 1;
@@ -354,7 +353,7 @@ int NU_Client_shutdown(NU_Client_t *client){
 
 int NU_Client_destroy(NU_Client_t *client){
 	if(!client){
-		MU_LOG_ERROR(logger, "Invalid Arguments: \"Client: %s\"\n", client ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Client_destroy: Invalid Arguments=> \"Client: %s\"\n", client ? "OK!" : "NULL");
 		return 0;
 	}
 	int fully_destroyed = 1;

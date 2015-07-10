@@ -178,7 +178,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 			free(server->sockets);
 		}
 		if(init_locks){
-			NU_rwlock_destroy(server->lock);
+			NU_rwlock_destroy(server->lock, logger);
 		}
 		if(server->data){
 			free(server->data);
@@ -189,47 +189,61 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 		return NULL;
 }
 
-NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t queue_size, int flags){
-	if(!server || !port || !queue_size) return NULL;
-	int is_reused = 1;
-	NU_Bound_Socket_t *bsock = reuse_existing_socket(server->sockets);
-	if(!bsock){
-		bsock = calloc(1, sizeof(NU_Bound_Socket_t));
-		MU_ASSERT_RETURN(bsock, logger, NULL, "Was unable to allocate memory for bsock!\n");
-		is_reused--;
-	}
-	if(!is_reused){
-		if(!server->sockets) server->sockets = bsock;
-		else {
-			NU_Bound_Socket_t *tmp_bsock = NULL;
-			for(tmp_bsock = server->sockets; tmp_bsock && tmp_bsock->next; tmp_bsock = tmp_bsock->next);
-			tmp_bsock->next = bsock;
-		}
-	}
-	if(!setup_bound_socket(bsock, ip_addr, port, queue_size)){
-		MU_LOG_WARNING(logger, "bind->setup_bound_socket: \"was unable to setup bsock\"\n");
+NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t queue_size){
+	if(!server || !port || !queue_size || !ip_addr){
+		MU_LOG_ERROR(logger, "NU_Server_bind: Invalid Arguments=> \"Server: %s;Port > 0: %s; Queue Size > 0: %s; IP Address: %s\n",
+			server ? "OK!" : "NULL", port ? "OK!" : "NO!", queue_size ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
 		return NULL;
 	}
-	server->amount_of_sockets++;
+	NU_rwlock_wrlock(server->lock);
+	NU_Bound_Socket_t *bsock = NU_Bound_Socket_reuse(server->sockets, logger);
+	if(!bsock){
+		bsock = calloc(1, sizeof(NU_Bound_Socket_t));
+		if(!bsock){
+			MU_LOG_ASSERT(logger, "NU_Server_bind->calloc: \"%s\"\n", strerror(errno));
+			NU_rwlock_unlock(server->lock, logger);
+			return NULL;
+		}
+		NU_Connection_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * server->amount_of_sockets + 1);
+		if(!tmp_sockets){
+			MU_LOG_ASSERT(logger, "NU_Server_bind->realloc: \"%s\"\n", strerror(errno));
+			NU_rwlock_unlock(server->lock, logger);
+			return NULL;
+		}
+		server->sockets = tmp_sockets;
+		server->sockets[server->amount_of_sockets++] = bsock;
+	}
+	if(!setup_bound_socket(bsock, ip_addr, port, queue_size)){
+		MU_LOG_WARNING(logger, "NU_Server_bind->setup_bound_socket: \"was unable to setup bsock\"\n");
+		NU_rwlock_unlock(server->lock, logger);
+		return NULL;
+	}
+	NU_rwlock_unlock(server->lock, logger);
 	return bsock;
 }
 
-int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock, const char *message){
-	if(!server || !bsock || !bsock->sockfd) return 0;
-	if(shutdown(bsock->sockfd, SHUT_RD) == -1){
-		MU_LOG_BSOCK_ERR(shutdown, bsock);
+int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+	if(!server || !bsock){
+		MU_LOG_ERROR(logger, "NU_Server_unbind: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_Connection_t *conn = NULL;
-	for(conn = server->connections; conn; conn = conn->next){
-		if(conn->sockfd && conn->port == bsock->port){
-			NU_Server_disconnect(server, conn, message);
-		}
-	}
-	server->amount_of_sockets--;
+	// Even though the server isn't directly modified, in order to send data to a connection, the readlock must be acquired, hence this will prevent
+	// any connections from sending to a shutting down socket. Also the socket will not shutdown until the readlocks are released.
+	NU_rwlock_wrlock(server->lock);
+	NU_rwlock_wrlock(bsock->lock);
 	if(shutdown(bsock->sockfd, SHUT_RDWR) == -1){
-		MU_LOG_BSOCK_ERR(shutdown, bsock);
+		MU_LOG_ERROR(logger, "NU_Server_unbind: \"%s\"\n", strerror(errno));
 		return 0;
+	}
+	size_t i = 0;
+	for(;i < server->amount_of_connections; i++){
+		NU_Connection_t *conn = server->connections[i];
+		if(NU_Connection_get_port(conn) == bsock->port){
+			int is_disconnected = NU_Connection_disconnect(conn, logger);
+			if(!is_disconnected){
+				MU_LOG_ERROR(logger, "NU_Server_unbind->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
+			}
+		}
 	}
 	return 1;
 }
