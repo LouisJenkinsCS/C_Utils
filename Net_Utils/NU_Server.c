@@ -232,7 +232,7 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	NU_rwlock_wrlock(server->lock);
 	NU_rwlock_wrlock(bsock->lock);
 	if(shutdown(bsock->sockfd, SHUT_RDWR) == -1){
-		MU_LOG_ERROR(logger, "NU_Server_unbind: \"%s\"\n", strerror(errno));
+		MU_LOG_ERROR(logger, "NU_Server_unbind->shutdown: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	size_t i = 0;
@@ -249,32 +249,50 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 }
 
 NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned int timeout){
-	int is_reused = 1;
-	NU_Connection_t *conn = reuse_existing_client(server->connections);
-	if(!conn) {
+	if(!server || !bsock){
+		MU_LOG_ERROR(logger, "NU_Server_accept: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
+		return NULL;
+	}
+	NU_rwlock_wrlock(server->lock, logger);
+	NU_Connection_t *conn = NU_reuse_existing_client(server->connections, logger);
+	if(!conn){
 		conn = calloc(1, sizeof(NU_Connection_t));
-		MU_ASSERT_RETURN(conn, logger, NULL, "Was unable to allocate memory for conn!\n");
-		is_reused--;
-	}
-	if(!is_reused){
-		conn->bbuf = calloc(1, sizeof(NU_Bounded_Buffer_t));
-		if(!server->connections) server->connections = conn;
-		else {
-			NU_Connection_t *tmp_client = NULL;
-			for(tmp_client = server->connections; tmp_client && tmp_client->next; tmp_client = tmp_client->next);
-			tmp_client->next = conn;
+		if(!conn){
+			MU_LOG_ASSERT(logger, "NU_Server_accept->calloc: \"%s\"\n", strerror(errno));
+			NU_rwlock_unlock(conn->lock, logger);
+			return NULL;		}
+		NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * server->amount_of_connections + 1);
+		if(!tmp_connections){
+			MU_LOG_ASSERT(logger, "NU_Server_accept->realloc: \"%s\"\n", strerror(errno));
+			NU_rwlock_unlock(server->lock, logger);
+			return NULL;
 		}
+		server->connections = tmp_connections;
+		server->connections[server->amount_of_connections++] = conn;
 	}
+	NU_rwlock_unlock(server->lock, logger);
+	NU_rwlock_rdlock(server->lock, logger);
 	char *ip_addr;
-	if(!(conn->sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout, logger))){
-		MU_LOG_INFO(logger, "accept->accept: \"timed out\"\n");
+	int sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout, logger);
+	if(sockfd == -1){
+		MU_LOG_INFO(logger, "NU_Server_accept->accept: \"Was unable to accept a client!\"\n");
+		NU_rwlock_unlock(server->lock);
+		return NULL;
+	}
+	int is_initialized = NU_Connection_init(conn, sockfd, ip_addr, port, logger);
+	if(!is_initialized){
+		// Ignore warning, attempt to close, no logging of if successful or not.
+		NU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
+		close(sockfd);
+		NU_rwlock_unlock(server->lock);
 		return NULL;
 	}
 	strcpy(conn->ip_addr, ip_addr);
 	free(ip_addr);
 	conn->port = bsock->port;
 	server->amount_of_clients++;
-	MU_LOG_SERVER("%s connected to port %d\n", conn->ip_addr, conn->port);
+	MU_LOG_INFO(logger, "%s connected to port %d\n", conn->ip_addr, conn->port);
+	NU_rwlock_unlock(server->lock);
 	return conn;
 }
 

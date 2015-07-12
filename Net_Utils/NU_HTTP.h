@@ -4,7 +4,7 @@
 #include <Net_Utils.h>
 
 typedef struct {
-   /// TODO: Implement!
-} NU_HTTP_t;
+   
+} NU_HTTP_Header_t;
 
 #endif /* end NET_UTILS_HTTP_H */
