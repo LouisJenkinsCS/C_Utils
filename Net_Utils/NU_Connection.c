@@ -39,9 +39,9 @@ size_t NU_Connection_send(NU_Connect_t *conn, const void *buffer, size_t buf_siz
 			conn ? "OK!" : "NULL", buffer ? "OK!", "NULL", buf_size ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return total_sent;
 }
 
@@ -52,9 +52,9 @@ size_t NU_Connect_receive(NU_Connect_t *conn, void *buffer, size_t buf_size, uns
 			conn ? "OK!" : "NULL", buffer ? "OK!", "NULL", buf_size ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger)
+	MU_Cond_rwlock_rdlock(conn->lock, logger)
 	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, logger);
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return amount_received;
 }
 
@@ -65,18 +65,18 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_siz
 			conn ? "OK!" : "NULL", file ? "OK!", "NULL", buf_size ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	char buf[buf_size];
 	size_t buf_read, total_sent = 0;
 	while((buf_read = TEMP_FAILURE_RETRY(fread(buf, 1, buf_size, file))) > 0){
 		if(NU_send_all(conn, buf, buf_read, timeout, logger) != buf_read){
 			MU_LOG_WARNING(logger, "NU_Connection_send_file->NU_send_all: \"Was unable to send all of message to %s\"\n", conn->ip_addr);
-			NU_rwlock_unlock(conn->lock, logger);
+			MU_Cond_rwlock_unlock(conn->lock, logger);
 			return total_sent;
 		}
 		total_sent += buf_read;
 	}
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return total_sent;
 }
 
@@ -87,7 +87,7 @@ size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_siz
 			conn ? "OK!" : "NULL", file ? "OK!", "NULL", buf_size ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	char buf[buf_size];
 	size_t received, total_received = 0;
 	while((received = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, logger)) > 0){
@@ -98,7 +98,7 @@ size_t NU_Connection_receive_file(NU_Connect_t *conn, FILE *file, size_t buf_siz
 		}
 		total_received += received;
 	}
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return total_received;
 }
 
@@ -108,11 +108,11 @@ char *NU_Connection_to_string(NU_Connection_t *connection, MU_Logger_t *logger){
 		MU_LOG_ERROR(logger, "NU_Connection_to_string: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return NULL;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	char *conn_str;
 	asprintf(&conn_str, "(sockfd: %d, port: %u, ip_addr: %s, type: %s, has_lock: %s, in_use: %s)",
 		conn->sockfd, conn->port, conn->ip_addr, type_to_string(conn->type), conn->lock ? "True" : "False", conn->in_use : "True" : "False");
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return conn_str;
 }
 
@@ -121,9 +121,9 @@ int NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd, MU_Logger_t *log
 		MU_LOG_ERROR(logger, "NU_Connection_set_sockfd: Invalid Arguments=> \"Connection: %s;Sockfd >= 0: %s\"\n", conn ? "OK!" : "NULL", sockfd >= 0 ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_wrlock(conn->lock, logger);
+	MU_Cond_rwlock_wrlock(conn->lock, logger);
 	conn->sockfd = sockfd;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return 1;
 }
 
@@ -132,9 +132,9 @@ int NU_Connection_get_sockfd(NU_Connection_t *conn, MU_Logger_t *logger){
 		MU_LOG_ERROR(logger, "NU_Connection_get_sockfd: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return -1;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	int sockfd = conn->sockfd;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return sockfd;
 }
 
@@ -143,9 +143,9 @@ int NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr, MU_Log
 		MU_LOG_ERROR(logger, "NU_Connection_set_ip_addr: Invalid Arguments=> \"Connection: %s;IP Address: %s\"\n", conn ? "OK!" : "NULL", ip_addr ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_wrlock(conn->lock, logger);
+	MU_Cond_rwlock_wrlock(conn->lock, logger);
 	strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return 1;
 }
 
@@ -154,9 +154,9 @@ const char *NU_Connection_get_ip_addr(NU_Connection_t *conn, MU_Logger_t *logger
 		MU_LOG_ERROR(logger, "NU_Connection_get_ip_addr: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return NULL;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	const char *ip_addr  = conn->ip_addr;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return ip_addr;
 }
 
@@ -165,9 +165,9 @@ unsigned int NU_Connection_get_port(NU_Connection_t *conn){
 		MU_LOG_ERROR(logger, "NU_Connection_get_port: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	unsigned int port  = conn->port;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return port;
 }
 
@@ -176,9 +176,9 @@ int NU_Connection_set_port(NU_Connection_t *conn, unsigned int port){
 		MU_LOG_ERROR(logger, "NU_Connection_set_port: Invalid Argument=> \"Connection: %s;Port > 0: %s\"\n", conn ? "OK!" : "NULL", port ? "OK!" : "NO!");
 		return 0;
 	}
-	NU_rwlock_wrlock(conn->lock, logger);
+	MU_Cond_rwlock_wrlock(conn->lock, logger);
 	conn->port = port;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return 1;
 }
 
@@ -188,17 +188,17 @@ int NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, con
 			conn ? "OK!" : "NULL", sockfd >= 0 ? "OK!" : "NO!", port ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_wrlock(conn->lock, logger);
+	MU_Cond_rwlock_wrlock(conn->lock, logger);
 	if(conn->in_use){
 		MU_LOG_INFO(logger, "NU_Connection_init: \"Connection already in use!\"\n");
-		NU_rwlock_unlock(conn->lock, logger);
+		MU_Cond_rwlock_unlock(conn->lock, logger);
 		return 0;
 	}
 	conn->sockfd = sockfd;
 	conn->port = port;
 	conn->ip_addr = ip_addr;
 	conn->in_use = 1;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return 1;
 }
 
@@ -207,10 +207,10 @@ int NU_Connection_is_valid(NU_Connection_t *conn, NU_Connection_Type_t type){
 		MU_LOG_ERROR(logger, "NU_Connection_get_port: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	int result = 1;
 	if(!conn->in_use || conn->type != type) result--;
-	NU_rwlock_unlock((conn->lock, logger);
+	MU_Cond_rwlock_unlock((conn->lock, logger);
 	return result;
 }
 
@@ -219,9 +219,9 @@ int NU_Connection_in_use(NU_Connection_t *conn){
 		MU_LOG_ERROR(logger, "NU_Connection_get_port: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_rdlock(conn->lock, logger);
+	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	int in_use = conn->in_use;
-	NU_rwlock_unlock((conn->lock, logger);
+	MU_Cond_rwlock_unlock((conn->lock, logger);
 	return in_use;
 }
 
@@ -230,14 +230,14 @@ int NU_Connection_disconnect(NU_Connection_t *conn, MU_Logger_t *logger){
 		MU_LOG_ERROR(logger, "NU_Connection_get_port: Invalid Argument=> \"Connection: %s\"\n", conn ? "OK!" : "NULL");
 		return 0;
 	}
-	NU_rwlock_wrlock(conn->lock, logger);
+	MU_Cond_rwlock_wrlock(conn->lock, logger);
 	if(!conn->in_use){
-		NU_rwlock_unlock(conn->lock, logger);
+		MU_Cond_rwlock_unlock(conn->lock, logger);
 		return 0;
 	}
 	if(TEMP_FAILURE_RETRY(close(conn->sockfd)) == -1) MU_LOG_WARNING(logger, "NU_Connection_disconnect->close: \"%s\"\n", strerror(errno));
 	conn->in_use = 0;
-	NU_rwlock_unlock(conn->lock, logger);
+	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return 1;
 }
 

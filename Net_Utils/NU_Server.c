@@ -2,12 +2,6 @@
 
 static MU_Logger_t *logger = NULL;
 
-#define MU_LOG_BSOCK_ERR(function, bsock) do { \
-	MU_LOG_VERBOSE(logger, "bsock: port->\"%d\", sockfd->%d, has_next: %s\n", bsock->port, bsock->sockfd, bsock->next ? "True" : "False"); \
-	MU_LOG_WARNING(logger, #function ": \"%s\"\n", strerror(errno)); \
-	bsock->sockfd = 0; \
-} while(0)
-
 #define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
 __attribute__((constructor)) static void init_logger(void){
@@ -26,15 +20,12 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-specific helper functions */
 
-static char *bsock_to_string(NU_Bound_Socket_t *head){
-	if(!head) return NULL;
-	char *bsock_str = NULL;
-	NU_Bound_Socket_t *bsock = NULL;
-	for(bsock = head; bsock; bsock = bsock->next){
-		char *old_str = bsock_str;
-		asprintf(&bsock_str, "%s (port: %d, sockfd: %d) %s", old_str ? old_str : "", bsock->port, bsock->sockfd, bsock->next ? "," : "");
-		free(old_str);
-	}
+static char *bsock_to_string(NU_Bound_Socket_t *bsock){
+	if(!bsock) return NULL;
+	MU_Cond_rwlock_rdlock(bsock->lock, logger);
+	char *bsock_str;
+	asprintf(&bsock_str, "(port: %d, sockfd: %d)", bsock->port, bsock->sockfd);
+	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	return bsock_str;
 }
 
@@ -145,7 +136,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	}
 	i = 0;
 	for(;i < server->amount_of_connections; i++){
-		NU_Connection_t *conn = NU_Connection_create(NU_SERVER, init_locks, logger);
+		NU_Connection_t *conn = NU_Connection_create(NU_Server, init_locks, logger);
 		if(!conn){
 			MU_LOG_ASSERT(conn, logger, NULL, "NU_Server_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
 			goto error;
@@ -178,7 +169,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 			free(server->sockets);
 		}
 		if(init_locks){
-			NU_rwlock_destroy(server->lock, logger);
+			MU_Cond_rwlock_destroy(server->lock, logger);
 		}
 		if(server->data){
 			free(server->data);
@@ -195,19 +186,19 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsi
 			server ? "OK!" : "NULL", port ? "OK!" : "NO!", queue_size ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
 		return NULL;
 	}
-	NU_rwlock_wrlock(server->lock);
-	NU_Bound_Socket_t *bsock = NU_Bound_Socket_reuse(server->sockets, logger);
+	MU_Cond_rwlock_wrlock(server->lock);
+	NU_Bound_Socket_t *bsock = reuse_existing_socket(server->sockets);
 	if(!bsock){
 		bsock = calloc(1, sizeof(NU_Bound_Socket_t));
 		if(!bsock){
 			MU_LOG_ASSERT(logger, "NU_Server_bind->calloc: \"%s\"\n", strerror(errno));
-			NU_rwlock_unlock(server->lock, logger);
+			MU_Cond_rwlock_unlock(server->lock, logger);
 			return NULL;
 		}
 		NU_Connection_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * server->amount_of_sockets + 1);
 		if(!tmp_sockets){
 			MU_LOG_ASSERT(logger, "NU_Server_bind->realloc: \"%s\"\n", strerror(errno));
-			NU_rwlock_unlock(server->lock, logger);
+			MU_Cond_rwlock_unlock(server->lock, logger);
 			return NULL;
 		}
 		server->sockets = tmp_sockets;
@@ -215,10 +206,10 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsi
 	}
 	if(!setup_bound_socket(bsock, ip_addr, port, queue_size)){
 		MU_LOG_WARNING(logger, "NU_Server_bind->setup_bound_socket: \"was unable to setup bsock\"\n");
-		NU_rwlock_unlock(server->lock, logger);
+		MU_Cond_rwlock_unlock(server->lock, logger);
 		return NULL;
 	}
-	NU_rwlock_unlock(server->lock, logger);
+	MU_Cond_rwlock_unlock(server->lock, logger);
 	return bsock;
 }
 
@@ -229,10 +220,12 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	}
 	// Even though the server isn't directly modified, in order to send data to a connection, the readlock must be acquired, hence this will prevent
 	// any connections from sending to a shutting down socket. Also the socket will not shutdown until the readlocks are released.
-	NU_rwlock_wrlock(server->lock);
-	NU_rwlock_wrlock(bsock->lock);
+	MU_Cond_rwlock_wrlock(server->lock);
+	MU_Cond_rwlock_wrlock(bsock->lock);
 	if(shutdown(bsock->sockfd, SHUT_RDWR) == -1){
 		MU_LOG_ERROR(logger, "NU_Server_unbind->shutdown: \"%s\"\n", strerror(errno));
+		MU_Cond_rwlock_unlock(bsock->lock);
+		MU_Cond_rwlock_unlock(server->lock);
 		return 0;
 	}
 	size_t i = 0;
@@ -244,6 +237,8 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 				MU_LOG_ERROR(logger, "NU_Server_unbind->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
 			}
 		}
+		MU_Cond_rwlock_unlock(bsock->lock);
+		MU_Cond_rwlock_unlock(server->lock);
 	}
 	return 1;
 }
@@ -253,246 +248,262 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 		MU_LOG_ERROR(logger, "NU_Server_accept: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
 		return NULL;
 	}
-	NU_rwlock_wrlock(server->lock, logger);
-	NU_Connection_t *conn = NU_reuse_existing_client(server->connections, logger);
+	char ip_addr[INET_ADDRSTRLEN];
+	int sockfd = NU_timed_accept(bsock->sockfd, ip_addr, timeout, logger);
+	if(sockfd == -1){
+		MU_LOG_INFO(logger, "NU_Server_accept->accept: \"Was unable to accept a server!\"\n");
+		return NULL;
+	}
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	MU_Cond_rwlock_rdlock(bsock->lock, logger);
+	NU_Connection_t *conn = NU_reuse_connection(server->connections, logger);
 	if(!conn){
 		conn = calloc(1, sizeof(NU_Connection_t));
 		if(!conn){
 			MU_LOG_ASSERT(logger, "NU_Server_accept->calloc: \"%s\"\n", strerror(errno));
-			NU_rwlock_unlock(conn->lock, logger);
-			return NULL;		}
+			MU_Cond_rwlock_unlock(server->lock, logger);
+			MU_Cond_rwlock_unlock(bsock->lock, logger);
+			return NULL;
+		}
 		NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * server->amount_of_connections + 1);
 		if(!tmp_connections){
 			MU_LOG_ASSERT(logger, "NU_Server_accept->realloc: \"%s\"\n", strerror(errno));
-			NU_rwlock_unlock(server->lock, logger);
+			MU_Cond_rwlock_unlock(server->lock, logger);
+			MU_Cond_rwlock_unlock(bsock->lock, logger);
 			return NULL;
 		}
 		server->connections = tmp_connections;
 		server->connections[server->amount_of_connections++] = conn;
-	}
-	NU_rwlock_unlock(server->lock, logger);
-	NU_rwlock_rdlock(server->lock, logger);
-	char *ip_addr;
-	int sockfd = NUH_timed_accept(bsock->sockfd, &ip_addr, timeout, logger);
-	if(sockfd == -1){
-		MU_LOG_INFO(logger, "NU_Server_accept->accept: \"Was unable to accept a client!\"\n");
-		NU_rwlock_unlock(server->lock);
-		return NULL;
 	}
 	int is_initialized = NU_Connection_init(conn, sockfd, ip_addr, port, logger);
 	if(!is_initialized){
 		// Ignore warning, attempt to close, no logging of if successful or not.
 		NU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
 		close(sockfd);
-		NU_rwlock_unlock(server->lock);
+		MU_Cond_rwlock_unlock(server->lock, logger);
+		MU_Cond_rwlock_unlock(bsock->lock, logger);
 		return NULL;
 	}
-	strcpy(conn->ip_addr, ip_addr);
-	free(ip_addr);
-	conn->port = bsock->port;
-	server->amount_of_clients++;
-	MU_LOG_INFO(logger, "%s connected to port %d\n", conn->ip_addr, conn->port);
-	NU_rwlock_unlock(server->lock);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	MU_LOG_INFO(logger, "%s connected to port %d\n", ip_addr, bsock->port);
 	return conn;
 }
 
-size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const char *message, size_t msg_size, unsigned int timeout){
-	if(!server || !conn || !message || !msg_size) return 0;
-	size_t result = NUH_send_all(conn->sockfd, message, msg_size, timeout, logger);
-	if(result != msg_size) MU_LOG_WARNING(logger, "Was unable to send all data to conn!Total Sent: %zu, Message Size: %zu\n", result, msg_size);
-	server->data.bytes_sent += result;
-	server->data.messages_sent++;
+size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
+	if(!server || !conn || conn->type != NU_Server){
+		MU_LOG_ERROR(logger, "NU_Server_send: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
+	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
+	NU_Atomic_Data_increment_sent(server->data, result);
+	if(result != buf_size){
+		MU_LOG_WARNING(logger, "NU_Server_send->NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn));
+	}
+	MU_Cond_rwlock_unlock(server->lock, logger);
 	return result;
 }
 
-const char *NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, size_t buffer_size, unsigned int timeout){
-	if(!server || !conn || !buffer_size) return NULL;
-	NUH_resize_buffer(conn->bbuf, buffer_size+1, logger);
-	size_t result = NUH_timed_receive(conn->sockfd, conn->bbuf, buffer_size, timeout, logger);
-	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buffer_size);
-	if(!result) return NULL;
-	conn->bbuf->buffer[result] = '\0';
-	server->data.bytes_received += result;
-	server->data.messages_received++;
-	return (const char *)conn->bbuf->buffer;
+size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
+	if(!server || !conn || conn->type != NU_Server){
+		MU_LOG_ERROR(logger, "NU_Server_receive: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	size_t result = NU_Connection_receive(conn, buf_size, timeout, logger);
+	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
+	if(!result){
+		MU_LOG_WARNING(logger, "NU_Server_receive->NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn));
+		return 0;
+	}
+	NU_Atomic_Data_increment_received(server->data, result);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	return result;
 }
 
-size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
-	if(!server || !conn || !conn->sockfd || !file || !buffer_size) return 0;
-	NUH_resize_buffer(conn->bbuf, buffer_size, logger);
-	size_t result, total_received = 0;
-	while((result = NUH_timed_receive(conn->sockfd, conn->bbuf, buffer_size, timeout, logger)) > 0){
-		if(is_binary) fwrite(conn->bbuf->buffer, 1, conn->bbuf->size, file);
-		else fprintf(file, "%.*s", (int)result, conn->bbuf->buffer);
-		total_received += result;
+size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
+	if(!server || !conn || !file || conn->type != NU_Server){
+		MU_LOG_ERROR(logger, "NU_Server_send_file: Invalid Arguments=> \"Server: %s;File: %s;Connection: %s;Connection-Type: %s\"\n",
+			server ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
 	}
-	server->data.bytes_received += total_received;
-	server->data.messages_received++;
-	MU_LOG_VERBOSE(logger, "Received file of total size %zu from conn!\n", total_received);
+	// Obtain the file size to aid in determining whether or not the send was successful or not.
+	struct stat file_stats
+;	int file_fd = fileno(file);
+	if(file_fd == -1){
+		MU_LOG_WARNING(logger, "NU_Server_send_file->fileno: \"%s\"\n", strerror(errno));
+	}
+	size_t file_size = 0;
+	if(fstat(file_fd, &file_stats) == -1){
+		MU_LOG_WARNING(logger, "NU_Server_send_file->fstat: \"%s\"\n", strerror(errno));
+	}
+	else {
+		file_size = file_stats.st_size;
+	}
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
+	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
+	if(!total_sent){
+		MU_LOG_WARNING(logger, "NU_Server_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
+		MU_Cond_rwlock_unlock(server->lock, logger);
+		return 0;
+	}
+	else if(file_size && file_size != total_sent){ 
+		MU_LOG_WARNING(logger, "NU_Server_send_file->NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
+			file_size, total_sent, NU_Connection_get_ip_addr(conn));
+	}
+	NU_Atomic_Data_increment_sent(server->data, total_sent);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn));
+	return total_sent;
+}
+
+size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
+	if(!server || !conn || conn->type != NU_Server){
+		MU_LOG_ERROR(logger, "NU_Server_receive_to_file: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+		return 0;
+	}
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
+	if(!total_received) MU_LOG_WARNING(logger, "NU_Server_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
+	NU_Atomic_Data_increment_received(server->data, result);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, NU_Connection_get_ip_addr(conn));
 	return total_received;
 }
 
-
-size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int is_binary, unsigned int timeout){
-	if(!server || !conn || !conn->sockfd || !file || !buffer_size) return 0;
-	NUH_resize_buffer(conn->bbuf, buffer_size, logger);
-	size_t retval, total_sent = 0;
-	char *str_retval;
-	if(is_binary){
-	  while((retval = fread(conn->bbuf->buffer, 1, buffer_size, file)) > 0){
-	    if(NU_Server_send(server, conn, conn->bbuf->buffer, retval, timeout) == 0){
-		    MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to conn!\n");
-		    return total_sent;
-	    }
-	    total_sent += retval;
-	    MU_DEBUG("%.*s", (int) retval, conn->bbuf->buffer);
-	  } 
-	} else {
-	    while((str_retval = fgets(conn->bbuf->buffer, buffer_size, file)) != NULL){
-	      if(!NU_Server_send(server, conn, conn->bbuf->buffer, buffer_size, timeout)){
-		MU_LOG_WARNING(logger, "server_send_file->server_send: \"%s\"\n", "Was unable to send all of message to conn!\n");
-		return total_sent;
-	      }
-	      total_sent += strlen(str_retval);
-	      MU_DEBUG("%s", str_retval);
-	    }
-	}
-	if(!total_sent) MU_LOG_WARNING(logger, "No data was sent to conn!\n");
-	else server->data.messages_sent++;
-	server->data.bytes_sent += (size_t) total_sent;
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to conn!\n", total_sent);
-	return (size_t) total_sent;
-}
-
-
-
 NU_Connection_t **NU_Server_select_receive(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!server || !connections || !size || !*size){
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_select_receive: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
-	fd_set receive_set;
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	FD_ZERO(&receive_set);
-	int max_fd = 0, retval;
-	size_t i = 0, new_size = 0;
-	for(;i < *size; i++){
-		NU_Connection_t *conn = connections[i];
-		if(!conn || !conn->sockfd) continue;
-		FD_SET(conn->sockfd, &receive_set);
-		new_size++;
-		if(conn->sockfd > max_fd) max_fd = conn->sockfd;
-	}
-	if(!new_size) {
-		*size = 0;
-		return NULL;
-	}
-	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
-		if(!retval) MU_LOG_INFO(logger, "select_receive->select: \"timeout\"\n");
-		else MU_LOG_WARNING(logger, "select_receive->select: \"%s\"\n", strerror(errno));
-		*size = 0;
-		return NULL;
-	}
-	NU_Connection_t **ready_clients = malloc(sizeof(NU_Connection_t *) * retval);
-	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(connections[i]->sockfd, &receive_set)) ready_clients[new_size++] = connections[i];
-	*size = new_size;
-	return ready_clients;
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	NU_Connection_t **ready_connections = NU_select_receive_connections(connections, size, timeout, logger);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	return ready_connections;
 }
 
 NU_Connection_t **NU_Server_select_send(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!server || !connections || !size || !*size){
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_select_send: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
 		*size = 0;
 		return NULL;
 	}
-	fd_set send_set;
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	FD_ZERO(&send_set);
-	int max_fd = 0, retval;
-	size_t i = 0, new_size = 0;
-	for(;i < *size; i++){
-		NU_Connection_t *conn = connections[i];
-		if(!conn || !conn->sockfd) continue
-;		FD_SET(conn->sockfd, &send_set);
-		new_size++;
-		if(conn->sockfd > max_fd) max_fd = conn->sockfd;
-	}
-	if(!new_size) {
-		*size = 0;
-		return NULL;
-	}
-	if((retval = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
-		if(!retval) MU_LOG_VERBOSE(logger, "select_send->select: \"timeout\"\n");
-		else MU_LOG_WARNING(logger, "select_send->select: \"%s\"\n", strerror(errno));
-		*size = 0;
-		return NULL;
-	}
-	NU_Connection_t **ready_clients = malloc(sizeof(NU_Connection_t *) * retval);
-	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(connections[i]->sockfd, &send_set)) ready_clients[new_size++] = connections[i];
-	*size = new_size;
-	return ready_clients;
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	NU_Connection_t **ready_connections = NU_select_send_connections(connections, size, timeout, logger);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	return ready_connections;
 }
 
-
 char *NU_Server_about(NU_Server_t *server){
-	char *about_server;
-	char *bsock_str = bsock_to_string(server->sockets);
-	char *data_str = NUH_data_to_string(server->data);
-	char *client_str = clients_to_string(server->connections);
-	asprintf(&about_server, "Bound to %zu ports: { %s }\nData usage: { %s }\n%zu connections connected: { %s }\n", server->amount_of_sockets, bsock_str, data_str, server->amount_of_clients, client_str);
-	free(bsock_str);
-	free(data_str);
-	free(client_str);
-	MU_LOG_INFO(logger, "About Server: \"%s\"\n", about_server);
-	return about_server;
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_about: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
+		return NULL;
+	}
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	char *server_str = "Connections: { ", *old_server_str;
+	size_t i = 0;
+	for(;i < server->amount_of_connections; i++){
+		old_server_str = server_str;
+		asprintf(&server_str, "%s%s%s", server_str, NU_Connection_to_string(server->connections[i]), i < server->amount_of_connections - 1 ? ", " : "");
+		// Since server_str is originally a string literal, freeing it would cause a segmentation fault, so we only skip the first one.
+		if(i > 0){
+			free(old_server_str);
+		}
+	}
+	old_server_str = server_str;
+	asprintf(&server_str, "%s }\nBound Sockets: { ", server_str);
+	free(old_server_str);
+	for(i = 0;server->amount_of_sockets;i++){
+		old_server_str = server_str;
+		asprintf(&server_str, "%s%s%s", server_str, bsock_to_string(server->sockets[i]), i < server->amount_of_sockets - 1 ? ", " : "");
+		free(old_server_str);
+	}
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	return server_str;
 }
 
 int NU_Server_log(NU_Server_t *server, const char *message, ...){
-	if(!server || !message) return 0;
+	if(!server || !message){
+		MU_LOG_ERROR(logger, "NU_Server_log: Invalid Arguments=> \"Server: %s;Message: %s\"\n", server ? "OK!" : "NULL", message ? "OK!" : "NULL");
+		return 0;
+	}
 	va_list args;
 	va_start(args, message);
-	const buffer_size = 1024;
-	char buffer[buffer_size];
-	if(vsnprintf(buffer, buffer_size, message, args) < 0){ 
-		MU_LOG_WARNING(logger, "log->vsnprintf: \"%s\"\n", strerror(errno));
+	const int buf_size = 1024;
+	char buffer[buf_size];
+	if(vsnprintf(buffer, buf_size, message, args) < 0){ 
+		MU_LOG_WARNING(logger, "NU_Server_log->vsnprintf: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	MU_LOG_SERVER("%s", buffer);
 	return 1;
 }
 
-int NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn, const char *message){
-	if(!server || !conn) return 0;
-	if(message){
-		shutdown(conn->sockfd, SHUT_RD);
-		NU_Server_send(server, conn, message, strlen(message), 0);
-		shutdown(conn->sockfd, SHUT_RDWR);
-	} else shutdown(conn->sockfd, SHUT_RDWR);
-	MU_LOG_SERVER("%s disconnected from port %d\n", conn->ip_addr, conn->port);
-	conn->sockfd = 0;
-	server->amount_of_clients--;
-	return 1;
-}
-
-int NU_Server_shutdown(NU_Server_t *server, const char *message){
-	if(!server) return 0;
-	NU_Bound_Socket_t *bsock = NULL;
-	for(bsock = server->sockets; bsock; bsock = bsock->next){
-		NU_Server_unbind(server, bsock, message);
+int NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *connection){
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_disconnect: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
+		return 0;
 	}
-	return server->amount_of_sockets == 0;
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	int successful = NU_Connection_disconnect(connection, logger);
+	if(!successful){
+		MU_LOG_ERROR(logger, "NU_Server_disconnect->NU_Connection_disconnect: \"Was unable to fully disconnect a connection!\"\n");
+	}
+	MU_Cond_rwlock_unlock(server->lock, logger);
 }
 
-int NU_Server_destroy(NU_Server_t *server, const char *message){
-	if(!server) return 0;
-	if(server->amount_of_sockets) NU_Server_shutdown(server, message);
-	delete_all_clients(server);
-	delete_all_sockets(server);
-	free(server);
+int NU_Server_shutdown(NU_Server_t *server){
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_shutdown: Invalid Arguments=> \"Server: %s\"\n", server ? "OK!" : "NULL");
+		return 0;
+	}
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	size_t i = 0;
+	for(;i < server->amount_of_connections; i++){
+		int successful = NU_Connection_disconnect(server->connections[i], logger);
+		if(!successful){
+			MU_LOG_ERROR(logger, "NU_Server_shutdown->NU_Connection_shutdown: \"Was unable to fully shutdown a connection!\"\n");
+		}
+	}
+	MU_Cond_rwlock_unlock(server->lock, logger);
 	return 1;
+}
+
+int NU_Server_destroy(NU_Server_t *server){
+	if(!server){
+		MU_LOG_ERROR(logger, "NU_Server_destroy: Invalid Arguments=> \"Server: %s\"\n", server ? "OK!" : "NULL");
+		return 0;
+	}
+	int fully_destroyed = 1;
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	size_t i = 0;
+	for(;i < server->amount_of_connections; i++){
+		int successful = NU_Connection_destroy(server->connections[i], logger);
+		if(!successful){
+			fully_destroyed = 0;
+			MU_LOG_ERROR(logger, "NU_Server_destroy->NU_Connection_destroy: \"Was unable to fully destroy a connection!\"\n");
+		}
+	}
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	if(conn->lock){
+		int successful = pthread_rwlock_destroy(conn->lock);
+		if(!successful){
+			MU_LOG_ERROR(logger, "NU_Server_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(successful));
+			fully_destroyed = 0;
+		}
+		else{
+			// Note that the lock is only freed if it successfull deallocates it. If EBUSY ends up being returned, then it's only a memory leak and not
+			// undefined behavior.
+			free(conn->lock);
+		}
+	}
+	free(server->data);
+	return fully_destroyed;
 }

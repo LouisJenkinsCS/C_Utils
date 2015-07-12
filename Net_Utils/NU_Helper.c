@@ -50,7 +50,7 @@ size_t NU_timed_receive(int sockfd, const void *buffer, size_t buf_size, unsigne
    return retval;
 }
 
-int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger){
+int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger){
    long long int retval;
    fd_set can_accept;
    struct timeval tv;
@@ -70,8 +70,7 @@ int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_
       return 0;
    }
    if(ip_addr){
-      *ip_addr = calloc(1, INET_ADDRSTRLEN);
-      if(!inet_ntop(AF_INET, &addr, *ip_addr , INET_ADDRSTRLEN)) MU_LOG_WARNING(logger, "inet_ntop: \"%s\"\n", strerror(errno));
+      if(!inet_ntop(AF_INET, &addr, ip_addr , INET_ADDRSTRLEN)) MU_LOG_WARNING(logger, "inet_ntop: \"%s\"\n", strerror(errno));
    }
    return retval;
 }
@@ -214,59 +213,4 @@ NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, size_t size,
       NU_unlock_rwlock(conn->lock, logger);
    }
    return NULL;
-}
-
-int NU_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
-   if(lock){
-      int failure = pthread_rwlock_rdlock(lock);
-      if(failure){
-         MU_LOG_ERROR(logger, "NU_rwlock_rdlock->pthread_rwlock_rdlock: \"%s\"\n", strerror(failure));
-      }
-      return failure;
-   }
-   return 0;
-}
-
-int NU_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
-   if(lock){
-      int failure = pthread_rwlock_wrlock(lock);
-      if(failure){
-         MU_LOG_ERROR(logger, "NU_rwlock_wrlock->pthread_rwlock_wrlock: \"%s\"\n", strerror(failure));
-      }
-      return failure;
-   }
-   return 0;
-}
-
-int NU_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
-   if(lock){
-      int failure = pthread_rwlock_unlock(lock);
-      if(failure){
-         MU_LOG_ERROR(logger, "NU_rwlock_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(failure));
-      }
-      return failure;
-   }
-   return 0;
-}
-
-int NU_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
-   if(lock){
-      int failure = pthread_mutex_lock(lock);
-      if(failure){
-         MU_LOG_ERROR(logger, "NU_mutex_lock->pthread_mutex_lock: \"%s\"\n", strerror(failure));
-      }
-      return failure;
-   }
-   return 0;
-}
-
-int NU_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
-   if(lock){
-      int failure = pthread_mutex_unlock(lock);
-      if(failure){
-         MU_LOG_ERROR(logger, "NU_mutex_unlock->pthread_mutex_unlock: \"%s\"\n", strerror(failure));
-      }
-      return failure;
-   }
-   return 0;
 }
