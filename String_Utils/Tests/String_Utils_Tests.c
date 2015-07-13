@@ -1,18 +1,21 @@
 #include <String_Utils.h>
 #include <string.h>
 #include <stdlib.h>
-#include <Misc_Utils.h>
+#include <MU_Logger.h>
 #define TEST(condition, test) do { \
     if(!(condition)) FAILED(test); \
-    MU_ASSERT_RETURN(condition, fp, 0); \
+    MU_ASSERT_RETURN(condition, logger, 0, "Failed test %s!\n", test); \
 } while(0)
 #define TEST_EQUAL(string_one, string_two, test) do { \
     int cmp_result = 0; \
     if((cmp_result = strcmp(string_one, string_two)) != 0) FAILED(test); \
-    MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, fp, 0); \
+    MU_ASSERT_RETURN(strcmp(string_one, string_two) == 0, logger, 0); \
 } while(0)
-#define PASSED(test) MU_LOG_INFO(fp, "Passed Test %s\n", test)
-#define FAILED(test) MU_LOG_ERROR(fp, "Failed Test %s\n", test)
+#define PASSED(test) do { \
+	MU_LOG_INFO(logger, "Passed Test %s\n", test); \
+	return 1; \
+} while(0)
+#define FAILED(test) MU_LOG_ERROR(logger, "Failed Test %s\n", test)
 #define TEST_ALL_FUNCTIONS testString_Utils_capitalize();\
 	testString_Utils_char_at();\
 	testString_Utils_compare();\
@@ -34,7 +37,7 @@
 	testString_Utils_to_uppercase();\
 	testString_Utils_trim()
 
-FILE *fp;
+MU_Logger_t *logger = NULL;
 
 int testString_Utils_capitalize() {
     char test[] = "Capitalize";
@@ -241,7 +244,7 @@ int  testString_Utils_split() {
     TEST_EQUAL(result[1], " says the Guard", test);
     TEST_EQUAL(result[2], " does one continue along the path of righteousness", test);
     TEST_EQUAL(result[3], " except by destroying all that is not righteous?", test);
-    for(i; i < *size; i++) free(result[i]);
+    for(;i < *size; i++) free(result[i]);
     free(result);
     free(size);
     PASSED(test);
@@ -309,15 +312,15 @@ int testString_Utils_trim() {
 }
 
 int main(void){
-    fp = fopen("String_Utils_Test_Log.txt", "w");
-    Timer_t *timer = Timer_Init(1);
+    MU_Logger_init(logger, "String_Utils_Test.log", "w", MU_ALL);
+    MU_Timer_t *timer = MU_Timer_Init(1);
     TEST_ALL_FUNCTIONS;
-    MU_LOG_INFO(fp, "All tests finished!\n");
+    MU_LOG_INFO(logger, "All tests finished!\n");
     Timer_Stop(timer);
     char *total_time = Timer_To_String(timer);
-    MU_LOG_INFO(fp, "Total Time: %s\n", total_time);
+    MU_LOG_INFO(logger, "Total Time: %s\n", total_time);
     Timer_Destroy(timer);
     free(total_time);
-    fclose(fp);
+    MU_Logger_destroy(logger);
     return 0;
 }

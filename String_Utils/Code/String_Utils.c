@@ -221,7 +221,7 @@ char *String_Utils_join(const char **array_of_strings, const char *delimiter, si
     assert(delimiter);
     char *temp = NULL;
     int i = 0;
-    for(i; i < size; i++){
+    for(;i < size; i++){
         if(!temp) temp = strdup(array_of_strings[i]);
         else String_Utils_concat_all(SU_MODIFY, 2, &temp, delimiter, array_of_strings[i]);
     }

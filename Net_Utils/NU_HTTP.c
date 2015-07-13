@@ -1,5 +1,7 @@
 /* TODO: Implement! */
 
+#include <NU_HTTP.h>
+
 __attribute__((constructor)) static void init_logger(void){
 	logger = malloc(sizeof(MU_Logger_t));
 	if(!logger){

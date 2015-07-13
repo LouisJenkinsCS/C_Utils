@@ -83,7 +83,7 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, unsigned char init_lo
 			MU_LOG_ASSERT(logger, "NU_Client_create->malloc: \"%s\"\n", strerror(errno));
 			goto error;
 		}
-		int failure = pthread_rwlock_init(clinet->lock, NULL);
+		int failure = pthread_rwlock_init(client->lock, NULL);
 		if(failure){
 			MU_LOG_ERROR(logger, "NU_Client_create->pthread_rwlock_init: \"%s\"\n", strerror(failure));
 			goto error;
@@ -118,7 +118,7 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, unsigned char init_lo
 			free(client->connections);
 		}
 		if(init_locks){
-			MU_Cond_rwlock_destroy(server->lock);
+			MU_Cond_rwlock_destroy(client->lock);
 		}
 		if(client->data){
 			free(client->data);
@@ -186,7 +186,7 @@ size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *bu
 }
 
 size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
-	if(!client || !conn || conn->type != NU_Client){
+	if(!client || !conn || conn->type != NU_CLIENT){
 		MU_LOG_ERROR(logger, "NU_Client_receive: Invalid Arguments=> \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
@@ -246,10 +246,10 @@ size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FIL
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
-	MU_Cond_rwlock_rdlock(clinet->lock, logger);
+	MU_Cond_rwlock_rdlock(client->lock, logger);
 	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
 	if(!total_received) MU_LOG_WARNING(logger, "NU_Client_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
-	NU_Atomic_Data_increment_received(client->data, result);
+	NU_Atomic_Data_increment_received(client->data, total_received);
 	MU_Cond_rwlock_unlock(client->lock, logger);
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
@@ -302,7 +302,7 @@ char *NU_Client_about(NU_Client_t *client){
 	return client_str;
 }
 
-int NU_Client_log(NU_Server_t *server, const char *message, ...){
+int NU_Client_log(NU_Client_t *client, const char *message, ...){
 	if(!client || !message){
 		MU_LOG_ERROR(logger, "NU_Client_log: Invalid Arguments=> \"Client: %s;Message: %s\"\n", client ? "OK!" : "NULL", message ? "OK!" : "NULL");
 		return 0;
@@ -330,6 +330,7 @@ int NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection){
 		MU_LOG_ERROR(logger, "NU_Client_disconnect->NU_Connection_disconnect: \"Was unable to fully disconnect a connection!\"\n");
 	}
 	MU_Cond_rwlock_unlock(client->lock, logger);
+	return 1;
 }
 
 int NU_Client_shutdown(NU_Client_t *client){
@@ -367,8 +368,8 @@ int NU_Client_destroy(NU_Client_t *client){
 		}
 	}
 	MU_Cond_rwlock_unlock(client->lock, logger);
-	if(conn->lock){
-		int successful = pthread_rwlock_destroy(conn->lock);
+	if(client->lock){
+		int successful = pthread_rwlock_destroy(client->lock);
 		if(!successful){
 			MU_LOG_ERROR(logger, "NU_Client_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(successful));
 			fully_destroyed = 0;
@@ -376,7 +377,7 @@ int NU_Client_destroy(NU_Client_t *client){
 		else{
 			// Note that the lock is only freed if it successfull deallocates it. If EBUSY ends up being returned, then it's only a memory leak and not
 			// undefined behavior.
-			free(conn->lock);
+			free(client->lock);
 		}
 	}
 	free(client->data);

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <Thread_Pool.h>
-#include <Misc_Utils.h>
+#include <MU_Logger.h>
 
 int iterations = 0;
 
@@ -96,7 +96,7 @@ int main(void){
 	Thread_Pool_Init(num_threads);
 	MU_LOG_INFO(logger, "Thread Pool created\n");
 	// Setup the timers for each test.
-	Timer_t *total_time = Timer_Init(1);
+	MU_Timer_t *total_time = Timer_Init(1);
 	//Timer_t *timer_one = Timer_Init();
 	//Timer_T *timer_two = Timer_Init();
 	//Timer_T *timer_three = Timer_Init();

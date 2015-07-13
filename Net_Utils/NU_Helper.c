@@ -29,7 +29,7 @@ size_t NU_send_all(int sockfd, const void *buffer, size_t buf_size, unsigned int
    return total_sent;
 }
 
-size_t NU_timed_receive(int sockfd, const void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
+size_t NU_timed_receive(int sockfd, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
    long long int retval;
    struct timeval tv;
    fd_set can_receive;
@@ -105,112 +105,4 @@ NU_Atomic_Data_t *NU_Atomic_Data_create(void){
 
 int NUH_is_selected(int flags, int mask){
    return flags & mask;
-}
-
-NU_Connection_t **NU_select_receive_connections(NU_Connection_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
-   if(!connections || !size || !*size){
-      MU_LOG_ERROR(logger, "Invalid Arguments: \"Connections: %s;Size Ptr: %s;Size > 0: %s\"\n",
-         connections ? "OK!" : "NULL", size ? "OK!" : "NO!", *size ? "OK!" : "NO!");
-      *size = 0;
-      return NULL;
-   }
-   fd_set receive_set;
-   struct timeval tv;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&receive_set);
-   int max_fd = 0, are_ready;
-   size_t i = 0, new_size = 0;
-   for(;i < *size; i++){
-      NU_Connection_t *conn = connections[i];
-      if(!NU_Connection_is_valid(conn)) continue;
-      int sockfd = NU_Connection_get_sockfd(conn);
-      FD_SET(sockfd, &receive_set);
-      new_size++;
-      if(sockfd > max_fd) max_fd = sockfd;
-   }
-   if(!new_size){
-      MU_LOG_WARNING(logger, "NU_select_send_connections: \"Was unable to find a valid connection in array!\"\n");
-      *size = 0;
-      return NULL;
-   }
-   if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
-      if(!are_ready) MU_LOG_INFO(logger, "NU_select_receive_connections->select: \"Timed out!\"\n");
-      else MU_LOG_WARNING(logger, "NU_select_receive_connections->select: \"%s\"\n", strerror(errno));
-      *size = 0;
-      return NULL;
-   }
-   NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
-   if(!ready_connections){
-      *size = 0;
-      MU_ASSERT_RETURN(ready_connections, logger, NULL, "NU_select_send_connections->malloc: \"%s\"\n", strerror(errno));
-   }
-   new_size = 0;
-   for(i = 0;i < *size;i++) if(FD_ISSET(NU_Connections_get_sockfd(connections[i]), &receive_set)) ready_connections[new_size++] = connections[i];
-   *size = new_size;
-   return ready_connections;
-}
-
-
-NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger){
-   if(!connections || !size || !*size){
-      MU_LOG_ERROR(logger, "Invalid Arguments: \"Connections: %s;Size Ptr: %s;Size > 0: %s\"\n",
-         connections ? "OK!" : "NULL", size ? "OK!" : "NO!", *size ? "OK!" : "NO!");
-      *size = 0;
-      return NULL;
-   }
-   fd_set send_set;
-   struct timeval tv;
-   tv.tv_sec = timeout;
-   tv.tv_usec = 0;
-   FD_ZERO(&send_set);
-   int max_fd = 0, are_ready;
-   size_t i = 0, new_size = 0;
-   for(;i < *size; i++){
-      NU_Connection_t *conn = connections[i];
-      if(!NU_Connection_in_use(conn)) continue;
-      int sockfd = NU_Connection_get_sockfd(conn);
-      FD_SET(sockfd, &send_set);
-      new_size++;
-      if(sockfd > max_fd) max_fd = sockfd;
-   }
-   if(!new_size){
-      MU_LOG_WARNING(logger, "NU_select_send_connections: \"Was unable to find a valid connection in array!\"\n");
-      *size = 0;
-      return NULL;
-   }
-   if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, NULL , &send_set, NULL, &tv))) <= 0){
-      if(!are_ready) MU_LOG_INFO(logger, "NU_select_send_connections->select: \"Timed out!\"\n");
-      else MU_LOG_WARNING(logger, "NU_select_send_connections->select: \"%s\"\n", strerror(errno));
-      *size = 0;
-      return NULL;
-   }
-   NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
-   if(!ready_connections){
-      *size = 0;
-      MU_ASSERT_RETURN(ready_connections, logger, NULL, "NU_select_send_connections->malloc: \"%s\"\n", strerror(errno));
-   }
-   new_size = 0;
-   for(i = 0;i < *size;i++){
-      if(FD_ISSET(NU_Connection_get_sockfd(connections[i]), &send_set)){
-         ready_connections[new_size++] = connections[i];
-      }
-   }
-   *size = new_size;
-   return ready_connections;
-}
-
-NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, size_t size, MU_Logger_t *logger){
-   if(!connections || !size) return NULL;
-   size_t i = 0;
-   for(;i < size; i++){
-      NU_Connection_t *conn = connections[i];
-      NU_lock_wrlock(conn->lock, logger);
-      if(conn && !conn->in_use){
-         NU_unlock_rwlock(conn->lock, logger);
-         return conn;
-      }
-      NU_unlock_rwlock(conn->lock, logger);
-   }
-   return NULL;
 }

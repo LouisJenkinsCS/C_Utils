@@ -14,16 +14,16 @@ static const unsigned int queue_max = 1;
 static const char *assert_get_info(NU_Connection_t *client, const char *inquiry){
   size_t bytes_sent = NU_Server_send(server, client, (const char *)inquiry, strlen(inquiry), timeout);
   MU_ASSERT(bytes_sent, logger, "Was unable to send information to client!\n");
-  char *response = calloc(buffer_size + 1);
+  char *response = calloc(1, buffer_size + 1);
   size_t bytes_received = NU_Server_receive(server, client, response, buffer_size, timeout);
   MU_ASSERT(bytes_received, logger, "Was unable to get response from client!\n");
   return response;
 }
 
-static void recv_file(NU_Client_Socket_t *client, const char *filename){
+static void recv_file(NU_Connection_t *client, const char *filename){
   FILE *file = fopen(filename, "wb");
   MU_ASSERT(file, logger, "Was unable to create file!fopen: \"%s\"\n", strerror(errno));
-  size_t received = NU_Server_receive_to_file(server, client, file, buffer_size, 1, timeout);
+  size_t received = NU_Server_receive_to_file(server, client, file, buffer_size, timeout);
   MU_DEBUG("Received %zu bytes into temporary file from client!\n", received);
 }
 
@@ -37,7 +37,7 @@ int main(void){
   char ip_addr[INET_ADDRSTRLEN];
   MU_DEBUG("IP Address:");
   MU_ASSERT(fgets(ip_addr, INET_ADDRSTRLEN, stdin), logger, "Invalid input from user!\n");
-  NU_Bound_Socket_t *bsock = NU_Server_bind(server, ip_addr, port_num, queue_max, NU_NONE);
+  NU_Bound_Socket_t *bsock = NU_Server_bind(server, ip_addr, port_num, queue_max, 1);
   MU_ASSERT(bsock, logger, "Failed while attempting to bind a socket!");
   NU_Connection_t *client = NU_Server_accept(server, bsock, timeout);
   MU_ASSERT(client, logger, "Client did not connect in time!\n");
@@ -50,7 +50,7 @@ int main(void){
   MU_DEBUG("Opening \"%s\"\n", filepath);
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "Was unable to open file: \"%s\" with mode \"%s\"", filepath, "rb");
-  size_t retval = NU_Server_send_file(server, client, file, buffer_size, 1, timeout);
+  size_t retval = NU_Server_send_file(server, client, file, buffer_size, timeout);
   MU_ASSERT(retval, logger, "Was unable to send data to client!\n");
   MU_DEBUG("Sent %zu bytes to client!\n", retval);
   NU_Server_destroy(server);

@@ -9,6 +9,7 @@ char *MU_Get_Timestamp(void){
 	return time_and_date;
 }
 
+/// Initialize logger.
 int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
 	if(!logger) return 0;
 	logger->file = fopen(filename, mode);

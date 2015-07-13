@@ -27,13 +27,13 @@
 
 typedef struct {
    /// Amount of messages sent.
-   atomic_size_t messages_sent;
+   _Atomic size_t messages_sent;
    /// Amount of messages received.
-   atomic_size_t messages_received;
+   _Atomic size_t messages_received;
    /// Total amount of data sent.
-   atomic_size_t bytes_sent;
+   _Atomic size_t bytes_sent;
    /// Total amount of data received.
-   atomic_size_t bytes_received;
+   _Atomic size_t bytes_received;
 } NU_Atomic_Data_t;
 
 /// Helper to make determining buffer and file sizes a lot easier.
@@ -43,25 +43,16 @@ typedef enum {
    /// Represents a kilobyte.
    NU_KILOBYTE = 1024,
    /// Represents a megabyte
-   NU_MEGABYTE = 1,048,576,
+   NU_MEGABYTE = 1048576,
    /// Represents a gigabyte
-   NU_GIGABYTE = 1,073,741,824
+   NU_GIGABYTE = 1073741824
 } NU_Data_Size_t;
 
 size_t NU_send_all(int sockfd, const void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
 size_t NU_timed_receive(int sockfd, void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
-int NU_timed_accept(int sockfd, char **ip_addr, unsigned int timeout, MU_Logger_t *logger);
-
-// Implement. Note to self: Needs to externally locked before calling.
-NU_Connection_t *NU_reuse_connection(NU_Connection_t **connections, MU_Logger_t *logger);
-
-// Implement
-NU_Connection_t **NU_select_receive_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
-
-// Implement
-NU_Connection_t **NU_select_send_connections(NU_Connect_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);
+int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
 char *NU_Atomic_Data_to_string(NU_Atomic_Data_t *data);

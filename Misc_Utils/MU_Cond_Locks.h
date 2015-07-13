@@ -21,6 +21,14 @@
 * This wrapper doesn't claim to do anything special, in fact it's only used for my own convenience, and hopefully to that of others.
 */
 
+/**
+ * Conditional wrapper for pthread_rwlock_init, which logs any errors, and only operates on the lock if it is not NULL.
+ *
+ * @parameter lock The lock to be operated on if it is not NULL.
+ * @parameter attr The attribute to be used to initialize the lock.
+ * @parameter logger The logger used to log any errors.
+ * @return 0 on success, a negative number resembling it's error code on failure.
+ */
 int MU_Cond_rwlock_init(pthread_rwlock_t *lock, pthread_rwlockattr_t *attr, MU_Logger_t *logger);
 
 int MU_Cond_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger);

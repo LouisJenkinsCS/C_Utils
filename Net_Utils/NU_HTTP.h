@@ -1,7 +1,7 @@
 #ifndef NET_UTILS_HTTP_H
 #define NET_UTILS_HTTP_H
 
-#include <Net_Utils.h>
+#include <NU_Helper.h>
 
 typedef struct {
    

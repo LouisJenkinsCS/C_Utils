@@ -57,7 +57,7 @@ NU_Server_t *NU_Server_create(size_t initial_connections, unsigned char init_loc
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */
-NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t amount);
+NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t amount, unsigned char init_locks);
 
 /* Will unbind the server from the port specified in socket. Will free the socket! */
 int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
