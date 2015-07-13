@@ -108,12 +108,14 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s\"\nMessage: \"%s\"\n", r_conns ? "OK!" : "NULL",
 						r_size ? "OK!" : "NO!", *r_size ? "OK!" : "NO!", s_conns ? "OK!" : "NULL", s_size ? "OK!" : "NULL",
 								*s_size ? "OK!" : "NO!", "Neither receivers nor senders were valid!");
-		return 0;
+		goto error;
 	}
 	fd_set receive_set;
 	fd_set send_set;
 	NU_Connection_t **r_conns = receivers ? *receivers : NULL;
 	NU_Connection_t **s_conns = senders ? *senders : NULL;
+	NU_Connection_t **send_connections = NULL;
+	NU_Connection_t **recv_connections = NULL;
 	//TODO: Pick up here
 	size_t recv_size = r_size ? *r_size : 0;
 	size_t send_size = s_size ? *s_size : 0;
@@ -122,10 +124,9 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	tv.tv_usec = 0;
 	FD_ZERO(&receive_set);
 	FD_ZERO(&send_set);
-	int r_max_fd = 0, can_receive;
-	int s_max_fd = 0, can_send;
+	int max_fd = 0, can_receive = 0, can_send = 0;
 	size_t i = 0, recv_valid = 0;
-	for(;i < recv_size; i++){
+	for(;i < recv_size && r_conns; i++){
 		NU_Connection_t *conn = r_conns[i];
 		MU_Cond_rwlock_rdlock(conn->lock, logger);
 		if(!conn->in_use){
@@ -135,11 +136,11 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		int sockfd = conn->sockfd;
 		FD_SET(sockfd, &receive_set);
 		recv_valid++;
-		if(sockfd > r_max_fd) r_max_fd = sockfd;
+		if(sockfd > max_fd) max_fd = sockfd;
 		MU_Cond_rwlock_unlock(conn->lock, logger);
 	}
 	size_t send_valid = 0;
-	for(i = 0; i < send_size; i++){
+	for(i = 0; i < send_size && s_conns; i++){
 		NU_Connection_t *conn = s_conns[i];
 		MU_Cond_rwlock_rdlock(conn->lock, logger);
 		if(!conn->in_use){
@@ -149,28 +150,66 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		int sockfd = conn->sockfd;
 		FD_SET(sockfd, &send_set);
 		send_valid++;
-		if(sockfd > s_max_fd) s_max_fd = sockfd;
+		if(sockfd > max_fd) max_fd = sockfd;
 		MU_Cond_rwlock_unlock(conn->lock, logger);
 	}
 	if(!recv_valid && !send_valid){
 		MU_LOG_WARNING(logger, "NU_Connection_select: \"Was unable to find a valid receiver or sender connection!\"\n");
-
+		goto error;
 	}
-	if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, NULL, NULL, &tv))) <= 0){
-		if(!are_ready) MU_LOG_INFO(logger, "NU_select_receive_connections->select: \"Timed out!\"\n");
-		else MU_LOG_WARNING(logger, "NU_select_receive_connections->select: \"%s\"\n", strerror(errno));
-		*size = 0;
-		return NULL;
+	if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, &send_set, NULL, &tv))) <= 0){
+		if(!are_ready) MU_LOG_INFO(logger, "NU_Connection_select->select: \"Timed out!\"\n");
+		else MU_LOG_WARNING(logger, "NU_Connection_select->select: \"%s\"\n", strerror(errno));
+		goto error;
 	}
-	NU_Connection_t **ready_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
-	if(!ready_connections){
-		*size = 0;
-		MU_ASSERT_RETURN(ready_connections, logger, NULL, "NU_select_send_connections->malloc: \"%s\"\n", strerror(errno));
+	recv_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+	if(!recv_connections){
+		MU_LOG_ASSERT(logger, "NU_Connection_select->malloc: \"%s\"\n", strerror(errno));
+		goto error;
 	}
-	new_size = 0;
-	for(i = 0;i < *size;i++) if(FD_ISSET(NU_Connections_get_sockfd(connections[i]), &receive_set)) ready_connections[new_size++] = connections[i];
-	*size = new_size;
-	return ready_connections;
+	send_connections = malloc(sizeof(NU_Connection_t *) * are_ready);
+	if(!send_connections){
+		MU_LOG_ASSERT(logger, "NU_Connection_select->malloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	for(i = 0; i < recv_size && r_conns; i++){
+		NU_Connection_t *conn = r_conns[i];
+		if(FD_ISSET(conn->sockfd, &receive_set)){
+			recv_connections[can_receive++] = conn;
+		}
+	}
+	tmp_recv_connections = realloc(recv_connections, sizeof(NU_Connection_t *) * can_receive);
+	if(!tmp_recv_connections){
+		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	recv_connections = tmp_recv_connections;
+	for(i = 0; i < send_size && s_conns; i++){
+		NU_Connection_t *conn = s_conns[i];
+		if(FD_ISSET(conn->sockfd, &send_set)){
+			send_connections[can_send++] = conn;
+		}
+	}
+	tmp_send_connections = realloc(send_connections, sizeof(NU_Connection_t *) * can_send);
+	if(!tmp_send_connections){
+		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	*receiver = recv_connections;
+	*sender = send_connections;
+	*r_size = can_receive;
+	*s_size = can_send;
+	return are_ready;
+	
+	error:
+		// TODO: Test this! Frees them before even declared.
+		free(send_connections);
+		free(recv_connections);
+		*receivers = NULL;
+		*r_size = 0;
+		*senders = NULL;
+		*s_size = 0;
+		return 0;
 }
 
 NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, MU_Logger_t *logger){
