@@ -1,5 +1,24 @@
 #include <NU_Connection.h>
 
+// Returns the max sockfd size.
+static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set){
+	if(connections) return -1;
+	size_t i = 0, max_fd = -1;
+	for(;i < size; i++){
+		NU_Connection_t *conn = connections[i];
+		MU_Cond_rwlock_rdlock(conn->lock, logger);
+		if(!conn->in_use){
+			MU_Cond_rwlock_unlock(conn->lock, logger);
+			continue;
+		}
+		int sockfd = conn->sockfd;
+		FD_SET(sockfd, set);
+		if(sockfd > max_fd) max_fd = sockfd;
+		MU_Cond_rwlock_unlock(conn->lock, logger);
+	}
+	return max_fd;
+}
+
 char *NU_Connection_Type_to_string(NU_Connection_Type_t type){
 	switch(type){
 	case NU_CLIENT: return "Client";
@@ -110,7 +129,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	NU_Connection_t **send_connections = NULL;
 	NU_Connection_t **recv_connections = NULL;
 	// Initialized at top for goto statement consistency.
-	if((!receivers || !r_size || !*r_size) && (!senders || !s_size || !*s_size)){
+	if((!receivers || !r_size || !*r_size) && (!senders || !s_size || *s_size)){
 		MU_LOG_ERROR(logger, "Invalid Arguments: \"Receivers: %s;Receiver Size_ptr: %s;Receiver Size > 0: %s;\n"
 				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s\"\nMessage: \"%s\"\n", r_conns ? "OK!" : "NULL",
 						r_size ? "OK!" : "NO!", *r_size ? "OK!" : "NO!", s_conns ? "OK!" : "NULL", s_size ? "OK!" : "NULL",
@@ -121,44 +140,23 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	fd_set send_set;
 	NU_Connection_t **r_conns = receivers ? *receivers : NULL;
 	NU_Connection_t **s_conns = senders ? *senders : NULL;
-	//TODO: Pick up here
 	size_t recv_size = r_size ? *r_size : 0;
 	size_t send_size = s_size ? *s_size : 0;
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
+	struct timeval tv = { .tv_sec = timeout };
 	FD_ZERO(&receive_set);
 	FD_ZERO(&send_set);
 	int max_fd = 0, can_receive = 0, can_send = 0;
-	size_t i = 0, recv_valid = 0;
-	for(;i < recv_size && r_conns; i++){
-		NU_Connection_t *conn = r_conns[i];
-		MU_Cond_rwlock_rdlock(conn->lock, logger);
-		if(!conn->in_use){
-			MU_Cond_rwlock_unlock(conn->lock, logger);
-			continue;
-		}
-		int sockfd = conn->sockfd;
-		FD_SET(sockfd, &receive_set);
-		recv_valid++;
-		if(sockfd > max_fd) max_fd = sockfd;
-		MU_Cond_rwlock_unlock(conn->lock, logger);
+	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set);
+	can_receive = (r_max_fd != -1);
+	if(r_max_fd > max_fd){
+		max_fd = r_max_fd;
 	}
-	size_t send_valid = 0;
-	for(i = 0; i < send_size && s_conns; i++){
-		NU_Connection_t *conn = s_conns[i];
-		MU_Cond_rwlock_rdlock(conn->lock, logger);
-		if(!conn->in_use){
-			MU_Cond_rwlock_unlock(conn->lock, logger);
-			continue;
-		}
-		int sockfd = conn->sockfd;
-		FD_SET(sockfd, &send_set);
-		send_valid++;
-		if(sockfd > max_fd) max_fd = sockfd;
-		MU_Cond_rwlock_unlock(conn->lock, logger);
+	int s_max_fd = add_valid_connections_to_fd_set(s_conns, send_size, &send_set);
+	can_send = (s_max_fd != -1);
+	if(s_max_fd > max_fd){
+		max_fd = s_max_fd;
 	}
-	if(!recv_valid && !send_valid){
+	if(!can_receive && !can_send){
 		MU_LOG_WARNING(logger, "NU_Connection_select: \"Was unable to find a valid receiver or sender connection!\"\n");
 		goto error;
 	}
@@ -226,7 +224,7 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 	size_t i = 0;
 	for(;i < size; i++){
 		NU_Connection_t *conn = connections[i];
-		NU_lock_wrlock(conn->lock, logger);
+		MU_Cond_rwlock_wrlock(conn->lock, logger);
 		if(conn && !conn->in_use){
 			conn->in_use = 1;
 			conn->sockfd = sockfd;
@@ -235,7 +233,7 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 			NU_unlock_rwlock(conn->lock, logger);
 			return conn;
 		}
-		NU_unlock_rwlock(conn->lock, logger);
+		MU_Cond_rwlock_unlock(conn->lock, logger);
 	}
 	return NULL;
 }
