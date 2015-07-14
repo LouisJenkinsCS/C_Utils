@@ -53,7 +53,7 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_siz
 size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement. Note to self: Needs to externally locked before calling.
-NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, MU_Logger_t *logger);
+NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger)
 
 // Implement
 NU_Connection_t **NU_Connection_select_receive(NU_Connection_t **connections, size_t *size, unsigned int timeout, MU_Logger_t *logger);

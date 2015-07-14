@@ -13,13 +13,17 @@ char *NU_Connection_Type_to_string(NU_Connection_Type_t type){
 // Implement
 NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks, MU_Logger_t *logger){
 	NU_Connection_t *conn = calloc(1, sizeof(NU_Connection_t));
-	MU_ASSERT_RETURN(conn, logger, NULL, "NU_Connection_create->calloc: \"%s\"\n", strerror(errno));
+	if(!conn){
+		MU_LOG_ASSERT(logger, "NU_Connection_create->calloc: \"%s\"\n", strerror(errno));
+		return NULL;
+	}
 	conn->type = type;
 	if(init_locks){
 		conn->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!conn->lock){
 			free(conn);
-			MU_ASSERT_RETURN(NULL, logger, NULL, "NU_Connection_create->malloc: \"%s\"\n", strerror(errno));
+			MU_LOG_ASSERT(logger, "NU_Connection_create->malloc: \"%s\"\n", strerror(errno));
+			return NULL;
 		}
 		int retval;
 		if((retval = pthread_rwlock_init(conn->lock, NULL)) < 0){
@@ -103,6 +107,9 @@ size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, size_t buf_
 }
 
 int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, unsigned int timeout, MU_Logger_t *logger){
+	NU_Connection_t **send_connections = NULL;
+	NU_Connection_t **recv_connections = NULL;
+	// Initialized at top for goto statement consistency.
 	if((!receivers || !r_size || !*r_size) && (!senders || !s_size || !*s_size)){
 		MU_LOG_ERROR(logger, "Invalid Arguments: \"Receivers: %s;Receiver Size_ptr: %s;Receiver Size > 0: %s;\n"
 				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s\"\nMessage: \"%s\"\n", r_conns ? "OK!" : "NULL",
@@ -114,8 +121,6 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	fd_set send_set;
 	NU_Connection_t **r_conns = receivers ? *receivers : NULL;
 	NU_Connection_t **s_conns = senders ? *senders : NULL;
-	NU_Connection_t **send_connections = NULL;
-	NU_Connection_t **recv_connections = NULL;
 	//TODO: Pick up here
 	size_t recv_size = r_size ? *r_size : 0;
 	size_t send_size = s_size ? *s_size : 0;
@@ -179,7 +184,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		}
 	}
 	tmp_recv_connections = realloc(recv_connections, sizeof(NU_Connection_t *) * can_receive);
-	if(!tmp_recv_connections){
+	if(can_receive && !tmp_recv_connections){
 		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
@@ -191,7 +196,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		}
 	}
 	tmp_send_connections = realloc(send_connections, sizeof(NU_Connection_t *) * can_send);
-	if(!tmp_send_connections){
+	if(can_send && !tmp_send_connections){
 		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
@@ -200,7 +205,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	*r_size = can_receive;
 	*s_size = can_send;
 	return are_ready;
-	
+
 	error:
 		// TODO: Test this! Frees them before even declared.
 		free(send_connections);
@@ -212,13 +217,21 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		return 0;
 }
 
-NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, MU_Logger_t *logger){
-	if(!connections || !size) return NULL;
+NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger){
+	if(!connections || !size || sockfd < 0 || !port || !ip_addr){
+		MU_LOG_ERROR(logger, "NU_Connection_reuse: Invalid Argument=> \"Connection: %s;Size > 0: %s;Sockfd >= 0: %s;Port > 0: %s;IP Address: %s\"\n",
+		conn ? "OK!" : "NULL", size ? "OK!" : "NO!", sockfd >= 0 ? "OK!" : "NO!", port ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
+		return NULL;
+	}
 	size_t i = 0;
 	for(;i < size; i++){
 		NU_Connection_t *conn = connections[i];
 		NU_lock_wrlock(conn->lock, logger);
 		if(conn && !conn->in_use){
+			conn->in_use = 1;
+			conn->sockfd = sockfd;
+			conn->port = port;
+			strncpy(conn->port, ip_addr, INET_ADDRSTRLEN);
 			NU_unlock_rwlock(conn->lock, logger);
 			return conn;
 		}

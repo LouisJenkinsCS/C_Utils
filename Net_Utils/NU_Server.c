@@ -268,49 +268,54 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	return 1;
 }
 
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned int timeout){
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned char init_locks, unsigned int timeout){
 	if(!server || !bsock){
 		MU_LOG_ERROR(logger, "NU_Server_accept: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
 		return NULL;
 	}
 	char ip_addr[INET_ADDRSTRLEN];
+	MU_Cond_rwlock_rdlock(bsock->lock, logger);
+	unsigned int port = bsock->port;
 	int sockfd = NU_timed_accept(bsock->sockfd, ip_addr, timeout, logger);
 	if(sockfd == -1){
 		MU_LOG_INFO(logger, "NU_Server_accept->accept: \"Was unable to accept a server!\"\n");
 		return NULL;
 	}
-	MU_Cond_rwlock_wrlock(server->lock, logger);
-	MU_Cond_rwlock_rdlock(bsock->lock, logger);
-	NU_Connection_t *conn = NU_reuse_connection(server->connections, logger);
-	if(!conn){
-		conn = calloc(1, sizeof(NU_Connection_t));
-		if(!conn){
-			MU_LOG_ASSERT(logger, "NU_Server_accept->calloc: \"%s\"\n", strerror(errno));
-			MU_Cond_rwlock_unlock(server->lock, logger);
-			MU_Cond_rwlock_unlock(bsock->lock, logger);
-			return NULL;
-		}
-		NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * server->amount_of_connections + 1);
-		if(!tmp_connections){
-			MU_LOG_ASSERT(logger, "NU_Server_accept->realloc: \"%s\"\n", strerror(errno));
-			MU_Cond_rwlock_unlock(server->lock, logger);
-			MU_Cond_rwlock_unlock(bsock->lock, logger);
-			return NULL;
-		}
-		server->connections = tmp_connections;
-		server->connections[server->amount_of_connections++] = conn;
-	}
-	int is_initialized = NU_Connection_init(conn, sockfd, ip_addr, bsock->port, logger);
-	if(!is_initialized){
-		// Ignore warning, attempt to close, no logging of if successful or not.
-		NU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
-		close(sockfd);
+	NU_Cond_rwlock_unlock(bsock->lock, logger);
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	NU_Connection_t *conn = NU_Connection_reuse(server->connections, server->amount_of_connections, sockfd, port, ip_addr, logger);
+	if(conn){
 		MU_Cond_rwlock_unlock(server->lock, logger);
-		MU_Cond_rwlock_unlock(bsock->lock, logger);
-		return NULL;
+		MU_LOG_INFO(logger, "%s connected to port %d\n", ip_addr, bsock->port);
+		return conn;
 	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
-	MU_Cond_rwlock_rdlock(server->lock, logger);
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	// If the NULL is returned, then a connection could not be reused, hence we initialize a new one below.
+	conn = NU_Connection_create(NU_SERVER, init_locks, logger);
+	if(!conn){
+		MU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_create: \"Was unable to create a connection!\"\n");
+		MU_Cond_rwlock_unlock(server->lock, logger);
+		return NULL;
+	}
+	NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * server->amount_of_connections + 1);
+	if(!tmp_connections){
+		MU_LOG_ASSERT(logger, "NU_Server_accept->realloc: \"%s\"\n", strerror(errno));
+		MU_Cond_rwlock_unlock(server->lock, logger);
+		return NULL;
+	}
+	server->connections = tmp_connections;
+	server->connections[server->amount_of_connections++] = conn;
+	int is_initialized = NU_Connection_init(conn, sockfd, ip_addr, bsock->port, logger);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	if(!is_initialized){
+		NU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
+		int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
+		if(!is_closed){
+			MU_LOG_ERROR(logger, "NU_Server_accept->close: \"%s\"\n", strerror(errno));
+		}
+		return NULL;
+	}
 	MU_LOG_INFO(logger, "%s connected to port %d\n", ip_addr, bsock->port);
 	return conn;
 }

@@ -142,22 +142,29 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, unsigned int init_locks,
 		MU_Cond_rwlock_unlock(client->lock, logger);
 		return NULL;
 	}
-	MU_Cond_rwlock_wrlock(client->lock, logger);
-	NU_Connection_t *conn = NU_reuse_connection(client->connections, logger);
-	if(!conn){
-		conn = NU_Connection_create(NU_CLIENT,init_locks, logger);
-		if(!conn){
-			MU_Cond_rwlock_unlock(client->lock, logger);
-			MU_ASSERT_RETURN(conn, logger, NULL, "NU_Client_connect->NU_Connection_create: \"Was unable to create connection!\"\n");
-		}
-		NU_Connection_t **tmp_connections = realloc(client->connections, sizeof(NU_Connection_t *) * client->amount_of_connections + 1);
-		if(!tmp_connections){
-			MU_Cond_rwlock_unlock(client->lock, logger);
-			MU_ASSERT_RETURN(tmp_connections, logger, NULL, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
-		}
-		client->connections = tmp_connections;
-		client->connections[client->amount_of_connections++] = conn;
+	MU_Cond_rwlock_rdlock(client->lock, logger);
+	NU_Connection_t *conn = NU_Connection_reuse(client->connections, client->amount_of_connections, sockfd, port, ip_addr, logger);
+	if(conn){
+		MU_LOG_INFO(logger, "Connected to %s on port %u\n", ip_addr, port);
+		MU_Cond_rwlock_unlock(client->lock);
+		return conn;
 	}
+	MU_Cond_rwlock_unlock(client->lock, logger);
+	MU_Cond_rwlock_wrlock(client->lock, logger);
+	conn = NU_Connection_create(NU_CLIENT,init_locks, logger);
+	if(!conn){
+		MU_LOG_ERROR(logger, "NU_Client_connect->NU_Connection_create: \"Was unable to create connection!\"\n");
+		MU_Cond_rwlock_unlock(client->lock, logger);
+		return NULL;
+	}
+	NU_Connection_t **tmp_connections = realloc(client->connections, sizeof(NU_Connection_t *) * client->amount_of_connections + 1);
+	if(!tmp_connections){
+		MU_Cond_rwlock_unlock(client->lock, logger);
+		MU_LOG_ASSERT(logger, "NU_Client_connect->realloc: \"%s\"\n", strerror(errno));
+		return NULL;
+	}
+	client->connections = tmp_connections;
+	client->connections[client->amount_of_connections++] = conn;
 	int successful = NU_Connection_init(conn, sockfd, port, ip_addr, logger);
 	MU_Cond_rwlock_unlock(client->lock, logger);
 	if(!successful){
