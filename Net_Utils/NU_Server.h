@@ -2,6 +2,7 @@
 #define NET_UTILS_SERVER_H
 
 #include <NU_Helper.h>
+#include <NU_Connection.h>
 
 /**
  * @brief Wraps a bound socket on a given port.

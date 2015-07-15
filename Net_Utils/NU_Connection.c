@@ -1,7 +1,7 @@
 #include <NU_Connection.h>
 
 // Returns the max sockfd size.
-static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set){
+static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set, MU_Logger_t *logger){
 	if(connections) return -1;
 	size_t i = 0, max_fd = -1;
 	for(;i < size; i++){
@@ -13,7 +13,9 @@ static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t
 		}
 		int sockfd = conn->sockfd;
 		FD_SET(sockfd, set);
-		if(sockfd > max_fd) max_fd = sockfd;
+		if(sockfd > max_fd){
+			max_fd = sockfd;
+		}
 		MU_Cond_rwlock_unlock(conn->lock, logger);
 	}
 	return max_fd;
@@ -131,8 +133,8 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	// Initialized at top for goto statement consistency.
 	if((!receivers || !r_size || !*r_size) && (!senders || !s_size || *s_size)){
 		MU_LOG_ERROR(logger, "Invalid Arguments: \"Receivers: %s;Receiver Size_ptr: %s;Receiver Size > 0: %s;\n"
-				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s\"\nMessage: \"%s\"\n", r_conns ? "OK!" : "NULL",
-						r_size ? "OK!" : "NO!", *r_size ? "OK!" : "NO!", s_conns ? "OK!" : "NULL", s_size ? "OK!" : "NULL",
+				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s\"\nMessage: \"%s\"\n", receivers ? "OK!" : "NULL",
+						r_size ? "OK!" : "NO!", *r_size ? "OK!" : "NO!", senders ? "OK!" : "NULL", s_size ? "OK!" : "NULL",
 								*s_size ? "OK!" : "NO!", "Neither receivers nor senders were valid!");
 		goto error;
 	}
@@ -146,12 +148,12 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	FD_ZERO(&receive_set);
 	FD_ZERO(&send_set);
 	int max_fd = 0, can_receive = 0, can_send = 0;
-	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set);
+	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set, logger);
 	can_receive = (r_max_fd != -1);
 	if(r_max_fd > max_fd){
 		max_fd = r_max_fd;
 	}
-	int s_max_fd = add_valid_connections_to_fd_set(s_conns, send_size, &send_set);
+	int s_max_fd = add_valid_connections_to_fd_set(s_conns, send_size, &send_set, logger);
 	can_send = (s_max_fd != -1);
 	if(s_max_fd > max_fd){
 		max_fd = s_max_fd;
@@ -160,6 +162,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		MU_LOG_WARNING(logger, "NU_Connection_select: \"Was unable to find a valid receiver or sender connection!\"\n");
 		goto error;
 	}
+	size_t are_ready;
 	if((are_ready = TEMP_FAILURE_RETRY(select(max_fd + 1, &receive_set, &send_set, NULL, &tv))) <= 0){
 		if(!are_ready) MU_LOG_INFO(logger, "NU_Connection_select->select: \"Timed out!\"\n");
 		else MU_LOG_WARNING(logger, "NU_Connection_select->select: \"%s\"\n", strerror(errno));
@@ -175,13 +178,14 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		MU_LOG_ASSERT(logger, "NU_Connection_select->malloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	for(i = 0; i < recv_size && r_conns; i++){
+	size_t i = 0;
+	for(; i < recv_size && r_conns; i++){
 		NU_Connection_t *conn = r_conns[i];
 		if(FD_ISSET(conn->sockfd, &receive_set)){
 			recv_connections[can_receive++] = conn;
 		}
 	}
-	tmp_recv_connections = realloc(recv_connections, sizeof(NU_Connection_t *) * can_receive);
+	NU_Connection_t **tmp_recv_connections = realloc(recv_connections, sizeof(NU_Connection_t *) * can_receive);
 	if(can_receive && !tmp_recv_connections){
 		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
 		goto error;
@@ -193,13 +197,13 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 			send_connections[can_send++] = conn;
 		}
 	}
-	tmp_send_connections = realloc(send_connections, sizeof(NU_Connection_t *) * can_send);
+	NU_Connection_t **tmp_send_connections = realloc(send_connections, sizeof(NU_Connection_t *) * can_send);
 	if(can_send && !tmp_send_connections){
 		MU_LOG_ASSERT(logger, "NU_Connection_select->realloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	*receiver = recv_connections;
-	*sender = send_connections;
+	*receivers = recv_connections;
+	*senders = send_connections;
 	*r_size = can_receive;
 	*s_size = can_send;
 	return are_ready;
@@ -218,7 +222,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger){
 	if(!connections || !size || sockfd < 0 || !port || !ip_addr){
 		MU_LOG_ERROR(logger, "NU_Connection_reuse: Invalid Argument=> \"Connection: %s;Size > 0: %s;Sockfd >= 0: %s;Port > 0: %s;IP Address: %s\"\n",
-		conn ? "OK!" : "NULL", size ? "OK!" : "NO!", sockfd >= 0 ? "OK!" : "NO!", port ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
+		connections ? "OK!" : "NULL", size ? "OK!" : "NO!", sockfd >= 0 ? "OK!" : "NO!", port ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
 		return NULL;
 	}
 	size_t i = 0;
@@ -229,7 +233,7 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 			conn->in_use = 1;
 			conn->sockfd = sockfd;
 			conn->port = port;
-			strncpy(conn->port, ip_addr, INET_ADDRSTRLEN);
+			strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
 			NU_unlock_rwlock(conn->lock, logger);
 			return conn;
 		}
