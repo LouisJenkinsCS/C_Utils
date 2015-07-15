@@ -1,15 +1,15 @@
 #include <MU_Cond_Locks.h>
-
+#include <string.h>
 
 int MU_Cond_rwlock_init(pthread_rwlock_t *lock, pthread_rwlockattr_t *attr, MU_Logger_t *logger){
-	if(lock){
-      int errcode = pthread_rwlock_init(lock, attr);
-      if(errcode){
-         MU_LOG_ERROR(logger, "MU_Cond_rwlock_init->pthread_rwlock_init: \"%s\"\n", strerror(errcode));
-      }
-      return errcode;
+    if(lock){
+        int errcode = pthread_rwlock_init(lock, attr);
+        if(errcode){
+            MU_LOG_ERROR(logger, "MU_Cond_rwlock_init->pthread_rwlock_init: \"%s\"\n", strerror(errcode));
+        }
+        return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;;
 }
 
 int MU_Cond_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
@@ -18,9 +18,9 @@ int MU_Cond_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_rwlock_wrlock->pthread_rwlock_wrlock: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
@@ -29,9 +29,9 @@ int MU_Cond_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_rwlock_rdlock->pthread_rwlock_rdlock: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
@@ -40,9 +40,9 @@ int MU_Cond_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_rwlock_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_rwlock_destroy(pthread_rwlock_t *lock, MU_Logger_t *logger){
@@ -51,9 +51,9 @@ int MU_Cond_rwlock_destroy(pthread_rwlock_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_rwlock_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_mutex_init(pthread_mutex_t *lock, pthread_mutexattr_t *attr, MU_Logger_t *logger){
@@ -62,9 +62,9 @@ int MU_Cond_mutex_init(pthread_mutex_t *lock, pthread_mutexattr_t *attr, MU_Logg
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_init->pthread_mutex_init: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
@@ -73,9 +73,9 @@ int MU_Cond_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_lock->pthread_rwlock_lock: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
@@ -84,9 +84,9 @@ int MU_Cond_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }
 
 int MU_Cond_mutex_destroy(pthread_mutex_t *lock, MU_Logger_t *logger){
@@ -95,7 +95,7 @@ int MU_Cond_mutex_destroy(pthread_mutex_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(errcode));
       }
-      return errcode;
+      return errcode ? 0 : 1;
    }
-   return 0;
+   return 1;
 }

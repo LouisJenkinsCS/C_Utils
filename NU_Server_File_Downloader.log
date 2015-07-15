@@ -1,0 +1,1 @@
+04:59:47 PM: [ASSERT](./Net_Utils//Tests/NU_Server_Test_File_Downloader.c:43) Condition: "bsock"; Message: "Failed while attempting to bind a socket!"

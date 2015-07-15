@@ -31,7 +31,7 @@ static char *bsock_to_string(NU_Bound_Socket_t *bsock){
 
 static int setup_bound_socket(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
 	if(!bsock) return 0;
-	int i = 0, flag = 1;
+	int flag = 1;
 	struct sockaddr_in my_addr;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd == -1) {
@@ -89,6 +89,7 @@ static NU_Bound_Socket_t *NU_Bound_Socket_create(unsigned char init_locks){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"\n");
 		goto error;
 	}
+	return bsock;
 
 	error:
 		if(bsock){
@@ -229,7 +230,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	for(;i < server->amount_of_sockets; i++){
 		NU_Bound_Socket_t *bsock = NU_Bound_Socket_create(init_locks);
 		if(!bsock){
-			MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_create: \"Was unable to create bound socket #%d\"\n", ++i);
+			MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_create: \"Was unable to create bound socket #%zu\"\n", ++i);
 			goto error;
 		}
 		bsock->is_bound = 0;
@@ -246,7 +247,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	for(;i < server->amount_of_connections; i++){
 		NU_Connection_t *conn = NU_Connection_create(NU_SERVER, init_locks, logger);
 		if(!conn){
-			MU_LOG_ASSERT(logger, "NU_Server_create->NU_Connection_create: \"Was unable to create connection #%d!\"\n", ++i);
+			MU_LOG_ASSERT(logger, "NU_Server_create->NU_Connection_create: \"Was unable to create connection #%zu!\"\n", ++i);
 			goto error;
 		}
 		server->connections[i] = conn;

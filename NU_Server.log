@@ -1,0 +1,10 @@
+04:59:47 PM: [ERROR](./Net_Utils/NU_Server.c:54) setup_bound_socket->listen: "Socket operation on non-socket"
+
+04:59:47 PM: [WARNING](./Net_Utils/NU_Server.c:149) reuse_existing_socket->setup_bound_socket: "was unable to setup bsock"
+
+04:59:47 PM: [ERROR](./Net_Utils/NU_Server.c:54) setup_bound_socket->listen: "Socket operation on non-socket"
+
+04:59:47 PM: [WARNING](./Net_Utils/NU_Server.c:125) NU_Bound_Socket_create->setup_bound_socket: "was unable to setup bsock"
+
+04:59:47 PM: [ERROR](./Net_Utils/NU_Server.c:308) NU_Server_bind->NU_Bound_Socket_create: "Was unable to create a bound socket!"
+

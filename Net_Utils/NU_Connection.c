@@ -71,7 +71,7 @@ size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_
 }
 
 // Implement
-size_t NU_Connect_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
+size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
 	if(!conn || !buffer || !buf_size){
 		MU_LOG_ERROR(logger, "Invalid Arguments: \"Connection: %s;Buffer: %s;Buffer Size > 0: %s\"\n",
 				conn ? "OK!" : "NULL", buffer ? "OK!" : "NULL", buf_size ? "OK!" : "NO!");

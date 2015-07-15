@@ -56,4 +56,5 @@ int main(void){
   MU_ASSERT(retval, logger, "Was unable to send data to client!\n");
   MU_DEBUG("Sent %zu bytes to client!\n", retval);
   NU_Server_destroy(server);
+  return EXIT_SUCCESS;
 }

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -g -D_GNU_SOURCE
+CFLAGS=-c -g -D_GNU_SOURCE -Wall
 LIBS=-pthread
 OBJS=NU_Connection.o NU_Server.o NU_Helper.o NU_Server_Test_File_Downloader.o MU_Logger.o MU_Cond_Locks.o
 TARGET=NU_Server_Test_File_Downloader
