@@ -303,7 +303,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsign
 		return bsock;
 	}
 	MU_Cond_rwlock_wrlock(server->lock, logger);
-	bsock = NU_Bound_Socket_create_and_init(queue_size, port, ip_addr, server->is_threaded);
+	bsock = NU_Bound_Socket_create(server->is_threaded);
 	if(!bsock){
 		MU_LOG_ERROR(logger, "NU_Server_bind->NU_Bound_Socket_create: \"Was unable to create a bound socket!\"\n");
 		MU_Cond_rwlock_unlock(server->lock, logger);
