@@ -199,7 +199,7 @@ size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffe
 		return 0;
 	}
 	MU_Cond_rwlock_rdlock(client->lock, logger);
-	size_t result = NU_Connection_receive(conn, buf_size, timeout, logger);
+	size_t result = NU_Connection_receive(conn, buffer, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
 	if(!result){
 		MU_LOG_WARNING(logger, "NU_Client_receive->NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn));
@@ -247,43 +247,19 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 	return total_sent;
 }
 
-size_t NU_Client_receive_to_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
+size_t NU_Client_receive_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!client || !conn || conn->type != NU_CLIENT){
 		MU_LOG_ERROR(logger, "NU_Client_receive_to_file: Invalid Arguments=> \"Client: %s;Connection: %s;Connection-Type: %s\"\n",
 			client ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
 	MU_Cond_rwlock_rdlock(client->lock, logger);
-	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
+	size_t total_received = NU_Connection_receive_file(conn, file, buf_size, timeout, logger);
 	if(!total_received) MU_LOG_WARNING(logger, "NU_Client_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
 	NU_Atomic_Data_increment_received(client->data, total_received);
 	MU_Cond_rwlock_unlock(client->lock, logger);
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
-}
-
-NU_Connection_t **NU_Client_select_receive(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!client){
-		MU_LOG_ERROR(logger, "NU_Client_select_receive: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
-		*size = 0;
-		return NULL;
-	}
-	MU_Cond_rwlock_rdlock(client->lock, logger);
-	NU_Connection_t **ready_connections = NU_select_receive_connections(connections, size, timeout, logger);
-	MU_Cond_rwlock_unlock(client->lock, logger);
-	return ready_connections;
-}
-
-NU_Connection_t **NU_Client_select_send(NU_Client_t *client, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!client){
-		MU_LOG_ERROR(logger, "NU_Client_select_send: Invalid Argument=> \"Client: %s\"\n", client ? "OK!" : "NULL");
-		*size = 0;
-		return NULL;
-	}
-	MU_Cond_rwlock_rdlock(client->lock, logger);
-	NU_Connection_t **ready_connections = NU_select_send_connections(connections, size, timeout, logger);
-	MU_Cond_rwlock_unlock(client->lock, logger);
-	return ready_connections;
 }
 
 char *NU_Client_about(NU_Client_t *client){

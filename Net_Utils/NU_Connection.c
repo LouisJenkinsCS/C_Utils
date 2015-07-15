@@ -234,7 +234,7 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 			conn->sockfd = sockfd;
 			conn->port = port;
 			strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
-			NU_unlock_rwlock(conn->lock, logger);
+			MU_Cond_rwlock_unlock(conn->lock, logger);
 			return conn;
 		}
 		MU_Cond_rwlock_unlock(conn->lock, logger);

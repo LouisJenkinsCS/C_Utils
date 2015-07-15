@@ -48,24 +48,26 @@ typedef struct {
    volatile size_t amount_of_sockets;
    /// RWLock associated with server for type safety.
    pthread_rwlock_t *lock;
+   /// Whether or not to initialize locks on everything.
+   unsigned char is_threaded;
    /// Keep track of overall data-usage.
    NU_Atomic_Data_t *data;
 } NU_Server_t;
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(size_t initial_connections, unsigned char init_locks);
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, unsigned char init_locks);
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */
-NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t amount, unsigned char init_locks);
+NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr);
 
 /* Will unbind the server from the port specified in socket. Will free the socket! */
 int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    connections should not be freed, and it is also managed by the server. */
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket,  unsigned int timeout);
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, unsigned int timeout);
 
 /* Send data to the requested client. */
 size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout);
@@ -74,16 +76,10 @@ size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *bu
 size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout);
 
 /* Receive data from the socket and feed it into a file. sendfile is used for maximum efficiency. */
-size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout);
+size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout);
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
 size_t NU_Server_send_file(NU_Server_t* server, NU_Connection_t *conn, FILE* file, size_t buffer_size, unsigned int timeout);
-
-/* Blocks for requested timeout or until one of the client sockets passed are available for receiving. */
-NU_Connection_t **NU_Server_select_receive(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout);
-
-/* Blocks for requested timeout or until one of the client sockets passed are available for sending. */
-NU_Connection_t **NU_Server_select_send(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout);
 
 /* Returns a string representation about this client, including but not limited to:
    1) Server's port number binded to as well as local IP.

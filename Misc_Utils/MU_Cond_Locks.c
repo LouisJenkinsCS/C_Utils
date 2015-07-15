@@ -69,7 +69,7 @@ int MU_Cond_mutex_init(pthread_mutex_t *lock, pthread_mutexattr_t *attr, MU_Logg
 
 int MU_Cond_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
 	if(lock){
-      int errcode = pthread_rwlock_lock(lock);
+      int errcode = pthread_mutex_lock(lock);
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_lock->pthread_rwlock_lock: \"%s\"\n", strerror(errcode));
       }
@@ -80,7 +80,7 @@ int MU_Cond_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger){
 
 int MU_Cond_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
 	if(lock){
-      int errcode = pthread_rwlock_unlock(lock);
+      int errcode = pthread_mutex_unlock(lock);
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_unlock->pthread_rwlock_unlock: \"%s\"\n", strerror(errcode));
       }
@@ -91,7 +91,7 @@ int MU_Cond_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger){
 
 int MU_Cond_mutex_destroy(pthread_mutex_t *lock, MU_Logger_t *logger){
 	if(lock){
-      int errcode = pthread_rwlock_destroy(lock);
+      int errcode = pthread_mutex_destroy(lock);
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_mutex_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(errcode));
       }

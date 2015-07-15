@@ -29,43 +29,125 @@ static char *bsock_to_string(NU_Bound_Socket_t *bsock){
 	return bsock_str;
 }
 
-static int setup_bound_socket(NU_Bound_Socket_t *bsock, const char *ip_addr, unsigned int port, size_t queue_size){
+static int setup_bound_socket(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
+	if(!bsock) return 0;
 	int i = 0, flag = 1;
 	struct sockaddr_in my_addr;
-	bsock->port = port;
-	if((bsock->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		MU_LOG_BSOCK_ERR(socket, bsock);
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if(sockfd == -1) {
+		MU_LOG_ERROR(logger, "setup_bound_socket->socket: \"%s\"\n", strerror(errno));
 		return 0;
 	}
-	if(setsockopt(bsock->sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
-		shutdown(bsock->sockfd, SHUT_RDWR);
-		MU_LOG_BSOCK_ERR(setsockopt, bsock);
-		return 0;
+	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
+		MU_LOG_ERROR(logger, "setup_bound_socket->setsockopt: \"%s\"\n", strerror(errno));
+		goto error;
 	}	
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(bsock->port);
 	my_addr.sin_addr.s_addr = ip_addr ? inet_addr(ip_addr) : INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
-	if(bind(bsock->sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
-		shutdown(bsock->sockfd, SHUT_RDWR);
-		MU_LOG_BSOCK_ERR(bind, bsock);
-		return 0;
+	if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
+		MU_LOG_ERROR(logger, "setup_bound_socket->bind: \"%s\"\n", strerror(errno));
+		goto error;
 	}
 	if(listen(bsock->sockfd, queue_size) == -1){
-		shutdown(bsock->sockfd, SHUT_RDWR);
-		MU_LOG_BSOCK_ERR(listen, bsock);
-		return 0;
+		MU_LOG_ERROR(logger, "setup_bound_socket->listen: \"%s\"\n", strerror(errno));
+		goto error;
 	}
+	MU_Cond_rwlock_wrlock(bsock->lock, logger);
+	bsock->port = port;
+	bsock->sockfd = sockfd;
+	bsock->is_bound = 1;
+	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	return 1;
+
+	error:
+		if(sockfd != -1){
+			int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
+			if(is_closed == -1){
+				MU_LOG_ERROR(logger, "setup_bound_socket->close: \"%s\"\n", strerror(errno));
+			}
+		}
+		return 0;
 }
 
-static NU_Bound_Socket_t *reuse_existing_socket(NU_Bound_Socket_t **sockets, size_t size){
+static NU_Bound_Socket_t *NU_Bound_Socket_create(unsigned char init_locks){
+	NU_Bound_Socket_t *bsock = calloc(1, sizeof(NU_Bound_Socket_t));
+	if(!bsock){
+		MU_LOG_ASSERT(logger, "NU_Bound_Socket_create->calloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	if(init_locks){
+		bsock->lock = malloc(sizeof(pthread_rwlock_t));
+		if(!bsock->lock){
+			MU_LOG_ASSERT(logger, "NU_Bound_Socket_create->malloc: \"%s\"\n", strerror(errno));
+			goto error;
+		}
+	}
+	int is_initialized = MU_Cond_rwlock_init(bsock->lock, NULL, logger);
+	if(!is_initialized){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"\n");
+		goto error;
+	}
+
+	error:
+		if(bsock){
+			int is_destroyed = MU_Cond_rwlock_destroy(bsock->lock, logger);
+			if(!is_destroyed){
+				MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_destroy: \"Was unable to destroy a lock!\"\n");
+			}
+			free(bsock);
+		}
+		return NULL;
+}
+
+
+static NU_Bound_Socket_t *NU_Bound_Socket_create_and_init(size_t queue_size, unsigned int port, const char *ip_addr, unsigned char init_locks){
+	NU_Bound_Socket_t *bsock = calloc(1, sizeof(NU_Bound_Socket_t));
+	if(!bsock){
+		MU_LOG_ASSERT(logger, "NU_Bound_Socket_create->calloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
+	if(init_locks){
+		bsock->lock = malloc(sizeof(pthread_rwlock_t));
+		if(!bsock->lock){
+			MU_LOG_ASSERT(logger, "NU_Bound_Socket_create->malloc: \"%s\"\n", strerror(errno));
+			goto error;
+		}
+	}
+	int is_initialized = MU_Cond_rwlock_init(bsock->lock, NULL, logger);
+	if(!is_initialized){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"\n");
+		goto error;
+	}
+	if(!setup_bound_socket(bsock, queue_size, port, ip_addr)){
+		MU_LOG_WARNING(logger, "NU_Bound_Socket_create->setup_bound_socket: \"was unable to setup bsock\"\n");
+		goto error;
+	}
+	return bsock;
+
+	error:
+		if(bsock){
+			int is_destroyed = MU_Cond_rwlock_destroy(bsock->lock, logger);
+			if(!is_destroyed){
+				MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_destroy: \"Was unable to destroy a lock!\"\n");
+			}
+			free(bsock);
+		}
+		return NULL;
+}
+
+static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, size_t queue_size, size_t size, unsigned int port, const char *ip_addr){
 	size_t i = 0;
 	for(;i < size; i++){
 		NU_Bound_Socket_t *bsock = sockets[i];
 		MU_Cond_rwlock_wrlock(bsock->lock, logger);
-		if(bsock && !bsock->is_bound){
+		if(!bsock->is_bound){
 			bsock->is_bound = 1;
+			if(!setup_bound_socket(bsock, queue_size, port, ip_addr)){
+				MU_LOG_WARNING(logger, "reuse_existing_socket->setup_bound_socket: \"was unable to setup bsock\"\n");
+				return NULL;
+			}
 			MU_Cond_rwlock_unlock(bsock->lock, logger);
 			return bsock;
 		}
@@ -74,27 +156,41 @@ static NU_Bound_Socket_t *reuse_existing_socket(NU_Bound_Socket_t **sockets, siz
 	return NULL;
 }
 
-static void destroy_bound_socket(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
+	if(!bsock) return 0;
+	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(is_closed == -1){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy->close: \"%s\"\n", strerror(errno));
+	}
+	MU_Cond_rwlock_destroy(bsock->lock, logger);
+	return is_closed != -1;
+}
+
+static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	if(!server || !bsock){
 		MU_LOG_ERROR(logger, "destroy_bound_socket: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
-		return;
+		return 0;
 	}
-	MU_Cond_rwlock_rdlock(server->lock, logger);
+	MU_Cond_rwlock_wrlock(server->lock, logger);
 	MU_Cond_rwlock_wrlock(bsock->lock, logger);
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		NU_Connection_t *conn = server->connections[i];
-		if(NU_Connection_get_port(conn) == bsock->port){
+		if(NU_Connection_get_port(conn, logger) == bsock->port){
 			int is_disconnected = NU_Connection_disconnect(conn, logger);
 			if(!is_disconnected){
 				MU_LOG_ERROR(logger, "destroy_bound_socket->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
 			}
 		}
 	}
-	close(bsock->sockfd);
-	bsock->is_bound = 0;
+	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(!is_closed){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy->close: \"%s\"\n", strerror(errno));
+	}
 	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_Cond_rwlock_destroy(bsock->lock, logger);
+	return 1;
 }
 
 NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, unsigned char init_locks){
@@ -103,6 +199,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 		MU_LOG_ASSERT(logger, "NU_Server_create->calloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
+	server->is_threaded = init_locks;
 	// Keep track of everything allocated. If anything fails to allocate, we will free up all memory allocated in this (very long) block.
 	size_t connections_allocated = 0, bsocks_allocated = 0;
 	server->data = NU_Atomic_Data_create();
@@ -130,11 +227,12 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	}
 	size_t i = 0;
 	for(;i < server->amount_of_sockets; i++){
-		NU_Bound_Socket_t *bsock = NU_Bound_Socket_create(init_locks, logger);
+		NU_Bound_Socket_t *bsock = NU_Bound_Socket_create(init_locks);
 		if(!bsock){
 			MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_create: \"Was unable to create bound socket #%d\"\n", ++i);
 			goto error;
 		}
+		bsock->is_bound = 0;
 		server->sockets[i] = bsock;
 		bsocks_allocated++;
 	}
@@ -171,7 +269,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 		if(server->sockets){
 			size_t i = 0;
 			for(;i < bsocks_allocated; i++){
-				int is_destroyed = NU_Bound_Socket_destroy(server->sockets[i], logger);
+				int is_destroyed = NU_Bound_Socket_destroy(server->sockets[i]);
 				if(!is_destroyed){
 					MU_LOG_ERROR(logger, "NU_Server_create->NU_Bound_Socket_destroy: \"Was unable to destroy a socket!\"\n");
 				}
@@ -190,51 +288,37 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 		return NULL;
 }
 
-NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, const char *ip_addr, unsigned int port, size_t queue_size, unsigned char init_locks){
+NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr){
 	if(!server || !port || !queue_size || !ip_addr){
 		MU_LOG_ERROR(logger, "NU_Server_bind: Invalid Arguments=> \"Server: %s;Port > 0: %s; Queue Size > 0: %s; IP Address: %s\n",
 			server ? "OK!" : "NULL", port ? "OK!" : "NO!", queue_size ? "OK!" : "NO!", ip_addr ? "OK!" : "NULL");
 		return NULL;
 	}
-	MU_Cond_rwlock_wrlock(server->lock, logger);
-	NU_Bound_Socket_t *bsock = reuse_existing_socket(server->sockets, server->amount_of_sockets);
-	if(!bsock){
-		bsock = calloc(1, sizeof(NU_Bound_Socket_t));
-		if(!bsock){
-			MU_LOG_ASSERT(logger, "NU_Server_bind->calloc: \"%s\"\n", strerror(errno));
-			MU_Cond_rwlock_unlock(server->lock, logger);
-			return NULL;
-		}
-		if(init_locks){
-			bsock->lock = malloc(sizeof(pthread_rwlock_t));
-			if(!bsock->lock){
-				MU_LOG_ASSERT(logger, "NU_Server_bind->calloc: \"%s\"\n", strerror(errno));
-				free(bsock);
-				return NULL;
-			}
-		}
-		int is_successful = MU_Cond_rwlock_init(bsock->lock, NULL, logger);
-		if(!is_successful){
-			free(bsock->lock);
-			free(bsock);
-			return NULL;
-		}
-		NU_Connection_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * server->amount_of_sockets + 1);
-		if(!tmp_sockets){
-			MU_LOG_ASSERT(logger, "NU_Server_bind->realloc: \"%s\"\n", strerror(errno));
-			MU_Cond_rwlock_unlock(server->lock, logger);
-			MU_Cond_rwlock_destroy(bsock->lock, logger);
-			return NULL;
-		}
-		server->sockets = tmp_sockets;
-		server->sockets[server->amount_of_sockets++] = bsock;
+	MU_Cond_rwlock_rdlock(server->lock, logger);
+	NU_Bound_Socket_t *bsock = NU_Bound_Socket_reuse(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
+	MU_Cond_rwlock_unlock(server->lock, logger);
+	if(bsock){
+		MU_LOG_INFO(logger, "Bound a socket to %s on port %u!\n", ip_addr, port);
+		return bsock;
 	}
-	if(!setup_bound_socket(bsock, ip_addr, port, queue_size)){
-		MU_LOG_WARNING(logger, "NU_Server_bind->setup_bound_socket: \"was unable to setup bsock\"\n");
+	MU_Cond_rwlock_wrlock(server->lock, logger);
+	bsock = NU_Bound_Socket_create_and_init(queue_size, port, ip_addr, server->is_threaded);
+	if(!bsock){
+		MU_LOG_ERROR(logger, "NU_Server_bind->NU_Bound_Socket_create: \"Was unable to create a bound socket!\"\n");
 		MU_Cond_rwlock_unlock(server->lock, logger);
 		return NULL;
 	}
+	NU_Bound_Socket_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * server->amount_of_sockets + 1);
+	if(!tmp_sockets){
+		MU_LOG_ASSERT(logger, "NU_Server_bind->realloc: \"%s\"\n", strerror(errno));
+		MU_Cond_rwlock_unlock(server->lock, logger);
+		NU_Bound_Socket_destroy(bsock);
+		return NULL;
+	}
+	server->sockets = tmp_sockets;
+	server->sockets[server->amount_of_sockets++] = bsock;
 	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_LOG_INFO(logger, "Bound a socket to %s on port %u!\n", ip_addr, port);
 	return bsock;
 }
 
@@ -256,7 +340,7 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		NU_Connection_t *conn = server->connections[i];
-		if(NU_Connection_get_port(conn) == bsock->port){
+		if(NU_Connection_get_port(conn, logger) == bsock->port){
 			int is_disconnected = NU_Connection_disconnect(conn, logger);
 			if(!is_disconnected){
 				MU_LOG_ERROR(logger, "NU_Server_unbind->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
@@ -268,7 +352,7 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	return 1;
 }
 
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned char init_locks, unsigned int timeout){
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned int timeout){
 	if(!server || !bsock){
 		MU_LOG_ERROR(logger, "NU_Server_accept: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
 		return NULL;
@@ -281,7 +365,7 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 		MU_LOG_INFO(logger, "NU_Server_accept->accept: \"Was unable to accept a server!\"\n");
 		return NULL;
 	}
-	NU_Cond_rwlock_unlock(bsock->lock, logger);
+	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	MU_Cond_rwlock_rdlock(server->lock, logger);
 	NU_Connection_t *conn = NU_Connection_reuse(server->connections, server->amount_of_connections, sockfd, port, ip_addr, logger);
 	if(conn){
@@ -292,7 +376,7 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	MU_Cond_rwlock_wrlock(server->lock, logger);
 	// If the NULL is returned, then a connection could not be reused, hence we initialize a new one below.
-	conn = NU_Connection_create(NU_SERVER, init_locks, logger);
+	conn = NU_Connection_create(NU_SERVER, server->is_threaded, logger);
 	if(!conn){
 		MU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_create: \"Was unable to create a connection!\"\n");
 		MU_Cond_rwlock_unlock(server->lock, logger);
@@ -306,10 +390,10 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	}
 	server->connections = tmp_connections;
 	server->connections[server->amount_of_connections++] = conn;
-	int is_initialized = NU_Connection_init(conn, sockfd, ip_addr, bsock->port, logger);
+	int is_initialized = NU_Connection_init(conn, sockfd, bsock->port, ip_addr, logger);
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	if(!is_initialized){
-		NU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
+		MU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
 		int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
 		if(!is_closed){
 			MU_LOG_ERROR(logger, "NU_Server_accept->close: \"%s\"\n", strerror(errno));
@@ -331,7 +415,7 @@ size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *bu
 	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
 	NU_Atomic_Data_increment_sent(server->data, result);
 	if(result != buf_size){
-		MU_LOG_WARNING(logger, "NU_Server_send->NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn));
+		MU_LOG_WARNING(logger, "NU_Server_send->NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn, logger));
 	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	return result;
@@ -344,10 +428,10 @@ size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffe
 		return 0;
 	}
 	MU_Cond_rwlock_rdlock(server->lock, logger);
-	size_t result = NU_Connection_receive(conn, buf_size, timeout, logger);
+	size_t result = NU_Connection_receive(conn, buffer, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
 	if(!result){
-		MU_LOG_WARNING(logger, "NU_Server_receive->NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn));
+		MU_LOG_WARNING(logger, "NU_Server_receive->NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn, logger));
 		return 0;
 	}
 	NU_Atomic_Data_increment_received(server->data, result);
@@ -361,6 +445,7 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *fil
 			server ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
+	const char *ip_addr = NU_Connection_get_ip_addr(conn, logger);
 	// Obtain the file size to aid in determining whether or not the send was successful or not.
 	struct stat file_stats
 ;	int file_fd = fileno(file);
@@ -378,57 +463,34 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *fil
 	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
 	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
 	if(!total_sent){
-		MU_LOG_WARNING(logger, "NU_Server_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn));
+		MU_LOG_WARNING(logger, "NU_Server_send_file->NU_Connection_send_file: \"No data was sent to %s\"\n", ip_addr);
 		MU_Cond_rwlock_unlock(server->lock, logger);
 		return 0;
 	}
 	else if(file_size && file_size != total_sent){ 
 		MU_LOG_WARNING(logger, "NU_Server_send_file->NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
-			file_size, total_sent, NU_Connection_get_ip_addr(conn));
+			file_size, total_sent, ip_addr);
 	}
 	NU_Atomic_Data_increment_sent(server->data, total_sent);
 	MU_Cond_rwlock_unlock(server->lock, logger);
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn));
+	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, ip_addr);
 	return total_sent;
 }
 
-size_t NU_Server_receive_to_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
+size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
 	if(!server || !conn || conn->type != NU_SERVER){
 		MU_LOG_ERROR(logger, "NU_Server_receive_to_file: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
 			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
 		return 0;
 	}
+	const char *ip_addr = NU_Connection_get_ip_addr(conn, logger);
 	MU_Cond_rwlock_rdlock(server->lock, logger);
-	size_t total_received = NU_Connection_receive_to_file(conn, file, buf_size, timeout, logger);
-	if(!total_received) MU_LOG_WARNING(logger, "NU_Server_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn));
+	size_t total_received = NU_Connection_receive_file(conn, file, buf_size, timeout, logger);
+	if(!total_received) MU_LOG_WARNING(logger, "NU_Server_receive_to_file->NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", ip_addr);
 	NU_Atomic_Data_increment_received(server->data, total_received);
 	MU_Cond_rwlock_unlock(server->lock, logger);
-	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, NU_Connection_get_ip_addr(conn));
+	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, ip_addr);
 	return total_received;
-}
-
-NU_Connection_t **NU_Server_select_receive(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!server){
-		MU_LOG_ERROR(logger, "NU_Server_select_receive: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
-		*size = 0;
-		return NULL;
-	}
-	MU_Cond_rwlock_rdlock(server->lock, logger);
-	NU_Connection_t **ready_connections = NU_select_receive_connections(connections, size, timeout, logger);
-	MU_Cond_rwlock_unlock(server->lock, logger);
-	return ready_connections;
-}
-
-NU_Connection_t **NU_Server_select_send(NU_Server_t *server, NU_Connection_t **connections, size_t *size, unsigned int timeout){
-	if(!server){
-		MU_LOG_ERROR(logger, "NU_Server_select_send: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
-		*size = 0;
-		return NULL;
-	}
-	MU_Cond_rwlock_rdlock(server->lock, logger);
-	NU_Connection_t **ready_connections = NU_select_send_connections(connections, size, timeout, logger);
-	MU_Cond_rwlock_unlock(server->lock, logger);
-	return ready_connections;
 }
 
 char *NU_Server_about(NU_Server_t *server){
@@ -441,7 +503,7 @@ char *NU_Server_about(NU_Server_t *server){
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		old_server_str = server_str;
-		asprintf(&server_str, "%s%s%s", server_str, NU_Connection_to_string(server->connections[i]), i < server->amount_of_connections - 1 ? ", " : "");
+		asprintf(&server_str, "%s%s%s", server_str, NU_Connection_to_string(server->connections[i], logger), i < server->amount_of_connections - 1 ? ", " : "");
 		// Since server_str is originally a string literal, freeing it would cause a segmentation fault, so we only skip the first one.
 		if(i > 0){
 			free(old_server_str);
