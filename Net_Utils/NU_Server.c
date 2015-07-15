@@ -29,43 +29,41 @@ static char *bsock_to_string(NU_Bound_Socket_t *bsock){
 	return bsock_str;
 }
 
-static int setup_bound_socket(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
+static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
 	if(!bsock) return 0;
 	int flag = 1;
 	struct sockaddr_in my_addr;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd == -1) {
-		MU_LOG_ERROR(logger, "setup_bound_socket->socket: \"%s\"\n", strerror(errno));
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->socket: \"%s\"\n", strerror(errno));
 		return 0;
 	}
 	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
-		MU_LOG_ERROR(logger, "setup_bound_socket->setsockopt: \"%s\"\n", strerror(errno));
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->setsockopt: \"%s\"\n", strerror(errno));
 		goto error;
 	}	
 	my_addr.sin_family = AF_INET;
-	my_addr.sin_port = htons(bsock->port);
+	my_addr.sin_port = htons(port);
 	my_addr.sin_addr.s_addr = ip_addr ? inet_addr(ip_addr) : INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
 	if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
-		MU_LOG_ERROR(logger, "setup_bound_socket->bind: \"%s\"\n", strerror(errno));
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->bind: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	if(listen(bsock->sockfd, queue_size) == -1){
-		MU_LOG_ERROR(logger, "setup_bound_socket->listen: \"%s\"\n", strerror(errno));
+	if(listen(sockfd, queue_size) == -1){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->listen: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	MU_Cond_rwlock_wrlock(bsock->lock, logger);
 	bsock->port = port;
 	bsock->sockfd = sockfd;
 	bsock->is_bound = 1;
-	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	return 1;
 
 	error:
 		if(sockfd != -1){
 			int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
 			if(is_closed == -1){
-				MU_LOG_ERROR(logger, "setup_bound_socket->close: \"%s\"\n", strerror(errno));
+				MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->close: \"%s\"\n", strerror(errno));
 			}
 		}
 		return 0;
@@ -121,8 +119,8 @@ static NU_Bound_Socket_t *NU_Bound_Socket_create_and_init(size_t queue_size, uns
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"\n");
 		goto error;
 	}
-	if(!setup_bound_socket(bsock, queue_size, port, ip_addr)){
-		MU_LOG_WARNING(logger, "NU_Bound_Socket_create->setup_bound_socket: \"was unable to setup bsock\"\n");
+	if(!NU_Bound_Socket_setup(bsock, queue_size, port, ip_addr)){
+		MU_LOG_WARNING(logger, "NU_Bound_Socket_create->NU_Bound_Socket_setup: \"was unable to setup bsock\"\n");
 		goto error;
 	}
 	return bsock;
@@ -144,12 +142,11 @@ static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, siz
 		NU_Bound_Socket_t *bsock = sockets[i];
 		MU_Cond_rwlock_wrlock(bsock->lock, logger);
 		if(!bsock->is_bound){
-			bsock->is_bound = 1;
-			if(!setup_bound_socket(bsock, queue_size, port, ip_addr)){
-				MU_LOG_WARNING(logger, "reuse_existing_socket->setup_bound_socket: \"was unable to setup bsock\"\n");
+			if(!NU_Bound_Socket_setup(bsock, queue_size, port, ip_addr)){
+				MU_LOG_WARNING(logger, "NU_Bound_Socket_reuse->NU_Bound_Socket_setup: \"Was unable to setup bound socket!\"\n");
+				MU_Cond_rwlock_unlock(bsock->lock, logger);
 				return NULL;
 			}
-			MU_Cond_rwlock_unlock(bsock->lock, logger);
 			return bsock;
 		}
 		MU_Cond_rwlock_unlock(bsock->lock, logger);
@@ -169,7 +166,7 @@ static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 
 static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	if(!server || !bsock){
-		MU_LOG_ERROR(logger, "destroy_bound_socket: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
 		return 0;
 	}
 	MU_Cond_rwlock_wrlock(server->lock, logger);
@@ -180,7 +177,7 @@ static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Sock
 		if(NU_Connection_get_port(conn, logger) == bsock->port){
 			int is_disconnected = NU_Connection_disconnect(conn, logger);
 			if(!is_disconnected){
-				MU_LOG_ERROR(logger, "destroy_bound_socket->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
+				MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
 			}
 		}
 	}
@@ -205,7 +202,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	size_t connections_allocated = 0, bsocks_allocated = 0;
 	server->data = NU_Atomic_Data_create();
 	if(!server->data){
-		MU_LOG_ERROR(logger, "NU_Server_create->NU_Collective_Data_create: \"Was unable to allocate atomic data\"\n");
+		MU_LOG_ERROR(logger, "NU_Server_create->NU_Collective_Data_create: \"Was unable to allocate Atomic Data\"\n");
 		goto error;
 	}
 	if(init_locks){
@@ -261,7 +258,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 			for(;i < connections_allocated; i++){
 				int is_destroyed = NU_Connection_destroy(server->connections[i], logger);
 				if(!is_destroyed){
-					MU_LOG_ERROR(logger, "NU_Server_create->NU_Connection_destroy: \"Was unable to destroy a connection\"\n");
+					MU_LOG_ERROR(logger, "NU_Server_create->NU_Connection_destroy: \"Was unable to destroy a connection!\"\n");
 				}
 
 			}
@@ -350,6 +347,7 @@ int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 		MU_Cond_rwlock_unlock(bsock->lock, logger);
 		MU_Cond_rwlock_unlock(server->lock, logger);
 	}
+	MU_LOG_INFO(logger, "Unbound from port %u!\n", bsock->port);
 	return 1;
 }
 
@@ -539,17 +537,18 @@ int NU_Server_log(NU_Server_t *server, const char *message, ...){
 	return 1;
 }
 
-int NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *connection){
+int NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn){
 	if(!server){
 		MU_LOG_ERROR(logger, "NU_Server_disconnect: Invalid Argument=> \"Server: %s\"\n", server ? "OK!" : "NULL");
 		return 0;
 	}
 	MU_Cond_rwlock_wrlock(server->lock, logger);
-	int successful = NU_Connection_disconnect(connection, logger);
+	int successful = NU_Connection_disconnect(conn, logger);
 	if(!successful){
 		MU_LOG_ERROR(logger, "NU_Server_disconnect->NU_Connection_disconnect: \"Was unable to fully disconnect a connection!\"\n");
 	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
+	MU_LOG_INFO(logger, "Disconnected from %s on port %u!\n", NU_Connection_get_ip_addr(conn, logger), NU_Connection_get_port(conn, logger));
 	return 1;
 }
 

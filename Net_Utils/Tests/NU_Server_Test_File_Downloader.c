@@ -55,6 +55,7 @@ int main(void){
   size_t retval = NU_Server_send_file(server, client, file, buffer_size, timeout);
   MU_ASSERT(retval, logger, "Was unable to send data to client!\n");
   MU_DEBUG("Sent %zu bytes to client!\n", retval);
+  NU_Server_disconnect(server, client);
   NU_Server_destroy(server);
   return EXIT_SUCCESS;
 }
