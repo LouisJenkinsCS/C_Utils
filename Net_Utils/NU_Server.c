@@ -165,6 +165,29 @@ static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 	return is_closed != -1;
 }
 
+static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+	if(!server || !bsock){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
+		return 0;
+	}
+	MU_Cond_rwlock_wrlock(bsock->lock, logger);
+	size_t i = 0;
+	for(;i < server->amount_of_connections; i++){
+		NU_Connection_t *conn = server->connections[i];
+		if(NU_Connection_get_port(conn, logger) == bsock->port){
+			int is_disconnected = NU_Connection_disconnect(conn, logger);
+			if(!is_disconnected){
+				MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
+			}
+		}
+	}
+	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(!is_closed){
+		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind->close: \"%s\"\n", strerror(errno));
+	}
+	MU_Cond_rwlock_unlock(bsock->lock, logger);
+}
+
 static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	if(!server || !bsock){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy: Invalid Arguments=> \"Server: %s;Bound Socket: %s\"\n", server ? "OK!" : "NULL", bsock ? "OK!" : "NULL");
@@ -189,6 +212,7 @@ static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Sock
 	MU_Cond_rwlock_unlock(bsock->lock, logger);
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	MU_Cond_rwlock_destroy(bsock->lock, logger);
+	free(bsock);
 	return 1;
 }
 
@@ -561,7 +585,7 @@ int NU_Server_shutdown(NU_Server_t *server){
 	MU_Cond_rwlock_wrlock(server->lock, logger);
 	size_t i = 0;
 	for(;i < server->amount_of_sockets; i++){
-		int successful = NU_Bound_Socket_unbind(server->sockets[i]);
+		int successful = NU_Bound_Socket_unbind(server, server->sockets[i]);
 		if(!successful){
 			MU_LOG_ERROR(logger, "NU_Server_shutdown->NU_Bound_Socket_unbind: \"Was unable to fully unbind a socket!\"\n");
 		}
