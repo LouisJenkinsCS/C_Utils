@@ -147,6 +147,7 @@ static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, siz
 				MU_Cond_rwlock_unlock(bsock->lock, logger);
 				return NULL;
 			}
+			MU_Cond_rwlock_unlock(bsock->lock, logger);
 			return bsock;
 		}
 		MU_Cond_rwlock_unlock(bsock->lock, logger);
@@ -559,10 +560,10 @@ int NU_Server_shutdown(NU_Server_t *server){
 	}
 	MU_Cond_rwlock_wrlock(server->lock, logger);
 	size_t i = 0;
-	for(;i < server->amount_of_connections; i++){
-		int successful = NU_Connection_disconnect(server->connections[i], logger);
+	for(;i < server->amount_of_sockets; i++){
+		int successful = NU_Bound_Socket_unbind(server->sockets[i]);
 		if(!successful){
-			MU_LOG_ERROR(logger, "NU_Server_shutdown->NU_Connection_shutdown: \"Was unable to fully shutdown a connection!\"\n");
+			MU_LOG_ERROR(logger, "NU_Server_shutdown->NU_Bound_Socket_unbind: \"Was unable to fully unbind a socket!\"\n");
 		}
 	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
@@ -574,29 +575,21 @@ int NU_Server_destroy(NU_Server_t *server){
 		MU_LOG_ERROR(logger, "NU_Server_destroy: Invalid Arguments=> \"Server: %s\"\n", server ? "OK!" : "NULL");
 		return 0;
 	}
-	int fully_destroyed = 1;
+	int is_shutdown = NU_Server_shutdown(server);
+	if(!is_shutdown){
+		MU_LOG_ERROR(logger, "NU_Server_destroy->NU_Server_shutdown: \"Was unable to shutdown server!\"\n");
+		return 0;
+	}
 	MU_Cond_rwlock_wrlock(server->lock, logger);
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		int successful = NU_Connection_destroy(server->connections[i], logger);
 		if(!successful){
-			fully_destroyed = 0;
 			MU_LOG_ERROR(logger, "NU_Server_destroy->NU_Connection_destroy: \"Was unable to fully destroy a connection!\"\n");
 		}
 	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
-	if(server->lock){
-		int successful = pthread_rwlock_destroy(server->lock);
-		if(!successful){
-			MU_LOG_ERROR(logger, "NU_Server_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(successful));
-			fully_destroyed = 0;
-		}
-		else{
-			// Note that the lock is only freed if it successfull deallocates it. If EBUSY ends up being returned, then it's only a memory leak and not
-			// undefined behavior.
-			free(server->lock);
-		}
-	}
+	MU_Cond_rwlock_destroy(server->lock, logger);
 	free(server->data);
-	return fully_destroyed;
+	return 1;
 }
