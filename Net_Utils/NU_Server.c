@@ -61,8 +61,8 @@ static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, un
 
 	error:
 		if(sockfd != -1){
-			int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
-			if(is_closed == -1){
+			int close_failed = TEMP_FAILURE_RETRY(close(sockfd));
+			if(close_failed){
 				MU_LOG_ERROR(logger, "NU_Bound_Socket_setup->close: \"%s\"\n", strerror(errno));
 			}
 		}
@@ -157,8 +157,8 @@ static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, siz
 
 static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 	if(!bsock) return 0;
-	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
-	if(is_closed == -1){
+	int close_failed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(close_failed){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy->close: \"%s\"\n", strerror(errno));
 	}
 	MU_Cond_rwlock_destroy(bsock->lock, logger);
@@ -181,8 +181,8 @@ static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock)
 			}
 		}
 	}
-	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
-	if(!is_closed){
+	int close_failed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(close_failed){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind->close: \"%s\"\n", strerror(errno));
 	}
 	MU_Cond_rwlock_unlock(bsock->lock, logger);
@@ -205,8 +205,8 @@ static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Sock
 			}
 		}
 	}
-	int is_closed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
-	if(!is_closed){
+	int close_failed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+	if(close_failed){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind_and_destroy->close: \"%s\"\n", strerror(errno));
 	}
 	MU_Cond_rwlock_unlock(bsock->lock, logger);
@@ -418,8 +418,8 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	if(!is_initialized){
 		MU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_init: \"Was unable to initialize a connection!\"\n");
-		int is_closed = TEMP_FAILURE_RETRY(close(sockfd));
-		if(!is_closed){
+		int close_failed = TEMP_FAILURE_RETRY(close(sockfd));
+		if(close_failed){
 			MU_LOG_ERROR(logger, "NU_Server_accept->close: \"%s\"\n", strerror(errno));
 		}
 		return NULL;
