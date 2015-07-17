@@ -1,6 +1,6 @@
 #include "MU_Logger.h"
 
-char *MU_Get_Timestamp(void){
+char *MU_get_timestamp(void){
 	const int buffer_size = 80;
 	time_t t = time(NULL);
 	struct tm *current_time = localtime(&t);
@@ -10,7 +10,7 @@ char *MU_Get_Timestamp(void){
 }
 
 /// Initialize logger.
-int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
+int MU_Logger_init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
 	if(!logger) return 0;
 	logger->file = fopen(filename, mode);
 	if(!logger->file) {
@@ -21,9 +21,8 @@ int MU_Logger_Init(MU_Logger_t *logger, const char *filename, const char *mode, 
 	return 1;
 }
 
-int MU_Logger_Destroy(MU_Logger_t *logger, unsigned int free_ptr){
+int MU_Logger_destroy(MU_Logger_t *logger){
 	if(!logger) return 0;
 	if(logger->file) fclose(logger->file);
-	if(free_ptr) free(logger);
 	return 1;
 }

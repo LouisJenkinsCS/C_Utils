@@ -51,6 +51,7 @@ int MU_Cond_rwlock_destroy(pthread_rwlock_t *lock, MU_Logger_t *logger){
       if(errcode){
          MU_LOG_ERROR(logger, "MU_Cond_rwlock_destroy->pthread_rwlock_destroy: \"%s\"\n", strerror(errcode));
       }
+      free(lock);
       return errcode ? 0 : 1;
    }
    return 1;

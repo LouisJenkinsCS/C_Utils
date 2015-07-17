@@ -33,7 +33,7 @@ int main(void){
   size_t bytes_sent;
   char *client_inquiry;
   logger = calloc(1, sizeof(MU_Logger_t));
-  MU_Logger_Init(logger, "NU_Server_File_Downloader.log", "w", MU_ALL);
+  MU_Logger_init(logger, "NU_Server_File_Downloader.log", "w", MU_ALL);
   server = NU_Server_create(queue_max, max_sockets, is_threaded);
   MU_ASSERT(server, logger, "Was unable to create server!\n");
   char ip_addr[INET_ADDRSTRLEN];
@@ -60,11 +60,15 @@ int main(void){
   char *header;
   asprintf(&header, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %zu\r\n\r\n", file_size);
   size_t sent = NU_Server_send(server, client, header, strlen(header), timeout);
+  free(header);
   MU_ASSERT(sent, logger, "Was unable to send header to client!\n");
   sent = NU_Server_send_file(server, client, file, buffer_size, timeout);
+  fclose(file);
   MU_ASSERT(sent, logger, "Was unable to send data to client!\n");
   MU_DEBUG("Sent %zu bytes to client!\n", sent);
   NU_Server_disconnect(server, client);
   NU_Server_destroy(server);
+  MU_Logger_destroy(logger);
+  free(logger);
   return EXIT_SUCCESS;
 }

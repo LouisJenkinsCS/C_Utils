@@ -10,12 +10,12 @@ __attribute__((constructor)) static void init_logger(void){
 		MU_DEBUG("init_logger->malloc: \"%s\"\n", strerror(errno));
 		return;
 	}
-	MU_Logger_Init(logger, "NU_Server.log", "w", MU_ALL);
+	MU_Logger_init(logger, "NU_Server.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_Destroy(logger, 1);
-	logger = NULL;
+	MU_Logger_destroy(logger);
+	free(logger);
 }
 
 /* Server-specific helper functions */
@@ -157,12 +157,17 @@ static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, siz
 
 static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 	if(!bsock) return 0;
-	int close_failed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
-	if(close_failed){
-		MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy->close: \"%s\"\n", strerror(errno));
+	int close_failed = 0;
+	if(bsock->is_bound){
+		close_failed = TEMP_FAILURE_RETRY(close(bsock->sockfd));
+		if(close_failed){
+			MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy->close: \"%s\"\n", strerror(errno));
+		}
 	}
 	MU_Cond_rwlock_destroy(bsock->lock, logger);
-	return is_closed != -1;
+	free(bsock);
+	MU_LOG_VERBOSE(logger, "Destroyed a bound socket!\n");
+	return close_failed == 0;
 }
 
 static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
@@ -171,10 +176,11 @@ static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock)
 		return 0;
 	}
 	MU_Cond_rwlock_wrlock(bsock->lock, logger);
+	unsigned int port = bsock->port;
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		NU_Connection_t *conn = server->connections[i];
-		if(NU_Connection_get_port(conn, logger) == bsock->port){
+		if(NU_Connection_get_port(conn, logger) == port && NU_Connection_in_use(conn, logger)){
 			int is_disconnected = NU_Connection_disconnect(conn, logger);
 			if(!is_disconnected){
 				MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind->NU_Connection_disconnect: \"Was unable to disconnect a connection!\"\n");
@@ -185,7 +191,10 @@ static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock)
 	if(close_failed){
 		MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind->close: \"%s\"\n", strerror(errno));
 	}
+	bsock->is_bound = 0;
 	MU_Cond_rwlock_unlock(bsock->lock, logger);
+	MU_LOG_INFO(logger, "Unbound from port %u!\n", port);
+	return 1;
 }
 
 static int NU_Bound_Socket_unbind_and_destroy(NU_Server_t *server, NU_Bound_Socket_t *bsock){
@@ -612,8 +621,17 @@ int NU_Server_destroy(NU_Server_t *server){
 			MU_LOG_ERROR(logger, "NU_Server_destroy->NU_Connection_destroy: \"Was unable to fully destroy a connection!\"\n");
 		}
 	}
+	for(i = 0;i < server->amount_of_sockets; i++){
+		int successful = NU_Bound_Socket_destroy(server->sockets[i]);
+		if(!successful){
+			MU_LOG_ERROR(logger, "NU_Server_destroy->NU_Bound_Socket_destroy: \"Was unable to fully destroy a bound socket!\"\n");
+		}
+	}
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	MU_Cond_rwlock_destroy(server->lock, logger);
 	free(server->data);
+	free(server->connections);
+	free(server->sockets);
+	free(server);
 	return 1;
 }

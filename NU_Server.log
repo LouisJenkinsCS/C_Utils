@@ -1,15 +1,15 @@
-07:30:09 PM: [INFO](./Net_Utils/NU_Server.c:324) Bound a socket to 10.0.2.15
+09:15:39 PM: [INFO](./Net_Utils/NU_Server.c:333) Bound a socket to 10.0.2.15
  on port 10000!
 
-07:30:09 PM: [INFO](./Net_Utils/NU_Server.c:397) 2.0.194.38 connected to port 10000
+09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:406) 2.0.134.180 connected to port 10000
 
-07:30:10 PM: [VERBOSE](./Net_Utils/NU_Server.c:439) Total Sent: 81, Buffer Size: 81
+09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:448) Total Sent: 81, Buffer Size: 81
 
-07:30:10 PM: [VERBOSE](./Net_Utils/NU_Server.c:500) Sent file of total size 4562 to 2.0.194.38!
+09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:509) Sent file of total size 4562 to 2.0.134.180!
 
-07:30:10 PM: [INFO](./Net_Utils/NU_Server.c:576) Disconnected from 2.0.194.38 on port 10000!
+09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:585) Disconnected from 2.0.134.180 on port 10000!
 
-07:30:10 PM: [ERROR](./Net_Utils/NU_Server.c:180) NU_Bound_Socket_unbind->NU_Connection_disconnect: "Was unable to disconnect a connection!"
+09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:196) Unbound from port 10000!
 
-07:30:10 PM: [ERROR](./Net_Utils/NU_Server.c:186) NU_Bound_Socket_unbind->close: "Success"
+09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:169) Destroyed a bound socket!
 
