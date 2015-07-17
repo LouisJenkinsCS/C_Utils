@@ -276,7 +276,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	}
 	i = 0;
 	for(;i < server->amount_of_connections; i++){
-		NU_Connection_t *conn = NU_Connection_create(NU_SERVER, init_locks, logger);
+		NU_Connection_t *conn = NU_Connection_create(init_locks, logger);
 		if(!conn){
 			MU_LOG_ASSERT(logger, "NU_Server_create->NU_Connection_create: \"Was unable to create connection #%zu!\"\n", ++i);
 			goto error;
@@ -409,7 +409,7 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	MU_Cond_rwlock_unlock(server->lock, logger);
 	MU_Cond_rwlock_wrlock(server->lock, logger);
 	// If the NULL is returned, then a connection could not be reused, hence we initialize a new one below.
-	conn = NU_Connection_create(NU_SERVER, server->is_threaded, logger);
+	conn = NU_Connection_create(server->is_threaded, logger);
 	if(!conn){
 		MU_LOG_ERROR(logger, "NU_Server_accept->NU_Connection_create: \"Was unable to create a connection!\"\n");
 		MU_Cond_rwlock_unlock(server->lock, logger);
@@ -438,9 +438,9 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 }
 
 size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
-	if(!server || !conn || conn->type != NU_SERVER){
-		MU_LOG_ERROR(logger, "NU_Server_send: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
-			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+	if(!server || !conn){
+		MU_LOG_ERROR(logger, "NU_Server_send: Invalid Arguments=> \"Server: %s;Connection: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL");
 		return 0;
 	}
 	MU_Cond_rwlock_rdlock(server->lock, logger);
@@ -455,9 +455,9 @@ size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *bu
 }
 
 size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
-	if(!server || !conn || conn->type != NU_SERVER){
-		MU_LOG_ERROR(logger, "NU_Server_receive: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
-			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+	if(!server || !conn){
+		MU_LOG_ERROR(logger, "NU_Server_receive: Invalid Arguments=> \"Server: %s;Connection: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL",);
 		return 0;
 	}
 	MU_Cond_rwlock_rdlock(server->lock, logger);
@@ -473,9 +473,9 @@ size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffe
 }
 
 size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	if(!server || !conn || !file || conn->type != NU_SERVER){
-		MU_LOG_ERROR(logger, "NU_Server_send_file: Invalid Arguments=> \"Server: %s;File: %s;Connection: %s;Connection-Type: %s\"\n",
-			server ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+	if(!server || !conn || !file){
+		MU_LOG_ERROR(logger, "NU_Server_send_file: Invalid Arguments=> \"Server: %s;File: %s;Connection: %s\"\n",
+			server ? "OK!" : "NULL", file ? "OK!" : "NULL", conn ? "OK!" : "NULL");
 		return 0;
 	}
 	const char *ip_addr = NU_Connection_get_ip_addr(conn, logger);
@@ -511,9 +511,9 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *fil
 }
 
 size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	if(!server || !conn || conn->type != NU_SERVER){
-		MU_LOG_ERROR(logger, "NU_Server_receive_to_file: Invalid Arguments=> \"Server: %s;Connection: %s;Connection-Type: %s\"\n",
-			server ? "OK!" : "NULL", conn ? "OK!" : "NULL", conn ? NU_Connection_Type_to_string(conn->type) : "NULL");
+	if(!server || !conn){
+		MU_LOG_ERROR(logger, "NU_Server_receive_to_file: Invalid Arguments=> \"Server: %s;Connection: %s\"\n",
+			server ? "OK!" : "NULL", conn ? "OK!" : "NULL");
 		return 0;
 	}
 	const char *ip_addr = NU_Connection_get_ip_addr(conn, logger);

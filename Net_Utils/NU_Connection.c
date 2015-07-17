@@ -21,24 +21,13 @@ static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t
 	return max_fd;
 }
 
-char *NU_Connection_Type_to_string(NU_Connection_Type_t type){
-	switch(type){
-	case NU_CLIENT: return "Client";
-	case NU_SERVER: return "Server";
-	case NU_HTTP: return "HTTP";
-	case NU_OTHER: return "Unknown";
-	default: return NULL;
-	}
-} 
-
 // Implement
-NU_Connection_t *NU_Connection_create(NU_Connection_Type_t type, unsigned char init_locks, MU_Logger_t *logger){
+NU_Connection_t *NU_Connection_create(unsigned char init_locks, MU_Logger_t *logger){
 	NU_Connection_t *conn = calloc(1, sizeof(NU_Connection_t));
 	if(!conn){
 		MU_LOG_ASSERT(logger, "NU_Connection_create->calloc: \"%s\"\n", strerror(errno));
 		return NULL;
 	}
-	conn->type = type;
 	if(init_locks){
 		conn->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!conn->lock){
@@ -250,8 +239,8 @@ char *NU_Connection_to_string(NU_Connection_t *conn, MU_Logger_t *logger){
 	}
 	MU_Cond_rwlock_rdlock(conn->lock, logger);
 	char *conn_str;
-	asprintf(&conn_str, "(sockfd: %d, port: %u, ip_addr: %s, type: %s, has_lock: %s, in_use: %s)",
-			conn->sockfd, conn->port, conn->ip_addr, NU_Connection_Type_to_string(conn->type), conn->lock ? "True" : "False", conn->in_use ? "True" : "False");
+	asprintf(&conn_str, "(sockfd: %d, port: %u, ip_addr: %s, has_lock: %s, in_use: %s)",
+			conn->sockfd, conn->port, conn->ip_addr, conn->lock ? "True" : "False", conn->in_use ? "True" : "False");
 	MU_Cond_rwlock_unlock(conn->lock, logger);
 	return conn_str;
 }
