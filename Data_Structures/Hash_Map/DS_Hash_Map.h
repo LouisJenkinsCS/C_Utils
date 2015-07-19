@@ -7,6 +7,8 @@ typedef struct {
 	DS_Hash_Map_Bucket_t **buckets;
 	/// The size of the hash map.
 	size_t size;
+	/// Maximum amount of buckets.
+	size_t amount_of_buckets;
 } DS_Hash_Map_t;
 
 typedef struct {
@@ -14,10 +16,11 @@ typedef struct {
 	char *key;
 	/// The value associated with each key.
 	void *value;
-	/// In case of collision, it will chain to the next.
+	/// Determines whether or not the bucket is in use, to allow for "caching".
 	volatile unsigned char in_use;
+	/// In case of collision, it will chain to the next. There is no limit.
 	DS_Hash_Map_Bucket_t *next;
-} DS_Hash_Map_Bucket_t;
+} DS_Bucket_t;
 
 /// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
 DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks);
@@ -32,7 +35,7 @@ void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
 void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
 
 /// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
-char *DS_Hash_Map_contains_value(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
+const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
 int DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
