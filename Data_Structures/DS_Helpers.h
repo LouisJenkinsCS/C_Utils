@@ -8,6 +8,6 @@ typedef void (*DS_general_cb)(void *);
 
 typedef int (*DS_comparator_cb)(const void *, const void *);
 
-typedef int (*DS_delete_cb)(void *);
+typedef void (*DS_delete_cb)(void *);
 
 #endif /* END DS_HELPERS_H */

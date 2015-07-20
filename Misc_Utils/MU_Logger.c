@@ -10,15 +10,25 @@ char *MU_get_timestamp(void){
 }
 
 /// Initialize logger.
-int MU_Logger_init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level){
-	if(!logger) return 0;
+MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_t level){
+	MU_Logger_t *logger = malloc(sizeof(MU_Logger_t));
+	if(!logger){
+		MU_DEBUG("MU_Logger_create->malloc: \"%s\"\n", strerror(errno));
+		goto error;
+	}
 	logger->file = fopen(filename, mode);
 	if(!logger->file) {
-		MU_DEBUG("Unable to create logfile!\n");
-		return 0;
+		MU_DEBUG("MU_Logger_create->fopen: \"%s\"\n", strerror(errno));
+		goto error;
 	}
 	logger->level = level;
-	return 1;
+	return logger;
+
+	error:
+		if(logger){
+			free(logger);
+		}
+		return NULL;
 }
 
 int MU_Logger_destroy(MU_Logger_t *logger){

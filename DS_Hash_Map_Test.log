@@ -1,0 +1,29 @@
+01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:28) Logging all Key-Value pairs!
+
+01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:39) 
+{
+ Hello World : Goodbye World,
+How are you : It was nice knowing you,
+Doing today? : In my short time on Earth,
+Fine I hope! : But it is time for me to go!,
+Because it is a good day : My people need me,
+To be alive! : And I them!,
+}
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:40) Creating Hash Map...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:43) Adding all key-value pairs to hash map...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:48) Retrieivng all values from keys from hash map...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:55) Removing Key-Value pair ("Fine I hope!" : "But it is time for me to go!")...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:57) Testing for removal of Key-Value pair...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:60) Testing for adding duplicate key...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:63) Testing retrieval of key by value...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:65) Destroy Hash Map...
+
+01:36:31 PM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:67) Success!
+

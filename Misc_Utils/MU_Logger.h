@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include <time.h>
 #include <assert.h>
 
@@ -162,7 +164,7 @@ typedef struct {
  * @param level The minimum level of logging to be processed. Anything below it will be ignored.
  * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
  */
-int MU_Logger_init(MU_Logger_t *logger, const char *filename, const char *mode, MU_Logger_Level_t level);
+MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_t level);
 
 /**
  * @brief Destroys the logger passed to it, freeing it if flagged.

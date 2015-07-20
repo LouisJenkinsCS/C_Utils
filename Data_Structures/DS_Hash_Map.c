@@ -1,16 +1,13 @@
 #include <DS_Hash_Map.h>
 
+static MU_Logger_t *logger = NULL;
+
 __attribute__((constructor)) static void init_logger(void){
-	logger = malloc(sizeof(MU_Logger_t));
-	if(!logger){
-		MU_DEBUG("Unable to allocate memory for DS_Hash_Map's logger!!!\n");
-		return;
-	}
-	MU_Logger_Init(logger, "DS_Hash_Map.log", "w", MU_ALL);
+	logger = MU_Logger_create("DS_Hash_Map.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_Destroy(logger);
+	MU_Logger_destroy(logger);
 	free(logger);
 }
 
@@ -28,34 +25,26 @@ static uint32_t hash_key(const char *key){
 	return hash;
 }
 
-/// Non threaded version of clearing a map.
-static int clear_map(DS_Hash_Map_t *map, DS_delete_cb del){
-	size_t i = 0, total_buckets = map->amount_of_buckets;
-	for(; i < total_buckets; i++){
-		for_each_bucket(map->buckets[i], del, 1);
-	}
-	map->size = 0;
-	return 1;
-}
-
 static void delete_bucket(DS_Bucket_t *bucket, DS_delete_cb del){
-	del(curr_bucket->value);
-	free(curr_bucket);
+	if(del){
+		del(bucket->value);
+	}
+	free(bucket);
 }
 
 static void delete_all_buckets(DS_Bucket_t **buckets, size_t amount_of_buckets, DS_delete_cb del){
-	size_t i = 0, total_buckets = map->amount_of_buckets;
+	size_t i = 0;
 	DS_Bucket_t *curr_bucket = NULL, *head_bucket = NULL;
 	for(; i < amount_of_buckets; i++){
-		if(!(head_bucket = curr_bucket = map->buckets[i])){
+		if(!(head_bucket = curr_bucket = buckets[i])){
 			continue;
 		}
-		while(head_bucket = curr_bucket->next){
-			delete_bucket(bucket, del);
+		while((head_bucket = curr_bucket->next)){
+			delete_bucket(curr_bucket, del);
 			curr_bucket = head_bucket;
 		}
 		if(curr_bucket){
-			delete_bucket(bucket, del);
+			delete_bucket(curr_bucket, del);
 		}
 	}
 }
@@ -68,23 +57,33 @@ static void for_each_bucket(DS_Bucket_t *bucket, DS_general_cb cb, unsigned char
 		if(done_with_bucket){
 			bucket->in_use = 0;
 		}
-	} while(bucket = bucket->next);
+	} while((bucket = bucket->next));
+}
+
+/// Non threaded version of clearing a map.
+static int clear_map(DS_Hash_Map_t *map, DS_delete_cb del){
+	size_t i = 0, total_buckets = map->amount_of_buckets;
+	for(; i < total_buckets; i++){
+		for_each_bucket(map->buckets[i], del, 1);
+	}
+	map->size = 0;
+	return 1;
 }
 
 static void *get_value_from_bucket(DS_Bucket_t *bucket, const char *key){
 	if(!bucket) return NULL;
 	do {
 		if(!bucket->in_use) continue;
-		if(strcmp(bucket->key, key) != 0){
+		if(strcmp(bucket->key, key) == 0){
 			break;
 		}
-	} while((bucket = bucket->next);
-	MU_DEBUG("Search Key: \"%s\" ; Found Key: \"%s\" ; Bucket In Use: \"%s\"\n", key, bucket ? bucket->key : "NULL", bucket ? (bucket->in_use ? "TRUE" : "FALSE") : "FALSE");
-	return bucket ? bucket->value ? NULL;
+	} while((bucket = bucket->next));
+	MU_LOG_VERBOSE(logger, "Search Key: \"%s\" ; Found Key: \"%s\" ; Bucket In Use: \"%s\"\n", key, bucket ? bucket->key : "NULL", bucket ? (bucket->in_use ? "TRUE" : "FALSE") : "NULL");
+	return bucket ? bucket->value : NULL;
 }
 
 static size_t get_bucket_index(const char *key, size_t amount_of_buckets){
-	return hash_key(key) % amount_of_buckets;
+	return hash_key(key) % amount_of_buckets;;
 }
 
 static int bucket_is_valid(DS_Bucket_t *bucket){
@@ -95,18 +94,18 @@ static DS_Bucket_t *get_bucket(DS_Bucket_t **buckets, size_t amount_of_buckets, 
 	return buckets[get_bucket_index(key, amount_of_buckets)];
 }
 
-static const char *get_key_if_match(DS_Bucket_t *bucket, const void *value, DS_comparator_cb cmp){
+static char *get_key_if_match(DS_Bucket_t *bucket, const void *value, DS_comparator_cb cmp){
 	if(!bucket) return NULL;
 	do {
 		if(!bucket->in_use) continue;
 		if(cmp ? cmp(bucket->value, value) == 0 : bucket->value == value){
 			break;
 		}
-	} while(bucket = bucket->next);
+	} while((bucket = bucket->next));
 	return bucket ? bucket->key : NULL;
 }
 
-DS_Bucket_t *create_bucket(const char *key, void *value, DS_Bucket_t *next){
+static DS_Bucket_t *create_bucket(char *key, void *value, DS_Bucket_t *next){
 	DS_Bucket_t *bucket = malloc(sizeof(DS_Bucket_t));
 	if(!bucket){
 		MU_LOG_ASSERT(logger, "create_bucket->malloc: \"%s\"\n", strerror(errno));
@@ -130,6 +129,7 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
 		MU_LOG_ASSERT(logger, "DS_Hash_Map_create->calloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
+	map->amount_of_buckets = amount_of_buckets;
 	map->size = 0;
 	return map;
 
@@ -145,13 +145,11 @@ int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 	size_t index = get_bucket_index(key, map->amount_of_buckets);
 	DS_Bucket_t *bucket = map->buckets[index];
 	if(!bucket){
-		bucket = map->buckets[index]  = calloc(1, sizeof(DS_Bucket_t));
+		bucket = (map->buckets[index] = create_bucket(key, value, NULL));
 		if(!bucket){
-			MU_LOG_ASSERT(logger, "DS_Hash_Map_add->calloc: \"%s\"\n", strerror(errno));
+			MU_LOG_ERROR(logger, "DS_Hash_Map_add->create_bucket: \"Was unable to create a bucket!\"\n");
 			return 0;
 		}
-		bucket->value = value;
-		bucket->key = key;
 		bucket->in_use = 1;
 		map->size++;
 		return 1;
@@ -167,8 +165,12 @@ int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 			bucket->in_use = 1;
 			map->size++;
 			break;
-		} else continue;
-	} while(bucket = bucket->next);
+		} else if(!bucket->next){
+			bucket->next = create_bucket(key, value, NULL);
+			bucket->next->in_use = 1;
+			break;
+		}
+	} while((bucket = bucket->next));
 	return 1;
 }
 
@@ -202,7 +204,7 @@ const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_compa
 	// O(N) complexity.
 	for(; i < total_buckets; i++){
 		bucket = map->buckets[i];
-		if(key = get_key_if_match(bucket, value, cmp)){
+		if((key = get_key_if_match(bucket, value, cmp))){
 			break;
 		}
 	}

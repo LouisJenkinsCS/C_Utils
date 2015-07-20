@@ -1,17 +1,9 @@
 #include <DS_Helpers.h>
 #include <MU_Logger.h>
+#include <string.h>
 #include <MU_Cond_Locks.h>
 
-typedef struct {
-	/// Array of all bucket head nodes.
-	DS_Hash_Map_Bucket_t **buckets;
-	/// The size of the hash map.
-	size_t size;
-	/// Maximum amount of buckets.
-	size_t amount_of_buckets;
-} DS_Hash_Map_t;
-
-typedef struct {
+typedef struct DS_Bucket_t {
 	/// The key associated with each bucket.
 	char *key;
 	/// The value associated with each key.
@@ -19,14 +11,23 @@ typedef struct {
 	/// Determines whether or not the bucket is in use, to allow for "caching".
 	volatile unsigned char in_use;
 	/// In case of collision, it will chain to the next. There is no limit.
-	DS_Hash_Map_Bucket_t *next;
+	struct DS_Bucket_t *next;
 } DS_Bucket_t;
+
+typedef struct {
+	/// Array of all bucket head nodes.
+	DS_Bucket_t **buckets;
+	/// The size of the hash map.
+	size_t size;
+	/// Maximum amount of buckets.
+	size_t amount_of_buckets;
+} DS_Hash_Map_t;
 
 /// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
 DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks);
 
 /// Add a key-value pair to a hash map, and if the comparator is not NULL, it will be a hash-set operation.
-int DS_Hash_Map_add(DS_Hash_Map_t *map, const char *key, void *value);
+int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
 
 /// Obtains the value from the key provided.
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
