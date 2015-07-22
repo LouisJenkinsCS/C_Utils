@@ -1,0 +1,192 @@
+YAY! It works! Finally, I figured out a somewhat decent, although not quite elegant solution! I pass an array (allocated on stack, so it gets cleaned up at least) to the validating function to fill out to test for which pass and which fail. Although note to self that I need to work more on it as it looks ugly, but overall, decent. 
+
+# --------------
+# Please enter the commit message for your changes. Everything below
+# this paragraph is ignored, and an empty message aborts the commit.
+# Just close the window to accept your message.
+warning: CRLF will be replaced by LF in Misc_Utils/MU_Arg_Check.c.
+The file will have its original line endings in your working directory.
+warning: CRLF will be replaced by LF in Misc_Utils/MU_Arg_Check.h.
+The file will have its original line endings in your working directory.
+diff --git a/DS_Hash_Map.log b/DS_Hash_Map.log
+index 740adc4..106a17c 100644
+--- a/DS_Hash_Map.log
++++ b/DS_Hash_Map.log
+@@ -1,14 +1,2 @@
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "To be alive!" ; Found Key: "To be alive!" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Because it is a good day" ; Found Key: "Because it is a good day" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "How are you" ; Found Key: "How are you" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
+-
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
++02:48:37 AM: [ERROR](./Data_Structures/DS_Hash_Map.c:195) DS_Hash_Map_get: Invalid Arguments=> ";map: TRUE;key: FALSE!"
+ 
+diff --git a/DS_Hash_Map_Test.log b/DS_Hash_Map_Test.log
+index 16ddf76..6b6e98a 100644
+--- a/DS_Hash_Map_Test.log
++++ b/DS_Hash_Map_Test.log
+@@ -1,6 +1,6 @@
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:28) Logging all Key-Value pairs!
++02:48:37 AM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:28) Logging all Key-Value pairs!
+ 
+-12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:39) 
++02:48:37 AM: [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:39) 
+ {
+  Hello World : Goodbye World,
+ How are you : It was nice knowing you,
+@@ -9,21 +9,10 @@ Fine I hope! : But it is time for me to go!,
+ Because it is a good day : My people need me,
+ To be alive! : And I them!,
+ }
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:40) Creating Hash Map...
++02:48:37 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:40) Creating Hash Map...
+ 
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:43) Adding all key-value pairs to hash map...
++02:48:37 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:43) Adding all key-value pairs to hash map...
+ 
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:48) Retrieivng all values from keys from hash map...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:55) Removing Key-Value pair ("Fine I hope!" : "But it is time for me to go!")...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:57) Testing for removal of Key-Value pair...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:60) Testing for adding duplicate key...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:63) Testing retrieval of key by value...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:65) Destroy Hash Map...
+-
+-12:38:29 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:67) Success!
++02:48:37 AM: [INFO](./Data_Structures/DS_Hash_Map_Test.c:48) Retrieivng all values from keys from hash map...
+ 
++02:48:37 AM: [ASSERT](./Data_Structures/DS_Hash_Map_Test.c:53) Condition: "value_retrieved && strcmp(value_retrieved, values[i]) == 0"; Message: "DS_Hash_Map_get: \"Was unable to retrieve the right value from key: \"To be alive!\";Expected: \"And I them!\", but received \"(null)\"!\"\n"
+diff --git a/MU_Arg_Check.o b/MU_Arg_Check.o
+deleted file mode 100644
+index 04d8ca4..0000000
+Binary files a/MU_Arg_Check.o and /dev/null differ
+diff --git a/MU_Cond_Locks.o b/MU_Cond_Locks.o
+deleted file mode 100644
+index d6bc08c..0000000
+Binary files a/MU_Cond_Locks.o and /dev/null differ
+diff --git a/Misc_Utils/MU_Arg_Check.c b/Misc_Utils/MU_Arg_Check.c
+index 155a516..5d12345 100644
+--- a/Misc_Utils/MU_Arg_Check.c
++++ b/Misc_Utils/MU_Arg_Check.c
+@@ -1,27 +1,20 @@
+ #include <MU_Arg_Check.h>
+ 
+-void MU_Arg_append_to_string(bool cond, char *cond_str, char **string_ptr){
+-	char *tmp_str;
+-	asprintf(&tmp_str, ";%s: %s", cond_str, MU_ARG_EVAL(cond));
+-	char *old_string_ptr = *string_ptr;
+-	asprintf(string_ptr, "%s%s", *string_ptr, tmp_str);
+-	free(old_string_ptr);
+-}
+-
+-bool MU_Arg_evaluate_arguments(int num_args, ...){
++bool MU_Arg_evaluate_arguments(int num_args, bool *arr, ...){
+ 	int i = 0;
+ 	va_list list;
+-	va_start(list, num_args);
++	va_start(list, arr);
+ 	bool result = true;
+ 	for(; i < num_args; i++){
+-		if(!va_arg(list, int)){
++		bool is_valid = va_arg(list, int);
++		arr[i] = is_valid;
++		if(!is_valid){
+ 			result = false;
+-			break;
+ 		}
+ 	}
+ 	return result;
+ }
+ 
+-bool MU_Arg_to_bool(void *arg){
+-	return arg;
++char *MU_Arg_evaluate_boolean(bool arg){
++	return arg ? "TRUE" : "FALSE";
+ }
+\ No newline at end of file
+diff --git a/Misc_Utils/MU_Arg_Check.h b/Misc_Utils/MU_Arg_Check.h
+index a487937..7c3df53 100644
+--- a/Misc_Utils/MU_Arg_Check.h
++++ b/Misc_Utils/MU_Arg_Check.h
+@@ -8,23 +8,25 @@
+ /// Genius implementation someone else made to find the amount of variadic functions.
+ #define MU_ARG_COUNT(...) (sizeof((bool[]){__VA_ARGS__})/sizeof(bool))
+ 
+-#define MU_ARG_EVAL(arg) (arg ? "TRUE" : "FALSE")
+-
+ #define MU_ARG_TO_STRING(arg)("" #arg "")
+ 
+ #define MU_ARG_CHECK(logger, retval, ...) do { \
+ 	int num_args = MU_ARG_COUNT(__VA_ARGS__); \
+-	if(!MU_Arg_evaluate_arguments(num_args, __VA_ARGS__)) break; \
++	bool valid_args[8]; \
++	if(MU_Arg_evaluate_arguments(num_args, valid_args, __VA_ARGS__)) break; \
+ 	char *arg_str = calloc(1, 512); \
+ 	sprintf(arg_str, "%s: Invalid Argument%s=> \"", __FUNCTION__, num_args > 1 ? "s" : ""); \
+-	if(num_args == 1) MU_ARG_CHECK_1(arg_str, __VA_ARGS__); \
+-	else if(num_args == 2) MU_ARG_CHECK_2(arg_str, __VA_ARGS__); \
+-	else if(num_args == 3) MU_ARG_CHECK_3(arg_str, __VA_ARGS__); \
+-	else if(num_args == 4) MU_ARG_CHECK_4(arg_str, __VA_ARGS__); \
+-	else if(num_args == 5) MU_ARG_CHECK_5(arg_str, __VA_ARGS__); \
+-	else if(num_args == 6) MU_ARG_CHECK_6(arg_str, __VA_ARGS__); \
+-	else if(num_args == 7) MU_ARG_CHECK_7(arg_str, __VA_ARGS__); \
+-	else if(num_args == 8) MU_ARG_CHECK_8(arg_str, __VA_ARGS__); \
++	switch(num_args){ \
++		case 1: MU_ARG_CHECK_1(arg_str, valid_args, __VA_ARGS__); break; \
++		case 2: MU_ARG_CHECK_2(arg_str, valid_args, __VA_ARGS__); break; \
++		case 3: MU_ARG_CHECK_3(arg_str, valid_args, __VA_ARGS__); break; \
++		case 4: MU_ARG_CHECK_4(arg_str, valid_args, __VA_ARGS__); break; \
++		case 5: MU_ARG_CHECK_5(arg_str, valid_args, __VA_ARGS__); break; \
++		case 6: MU_ARG_CHECK_6(arg_str, valid_args, __VA_ARGS__); break; \
++		case 7: MU_ARG_CHECK_7(arg_str, valid_args, __VA_ARGS__); break; \
++		case 8: MU_ARG_CHECK_8(arg_str, valid_args, __VA_ARGS__); break; \
++		default: assert(0); \
++	} \
+ 	sprintf(arg_str, "%s!\"\n", arg_str); \
+ 	MU_LOG_ERROR(logger, "%s", arg_str); \
+ 	free(arg_str); \
+@@ -32,20 +34,24 @@
+ } while(0)
+ 
+ 
+-#define MU_ARG_CHECK_8(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_7(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_8(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[7])); MU_ARG_CHECK_7(string_ptr, valid_args, __VA_ARGS__)
++
++#define MU_ARG_CHECK_7(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[6])); MU_ARG_CHECK_6(string_ptr, valid_args,  __VA_ARGS__)
++
++#define MU_ARG_CHECK_6(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[5])); MU_ARG_CHECK_5(string_ptr, valid_args,  __VA_ARGS__)
+ 
+-#define MU_ARG_CHECK_7(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_6(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_5(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[4])); MU_ARG_CHECK_4(string_ptr, valid_args,  __VA_ARGS__)
+ 
+-#define MU_ARG_CHECK_6(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_5(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_4(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[3])); MU_ARG_CHECK_3(string_ptr, valid_args,  __VA_ARGS__)
+ 
+-#define MU_ARG_CHECK_5(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_4(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_3(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[2])); MU_ARG_CHECK_2(string_ptr, valid_args,  __VA_ARGS__)
+ 
+-#define MU_ARG_CHECK_4(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_3(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_2(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[1])); MU_ARG_CHECK_1(string_ptr, valid_args,  __VA_ARGS__)
+ 
+-#define MU_ARG_CHECK_3(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_2(string_ptr, __VA_ARGS__)
++#define MU_ARG_CHECK_1(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s;%s: %s", string_ptr,  MU_ARG_TO_STRING(arg), MU_Arg_evaluate_boolean(valid_args[0]));
+ 
+-#define MU_ARG_CHECK_2(string_ptr, arg, ...) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg)); MU_ARG_CHECK_1(string_ptr, __VA_ARGS__)
++bool MU_Arg_evaluate_arguments(int num_args, bool *arr, ...);
+ 
+-#define MU_ARG_CHECK_1(string_ptr, arg) sprintf(string_ptr, "%s;%s: %s", *string_ptr,  MU_ARG_TO_STRING(arg), MU_ARG_EVAL(arg));
++char *MU_Arg_evaluate_boolean(bool arg);
+ 
+ #endif /* endif MU_ARG_CHECK_H */
+\ No newline at end of file
