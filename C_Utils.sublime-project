@@ -1,0 +1,24 @@
+{
+	"SublimeLinter":
+	{
+		"linters":
+		{
+			"clang":
+			{
+				"extra_flags": "-Wall",
+				"include_dirs":
+				[
+					"${project_folder}",
+					"${project_folder}/Misc_Utils",
+					"${project_folder}/Data_Structures"
+				]
+			}
+		}
+	},
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	]
+}

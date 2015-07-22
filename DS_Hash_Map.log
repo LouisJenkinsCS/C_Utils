@@ -1,14 +1,14 @@
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "To be alive!" ; Found Key: "To be alive!" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "To be alive!" ; Found Key: "To be alive!" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Because it is a good day" ; Found Key: "Because it is a good day" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Because it is a good day" ; Found Key: "Because it is a good day" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "How are you" ; Found Key: "How are you" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "How are you" ; Found Key: "How are you" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Fine I hope!" ; Found Key: "Fine I hope!" ; Bucket In Use: "TRUE"
 
-01:36:31 PM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
+12:38:29 AM: [VERBOSE](./Data_Structures/DS_Hash_Map.c:81) Search Key: "Doing today?" ; Found Key: "Doing today?" ; Bucket In Use: "TRUE"
 

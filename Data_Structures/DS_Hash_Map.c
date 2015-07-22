@@ -1,4 +1,4 @@
-#include <DS_Hash_Map.h>
+#include "DS_Hash_Map.h"
 
 static MU_Logger_t *logger = NULL;
 
@@ -119,22 +119,34 @@ static DS_Bucket_t *create_bucket(char *key, void *value, DS_Bucket_t *next){
 
 /// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
 DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks){
-	DS_Hash_Map_t *map = malloc(sizeof(DS_Hash_Map_t));
+	DS_Hash_Map_t *map = calloc(1, sizeof(DS_Hash_Map_t));
 	if(!map){
 		MU_LOG_ASSERT(logger, "DS_Hash_Map_create->malloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	map->buckets = calloc(amount_of_buckets, sizeof(DS_Bucket_t *));
+	map->amount_of_buckets = amount_of_buckets ? amount_of_buckets : 1;
+	map->buckets = calloc(map->amount_of_buckets, sizeof(DS_Bucket_t *));
 	if(!map->buckets){
 		MU_LOG_ASSERT(logger, "DS_Hash_Map_create->calloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
-	map->amount_of_buckets = amount_of_buckets;
-	map->size = 0;
+	if(init_locks){
+		map->lock = malloc(sizeof(pthread_rwlock_t));
+		if(!map->lock){
+			MU_LOG_ASSERT(logger, "DS_Hash_Map_create->malloc: \"%s\"\n", strerror(errno));
+			goto error;
+		}
+	}
+	int is_initialized = MU_Cond_rwlock_init(map->lock, NULL, logger);
+	if(!is_initialized){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"\n");
+		goto error;
+	}
 	return map;
 
 	error:
 		if(map){
+			MU_Cond_rwlock_destroy(map->lock, logger);
 			free(map);
 		}
 		return NULL;
@@ -142,6 +154,10 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
 
 /// Add a key-value pair to a hash map.
 int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
+	if(!map || !key){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_add: Invalid Arguments=> \"Hash Map: %s;Key: %s\"\n", map ? "OK!" : "NULL", key ? "OK!" : "NULL");
+		return 0;
+	}
 	size_t index = get_bucket_index(key, map->amount_of_buckets);
 	DS_Bucket_t *bucket = map->buckets[index];
 	if(!bucket){
@@ -176,6 +192,7 @@ int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 
 /// Obtains the value from the key provided.
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key){
+	MU_ARG_CHECK(logger, NULL, map, key);
 	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, key);
 	if(!bucket_is_valid(bucket)){
 		return NULL;
@@ -200,10 +217,9 @@ void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del){
 const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp){
 	size_t i = 0, total_buckets = map->amount_of_buckets;
 	char *key = NULL;
-	DS_Bucket_t *bucket = NULL;
 	// O(N) complexity.
 	for(; i < total_buckets; i++){
-		bucket = map->buckets[i];
+		DS_Bucket_t *bucket = map->buckets[i];
 		if((key = get_key_if_match(bucket, value, cmp))){
 			break;
 		}

@@ -2,7 +2,14 @@
 #define DS_HELPERS_H
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
+#include <string.h>
+#include <MU_Logger.h>
+#include <MU_Cond_Locks.h>
+#include <MU_Arg_Check.h>
 
 typedef void (*DS_general_cb)(void *);
 

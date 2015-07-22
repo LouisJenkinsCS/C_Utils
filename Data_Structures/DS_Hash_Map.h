@@ -1,7 +1,4 @@
 #include <DS_Helpers.h>
-#include <MU_Logger.h>
-#include <string.h>
-#include <MU_Cond_Locks.h>
 
 typedef struct DS_Bucket_t {
 	/// The key associated with each bucket.
@@ -21,6 +18,8 @@ typedef struct {
 	size_t size;
 	/// Maximum amount of buckets.
 	size_t amount_of_buckets;
+	/// RWLock to enforce thread-safety.
+	pthread_rwlock_t *lock;
 } DS_Hash_Map_t;
 
 /// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
