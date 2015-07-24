@@ -248,5 +248,6 @@ size_t DS_Hash_Map_size(DS_Hash_Map_t *map){
 
 int DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del){
 	delete_all_buckets(map->buckets, map->amount_of_buckets, del);
+	free(map);
 	return 1;
 }
