@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
@@ -42,7 +43,17 @@ typedef enum {
 	MU_ERROR,
 	/// Does not display any Warnings, Errors, or even Assertions.
 	MU_NONE
-} MU_Logger_Level_t;
+} MU_Logger_Level_e;
+
+typedef struct {
+	char *all_formatter;
+	char *info_formatter;
+	char *custom_formatter;
+	char *warning_formatter;
+	char *error_formatter;
+	char *assert_formatter;
+	char *default_formatter;
+} MU_Logger_Formatter_t;
 
 /**
  * @brief Logger utility to log various types of messages according to different MU_Logger_Level_t levels.
@@ -58,8 +69,10 @@ typedef enum {
 typedef struct {
 	/// The log file to write to.
 	FILE *file;
+	/// The formatter for log strings.
+	MU_Logger_Formatter_t *logger;
 	/// The level determining what messages will be printed.
-	MU_Logger_Level_t level;
+	MU_Logger_Level_e level;
 } MU_Logger_t;
 
 #ifdef NDEBUG
@@ -69,7 +82,7 @@ typedef struct {
 /// Prints a debug message, along with it's timestamp, file and line of code it's on.
 #define MU_DEBUG(message, ...) do { \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(stderr, "%s: [DEBUG]: " message "\n", timestamp, ##__VA_ARGS__); \
+	fprintf(stderr, "%s: [DEBUG]: %s: " message "\n", timestamp, __FUNCTION__, ##__VA_ARGS__); \
 	free(timestamp); \
 } while(0)
 #endif
@@ -79,7 +92,7 @@ typedef struct {
 		if(!logger || !logger->file || logger->level > MU_ERROR) assert(condition); \
 		char *timestamp = MU_get_timestamp(); \
 		MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
-		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+		fprintf(logger->file, "%s: [ASSERT](%s:%d) %s: Condition: \"" #condition "\";Message: " #message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \
 		exit(EXIT_FAILURE); \
@@ -91,7 +104,7 @@ typedef struct {
 		if(!logger || !logger->file || logger->level > MU_ERROR) return retval; \
 		char *timestamp = MU_get_timestamp(); \
 		MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
-		fprintf(logger->file, "%s: [ASSERT](%s:%d) Condition: \"" #condition "\"; Message: " #message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+		fprintf(logger->file, "%s: [ASSERT](%s:%d) %s: Condition: \"" #condition "\"; Message: " #message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 		fflush(logger->file); \
 		free(timestamp); \
 		return retval; \
@@ -102,7 +115,7 @@ typedef struct {
 	if(!logger || !logger->file || logger->level > MU_ERROR) break; \
 	char *timestamp = MU_get_timestamp(); \
 	MU_DEBUG("Assertion Failed!Message: \"" message "\"\n", ##__VA_ARGS__); \
-	fprintf(logger->file, "%s: [ASSERT](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [ASSERT](%s:%d) %s: " message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
@@ -110,7 +123,7 @@ typedef struct {
 #define MU_LOG_ERROR(logger, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_ERROR) break; \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(logger->file, "%s: [ERROR](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [ERROR](%s:%d) %s: " message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0) 
@@ -118,7 +131,7 @@ typedef struct {
 #define MU_LOG_WARNING(logger, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_WARNING) break; \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(logger->file, "%s: [WARNING](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [WARNING](%s:%d) %S: " message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
@@ -126,7 +139,7 @@ typedef struct {
 #define MU_LOG_CUSTOM(logger, prefix, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_CUSTOM) break; \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(logger->file, "%s: [%s]: " message "\n", timestamp, prefix, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [%s]: %s" message "\n", timestamp, prefix, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
@@ -134,7 +147,7 @@ typedef struct {
 #define MU_LOG_INFO(logger, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_INFO) break; \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(logger->file, "%s: [INFO](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [INFO](%s:%d) %s: " message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
@@ -143,7 +156,7 @@ typedef struct {
 #define MU_LOG_VERBOSE(logger, message, ...) do { \
 	if(!logger || !logger->file || logger->level > MU_ALL) break; \
 	char *timestamp = MU_get_timestamp(); \
-	fprintf(logger->file, "%s: [VERBOSE](%s:%d) " message "\n", timestamp, __FILE__, __LINE__, ##__VA_ARGS__); \
+	fprintf(logger->file, "%s: [VERBOSE](%s:%d) %s: " message "\n", timestamp, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); \
 	fflush(logger->file); \
 	free(timestamp); \
 } while(0)
@@ -164,7 +177,7 @@ typedef struct {
  * @param level The minimum level of logging to be processed. Anything below it will be ignored.
  * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
  */
-MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_t level);
+MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_e level);
 
 /**
  * @brief Destroys the logger passed to it, freeing it if flagged.

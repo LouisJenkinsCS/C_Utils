@@ -1,31 +1,28 @@
 CC=gcc
-CFLAGS=-c -g -D_GNU_SOURCE -Wall
-LIBS=-pthread
-OBJS=MU_Cond_Locks.o MU_Arg_Check.o DS_Hash_Map.o DS_Hash_Map_Test.o MU_Logger.o
+PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
+CFLAGS=-g -D_GNU_SOURCE -Wall
+MP=./Misc_Utils/
+DSP=./Data_Structures/
+LDFLAGS=-pthread
+FLAGS=$(CFLAGS) $(LDFLAGS)
+SOURCES=$(MP)MU_Logger.c $(MP)MU_Arg_Check.c $(MP)MU_Cond_Locks.c $(DSP)DS_Hash_Map.c $(DSP)DS_Hash_Map_Test.c
+OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=DS_Hash_Map_Test
-DSPATH=./Data_Structures/
-MUPATH=./Misc_Utils/
-DEPS=-I$(MUPATH) -I$(DSPATH)
+DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
+VPATH=$(MP) $(DSP)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) $(LIBS) $(OBJS) -o $(TARGET)
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(DEPS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
-MU_Logger.o: $(MUPATH)MU_Logger.c
-	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)MU_Logger.c
+%.o: %.c
+	$(CC) $(CFLAGS) $(DEPS) -c $< -o $@
 
-MU_Cond_Locks.o: $(MUPATH)MU_Cond_Locks.c
-	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)MU_Cond_Locks.c
+.PHONY: depend clean
 
-MU_Arg_Check.o: $(MUPATH)MU_Arg_Check.c
-	$(CC) $(CFLAGS) $(DEPS) $(MUPATH)MU_Arg_Check.c
-
-DS_Hash_Map.o: $(DSPATH)DS_Hash_Map.c
-	$(CC) $(CFLAGS) $(DEPS) $(DSPATH)DS_Hash_Map.c
-
-DS_Hash_Map_Test.o: $(DSPATH)/Tests/DS_Hash_Map_Test.c
-	$(CC) $(CFLAGS) $(DEPS) $(DSPATH)DS_Hash_Map_Test.c
+depend: $(SOURCES)
+	makedepend $(DEPS) $^
 
 clean: 
 	$(RM) $(TARGET) *.o *~
