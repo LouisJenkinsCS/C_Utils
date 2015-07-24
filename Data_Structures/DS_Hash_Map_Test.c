@@ -8,6 +8,7 @@ const int synchronized = 0;
 
 int main(void){
 	logger = MU_Logger_create("DS_Hash_Map_Test.log", "w", MU_ALL);
+	assert(logger);
 	char *keys[] = {
 		"Hello World",
 		"How are you",
