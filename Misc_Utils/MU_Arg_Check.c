@@ -1,11 +1,11 @@
 #include <MU_Arg_Check.h>
 
 bool MU_Arg_evaluate_arguments(int num_args, bool *arr, ...){
-	int i = 0;
+	int i = num_args - 1;
 	va_list list;
 	va_start(list, arr);
 	bool result = true;
-	for(; i < num_args; i++){
+	for(; i >= 0; i--){
 		bool is_valid = va_arg(list, int);
 		arr[i] = is_valid;
 		if(!is_valid){

@@ -28,7 +28,7 @@ int main(void){
 	int i = 0;
 	MU_LOG_VERBOSE(logger, "Logging all Key-Value pairs!");
 	char *all_pairs, *old_str;
-	asprintf(&all_pairs, "\n{ \n");
+	asprintf(&all_pairs, "{ \n");
 	for(; i < 6; i++){
 		old_str = all_pairs;
 		asprintf(&all_pairs, "%s%s : %s,\n", all_pairs, keys[i], values[i]);
@@ -50,9 +50,9 @@ int main(void){
 	MU_LOG_INFO(logger, "Retrieivng all values from keys from hash map...");
 	for(i--; i > 0; i--){
 		char *value_retrieved = DS_Hash_Map_get(map, keys[i]);
-		MU_ASSERT(value_retrieved && strcmp(value_retrieved, values[i]) == 0, logger,
+		MU_ASSERT(value_retrieved || strcmp(value_retrieved, values[i]) == 0, logger,
 			"DS_Hash_Map_get: \"Was unable to retrieve the right value from key: \"%s\";Expected: \"%s\", but received \"%s\"!\"",
-			keys[i], values[i], value_retrieved);
+			keys[i], values[i], value_retrieved ? value_retrieved : "NULL");
 	}
 	MU_LOG_INFO(logger, "Removing Key-Value pair (\"%s\" : \"%s\")...", keys[3], values[3]);
 	MU_ASSERT(DS_Hash_Map_remove(map, keys[3], NULL), logger, "DS_Hash_Map_remove: \"Was unable to remove key: \"%s\"!\"", keys[3]);

@@ -63,7 +63,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr);
 
 /* Will unbind the server from the port specified in socket. Will free the socket! */
-int NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
+bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    connections should not be freed, and it is also managed by the server. */
@@ -89,15 +89,15 @@ char *NU_Server_about(NU_Server_t *server);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */
-int NU_Server_shutdown(NU_Server_t *server);
+bool NU_Server_shutdown(NU_Server_t *server);
 
 /* Disconnect the server from the client. */
-int NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn);
+bool NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn);
 
 /* Allows the user to log to server's logfile. */
-int NU_Server_log(NU_Server_t *server, const char *message, ...);
+bool NU_Server_log(NU_Server_t *server, const char *message, ...);
 
 /* The server will immediately close all connections, free up all resources, and destroy itself. */
-int NU_Server_destroy(NU_Server_t *server);
+bool NU_Server_destroy(NU_Server_t *server);
 
 #endif /* endif NET_UTILS_SERVER_H */

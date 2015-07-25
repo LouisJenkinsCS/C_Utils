@@ -10,7 +10,8 @@
 				[
 					"${project_folder}",
 					"${project_folder}/Misc_Utils",
-					"${project_folder}/Data_Structures"
+					"${project_folder}/Data_Structures",
+					"${project_folder}/Net_Utils"
 				]
 			}
 		}

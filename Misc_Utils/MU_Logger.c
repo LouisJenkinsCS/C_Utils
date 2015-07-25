@@ -12,11 +12,7 @@ typedef struct {
 
 static const int buffer_size = 1024;
 
-static const char *MU_Logger_Format_Tokens[] = {
-	"%fnc", "%fle", "%lno", "%lvl", "%msg", "%cnd", "%tsm"
-};
-
-static const int num_of_tokens = sizeof(MU_Logger_Format_Tokens) / sizeof(MU_Logger_Format_Tokens[0]);
+static const int num_of_tokens = 7;
 
 static const char *MU_Logger_Format_function_name_cb(MU_Logger_Format_Info_t *info, va_list args){
 	return info->function_name;
@@ -50,17 +46,21 @@ static const char *MU_Logger_Format_timestamp_cb(MU_Logger_Format_Info_t *info, 
 	return MU_get_timestamp();
 }
 
-const char *(*MU_Logger_Format_cb[])(MU_Logger_Format_Info_t *, va_list) = {
-	MU_Logger_Format_function_name_cb, MU_Logger_Format_file_name_cb, MU_Logger_Format_line_number_cb,
-	MU_Logger_Format_log_level_cb, MU_Logger_Format_message_cb, MU_Logger_Format_condition_cb,
-	MU_Logger_Format_timestamp_cb
+struct {
+	const char *token;
+	const char *(*callback)(MU_Logger_Format_Info_t *info, va_list);
+} MU_Logger_Format_Tokens[] = {
+	{ "%fnc", MU_Logger_Format_function_name_cb }, { "%fle", MU_Logger_Format_file_name_cb }, 
+	{ "%lno", MU_Logger_Format_line_number_cb }, { "%lvl", MU_Logger_Format_log_level_cb },
+	{ "%msg", MU_Logger_Format_message_cb }, { "%cnd", MU_Logger_Format_condition_cb },
+	{ "%tsm", MU_Logger_Format_timestamp_cb }
 };
 
 static const char *parse_token(const char *token, MU_Logger_Format_Info_t *info, va_list args){
 	int i = 0;
 	for(; i < num_of_tokens; i++){
-		if(strcmp(token, MU_Logger_Format_Tokens[i]) == 0){
-			return MU_Logger_Format_cb[i](info, args);
+		if(strcmp(token, MU_Logger_Format_Tokens[i].token) == 0){
+			return MU_Logger_Format_Tokens[i].callback(info, args);
 		}
 	}
 	return NULL;
@@ -118,7 +118,8 @@ MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_
 		goto error;
 	}
 	logger->level = level;
-	logger->format.default_f = "%tsm [%lvl](%fle:%lno) %fnc(): \"%msg\"\n";
+	//logger->format.all_f = strdup("\nTimestamp: %tsm\nFunction: %fnc()\nFile: %fle\nLine: %lno\nMessage: \"%msg\"\n");
+	logger->format.default_f = "%tsm [%lvl](%fle:%lno) %fnc(): \n\"%msg\"\n";
 	return logger;
 
 	error:
@@ -138,8 +139,7 @@ bool MU_Logger_Log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *cus
 	format_string(MU_Logger_Format_get(logger, level), buffer, log_buf_size, &info, args);
 	fprintf(logger->file, "%s", buffer);
 	if(level == MU_ASSERTION){
-		MU_DEBUG("%s", buffer);
-
+		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
 	fflush(logger->file);
 	return true;

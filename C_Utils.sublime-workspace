@@ -4,6 +4,66 @@
 		"selected_items":
 		[
 			[
+				"MU_Logger_Format",
+				"MU_Logger_Format_Info_t"
+			],
+			[
+				"MU_Arg",
+				"MU_Arg_evaluate_boolean"
+			],
+			[
+				"default",
+				"default_f"
+			],
+			[
+				"er",
+				"error_f"
+			],
+			[
+				"custom",
+				"custom_level"
+			],
+			[
+				"MU_Lo",
+				"MU_Logger_Format_Info_t"
+			],
+			[
+				"should",
+				"should_copy"
+			],
+			[
+				"MU_Logger",
+				"MU_Logger_get_format"
+			],
+			[
+				"MU_Logger_",
+				"MU_Logger_Format_Tokens"
+			],
+			[
+				"lvl",
+				"lvl_fn"
+			],
+			[
+				"MU_Logger_Form",
+				"MU_Logger_Format_Info_t"
+			],
+			[
+				"MU_L",
+				"MU_Logger_Format_Info_t"
+			],
+			[
+				"formatter",
+				"formatter_orig_len"
+			],
+			[
+				"token",
+				"token_size"
+			],
+			[
+				"__F",
+				"__FUNCTION__"
+			],
+			[
 				"MU_ARG",
 				"MU_ARG_STRINGIFY"
 			],
@@ -324,10 +384,6 @@
 				"NU_Connection_t"
 			],
 			[
-				"MU_Logger",
-				"MU_Logger_t"
-			],
-			[
 				"MU_T",
 				"MU_TIMER_H"
 			],
@@ -458,104 +514,16 @@
 			[
 				"PBQ",
 				"PBQTPATH"
-			],
-			[
-				"TP_",
-				"TP_DECREMENT"
-			],
-			[
-				"ge",
-				"Get_Task_Priority"
-			],
-			[
-				"array",
-				"array_of_strings"
-			],
-			[
-				"result_",
-				"result_three_char"
-			],
-			[
-				"resul",
-				"result_one_char"
-			],
-			[
-				"re",
-				"result_three"
-			],
-			[
-				"mut",
-				"mutable_string"
-			],
-			[
-				"string",
-				"string_two"
-			],
-			[
-				"result",
-				"result_one"
-			],
-			[
-				"MU_L",
-				"MU_LOG_VERBOSE"
-			],
-			[
-				"resu",
-				"result_one"
-			],
-			[
-				"sleep",
-				"sleep_duration"
-			],
-			[
-				"MU_LOG",
-				"MU_LOG_VERBOSE"
-			],
-			[
-				"thread",
-				"thread_id"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "Makefile",
+			"file": "Misc_Utils/MU_Logger.c",
 			"settings":
 			{
-				"buffer_size": 800,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "DS_Hash_Map.log",
-			"settings":
-			{
-				"buffer_size": 121,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Hash_Map.h",
-			"settings":
-			{
-				"buffer_size": 2079,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Hash_Map_Test.c",
-			"settings":
-			{
-				"buffer_size": 2952,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Helpers.h",
-			"settings":
-			{
-				"buffer_size": 409,
+				"buffer_size": 6058,
 				"line_ending": "Windows"
 			}
 		},
@@ -563,24 +531,16 @@
 			"file": "Data_Structures/DS_Hash_Map.c",
 			"settings":
 			{
-				"buffer_size": 7392,
+				"buffer_size": 7455,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "Misc_Utils/MU_Arg_Check.c",
+			"file": "DS_Hash_Map_Test.log",
 			"settings":
 			{
-				"buffer_size": 380,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Misc_Utils/MU_Arg_Check.h",
-			"settings":
-			{
-				"buffer_size": 3215,
-				"line_ending": "Windows"
+				"buffer_size": 1382,
+				"line_ending": "Unix"
 			}
 		}
 	],
@@ -655,10 +615,30 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 104.0,
-		"last_filter": "git push",
+		"height": 58.0,
+		"last_filter": "make depe",
 		"selected_items":
 		[
+			[
+				"make depe",
+				"Makefile (C_Utils): make depend"
+			],
+			[
+				"make clean",
+				"Build With: Make - Clean"
+			],
+			[
+				"make depend",
+				"Makefile (C_Utils): make depend"
+			],
+			[
+				"make",
+				"Makefile (C_Utils): make all"
+			],
+			[
+				"make ",
+				"Makefile (C_Utils): make depend"
+			],
 			[
 				"git push",
 				"Git: Push"
@@ -684,16 +664,8 @@
 				"Git: Status"
 			],
 			[
-				"make clean",
-				"Build With: Make - Clean"
-			],
-			[
 				"make clea",
 				"Build With: Make - Clean"
-			],
-			[
-				"make",
-				"Makefile (C_Utils): make all"
 			],
 			[
 				"make cl",
@@ -730,10 +702,6 @@
 			[
 				"run",
 				"Run"
-			],
-			[
-				"make ",
-				"Makefile (C_Utils): make all"
 			],
 			[
 				"status",
@@ -791,38 +759,41 @@
 	],
 	"file_history":
 	[
-		"/C/Users/theif519/Documents/GitHub/C_Utils/COMMIT_EDITMSG.COMMIT_EDITMSG",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Arg_Check.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Arg_Check.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map_Test.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Makefile",
+		"/C/cygwin64/home/theif519/DrMemory-Linux-1.8.0-8/README",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Helpers.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/makefile",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/COMMIT_EDITMSG.COMMIT_EDITMSG",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/COMMIT_EDITMSG.COMMIT_EDITMSG",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Linked_List.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/SublimeLinter-contrib-clang/README.md",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/C_Utils.sublime-project",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.sublime-project",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map_Test.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map_Test.log",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Client.c",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/SublimeLinter/Default (Windows).sublime-keymap",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/Prefixr/My_First_Plugin.py",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/Default (Windows).sublime-keymap",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/make.sh",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map.log",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/C_Make.sublime-build",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/C_Build.sublime-build",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/Make_C.sublime-build",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/MakeCommand.sublime-commands",
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/Git/Git.sublime-settings",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Makefile",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Helpers.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/NU_Server.log",
@@ -915,10 +886,7 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Concurrency_Utils/PBQueue.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Concurrency_Utils/PBQueue.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Concurrency_Utils/Thread Pool/Code/Thread_Pool_Main_Page.dox",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Concurrency_Utils/Thread_Pool.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/File_Utils/File_Utils.h",
-		"/C/Users/theif519/Downloads/src-version1/Script/Code/Instruction.cpp",
-		"/C/Users/theif519/Downloads/src-version1/Script/Data/StackData.cpp"
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Concurrency_Utils/Thread_Pool.h"
 	],
 	"find":
 	{
@@ -936,6 +904,12 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"\\\\n",
+			"\\n",
+			"\\\\n",
+			"MU_logger_Log",
+			"assertion",
+			"__LINE__",
 			"MU_ARG_EVAL\\(arg\\)",
 			"!= false\\)",
 			"arg, string_ptr",
@@ -1063,6 +1037,8 @@
 		"regex": true,
 		"replace_history":
 		[
+			"",
+			"MU_LOGGER_STRINGIFY(__LINE__)",
 			"MU_Arg_evaluate_boolean(arg)",
 			"",
 			"string_ptr, arg",
@@ -1137,75 +1113,19 @@
 			[
 				{
 					"buffer": 0,
-					"file": "Makefile",
+					"file": "Misc_Utils/MU_Logger.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 800,
+						"buffer_size": 6058,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								205,
-								205
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Makefile/Makefile.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 90.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "DS_Hash_Map.log",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 121,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								120,
-								120
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage"
-						},
-						"translation.x": -0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "Data_Structures/DS_Hash_Map.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2079,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								23,
-								23
+								3643,
+								3643
 							]
 						],
 						"settings":
@@ -1214,27 +1134,27 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 270.0,
+						"translation.y": 1395.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
-					"file": "Data_Structures/DS_Hash_Map_Test.c",
+					"buffer": 1,
+					"file": "Data_Structures/DS_Hash_Map.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2952,
+						"buffer_size": 7455,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1878,
-								1878
+								6228,
+								6228
 							]
 						],
 						"settings":
@@ -1250,117 +1170,31 @@
 					"type": "text"
 				},
 				{
-					"buffer": 4,
-					"file": "Data_Structures/DS_Helpers.h",
+					"buffer": 2,
+					"file": "DS_Hash_Map_Test.log",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 409,
+						"buffer_size": 1382,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								237,
-								237
+								349,
+								349
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C++.tmLanguage"
+							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage"
 						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.x": -0.0,
+						"translation.y": 171.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "Data_Structures/DS_Hash_Map.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7392,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								5507,
-								5507
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 2437.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "Misc_Utils/MU_Arg_Check.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 380,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								279,
-								279
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "Misc_Utils/MU_Arg_Check.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3215,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1528,
-								1528
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage"
-						},
-						"translation.x": 118.0,
-						"translation.y": 315.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
+					"stack_index": 0,
 					"type": "text"
 				}
 			]

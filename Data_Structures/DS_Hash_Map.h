@@ -26,7 +26,7 @@ typedef struct {
 DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks);
 
 /// Add a key-value pair to a hash map, and if the comparator is not NULL, it will be a hash-set operation.
-int DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
+bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
 
 /// Obtains the value from the key provided.
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
@@ -38,12 +38,12 @@ void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
 const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
-int DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
+bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
 
 /// Will clear the map of all elements, calling the deletion callback on each element if it is not NULL.
-int DS_Hash_Map_clear(DS_Hash_Map_t *map, DS_delete_cb del);
+bool DS_Hash_Map_clear(DS_Hash_Map_t *map, DS_delete_cb del);
 
 /// Determines the size at the time this function is called.
 size_t DS_Hash_Map_size(DS_Hash_Map_t *map);
 
-int DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del);
+bool DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del);

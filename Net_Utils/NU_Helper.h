@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <MU_Logger.h>
 #include <MU_Cond_Locks.h>
+#include <MU_Arg_Check.h>
+#include <MU_Retry.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -19,6 +21,7 @@
 #include <stdlib.h>
 #include <stdatomic.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
@@ -52,7 +55,7 @@ size_t NU_send_all(int sockfd, const void *buf, size_t buf_size, unsigned int ti
 
 size_t NU_timed_receive(int sockfd, void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
-int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
+bool NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
 char *NU_Atomic_Data_to_string(NU_Atomic_Data_t *data);
@@ -63,6 +66,6 @@ void NU_Atomic_Data_increment_sent(NU_Atomic_Data_t *data, unsigned int bytes);
 
 NU_Atomic_Data_t *NU_Atomic_Data_create(void);
 
-int NU_is_selected(int flags, int mask);
+bool NU_is_selected(int flags, int mask);
 
 #endif /* END NET_UTILS_HELPER_H */
