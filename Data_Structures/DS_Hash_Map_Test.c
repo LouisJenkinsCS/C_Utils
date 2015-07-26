@@ -50,7 +50,7 @@ int main(void){
 	MU_LOG_INFO(logger, "Retrieivng all values from keys from hash map...");
 	for(i--; i > 0; i--){
 		char *value_retrieved = DS_Hash_Map_get(map, keys[i]);
-		MU_ASSERT(value_retrieved || strcmp(value_retrieved, values[i]) == 0, logger,
+		MU_ASSERT(value_retrieved && strcmp(value_retrieved, values[i]) == 0, logger,
 			"DS_Hash_Map_get: \"Was unable to retrieve the right value from key: \"%s\";Expected: \"%s\", but received \"%s\"!\"",
 			keys[i], values[i], value_retrieved ? value_retrieved : "NULL");
 	}

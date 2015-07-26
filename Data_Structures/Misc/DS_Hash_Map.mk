@@ -5,7 +5,7 @@ MP=./Misc_Utils/
 DSP=./Data_Structures/
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=MU_Logger.c MU_Arg_Check.c MU_Cond_Locks.c DS_Hash_Map.c DS_Hash_Map_Test.c
+SOURCES=MU_Logger.c MU_Arg_Check.c DS_Hash_Map.c DS_Hash_Map_Test.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=DS_Hash_Map_Test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))

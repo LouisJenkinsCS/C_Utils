@@ -137,16 +137,16 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
 			goto error;
 		}
 	}
-	int is_initialized = MU_Cond_rwlock_init(map->lock, NULL, logger);
+	int is_initialized = 1;
+	MU_COND_RWLOCK_INIT(map->lock, NULL, is_initialized, logger);
 	if(!is_initialized){
-		MU_LOG_ERROR(logger, "DS_Hash_Map_create->MU_Cond_rwlock_init: \"Was unable to initialize lock!\"");
 		goto error;
 	}
 	return map;
 
 	error:
 		if(map){
-			MU_Cond_rwlock_destroy(map->lock, logger);
+			MU_COND_RWLOCK_DESTROY(map->lock, logger);
 			free(map);
 		}
 		return NULL;
@@ -155,24 +155,24 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
 /// Add a key-value pair to a hash map.
 bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 	MU_ARG_CHECK(logger, false, map, key);
-	MU_Cond_rwlock_wrlock(map->lock, logger);
+	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
 	size_t index = get_bucket_index(key, map->amount_of_buckets);
 	DS_Bucket_t *bucket = map->buckets[index];
 	if(!bucket){
 		bucket = (map->buckets[index] = create_bucket(key, value, NULL));
 		if(!bucket){
 			MU_LOG_ERROR(logger, "DS_Hash_Map_add->create_bucket: \"Was unable to create a bucket!\"");
-			MU_Cond_rwlock_unlock(map->lock, logger);
+			MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 			return false;
 		}
 		bucket->in_use = 1;
 		map->size++;
-		MU_Cond_rwlock_unlock(map->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return true;
 	}
 	void *key_exists = get_value_from_bucket(bucket, key);
 	if(key_exists){
-		MU_Cond_rwlock_unlock(map->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return false;
 	}
 	do {
@@ -188,44 +188,44 @@ bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 			break;
 		}
 	} while((bucket = bucket->next));
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return true;
 }
 
 /// Obtains the value from the key provided.
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key){
 	MU_ARG_CHECK(logger, NULL, map, map && map->size, map && map->buckets, key);
-	MU_Cond_rwlock_rdlock(map->lock, logger);
+	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
 	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, key);
 	if(!bucket_is_valid(bucket)){
-		MU_Cond_rwlock_unlock(map->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return NULL;
 	}
 	void *value = get_value_from_bucket(bucket, key);
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return value;
 }
 
 /// Return and remove the value at the key provided, deleting it if the deletion callback is not NULL.
 void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del){
 	MU_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size, key);
-	MU_Cond_rwlock_wrlock(map->lock, logger);
+	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
 	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, key);
 	if(!bucket_is_valid(bucket)){
-		MU_Cond_rwlock_unlock(map->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return NULL;
 	}
 	void *value = get_value_from_bucket(bucket, key);
 	bucket->in_use = 0;
 	map->size--;
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return value;
 }
 
 /// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
 const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp){
 	MU_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size);
-	MU_Cond_rwlock_rdlock(map->lock, logger);
+	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
 	size_t i = 0, total_buckets = map->amount_of_buckets;
 	char *key = NULL;
 	// O(N) complexity.
@@ -235,49 +235,49 @@ const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_compa
 			break;
 		}
 	}
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return key;
 }
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
 bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb callback_function){
 	MU_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size, callback_function);
-	MU_Cond_rwlock_rdlock(map->lock, logger);
+	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
 	size_t i = 0, total_buckets = map->amount_of_buckets;
 	for(; i < total_buckets; i++){
 		for_each_bucket(map->buckets[i], callback_function, 0);
 	}
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return 1;
 }
 
 /// Will clear the map of all elements, calling the deletion callback on each element if it is not NULL.
 bool DS_Hash_Map_clear(DS_Hash_Map_t *map, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size);
-	MU_Cond_rwlock_wrlock(map->lock, logger);
+	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
 	bool successful = clear_map(map, del);
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return successful;
 }
 
 /// Determines the size at the time this function is called.
 size_t DS_Hash_Map_size(DS_Hash_Map_t *map){
 	MU_ARG_CHECK(logger, 0, map, map && map->buckets, map && map->size);
-	MU_Cond_rwlock_rdlock(map->lock, logger);
+	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
 	size_t size = map->size;
-	MU_Cond_rwlock_unlock(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return size;
 }
 
 bool DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, map);
-	MU_Cond_rwlock_wrlock(map->lock, logger);
+	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
 	delete_all_buckets(map->buckets, map->amount_of_buckets, del);
 	map->amount_of_buckets = 0;
 	map->size = 0;
 	map->buckets = NULL;
-	MU_Cond_rwlock_unlock(map->lock, logger);
-	MU_Cond_rwlock_destroy(map->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
+	MU_COND_RWLOCK_DESTROY(map->lock, logger);
 	free(map);
 	return true;
 }

@@ -1,6 +1,6 @@
-04:00:48 PM [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:29) main(): 
+01:51:11 PM [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:29) main(): 
 "Logging all Key-Value pairs!"
-04:00:48 PM [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:40) main(): 
+01:51:11 PM [VERBOSE](./Data_Structures/DS_Hash_Map_Test.c:40) main(): 
 "{ 
 Hello World : Goodbye World,
 How are you : It was nice knowing you,
@@ -9,11 +9,21 @@ Fine I hope! : But it is time for me to go!,
 Because it is a good day : My people need me,
 To be alive! : And I them!,
 }"
-04:00:48 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:42) main(): 
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:42) main(): 
 "Creating Hash Map..."
-04:00:48 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:45) main(): 
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:45) main(): 
 "Adding all key-value pairs to hash map..."
-04:00:48 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:50) main(): 
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:50) main(): 
 "Retrieivng all values from keys from hash map..."
-04:00:48 PM [ASSERTION](./Data_Structures/DS_Hash_Map_Test.c:55) main(): 
-"DS_Hash_Map_get: "Was unable to retrieve the right value from key: "To be alive!";Expected: "And I them!", but received "NULL"!""
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:57) main(): 
+"Removing Key-Value pair ("Fine I hope!" : "But it is time for me to go!")..."
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:59) main(): 
+"Testing for removal of Key-Value pair..."
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:62) main(): 
+"Testing for adding duplicate key..."
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:65) main(): 
+"Testing retrieval of key by value..."
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:67) main(): 
+"Destroy Hash Map..."
+01:51:11 PM [INFO](./Data_Structures/DS_Hash_Map_Test.c:69) main(): 
+"Success!"

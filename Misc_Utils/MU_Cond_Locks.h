@@ -24,25 +24,92 @@
 /**
  * Conditional wrapper for pthread_rwlock_init, which logs any errors, and only operates on the lock if it is not NULL.
  *
- * @parameter lock The lock to be operated on if it is not NULL.
- * @parameter attr The attribute to be used to initialize the lock.
- * @parameter logger The logger used to log any errors.
+ * @param lock The lock to be operated on if it is not NULL.
+ * @param attr The attribute to be used to initialize the lock.
+ * @param storage The variable to store the success or failure of rwlock init.
+ * @param logger The logger used to log any errors.
  * @return 0 on success, a negative number resembling it's error code on failure.
  */
-int MU_Cond_rwlock_init(pthread_rwlock_t *lock, pthread_rwlockattr_t *attr, MU_Logger_t *logger);
+#define MU_COND_RWLOCK_INIT(lock, attr, storage, logger) do { \
+	if(lock){ \
+	    int errcode = pthread_rwlock_init(lock, attr); \
+	    if(errcode){ \
+	        MU_LOG_ERROR(logger, "pthread_rwlock_init: '%s'", strerror(errcode)); \
+	    } \
+	    storage = errcode ? 0 : 1; \
+   	} \
+} while(0) 
 
-int MU_Cond_rwlock_wrlock(pthread_rwlock_t *lock, MU_Logger_t *logger);
+#define MU_COND_RWLOCK_WRLOCK(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_rwlock_wrlock(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_wrlock: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
 
-int MU_Cond_rwlock_rdlock(pthread_rwlock_t *lock, MU_Logger_t *logger);
+#define MU_COND_RWLOCK_RDLOCK(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_rwlock_rdlock(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_rdlock: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
 
-int MU_Cond_rwlock_unlock(pthread_rwlock_t *lock, MU_Logger_t *logger);
+#define MU_COND_RWLOCK_UNLOCK(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_rwlock_unlock(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_unlock: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
 
-int MU_Cond_rwlock_destroy(pthread_rwlock_t *lock, MU_Logger_t *logger);
+#define MU_COND_RWLOCK_DESTROY(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_rwlock_destroy(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_destroy: '%s'", strerror(errcode)); \
+      } \
+      free(lock); \
+   } \
+} while(0)
 
-int MU_Cond_mutex_init(pthread_mutex_t *lock, pthread_mutexattr_t *attr, MU_Logger_t *logger);
+#define MU_COND_MUTEX_INIT(lock, attr, storage, logger) do { \
+	if(lock){ \
+      int errcode = pthread_mutex_init(lock, attr); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(errcode)); \
+      } \
+      storage = errcode; \
+   } \
+} while(0)
 
-int MU_Cond_mutex_lock(pthread_mutex_t *lock, MU_Logger_t *logger);
+#define MU_COND_MUTEX_LOCK(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_mutex_lock(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_lock: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
 
-int MU_Cond_mutex_unlock(pthread_mutex_t *lock, MU_Logger_t *logger);
+#define MU_COND_MUTEX_UNLOCK(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_mutex_unlock(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_unlock: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
 
-int MU_Cond_mutex_destroy(pthread_mutex_t *lock, MU_Logger_t *logger);
+#define MU_COND_MUTEX_DESTROY(lock, logger) do { \
+	if(lock){ \
+      int errcode = pthread_mutex_destroy(lock); \
+      if(errcode){ \
+         MU_LOG_ERROR(logger, "pthread_rwlock_destroy: '%s'", strerror(errcode)); \
+      } \
+   } \
+} while(0)
