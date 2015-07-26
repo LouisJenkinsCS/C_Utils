@@ -3,10 +3,7 @@
 
 #include <errno.h>
 
-#define MU_TEMP_FAILURE_RETRY(storage, function) do { \
-	errno = 0; \
-	while((storage = function),  errno == EINTR); \
-} while(0)
+#define MU_TEMP_FAILURE_RETRY(storage, function) while(errno = 0, (storage = function),  errno == EINTR); 
 
 
 #endif /* endif MU_RETRY_H */

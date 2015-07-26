@@ -26,7 +26,7 @@ typedef struct NU_Bound_Socket_t{
    /// RWLock to ensure thread safety.
    pthread_rwlock_t *lock;
    /// Flag to determine if it is bound.
-   volatile unsigned char is_bound;
+   volatile bool is_bound;
 } NU_Bound_Socket_t;
 
 /**
@@ -49,14 +49,14 @@ typedef struct {
    /// RWLock associated with server for type safety.
    pthread_rwlock_t *lock;
    /// Whether or not to initialize locks on everything.
-   unsigned char is_threaded;
+   bool is_threaded;
    /// Keep track of overall data-usage.
    NU_Atomic_Data_t *data;
 } NU_Server_t;
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, unsigned char init_locks);
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks);
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */

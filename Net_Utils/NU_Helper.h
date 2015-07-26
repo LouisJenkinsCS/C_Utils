@@ -55,7 +55,7 @@ size_t NU_send_all(int sockfd, const void *buf, size_t buf_size, unsigned int ti
 
 size_t NU_timed_receive(int sockfd, void *buf, size_t buf_size, unsigned int timeout, MU_Logger_t *logger);
 
-bool NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
+int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
 
 // Implement
 char *NU_Atomic_Data_to_string(NU_Atomic_Data_t *data);

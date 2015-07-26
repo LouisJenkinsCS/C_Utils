@@ -1,15 +1,2 @@
-09:15:39 PM: [INFO](./Net_Utils/NU_Server.c:333) Bound a socket to 10.0.2.15
- on port 10000!
-
-09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:406) 2.0.134.180 connected to port 10000
-
-09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:448) Total Sent: 81, Buffer Size: 81
-
-09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:509) Sent file of total size 4562 to 2.0.134.180!
-
-09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:585) Disconnected from 2.0.134.180 on port 10000!
-
-09:15:42 PM: [INFO](./Net_Utils/NU_Server.c:196) Unbound from port 10000!
-
-09:15:42 PM: [VERBOSE](./Net_Utils/NU_Server.c:169) Destroyed a bound socket!
-
+08:55:47 PM [ERROR](./Net_Utils/NU_Server.c:254) NU_Server_bind(): 
+"NU_Server_bind: Invalid Arguments=> {  server: FALSE; port > 0: TRUE; queue_size > 0: TRUE; ip_addr: TRUE! }"
