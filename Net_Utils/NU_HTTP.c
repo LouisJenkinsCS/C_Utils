@@ -18,6 +18,80 @@ static const int field_size = 32;
 static const int value_size = 256;
 static const int header_size = 4096;
 
+static const char *NU_HTTP_Status_Codes[] = {
+	[100] = "100 Continue",
+    [101] = "101 Switching Protocols",
+
+    // Success 2xx
+    [200] = "200 OK",
+    [201] = "201 Created",
+    [202] = "202 Accepted",
+    [203] = "203 Non-Authoritative Information",
+    [204] = "204 No Content",
+    [205] = "205 Reset Content",
+    [206] = "206 Partial Content",
+
+    // Redirection 3xx
+    [300] = "300 Multiple Choices",
+    [301] = "301 Moved Permanently",
+    [302] = "302 Found",
+    [303] = "303 See Other",
+    [304] = "304 Not Modified",
+    [305] = "305 Use Proxy",
+    [307] = "307 Temporary Redirect",
+
+    // Client Error 4xx
+    [400] = "400 Bad Request",
+    [401] = "401 Unauthorized",
+    [402] = "402 Payment Required",
+    [403] = "403 Forbidden",
+    [404] = "404 Not Found",
+    [405] = "405 Method Not Allowed",
+    [406] = "406 Not Acceptable",
+    [407] = "407 Proxy Authentication Required",
+    [408] = "408 Request Timeout",
+    [409] = "409 Conflict",
+    [410] = "410 Gone",
+    [411] = "411 Length Required",
+    [412] = "412 Precondition Failed",
+    [413] = "413 Request Entity Too Large",
+    [414] = "414 Request-URI Too Long",
+    [415] = "415 Unsupported Media Type",
+    [416] = "416 Requested Range Not Satisfiable",
+    [417] = "417 Expectation Failed",
+
+    // Server Error 5xx
+    [500] = "500 Internal Server Error",
+    [501] = "501 Not Implemented",
+    [502] = "502 Bad Gateway",
+    [503] = "503 Service Unavailable",
+    [504] = "504 Gateway Timeout",
+    [505] = "505 HTTP Version Not Supported",
+    [509] = "509 Bandwidth Limit Exceeded"
+};
+
+static void parse_http_field(NU_Header_t *header, const char *line){
+	MU_DEBUG("%s", line);
+	const char *delimiter = ": ";
+	const int delim_size = strlen(delimiter);
+	char field[field_size], value[value_size];
+	char *offset_str = strstr(line, delimiter);
+	if(!offset_str){
+		MU_LOG_WARNING(logger, "No delimiter offset for line: '%s'!", line);
+		return;
+	}
+	// A bit of math required here. We must find the length of the field to read into field buffer.
+	int field_len = strlen(line) - strlen(offset_str);
+	offset_str += delim_size;
+	MU_DEBUG("Line: '%s'\nOffset_Str: '%s'", line, offset_str);
+	snprintf(field, field_size, "%.*s", field_len, line);
+	snprintf(value, value_size, "%s", offset_str);
+	bool was_added = DS_Hash_Map_add(header->mapped_fields, strdup(field), strdup(value));
+	if(!was_added){
+		MU_LOG_WARNING(logger, "DS_Hash_Map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
+	}
+}
+
 static void parse_http_method(NU_Header_t *header, const char *line){
 	MU_DEBUG("%s", line);
 	if(strncmp(line, "GET", 3) == 0){
@@ -66,15 +140,11 @@ static void parse_http_version(NU_Header_t *header, const char *line){
 	}
 }
 
-static void parse_http_header(NU_Header_t *header, const char *header_str){
+static void parse_http_header(NU_Header_t *header, char *header_str){
 	MU_DEBUG("Header: \n%s", header_str);
-	const char *delimiter = ": ";
-	const int delim_size = strlen(delimiter);
 	char *first_line;
 	char *rest_of_lines;
-	char field[field_size], value[value_size];
-	char *header_copy = strdup(header_str);
-	char *line = strtok_r(header_copy, "\r\n", &rest_of_lines);
+	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
 		MU_LOG_VERBOSE(logger, "No header field found!");
 		return;
@@ -95,23 +165,8 @@ static void parse_http_header(NU_Header_t *header, const char *header_str){
 		} else parse_http_method(header, line);
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
-		char *offset_str = strstr(line, delimiter);
-		if(!offset_str){
-			MU_LOG_WARNING(logger, "No delimiter offset for line: '%s'!", line);
-			return;
-		}
-		// A bit of math required here. We must find the length of the field to read into field buffer.
-		int field_len = strlen(line) - strlen(offset_str);
-		offset_str += delim_size;
-		MU_DEBUG("Line: '%s'\nOffset_Str: '%s'", line, offset_str);
-		snprintf(field, field_size, "%.*s", field_len, line);
-		snprintf(value, value_size, "%s", offset_str);
-		bool was_added = DS_Hash_Map_add(header->mapped_fields, strdup(field), strdup(value));
-		if(!was_added){
-			MU_LOG_WARNING(logger, "DS_Hash_Map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
-		}
+		parse_http_field(header, line);
 	}
-	free(header_copy);
 }
 
 NU_Header_t *NU_Header_create(void){
@@ -134,14 +189,17 @@ NU_Header_t *NU_Header_create(void){
 		return NULL;
 }
 
-NU_Header_t *NU_Header_from(const char *header_str){
+NU_Header_t *NU_Header_from(const char *header_str, int header_size){
 	MU_ARG_CHECK(logger, NULL, header_str);
 	NU_Header_t *header = NU_Header_create();
 	if(!header){
 		MU_LOG_ERROR(logger, "NU_Header_create: 'Was unable to create base header!'");
 		return NULL;
 	}
-	parse_http_header(header, header_str);
+	char *new_header_str;
+	asprintf(&new_header_str, "%.*s", header_size, header_str);
+	parse_http_header(header, new_header_str);
+	free(new_header_str);
 	return header;
 }
 

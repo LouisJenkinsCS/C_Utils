@@ -1,86 +1,19 @@
-01:52:18 PM [INFO](./Net_Utils/NU_Server.c:256) NU_Server_bind(): 
-"Bound a socket to 192.168.1.112 on port 10000!"
-01:52:33 PM [INFO](./Net_Utils/NU_Server.c:323) NU_Server_accept(): 
-"2.0.223.189 connected to port 10000"
-01:52:33 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 9, Buffer Size: 9"
-01:52:35 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 16"
-01:52:46 PM [INFO](./Net_Utils/NU_Server.c:323) NU_Server_accept(): 
-"2.0.223.197 connected to port 10000"
-01:52:46 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 9, Buffer Size: 9"
-01:52:47 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 16"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:48 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:49 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:51 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 2, Buffer Size: 4096"
-01:52:51 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 14, Buffer Size: 14"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:53 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 1, Buffer Size: 4096"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 13, Buffer Size: 13"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 2, Buffer Size: 4096"
-01:52:54 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
-"Total Sent: 14, Buffer Size: 14"
-01:53:21 PM [INFO](./Net_Utils/NU_Helper.c:44) NU_timed_receive(): 
-"select: 'Timed out!'"
-01:53:21 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 0, Buffer Size: 4096"
-01:53:21 PM [WARNING](./Net_Utils/NU_Server.c:377) NU_Server_receive(): 
-"NU_Connection_receive: 'Was unable to receive from 2.0.223.197!'"
-01:53:21 PM [INFO](./Net_Utils/NU_Server.c:476) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.197 on port 10000!"
-01:53:24 PM [INFO](./Net_Utils/NU_Helper.c:44) NU_timed_receive(): 
-"select: 'Timed out!'"
-01:53:24 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
-"Total received: 0, Buffer Size: 4096"
-01:53:24 PM [WARNING](./Net_Utils/NU_Server.c:377) NU_Server_receive(): 
-"NU_Connection_receive: 'Was unable to receive from 2.0.223.189!'"
-01:53:24 PM [INFO](./Net_Utils/NU_Server.c:476) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.189 on port 10000!"
+01:19:07 PM [INFO](./Net_Utils/NU_Server.c:256) NU_Server_bind(): 
+"Bound a socket to 192.168.1.112
+ on port 10000!"
+01:19:15 PM [INFO](./Net_Utils/NU_Server.c:323) NU_Server_accept(): 
+"2.0.216.142 connected to port 10000"
+01:19:15 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
+"Total received: 385, Buffer Size: 1024"
+01:19:15 PM [VERBOSE](./Net_Utils/NU_Server.c:362) NU_Server_send(): 
+"Total Sent: 81, Buffer Size: 81"
+01:19:15 PM [VERBOSE](./Net_Utils/NU_Server.c:415) NU_Server_send_file(): 
+"Sent file of total size 4866 to 2.0.216.142!"
+01:19:16 PM [VERBOSE](./Net_Utils/NU_Server.c:375) NU_Server_receive(): 
+"Total received: 349, Buffer Size: 1024"
+01:19:16 PM [INFO](./Net_Utils/NU_Server.c:476) NU_Server_disconnect(): 
+"Disconnected from 2.0.216.142 on port 10000!"
+01:19:16 PM [INFO](./Net_Utils/NU_Server.c:150) NU_Bound_Socket_unbind(): 
+"Unbound from port 10000!"
+01:19:16 PM [VERBOSE](./Net_Utils/NU_Server.c:126) NU_Bound_Socket_destroy(): 
+"Destroyed a bound socket!"
