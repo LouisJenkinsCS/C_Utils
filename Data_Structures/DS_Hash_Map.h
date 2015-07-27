@@ -37,6 +37,9 @@ void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
 /// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
 const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
 
+/// TODO: Implement
+char **DS_Hash_Map_key_value_to_string(DS_Hash_Map_t *map, const char *delimiter, size_t *size);
+
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
 bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
 

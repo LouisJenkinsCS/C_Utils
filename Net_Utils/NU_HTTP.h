@@ -2,6 +2,7 @@
 #define NET_UTILS_HTTP_H
 
 #include <NU_Helper.h>
+#include <NU_Connection.h>
 #include <DS_Hash_Map.h>
 
 const char *NU_HTTP_Status_Codes[] = {
@@ -65,15 +66,29 @@ typedef enum {
 	NU_HTTP_CONNECT
 } NU_HTTP_Method_e;
 
+typedef enum {
+    NU_HTTP_VER_1_0,
+    NU_HTTP_VER_1_1
+} NU_HTTP_Version_e;
+
 // _f suffix denotes "field" to avoid any conflicts with function names.
 // Note to self: Use a hash table for each of these! Would be rather efficient in the long run, with O(1) processing time.
 typedef struct {
+    /// Contains the fields parsed from the header in a hash table.
    DS_Hash_Map_t *mapped_fields;
+   /// The HTTP version.
+   NU_HTTP_Version_e version;
+   /// The HTTP method.
+   NU_HTTP_Method_e method;
+   /// The HTTP status.
+   unsigned int status;
+   /// Determines whether or not this is in use.
+   bool in_use;
    // TODO: Continue from here!
 } NU_HTTP_Header_t;
 
 typedef struct {
-	NU_HTTP_version;
+
 } NU_HTTP_Response_t;
 
 typedef struct {
