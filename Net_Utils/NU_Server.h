@@ -50,8 +50,6 @@ typedef struct {
    pthread_rwlock_t *lock;
    /// Whether or not to initialize locks on everything.
    bool is_threaded;
-   /// Keep track of overall data-usage.
-   NU_Atomic_Data_t *data;
 } NU_Server_t;
 
 /* Create a fully initialized server that is unconnected. The socket used is
@@ -80,12 +78,6 @@ size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *
 
 /* Reads from the file, then sends it to the socket for as long as the timeout. */
 size_t NU_Server_send_file(NU_Server_t* server, NU_Connection_t *conn, FILE* file, size_t buffer_size, unsigned int timeout);
-
-/* Returns a string representation about this client, including but not limited to:
-   1) Server's port number binded to as well as local IP.
-   2) List of all client's currently connected to, as well as messages and data sent/received from each individually.
-   3) Total amount of data and messages sent/received. */
-char *NU_Server_about(NU_Server_t *server);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */

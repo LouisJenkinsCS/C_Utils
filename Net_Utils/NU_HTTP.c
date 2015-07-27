@@ -146,14 +146,14 @@ static void parse_http_header(NU_Header_t *header, char *header_str){
 	char *rest_of_lines;
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
-		MU_LOG_VERBOSE(logger, "No header field found!");
+		MU_LOG_WARNING(logger, "No header field found!");
 		return;
 	}
 	/// For the first line, tokenate out the method, path (if applicable) and http version.
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
-			MU_LOG_VERBOSE(logger, "Invalid first line of header!");
+			MU_LOG_WARNING(logger, "Invalid first line of header!");
 			return;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){

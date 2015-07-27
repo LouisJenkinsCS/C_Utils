@@ -70,11 +70,6 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, bool init_locks){
 		goto error;
 	}
 	size_t connections_allocated = 0;
-	client->data = NU_Atomic_Data_create();
-	if(!client->data){
-		MU_LOG_ASSERT(logger, "NU_Collective_Data_create: \"Was unable to allocate atomic data\"\n");
-		goto error;
-	}
 	if(init_locks){
 		client->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!client->lock){
@@ -117,9 +112,6 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, bool init_locks){
 			free(client->connections);
 		}
 		MU_COND_RWLOCK_DESTROY(client->lock, logger);
-		if(client->data){
-			free(client->data);
-		}
 		if(client){
 			free(client);
 		}
@@ -173,7 +165,6 @@ size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *bu
 	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
 	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
-	NU_Atomic_Data_increment_sent(client->data, result);
 	if(result != buf_size){
 		MU_LOG_WARNING(logger, "NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn, logger));
 	}
@@ -190,7 +181,6 @@ size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffe
 		MU_LOG_WARNING(logger, "NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn, logger));
 		return 0;
 	}
-	NU_Atomic_Data_increment_received(client->data, result);
 	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
 	return result;
 }
@@ -222,7 +212,6 @@ size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *fil
 		MU_LOG_WARNING(logger, "NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
 			file_size, total_sent, NU_Connection_get_ip_addr(conn, logger));
 	}
-	NU_Atomic_Data_increment_sent(client->data, total_sent);
 	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
 	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn, logger));
 	return total_sent;
@@ -233,30 +222,9 @@ size_t NU_Client_receive_file(NU_Client_t *client, NU_Connection_t *conn, FILE *
 	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
 	size_t total_received = NU_Connection_receive_file(conn, file, buf_size, timeout, logger);
 	if(!total_received) MU_LOG_WARNING(logger, "NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn, logger));
-	NU_Atomic_Data_increment_received(client->data, total_received);
 	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
 	return total_received;
-}
-
-char *NU_Client_about(NU_Client_t *client){
-	MU_ARG_CHECK(logger, NULL, client);
-	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
-	char *client_str = "{ ", *old_client_str;
-	size_t i = 0;
-	for(;i < client->amount_of_connections; i++){
-		old_client_str = client_str;
-		asprintf(&client_str, "%s%s%s", client_str, NU_Connection_to_string(client->connections[i], logger), i < client->amount_of_connections - 1 ? "," : "");
-		// Since client_str is originally a string literal, freeing it would cause a segmentation fault, so we only skip the first one.
-		if(i > 0){
-			free(old_client_str);
-		}
-	}
-	old_client_str = client_str;
-	asprintf(&client_str, "%s }", client_str);
-	free(old_client_str);
-	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-	return client_str;
 }
 
 bool NU_Client_log(NU_Client_t *client, const char *message, ...){
@@ -314,6 +282,5 @@ bool NU_Client_destroy(NU_Client_t *client){
 	}
 	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
 	MU_COND_RWLOCK_DESTROY(client->lock, logger);
-	free(client->data);
 	return fully_destroyed;
 }

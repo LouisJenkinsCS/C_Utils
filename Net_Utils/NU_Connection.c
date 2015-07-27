@@ -219,17 +219,6 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 	return NULL;
 }
 
-// Implement
-char *NU_Connection_to_string(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, NULL, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
-	char *conn_str;
-	asprintf(&conn_str, "(sockfd: %d, port: %u, ip_addr: %s, has_lock: %s, in_use: %s)",
-			conn->sockfd, conn->port, conn->ip_addr, conn->lock ? "True" : "False", conn->in_use ? "True" : "False");
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
-	return conn_str;
-}
-
 bool NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd, MU_Logger_t *logger){
 	MU_ARG_CHECK(logger, false, conn);
 	MU_COND_RWLOCK_WRLOCK(conn->lock, logger);

@@ -9,8 +9,6 @@ typedef struct {
    NU_Connection_t **connections;
    /// Amount of servers currently connected to.
    size_t amount_of_connections;
-   /// Keeps track of data used.
-   NU_Atomic_Data_t *data;
    /// RWLock to ensure thread safety on modifying connections and amount;
    pthread_rwlock_t *lock;
    /// Whether or not to initialize locks on everything.
@@ -32,14 +30,6 @@ size_t NU_Client_receive_file(NU_Client_t *client, NU_Connection_t *connection, 
 
 /* Receives data from the host, up to a given timeout. */
 size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *connection, void *buffer, size_t buf_size, unsigned int timeout);
-
-/* Returns a string representation of the information about this client, including but not limited to:
-   1) Host connected to and port number.
-   2) Client's hostname and local IP
-   3) Amount of data and messages sent.
-   4) Etc.
-*/
-char *NU_Client_about(NU_Client_t *client);
 
 bool NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection);
 

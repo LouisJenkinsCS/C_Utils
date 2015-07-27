@@ -15,15 +15,6 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-specific helper functions */
 
-static char *bsock_to_string(NU_Bound_Socket_t *bsock){
-	if(!bsock) return NULL;
-	MU_COND_RWLOCK_RDLOCK(bsock->lock, logger);
-	char *bsock_str;
-	asprintf(&bsock_str, "(port: %d, sockfd: %d)", bsock->port, bsock->sockfd);
-	MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
-	return bsock_str;
-}
-
 static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
 	if(!bsock) return 0;
 	int flag = 1;
@@ -160,11 +151,6 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	server->is_threaded = init_locks;
 	// Keep track of everything allocated. If anything fails to allocate, we will free up all memory allocated in this (very long) block.
 	size_t connections_allocated = 0, bsocks_allocated = 0;
-	server->data = NU_Atomic_Data_create();
-	if(!server->data){
-		MU_LOG_ERROR(logger, "NU_Collective_Data_create: 'Was unable to allocate Atomic Data'");
-		goto error;
-	}
 	if(init_locks){
 		server->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!server->lock){
@@ -238,9 +224,6 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 			}
 			if(init_locks){
 				MU_COND_RWLOCK_DESTROY(server->lock, logger);
-			}
-			if(server->data){
-				free(server->data);
 			}
 			free(server);
 		}
@@ -360,7 +343,6 @@ size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *bu
 	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
 	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
 	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu", result, buf_size);
-	NU_Atomic_Data_increment_sent(server->data, result);
 	if(result != buf_size){
 		MU_LOG_WARNING(logger, "NU_Connection_send: 'Was unable to send %zu bytes to %s!'", buf_size - result, NU_Connection_get_ip_addr(conn, logger));
 	}
@@ -377,7 +359,6 @@ size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffe
 		MU_LOG_WARNING(logger, "NU_Connection_receive: 'Was unable to receive from %s!'", NU_Connection_get_ip_addr(conn, logger));
 		return 0;
 	}
-	NU_Atomic_Data_increment_received(server->data, result);
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	return result;
 }
@@ -410,7 +391,6 @@ size_t NU_Server_send_file(NU_Server_t *server, NU_Connection_t *conn, FILE *fil
 		MU_LOG_WARNING(logger, "NU_Connection_send_file: 'File Size is %zu, but only sent %zu to %s'",
 			file_size, total_sent, ip_addr);
 	}
-	NU_Atomic_Data_increment_sent(server->data, total_sent);
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!", total_sent, ip_addr);
 	return total_sent;
@@ -422,35 +402,9 @@ size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *
 	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
 	size_t total_received = NU_Connection_receive_file(conn, file, buf_size, timeout, logger);
 	if(!total_received) MU_LOG_WARNING(logger, "NU_Connection_receive_to_file: 'Was unable to receive file from %s'", ip_addr);
-	NU_Atomic_Data_increment_received(server->data, total_received);
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!", total_received, ip_addr);
 	return total_received;
-}
-
-char *NU_Server_about(NU_Server_t *server){
-	MU_ARG_CHECK(logger, NULL, server);
-	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
-	char *server_str = "Connections: { ", *old_server_str;
-	size_t i = 0;
-	for(;i < server->amount_of_connections; i++){
-		old_server_str = server_str;
-		asprintf(&server_str, "%s%s%s", server_str, NU_Connection_to_string(server->connections[i], logger), i < server->amount_of_connections - 1 ? ", " : "");
-		// Since server_str is originally a string literal, freeing it would cause a segmentation fault, so we only skip the first one.
-		if(i > 0){
-			free(old_server_str);
-		}
-	}
-	old_server_str = server_str;
-	asprintf(&server_str, "%s }\nBound Sockets: { ", server_str);
-	free(old_server_str);
-	for(i = 0;server->amount_of_sockets;i++){
-		old_server_str = server_str;
-		asprintf(&server_str, "%s%s%s", server_str, bsock_to_string(server->sockets[i]), i < server->amount_of_sockets - 1 ? ", " : "");
-		free(old_server_str);
-	}
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-	return server_str;
 }
 
 bool NU_Server_log(NU_Server_t *server, const char *message, ...){
@@ -514,7 +468,6 @@ bool NU_Server_destroy(NU_Server_t *server){
 	}
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	MU_COND_RWLOCK_DESTROY(server->lock, logger);
-	free(server->data);
 	free(server->connections);
 	free(server->sockets);
 	free(server);
