@@ -269,6 +269,53 @@ size_t DS_Hash_Map_size(DS_Hash_Map_t *map){
 	return size;
 }
 
+char **DS_Hash_Map_key_value_to_string(DS_Hash_Map_t *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, DS_to_string_cb to_string){
+	MU_ARG_CHECK(logger, (*size = 0, NULL), map, size);
+	const size_t buf_size = 256;
+	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
+	char **arr = NULL;
+	size_t arr_size = map->size, str_allocated = 0;
+	if(!arr_size){
+		MU_LOG_WARNING(logger, "The hash map is empty!");
+		goto error;
+	}
+	arr = malloc(sizeof(char *) * arr_size);
+	if(!arr){
+		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		goto error;
+	}
+	size_t i = 0;
+	for(; i < map->amount_of_buckets; i++){
+		DS_Bucket_t *bucket = map->buckets[i];
+		if(!bucket) continue;
+		do {
+			if(!bucket->in_use) continue;
+			char *buf = malloc(buf_size);
+			if(!buf){
+				MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+				goto error;
+			}
+			snprintf(buf, buf_size + 1, "%s%s%s%s%s", key_prefix ? key_prefix : "", bucket->key,
+				delimiter ? delimiter : "", to_string ? to_string(bucket->value) : (char *)bucket->value, val_suffix ? val_suffix : "");
+			arr[str_allocated++] = buf;
+		} while ((bucket = bucket->next));
+	}
+	*size = str_allocated;
+	return arr;
+
+	error:
+		if(arr){
+			size_t i = 0;
+			for(; i < str_allocated; i++){
+				free(arr[i]);
+			}
+			free(arr);
+		}
+		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
+		*size = 0;
+		return NULL;
+}
+
 bool DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, map);
 	MU_COND_RWLOCK_WRLOCK(map->lock, logger);

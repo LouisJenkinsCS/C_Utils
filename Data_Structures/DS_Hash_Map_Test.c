@@ -10,20 +10,24 @@ int main(void){
 	logger = MU_Logger_create("DS_Hash_Map_Test.log", "w", MU_ALL);
 	assert(logger);
 	char *keys[] = {
-		"Hello World",
-		"How are you",
-		"Doing today?",
-		"Fine I hope!",
-		"Because it is a good day",
-		"To be alive!"
+		"Host",
+		"User-Agent",
+		"Cache-Control",
+		"Accept",
+		"Accept-Language",
+		"Keep-Alive",
+		"Connection",
+		"Cookie"
 	};
 	char *values[] = {
-		"Goodbye World",
-		"It was nice knowing you",
-		"In my short time on Earth",
-		"But it is time for me to go!",
-		"My people need me",
-		"And I them!"
+		"net.tutsplus.com",
+		"Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko",
+		"no-cache",
+		"text/html,application/xhtml+xml,application/xml;q=0.9,*/",
+		"en-us,en;q=0.5",
+		"300",
+		"keep-alive",
+		"PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120"
 	};
 	int i = 0;
 	MU_LOG_VERBOSE(logger, "Logging all Key-Value pairs!");
@@ -31,7 +35,7 @@ int main(void){
 	asprintf(&all_pairs, "{ \n");
 	for(; i < 6; i++){
 		old_str = all_pairs;
-		asprintf(&all_pairs, "%s%s : %s,\n", all_pairs, keys[i], values[i]);
+		asprintf(&all_pairs, "%s%s: %s,\n", all_pairs, keys[i], values[i]);
 		free(old_str);
 	}
 	old_str = all_pairs;
@@ -47,6 +51,14 @@ int main(void){
 		int was_added = DS_Hash_Map_add(map, keys[i], values[i]);
 		MU_ASSERT(was_added, logger, "DS_Hash_Map_add: \"Was unable to add key: \"%s\" with value: \"%s\"!\"", keys[i], values[i]);
 	}
+	MU_LOG_INFO(logger, "Printing all Key-Value pairs from hash map!");
+	size_t size;
+	char **arr = DS_Hash_Map_key_value_to_string(map, NULL, ": ", NULL, &size, NULL);
+	for(i = 0; i < size; i++){
+		MU_DEBUG("%s", arr[i]);
+		free(arr[i]);
+	}
+	free(arr);
 	MU_LOG_INFO(logger, "Retrieivng all values from keys from hash map...");
 	for(i--; i > 0; i--){
 		char *value_retrieved = DS_Hash_Map_get(map, keys[i]);
