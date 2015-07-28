@@ -26,7 +26,7 @@ typedef enum {
 
 typedef struct {
     /// Contains the fields parsed from the header in a hash table.
-    DS_Hash_Map_t *mapped_fields;
+    DS_Hash_Map_t *header;
     /// The HTTP version.
     NU_HTTP_Version_e version;
     /// The HTTP status.
@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     /// Contains the fields parsed from the header in a hash table.
-    DS_Hash_Map_t *mapped_fields;
+    DS_Hash_Map_t *header;
     /// The HTTP method.
     NU_HTTP_Method_e method;
     /// The request file path.
@@ -46,18 +46,33 @@ typedef struct {
 
 // TODO: Make Field Values case-insensitive!
 
-NU_Response_t *NU_Response_create(const char *header, int header_size);
+NU_Response_t *NU_Response_create(void);
 
-NU_Request_t *NU_Request_create(const char *header, int header_size);
+NU_Request_t *NU_Request_create(void);
 
-bool NU_Response_append_header(NU_Response_t *res, const char *header);
+/*
+    NOTE: When parsing from header, make sure to NOT read past the header_size. Try to make sure header is of appropriate size.
+    This will append what it can to the mapped header, and return what it cannot. I.E After end of header, or incomplete portions.
+    header_size will be the size of what is left (I.E what is invalid or not part of the header). Response should be cleared before passing it!
+    TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
+*/
+char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
 
-bool NU_Request_append_header(NU_Request_t *req, const char *header);
+char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size);
 
-/// Returns the portion after the http header.
-char *NU_Response_to_string(NU_Response_t *res, char *buffer, size_t *buf_size);
+/*
+    Clears the response header of all fields and attributes.
+*/
+bool NU_Response_clear(NU_Response_t *res);
 
-char *NU_Request_to_string(NU_Request_t *req, char *buffer, size_t *buf_size);
+bool NU_Request_clear(NU_Request_t *req);
+
+/*
+    Returns the null-terminated string of the header.
+*/
+char *NU_Response_to_string(NU_Response_t *res);
+
+char *NU_Request_to_string(NU_Request_t *req);
 
 bool NU_Response_set_field(NU_Response_t *res, const char *field, const char *values);
 
