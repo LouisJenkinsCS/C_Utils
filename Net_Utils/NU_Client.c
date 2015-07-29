@@ -104,7 +104,7 @@ NU_Client_t *NU_Client_create(size_t connection_pool_size, bool init_locks){
 		if(client->connections){
 			size_t i = 0;
 			for(;i < connections_allocated; i++){
-				int is_destroyed = NU_Connection_destroy(client->connections[i], logger);
+				int is_destroyed = NU_Connection_destroy(client->connections[i]);
 				if(!is_destroyed){
 					MU_LOG_ERROR(logger, "NU_Connection_destroy: \"Was unable to destroy a connection\"\n");
 				}
@@ -160,73 +160,6 @@ NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *ip_addr, uns
 	return conn;
 }
 
-size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout){
-	MU_ARG_CHECK(logger, 0, client, conn, buffer, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
-	size_t result = NU_Connection_send(conn, buffer, buf_size, timeout, logger);
-	MU_LOG_VERBOSE(logger, "Total Sent: %zu, Buffer Size: %zu\n", result, buf_size);
-	if(result != buf_size){
-		MU_LOG_WARNING(logger, "NU_Connection_send: \"Was unable to send %zu bytes to %s!\"\n", buf_size - result, NU_Connection_get_ip_addr(conn, logger));
-	}
-	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-	return result;
-}
-
-size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout){
-	MU_ARG_CHECK(logger, 0, conn, buffer, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
-	size_t result = NU_Connection_receive(conn, buffer, buf_size, timeout, logger);
-	MU_LOG_VERBOSE(logger, "Total received: %zu, Buffer Size: %zu\n", result, buf_size);
-	if(!result){
-		MU_LOG_WARNING(logger, "NU_Connection_receive: \"Was unable to receive from %s!\"\n", NU_Connection_get_ip_addr(conn, logger));
-		return 0;
-	}
-	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-	return result;
-}
-
-size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	MU_ARG_CHECK(logger, 0, client, conn, file, buf_size > 0);
-	// Obtain the file size to aid in determining whether or not the send was successful or not.
-	struct stat file_stats
-;	int file_fd = fileno(file);
-	if(file_fd == -1){
-		MU_LOG_WARNING(logger, "fileno: \"%s\"\n", strerror(errno));
-	}
-	size_t file_size = 0;
-	if(fstat(file_fd, &file_stats) == -1){
-		MU_LOG_WARNING(logger, "fstat: \"%s\"\n", strerror(errno));
-	}
-	else {
-		file_size = file_stats.st_size;
-	}
-	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
-	size_t total_sent = NU_Connection_send_file(conn, file, buf_size, timeout, logger);
-	// Note that if the file size is zero, meaning that there was an error with fstat, it will skip this check.
-	if(!total_sent){
-		MU_LOG_WARNING(logger, "NU_Connection_send_file: \"No data was sent to %s\"\n", NU_Connection_get_ip_addr(conn, logger));
-		MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-		return 0;
-	}
-	else if(file_size && file_size != total_sent){ 
-		MU_LOG_WARNING(logger, "NU_Connection_send_file: \"File Size is %zu, but only sent %zu to %s\"\n",
-			file_size, total_sent, NU_Connection_get_ip_addr(conn, logger));
-	}
-	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-	MU_LOG_VERBOSE(logger, "Sent file of total size %zu to %s!\n", total_sent, NU_Connection_get_ip_addr(conn, logger));
-	return total_sent;
-}
-
-size_t NU_Client_receive_file(NU_Client_t *client, NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout){
-	MU_ARG_CHECK(logger, 0, client, conn, file, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(client->lock, logger);
-	size_t total_received = NU_Connection_receive_file(conn, file, buf_size, timeout, logger);
-	if(!total_received) MU_LOG_WARNING(logger, "NU_Connection_receive_to_file: \"Was unable to receive file from %s\"\n", NU_Connection_get_ip_addr(conn, logger));
-	MU_COND_RWLOCK_UNLOCK(client->lock, logger);
-	MU_LOG_VERBOSE(logger, "Received file of total size %zu from %s!\n", total_received, conn->ip_addr);
-	return total_received;
-}
-
 bool NU_Client_log(NU_Client_t *client, const char *message, ...){
 	MU_ARG_CHECK(logger, false, client, message);
 	va_list args;
@@ -244,7 +177,7 @@ bool NU_Client_log(NU_Client_t *client, const char *message, ...){
 bool NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *conn){
 	MU_ARG_CHECK(logger, false, client, conn);
 	MU_COND_RWLOCK_WRLOCK(client->lock, logger);
-	int successful = NU_Connection_disconnect(conn, logger);
+	int successful = NU_Connection_disconnect(conn);
 	if(!successful){
 		MU_LOG_ERROR(logger, "NU_Connection_disconnect: \"Was unable to fully disconnect a connection!\"\n");
 	}
@@ -258,7 +191,7 @@ bool NU_Client_shutdown(NU_Client_t *client){
 	MU_COND_RWLOCK_WRLOCK(client->lock, logger);
 	size_t i = 0;
 	for(;i < client->amount_of_connections; i++){
-		int successful = NU_Connection_disconnect(client->connections[i], logger);
+		int successful = NU_Connection_disconnect(client->connections[i]);
 		if(!successful){
 			fully_shutdown = false;
 			MU_LOG_ERROR(logger, "NU_Connection_shutdown: \"Was unable to fully shutdown a connection!\"\n");
@@ -274,7 +207,7 @@ bool NU_Client_destroy(NU_Client_t *client){
 	MU_COND_RWLOCK_WRLOCK(client->lock, logger);
 	size_t i = 0;
 	for(;i < client->amount_of_connections; i++){
-		int successful = NU_Connection_destroy(client->connections[i], logger);
+		int successful = NU_Connection_destroy(client->connections[i]);
 		if(!successful){
 			fully_destroyed = false;
 			MU_LOG_ERROR(logger, "NU_Connection_destroy: \"Was unable to fully destroy a connection!\"\n");

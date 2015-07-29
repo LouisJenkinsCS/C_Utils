@@ -21,16 +21,6 @@ NU_Client_t *NU_Client_create(size_t initial_size, bool init_locks);
 /* Connects the client to some host! */
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int timeout);
 
-/* Sends data to the host, up to the given timeout. */
-size_t NU_Client_send(NU_Client_t *client, NU_Connection_t *connection, const void *buffer, size_t buf_size, unsigned int timeout);
-
-size_t NU_Client_send_file(NU_Client_t *client, NU_Connection_t *connection, FILE *file, size_t buffer_size, unsigned int timeout);
-
-size_t NU_Client_receive_file(NU_Client_t *client, NU_Connection_t *connection, FILE *file, size_t buffer_size, unsigned int timeout);
-
-/* Receives data from the host, up to a given timeout. */
-size_t NU_Client_receive(NU_Client_t *client, NU_Connection_t *connection, void *buffer, size_t buf_size, unsigned int timeout);
-
 bool NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection);
 
 bool NU_Client_log(NU_Client_t *client, const char *message, ...);

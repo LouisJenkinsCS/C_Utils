@@ -4,8 +4,16 @@
 		"selected_items":
 		[
 			[
+				"NU_Respo",
+				"NU_Response_t"
+			],
+			[
+				"NU_Request",
+				"NU_Request_t"
+			],
+			[
 				"request",
-				"request_header_str"
+				"request"
 			],
 			[
 				"buf",
@@ -506,14 +514,6 @@
 			[
 				"destr",
 				"destroy_bound_socket"
-			],
-			[
-				"int",
-				"int"
-			],
-			[
-				"NU_Client",
-				"NU_Client_Socket_t"
 			]
 		]
 	},
@@ -532,23 +532,55 @@
 			"file": "Net_Utils/NU_HTTP.h",
 			"settings":
 			{
-				"buffer_size": 1368,
+				"buffer_size": 3189,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "Net_Utils/Tests/NU_HTTP_Header_Test.c",
+			"file": "Net_Utils/NU_Client.h",
 			"settings":
 			{
-				"buffer_size": 2892,
+				"buffer_size": 1947,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "Net_Utils/NU_HTTP.c",
+			"file": "Net_Utils/NU_Server.h",
 			"settings":
 			{
-				"buffer_size": 6623,
+				"buffer_size": 4781,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Net_Utils/NU_Helper.h",
+			"settings":
+			{
+				"buffer_size": 1089,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Net_Utils/NU_Connection.c",
+			"settings":
+			{
+				"buffer_size": 11224,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Data_Structures/DS_Hash_Map.h",
+			"settings":
+			{
+				"buffer_size": 2276,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Net_Utils/NU_Connection.h",
+			"settings":
+			{
+				"buffer_size": 2553,
 				"line_ending": "Windows"
 			}
 		}
@@ -771,6 +803,11 @@
 	],
 	"file_history":
 	[
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Client.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_HTTP_Header_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map_Test.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Helpers.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.c",
@@ -778,8 +815,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_File_Downloader.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Client.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_Server_File_Downloader.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_Server_Telnet_Client_Chat.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/NU_Server.log",
@@ -795,7 +830,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Retry.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map.mk",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server_File_Downloader.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.h",
@@ -896,9 +930,7 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Misc_Utils/Tests/Misc_Utils_Test_Log.txt",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils_Test_Log.txt",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils/Code/String_Utils.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils/Code/String_Utils.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool_Log.txt",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool_Test_Log.txt"
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils/Code/String_Utils.h"
 	],
 	"find":
 	{
@@ -916,6 +948,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"// Implement",
 			"			\n",
 			"\\\\n",
 			"\\\\\"",
@@ -1042,8 +1075,7 @@
 			"\\(-1\\)",
 			"(-1)",
 			"-1",
-			"ip_address",
-			"destroy_bound"
+			"ip_address"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1153,7 +1185,7 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 6,
 			"sheets":
 			[
 				{
@@ -1182,7 +1214,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
@@ -1191,15 +1223,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1368,
+						"buffer_size": 3189,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								125,
-								125
+								1844,
+								1844
 							]
 						],
 						"settings":
@@ -1209,66 +1241,188 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
+						"translation.y": 705.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Net_Utils/NU_Client.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1947,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								461,
+								461
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "Net_Utils/NU_Server.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4781,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4002,
+								4002
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 831.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "Net_Utils/NU_Helper.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1089,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								698,
+								698
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "Net_Utils/NU_Connection.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 11224,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2277,
+								2285
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 900.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "Net_Utils/Tests/NU_HTTP_Header_Test.c",
-					"semi_transient": false,
+					"buffer": 6,
+					"file": "Data_Structures/DS_Hash_Map.h",
+					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 2892,
+						"buffer_size": 2276,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1653,
-								1653
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.tmLanguage"
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 225.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "Net_Utils/NU_HTTP.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 6623,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2364,
-								2364
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 1035.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "Net_Utils/NU_Connection.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2553,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								856,
+								856
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 135.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
 					"type": "text"
 				}
 			]

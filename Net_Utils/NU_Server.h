@@ -27,7 +27,11 @@ typedef struct NU_Bound_Socket_t{
    pthread_rwlock_t *lock;
    /// Flag to determine if it is bound.
    volatile bool is_bound;
+   /// Logger associated with socket, for when it has it's own file.
+   MU_Logger_t *logger;
 } NU_Bound_Socket_t;
+
+// TODO: Put NU_Bound_Socket_t inside of it's own file, NU_Bound_Socket
 
 /**
  * @brief Wraps a server's created, bound and listening socket as well keeping track of connected connections.
@@ -52,6 +56,8 @@ typedef struct {
    bool is_threaded;
 } NU_Server_t;
 
+// TODO: Change rwlock to a mutex!
+
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
 NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks);
@@ -66,18 +72,6 @@ bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    connections should not be freed, and it is also managed by the server. */
 NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, unsigned int timeout);
-
-/* Send data to the requested client. */
-size_t NU_Server_send(NU_Server_t *server, NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout);
-
-/* Receives data from any of current connections. */
-size_t NU_Server_receive(NU_Server_t *server, NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout);
-
-/* Receive data from the socket and feed it into a file. sendfile is used for maximum efficiency. */
-size_t NU_Server_receive_file(NU_Server_t *server, NU_Connection_t *conn, FILE *file, size_t buffer_size, unsigned int timeout);
-
-/* Reads from the file, then sends it to the socket for as long as the timeout. */
-size_t NU_Server_send_file(NU_Server_t* server, NU_Connection_t *conn, FILE* file, size_t buffer_size, unsigned int timeout);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */

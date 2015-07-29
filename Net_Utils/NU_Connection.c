@@ -1,14 +1,16 @@
 #include <NU_Connection.h>
 
+static const int send_buf_size = 8 * 1024;
+
 // Returns the max sockfd size.
-static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set, MU_Logger_t *logger){
+static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set){
 	if(connections) return -1;
 	size_t i = 0, max_fd = -1;
 	for(;i < size; i++){
 		NU_Connection_t *conn = connections[i];
-		MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+		MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 		if(!conn->in_use){
-			MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+			MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 			continue;
 		}
 		int sockfd = conn->sockfd;
@@ -16,7 +18,7 @@ static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t
 		if(sockfd > max_fd){
 			max_fd = sockfd;
 		}
-		MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	}
 	return max_fd;
 }
@@ -25,81 +27,108 @@ static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t
 NU_Connection_t *NU_Connection_create(bool init_locks, MU_Logger_t *logger){
 	NU_Connection_t *conn = calloc(1, sizeof(NU_Connection_t));
 	if(!conn){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		MU_LOG_ASSERT(conn->logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
 	if(init_locks){
 		conn->lock = malloc(sizeof(pthread_rwlock_t));
 		if(!conn->lock){
 			free(conn);
-			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			MU_LOG_ASSERT(conn->logger, "malloc: '%s'", strerror(errno));
 			return NULL;
 		}
 		int retval;
 		if((retval = pthread_rwlock_init(conn->lock, NULL)) < 0){
 			free(conn->lock);
 			free(conn);
-			MU_LOG_ERROR(logger, "pthread_rwlock_init: '%s'", strerror(retval));
+			MU_LOG_ERROR(conn->logger, "pthread_rwlock_init: '%s'", strerror(retval));
 			return NULL;
 		}
 	}
+	conn->logger = logger;
 	return conn;
 }
 
 // Implement
-size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, 0, conn, buffer, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
-	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, logger);
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, int flags){
+	MU_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
+	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return total_sent;
 }
 
 // Implement
-size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, 0, conn, buffer, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
-	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, logger);
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, int flags){
+	MU_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
+	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return amount_received;
 }
 
 // Implement
-size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, 0, conn, file, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
-	char buf[buf_size];
+size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags){
+	MU_ARG_CHECK(conn->logger, 0, conn, file);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
+	struct stat file_stats;	
+	int file_fd = fileno(file);
+	if(file_fd == -1){
+		MU_LOG_WARNING(conn->logger, "fileno: '%s'", strerror(errno));
+		return 0;
+	}
+	if(fstat(file_fd, &file_stats) == -1){
+		MU_LOG_WARNING(conn->logger, "fstat: '%s'", strerror(errno));
+		return 0;
+	}
+	size_t file_size = file_stats.st_size;
+	char buf[send_buf_size];
 	size_t buf_read, total_sent = 0;
-	MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, buf_size, file));
+	MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, send_buf_size, file));
 	while(buf_read > 0){
-		if(NU_send_all(conn->sockfd, buf, buf_read, timeout, logger) != buf_read){
-			MU_LOG_WARNING(logger, "NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
-			MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+		if(NU_send_all(conn->sockfd, buf, buf_read, timeout, flags, conn->logger) != buf_read){
+			MU_LOG_WARNING(conn->logger, "NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
+			MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 			return total_sent;
 		}
 		total_sent += buf_read;
-		MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, buf_size, file));
+		MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, send_buf_size, file));
 	}
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	if(total_sent != file_size){
+		MU_LOG_WARNING(conn->logger, "Was unable to send all of file to %s!File Size is %zu, but could only send %zu!",
+			conn->ip_addr, file_size, total_sent);
+	}
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return total_sent;
 }
 
 // Implement
-size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, size_t buf_size, unsigned int timeout, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, 0, conn, file, buf_size > 0);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags){
+	MU_ARG_CHECK(conn->logger, 0, conn, file);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
+	struct stat file_stats;	
+	int file_fd = fileno(file);
+	if(file_fd == -1){
+		MU_LOG_WARNING(conn->logger, "fileno: '%s'", strerror(errno));
+		return 0;
+	}
+	if(fstat(file_fd, &file_stats) == -1){
+		MU_LOG_WARNING(conn->logger, "fstat: '%s'", strerror(errno));
+		return 0;
+	}
+	size_t buf_size = file_stats.st_blksize;
 	char buf[buf_size];
 	size_t received, total_received = 0;
-	while((received = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, logger)) > 0){
+	while((received = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, flags, conn->logger)) > 0){
 		size_t written;
 		MU_TEMP_FAILURE_RETRY(written, fwrite(buf, 1, received, file));
 		if(written != received){
-			MU_LOG_ERROR(logger, "fwrite: 'Written only %zu bytes, expected %zu bytes!\n%s'", written, received, strerror(errno));
+			MU_LOG_ERROR(conn->logger, "fwrite: 'Written only %zu bytes, expected %zu bytes!\n%s'", written, received, strerror(errno));
 			return total_received += written;
 		}
 		total_received += received;
 	}
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return total_received;
 }
 
@@ -128,12 +157,12 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 	FD_ZERO(&receive_set);
 	FD_ZERO(&send_set);
 	int max_fd = 0, can_receive = 0, can_send = 0;
-	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set, logger);
+	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set);
 	can_receive = (r_max_fd != -1);
 	if(r_max_fd > max_fd){
 		max_fd = r_max_fd;
 	}
-	int s_max_fd = add_valid_connections_to_fd_set(s_conns, send_size, &send_set, logger);
+	int s_max_fd = add_valid_connections_to_fd_set(s_conns, send_size, &send_set);
 	can_send = (s_max_fd != -1);
 	if(s_max_fd > max_fd){
 		max_fd = s_max_fd;
@@ -205,64 +234,80 @@ NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size,
 	size_t i = 0;
 	for(;i < size; i++){
 		NU_Connection_t *conn = connections[i];
-		MU_COND_RWLOCK_WRLOCK(conn->lock, logger);
+		MU_COND_RWLOCK_WRLOCK(conn->lock, conn->logger);
 		if(conn && !conn->in_use){
 			conn->in_use = true;
 			conn->sockfd = sockfd;
 			conn->port = port;
 			strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
-			MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+			MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 			return conn;
 		}
-		MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	}
 	return NULL;
 }
 
-bool NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn);
-	MU_COND_RWLOCK_WRLOCK(conn->lock, logger);
+bool NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	MU_COND_RWLOCK_WRLOCK(conn->lock, conn->logger);
 	conn->sockfd = sockfd;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return true;
 }
 
-int NU_Connection_get_sockfd(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, -1, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+int NU_Connection_get_sockfd(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, -1, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	int sockfd = conn->sockfd;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return sockfd;
 }
 
-bool NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, ip_addr);
-	MU_COND_RWLOCK_WRLOCK(conn->lock, logger);
+bool NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr){
+	MU_ARG_CHECK(conn->logger, false, ip_addr);
+	MU_COND_RWLOCK_WRLOCK(conn->lock, conn->logger);
 	strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN);
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return true;
 }
 
-const char *NU_Connection_get_ip_addr(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, NULL, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+const char *NU_Connection_get_ip_addr(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, NULL, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	const char *ip_addr  = conn->ip_addr;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return ip_addr;
 }
 
-unsigned int NU_Connection_get_port(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, 0, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+unsigned int NU_Connection_get_port(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, 0, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	unsigned int port  = conn->port;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return port;
 }
 
-bool NU_Connection_set_port(NU_Connection_t *conn, unsigned int port, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn, port > 0);
-	MU_COND_RWLOCK_WRLOCK(conn->lock, logger);
+bool NU_Connection_set_port(NU_Connection_t *conn, unsigned int port){
+	MU_ARG_CHECK(conn->logger, false, conn, port > 0);
+	MU_COND_RWLOCK_WRLOCK(conn->lock, conn->logger);
 	conn->port = port;
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
+	return true;
+}
+
+MU_Logger_t *NU_Connection_get_logger(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
+	MU_Logger_t *logger = conn->logger;
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
+	return logger;
+}
+
+bool NU_Connection_set_logger(NU_Connection_t *conn, MU_Logger_t *logger){
+	MU_ARG_CHECK(logger, false, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+	conn->logger = logger;
 	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
 	return true;
 }
@@ -278,46 +323,49 @@ bool NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, co
 	conn->sockfd = sockfd;
 	conn->port = port;
 	strcpy(conn->ip_addr, ip_addr);
+	if(logger){
+		conn->logger = logger;
+	}
 	conn->in_use = true;
 	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
 	return true;
 }
 
-bool NU_Connection_is_valid(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+bool NU_Connection_is_valid(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	bool result = conn->in_use;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return result;
 }
 
-bool NU_Connection_in_use(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, logger);
+bool NU_Connection_in_use(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	int in_use = conn->in_use;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return in_use;
 }
 
-bool NU_Connection_disconnect(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn);
-	MU_COND_RWLOCK_WRLOCK(conn->lock, logger);
+bool NU_Connection_disconnect(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	MU_COND_RWLOCK_WRLOCK(conn->lock, conn->logger);
 	if(!conn->in_use){
-		MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+		MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 		return false;
 	}
 	int has_closed;
 	MU_TEMP_FAILURE_RETRY(has_closed, close(conn->sockfd));
-	if(has_closed == -1) MU_LOG_WARNING(logger, "close: '%s'", strerror(errno));
+	if(has_closed == -1) MU_LOG_WARNING(conn->logger, "close: '%s'", strerror(errno));
 	conn->in_use = false;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, logger);
+	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return true;
 }
 
-bool NU_Connection_destroy(NU_Connection_t *conn, MU_Logger_t *logger){
-	MU_ARG_CHECK(logger, false, conn);
-	NU_Connection_disconnect(conn, logger);
-	MU_COND_RWLOCK_DESTROY(conn->lock, logger);
+bool NU_Connection_destroy(NU_Connection_t *conn){
+	MU_ARG_CHECK(conn->logger, false, conn);
+	NU_Connection_disconnect(conn);
+	MU_COND_RWLOCK_DESTROY(conn->lock, conn->logger);
 	free(conn);
 	return true;
 }
