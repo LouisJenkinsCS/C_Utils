@@ -195,7 +195,7 @@ A basic thread-safe hash map. Follows the template of <char *, void *>, where yo
 
 A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. 
 
-Example: "%tsm [%lvl](%fle:%lno) %fnc(): \n\"%msg\"\n" 
+Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
 
 Which is the current default, would look like such...
 
@@ -208,7 +208,7 @@ MU_LOG_INFO(logger, "Hello World!");
 
 The above would produce the following output:
 
-9:39:32 PM [INFO](test_file:63) main():
+9:39:32 PM \[INFO\](test_file:63) main():
 "Hello World!"
 
 The most notable features being that it lets you know not only the exact line number and file, but also the function it is being called from.
