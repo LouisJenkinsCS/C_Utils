@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
+#define MU_EVENT_MAX_LEN 64
+
 typedef struct {
 	/// The lock associated with an event's condition variable.
 	pthread_mutex_t *lock;
@@ -15,11 +17,13 @@ typedef struct {
 	atomic_bool flag;
 	/// The amount of threads waiting on this event.
 	atomic_int waiting_threads;
+	/// The name of the event.
+	char name[MU_EVENT_MAX_LEN + 1];
 	/// The logger used to log events.
 	MU_Logger_t *logger;
 } MU_Event_t;
 
-MU_Event_t *MU_Event_create(MU_Logger_t *logger);
+MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger);
 
 bool MU_Event_set(MU_Event_t *event);
 

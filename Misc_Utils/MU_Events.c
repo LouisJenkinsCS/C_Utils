@@ -1,6 +1,9 @@
 #include <MU_Events.h>
 
-MU_Event_t *MU_Event_create(MU_Logger_t *logger){
+/// The common event log format.
+static const char *format = "~%s~: '%s'";
+
+MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger){
 	bool lock_initialized = false, cond_initialized = false;
 	MU_Event_t *event = calloc(1, sizeof(MU_Event_t));
 	if(!event){
@@ -30,8 +33,11 @@ MU_Event_t *MU_Event_create(MU_Logger_t *logger){
 	cond_initialized = true;
 	event->flag = ATOMIC_VAR_INIT(false);
 	event->waiting_threads = ATOMIC_VAR_INIT(0);
+	if(event_name){
+		snprintf(event->name, MU_EVENT_MAX_LEN, "%s", event_name);
+	}
 	event->logger = logger;
-	MU_LOG_VERBOSE(logger, "Event created!");
+	MU_LOG_VERBOSE(logger, format, event_name, "Event created!");
 	return event;
 
 	error:
@@ -64,7 +70,7 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout){
 	if(atomic_load(&event->flag) == false){
 		return false;
 	}
-	MU_LOG_VERBOSE(event->logger, "Waiting on event signal!");
+	MU_LOG_VERBOSE(event->logger, format, event->name, "Waiting on event signal!");
 	atomic_fetch_add(&event->waiting_threads, 1);
 	pthread_mutex_lock(event->lock);
 	if(timeout < 0){
@@ -93,24 +99,27 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout){
 			} // End errorcode check
 		} // End atomic_load loop.
 	} // End timeout condwait
-	MU_LOG_VERBOSE(event->logger, "Received event signal!");
+	MU_LOG_VERBOSE(event->logger, format, event->name, "Received event signal!");
 	atomic_fetch_sub(&event->flag, 1);
 	return true;
 } // End function
 
 bool MU_Event_signal(MU_Event_t *event){
 	if(!event) return false;
+	if(atomic_load(&event->flag) == false){
+		return false;
+	}
 	pthread_mutex_lock(event->lock);
 	atomic_store(&event->flag, false);
 	pthread_cond_broadcast(event->cond);
 	pthread_mutex_unlock(event->lock);
-	MU_LOG_VERBOSE(event->logger, "Event signaled!");
+	MU_LOG_VERBOSE(event->logger, format, event->name, "Event signaled!");
 	return true;
 }
 
 bool MU_Event_destroy(MU_Event_t *event){
 	if(!event) return false;
-	MU_LOG_VERBOSE(event->logger, "Sending final signal to threads...");
+	MU_LOG_VERBOSE(event->logger, format, event->name, "Sending final signal to threads...");
 	MU_Event_signal(event);
 	while(atomic_load(&event->waiting_threads) > 0){
 		pthread_yield();
