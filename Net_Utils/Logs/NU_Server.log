@@ -1,0 +1,13 @@
+09:24:07 PM [INFO](./Net_Utils/NU_Server.c:238) NU_Server_bind(): 
+"Bound a socket to 192.168.1.112
+ on port 10000!"
+09:24:11 PM [INFO](./Net_Utils/NU_Server.c:305) NU_Server_accept(): 
+"2.0.217.181 connected to port 10000"
+09:24:11 PM [INFO](./Net_Utils/NU_Server.c:360) NU_Server_disconnect(): 
+"Disconnected from 2.0.217.181 on port 10000!"
+09:24:11 PM [SERVER](./Net_Utils/NU_Server.c:350) NU_Server_log(): 
+"Shutting down..."
+09:24:11 PM [INFO](./Net_Utils/NU_Server.c:140) NU_Bound_Socket_unbind(): 
+"Unbound from port 10000!"
+09:24:11 PM [VERBOSE](./Net_Utils/NU_Server.c:116) NU_Bound_Socket_destroy(): 
+"Destroyed a bound socket!"

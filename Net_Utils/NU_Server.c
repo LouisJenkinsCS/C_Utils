@@ -5,12 +5,11 @@ static MU_Logger_t *logger = NULL;
 #define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
 __attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("NU_Server.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Net_Utils/Logs/NU_Server.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
-	free(logger);
 }
 
 /* Server-specific helper functions */

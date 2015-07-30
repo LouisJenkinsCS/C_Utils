@@ -39,10 +39,7 @@ size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned in
 NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
 
 
-NU_Connection_t **NU_Connection_select_receive(NU_Connection_t **connections, size_t *size, unsigned int timeout);
-
-
-NU_Connection_t **NU_Connection_select_send(NU_Connection_t **connections, size_t *size, unsigned int timeout);
+int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, unsigned int timeout, MU_Logger_t *logger);
 
 
 

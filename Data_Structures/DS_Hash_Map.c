@@ -3,12 +3,11 @@
 static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("DS_Hash_Map.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Data_Structures/Logs/DS_Hash_Map.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
-	free(logger);
 }
 
 /// Very simple and straight forward hash function. Bob Jenkin's hash.

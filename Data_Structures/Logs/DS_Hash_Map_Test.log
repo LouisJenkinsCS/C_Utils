@@ -1,0 +1,31 @@
+09:28:33 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:33) main(): 
+"Logging all Key-Value pairs!"
+09:28:33 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:44) main(): 
+"{ 
+Host: net.tutsplus.com,
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko,
+Cache-Control: no-cache,
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/,
+Accept-Language: en-us,en;q=0.5,
+Keep-Alive: 300,
+}"
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:46) main(): 
+"Creating Hash Map..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:49) main(): 
+"Adding all key-value pairs to hash map..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:54) main(): 
+"Printing all Key-Value pairs from hash map!"
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:62) main(): 
+"Retrieivng all values from keys from hash map..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:69) main(): 
+"Removing Key-Value pair ("Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/")..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:71) main(): 
+"Testing for removal of Key-Value pair..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:74) main(): 
+"Testing for adding duplicate key..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:77) main(): 
+"Testing retrieval of key by value..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:79) main(): 
+"Destroy Hash Map..."
+09:28:33 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:81) main(): 
+"Success!"

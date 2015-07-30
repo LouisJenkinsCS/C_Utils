@@ -54,7 +54,7 @@ static void *redirector_thread(void *args){
 	char msg[task->buffer_size + 1];
 	char redirect_message[task->buffer_size + username_prefix_size + 1];
 	while(1){
-		size_t received = NU_Server_receive(server, task->sender->client, msg, task->buffer_size, task->timeout);
+		size_t received = NU_Connection_receive(task->sender->client, msg, task->buffer_size, task->timeout, 0);
 		if(!received){
 			break;
 		}
@@ -64,7 +64,7 @@ static void *redirector_thread(void *args){
 		strcat(redirect_message, msg);
 		strcat(redirect_message, suffix);
 		//MU_LOG_VERBOSE(logger, "%s\n", new_msg);
-		if(!NU_Server_send(server, task->receiver->client, (const char *)redirect_message, strlen(redirect_message), task->timeout)) {
+		if(!NU_Connection_send(task->receiver->client, redirect_message, strlen(redirect_message), task->timeout, 0)){
 			break;
 		}
 	}
@@ -76,17 +76,18 @@ static void *redirector_thread(void *args){
 static Client_Wrapper_t *obtain_client(NU_Bound_Socket_t *bsock){
 	NU_Connection_t *client = NU_Server_accept(server, bsock, generous_timeout);
 	MU_ASSERT(client, logger, "Client did not connect in time!\n");
+	NU_Connection_send(client, "\255\253\34", 3, avg_timeout, 0);
 	char username[username_max_length];
-	size_t sent = NU_Server_send(server, client, "Username:", strlen("Username:"), avg_timeout);
+	size_t sent = NU_Connection_send(client, "Username:", strlen("Username:"), avg_timeout, 0);
 	MU_ASSERT(sent, logger, "Client timed out or disconnected while asking for username!\n");
-	size_t received = NU_Server_receive(server, client, username, username_max_length, avg_timeout);
+	size_t received = NU_Connection_receive(client, username, username_max_length, avg_timeout, 0);
 	MU_ASSERT(received, logger, "Client timed out or disconnected waiting to obtain username!\n");
 	strtok(username, "\r\n");
 	return wrap_client(client, username);
 }
 
 int main(void){
-	logger = MU_Logger_create("NU_Server_Telnet_Client_Chat.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Net_Utils/Logs/NU_Server_Telnet_Client_Chat.log", "w", MU_ALL);
 	server = NU_Server_create(max_clients, max_bsocks, true);
 	NU_Bound_Socket_t *bsock = NU_Server_bind(server, max_clients, port_num, "192.168.1.112");
 	MU_ASSERT(bsock, logger, "Failed while attempting to bind a socket!");
@@ -100,8 +101,8 @@ int main(void){
 		wrappers[i] = wrapper;
 		MU_DEBUG("Connected to %s!", wrapper->username);
 	}
-	Thread_Task_t *wrapper_one_task = new_task(wrappers[0], wrappers[1], 4 * NU_KILOBYTE, avg_timeout);
-	Thread_Task_t *wrapper_two_task = new_task(wrappers[1], wrappers[0], 4 * NU_KILOBYTE, avg_timeout);
+	Thread_Task_t *wrapper_one_task = new_task(wrappers[0], wrappers[1], 4 * 1024, avg_timeout);
+	Thread_Task_t *wrapper_two_task = new_task(wrappers[1], wrappers[0], 4 * 1024, avg_timeout);
 	int failed_create = pthread_create(&thread_one, NULL, redirector_thread, wrapper_one_task);
 	MU_ASSERT(!failed_create, logger, "pthread_create: %s", strerror(failed_create));
 	failed_create = pthread_create(&thread_two, NULL, redirector_thread, wrapper_two_task);
@@ -111,10 +112,6 @@ int main(void){
 	MU_ASSERT(!join_failed, logger, "pthread_join: %s", strerror(join_failed));
 	join_failed = pthread_join(thread_two, NULL);
 	MU_ASSERT(!join_failed, logger, "pthread_join: %s", strerror(join_failed));
-	char *end_result = NU_Server_about(server);
-	MU_DEBUG("%s", end_result);
-	free(end_result);
-	NU_Server_log(server, "%s", "Server being shutdown!");
 	NU_Server_destroy(server);
 	return EXIT_SUCCESS;
 }

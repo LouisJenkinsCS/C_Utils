@@ -188,5 +188,6 @@ int MU_Logger_destroy(MU_Logger_t *logger){
 	free(logger->format.verbose_f);
 	free(logger->format.custom_f);
 	free(logger->format.warning_f);
+	free(logger);
 	return 1;
 }

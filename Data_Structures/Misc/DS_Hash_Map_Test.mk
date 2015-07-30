@@ -9,7 +9,7 @@ SOURCES=MU_Logger.c MU_Arg_Check.c DS_Hash_Map.c DS_Hash_Map_Test.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=DS_Hash_Map_Test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=$(MP) $(DSP)
+VPATH=./Misc_Utils/ ./Data_Structures/ ./Data_Structures/Tests
 
 all: $(TARGET)
 
