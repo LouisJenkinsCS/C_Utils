@@ -68,7 +68,7 @@ int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t
    if(accepted <= 0){
       if(!accepted) MU_LOG_INFO(logger, "select: 'Timed out!'");
       else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
-      return 0;
+      return -1;
    }
    struct sockaddr_in addr;
    socklen_t size = sizeof(struct sockaddr_in);

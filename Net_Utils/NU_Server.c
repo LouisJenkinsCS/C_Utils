@@ -117,7 +117,7 @@ static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 	return close_failed == 0;
 }
 
-static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+static bool NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	MU_COND_RWLOCK_WRLOCK(bsock->lock, logger);
 	unsigned int port = bsock->port;
 	size_t i = 0;
@@ -138,7 +138,7 @@ static int NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock)
 	bsock->is_bound = 0;
 	MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
 	MU_LOG_INFO(logger, "Unbound from port %u!", port);
-	return 1;
+	return true;
 }
 
 NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks){
@@ -230,7 +230,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 }
 
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr){
-	MU_ARG_CHECK(logger, NULL, server, port > 0, queue_size > 0, ip_addr);
+	MU_ARG_CHECK(logger, NULL, server, port > 0, queue_size > 0);
 	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
 	NU_Bound_Socket_t *bsock = NU_Bound_Socket_reuse(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
@@ -254,6 +254,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsign
 	}
 	server->sockets = tmp_sockets;
 	server->sockets[server->amount_of_sockets++] = bsock;
+	NU_Bound_Socket_setup(bsock, queue_size, port, ip_addr);
 	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr, port);
 	return bsock;
@@ -264,25 +265,8 @@ bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	// Even though the server isn't directly modified, in order to send data to a connection, the readlock must be acquired, hence this will prevent
 	// any connections from sending to a shutting down socket. Also the socket will not shutdown until the readlocks are released.
 	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
-	MU_COND_RWLOCK_WRLOCK(bsock->lock, logger);
-	if(shutdown(bsock->sockfd, SHUT_RDWR) == -1){
-		MU_LOG_ERROR(logger, "shutdown: '%s'", strerror(errno));
-		MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-		return 0;
-	}
-	size_t i = 0;
-	for(;i < server->amount_of_connections; i++){
-		NU_Connection_t *conn = server->connections[i];
-		if(NU_Connection_get_port(conn) == bsock->port){
-			int is_disconnected = NU_Connection_disconnect(conn);
-			if(!is_disconnected){
-				MU_LOG_ERROR(logger, "NU_Connection_disconnect: 'Was unable to disconnect a connection!'");
-			}
-		}
-		MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-	}
+	NU_Bound_Socket_unbind(server, bsock);
+	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 	MU_LOG_INFO(logger, "Unbound from port %u!", bsock->port);
 	return 1;
 }
@@ -294,7 +278,7 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	unsigned int port = bsock->port;
 	int sockfd = NU_timed_accept(bsock->sockfd, ip_addr, timeout, logger);
 	if(sockfd == -1){
-		MU_LOG_INFO(logger, "accept: 'Was unable to accept a server!'");
+		MU_LOG_INFO(logger, "accept: 'Was unable to accept a connection!'");
 		return NULL;
 	}
 	MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);

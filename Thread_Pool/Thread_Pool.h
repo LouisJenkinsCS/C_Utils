@@ -62,29 +62,15 @@
 
 #include <PBQueue.h>
 #include <stdlib.h>
-#include <Misc_Utils.h>
-
-typedef struct Worker Worker;
-
-typedef struct Thread_Pool Thread_Pool;
-
-typedef struct Result Result;
-
-typedef struct Sub_Process Sub_Process;
-
-typedef struct Task Task;
-
-typedef struct Task_Queue Task_Queue;
-
-typedef enum Priority Priority;
-
-typedef enum Pause_Preference Pause_Preference;
-
-typedef enum Task_Status Task_Status;
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdatomic.h>
+#include <errno.h>
+#include <MU_Logger.h>
 
 typedef void *(*thread_callback)(void *args);
 
-enum Priority{
+typedef enum {
 	/// Lowest possible priority
 	TP_LOWEST,
 	/// Low priority, above Lowest.
@@ -95,38 +81,62 @@ enum Priority{
 	TP_HIGH,
 	/// Highest priority, or "imminent"
 	TP_HIGHEST
-};
+} TP_Priority_e;
 
-struct Worker {
+typedef struct {
+	/// Lock to protect contents of 'Result'
+	pthread_mutex_t *not_ready;
+	/// Condition variable to signal result being ready.
+	pthread_cond_t *is_ready;
+	/// Determines whether or not it has been processed.
+	volatile bool ready;
+	/// The returned item from the task.
+	void *item;
+} TP_Result_t;
+
+typedef struct TP_Task_t{
+	/// Task to be executed.
+	thread_callback callback;
+	/// Arguments to be passed to the task.
+	void *args;
+	/// Pointing to the next task in the queue.
+	struct TP_Task_t *next;
+	/// Result from the Task.
+	TP_Result_t *result;
+	/// Priority of task.
+	TP_Priority_e priority;
+	/// Determines whether or not this task can be paused midway.
+	_Atomic bool no_pause;
+	/// Determines whether or not the thread that runs this task should pause after.
+	_Atomic bool delayed_pause;
+} TP_Task_t;
+
+typedef struct {
 	/// The worker thread that does the work.
 	pthread_t *thread;
 	/// The worker thread id.
 	unsigned int thread_id;
 	/// Determines whether the thread is properly setup.
-	volatile unsigned char is_setup;
+	_Atomic bool is_setup;
 	/// The current task being worked on.
-	Task *task;
-};
+	TP_Task_t *task;
+} TP_Worker_t;
 
-struct Thread_Pool {
+typedef struct {
 	/// Array of threads.
-	Worker **worker_threads;
+	TP_Worker_t **worker_threads;
 	/// The queue with all jobs assigned to it.
 	PBQueue *queue;
-	/// Logger used to log information, warnings and errors.
-	MU_Logger_t *logger;
 	/// Amount of threads currently created, A.K.A Max amount.
-	unsigned int thread_count;
+	_Atomic size_t thread_count;
 	/// Amount of threads currently active.
-	unsigned int active_threads;
+	_Atomic size_t active_threads;
 	/// Flag to keep all threads alive.
-	volatile unsigned char keep_alive;
+	_Atomic bool keep_alive;
 	/// Flag used to pause all threads
-	volatile unsigned char paused;
+	_Atomic bool paused;
 	/// Used for timed pauses.
-	volatile unsigned int seconds_to_pause;
-	/// Mutex for thread_count and active_threads, and keep_alive.
-	pthread_mutex_t *thread_count_change;
+	_Atomic unsigned int seconds_to_pause;
 	/// Condition variable used to resume all threads.
 	pthread_cond_t *resume;
 	/// Mutex accompanied by the condition variable.
@@ -135,35 +145,7 @@ struct Thread_Pool {
 	pthread_cond_t *all_tasks_finished;
 	/// Mutex accompanied by all_tasks_finished
 	pthread_mutex_t *no_tasks;
-};
-
-struct Result {
-	/// Lock to protect contents of 'Result'
-	pthread_mutex_t *not_ready;
-	/// Condition variable to signal result being ready.
-	pthread_cond_t *is_ready;
-	/// Determines whether or not it has been processed.
-	volatile unsigned char ready;
-	/// The returned item from the task.
-	void *item;
-};
-
-struct Task {
-	/// Task to be executed.
-	thread_callback callback;
-	/// Arguments to be passed to the task.
-	void *args;
-	/// Pointing to the next task in the queue.
-	Task *next;
-	/// Result from the Task.
-	Result *result;
-	/// Priority of task.
-	Priority priority;
-	/// Determines whether or not this task can be paused midway.
-	unsigned char no_pause;
-	/// Determines whether or not the thread that runs this task should pause after.
-	unsigned char delayed_pause;
-};
+} TP_Pool_t;
 
 /**
  * Constructor for the thread pool, creating the requested amount of threads. 
@@ -184,7 +166,7 @@ int Thread_Pool_Init(size_t number_of_threads);
  * | TP_HIGHEST_PRIORITY | TP_NO_RESULT | TP_NO_PAUSE.
  * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
-Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags);
+TP_Result_t *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags);
 
 /**
  * Clear all tasks in the task queue. Note: Will not cancel currently run tasks.
@@ -197,7 +179,7 @@ int Thread_Pool_Clear_Tasks(void);
  * @param result Result to be destroyed.
  * @return 1 on success.
  */
-int Thread_Pool_Result_Destroy(Result *result);
+int Thread_Pool_Result_Destroy(TP_Result_t *result);
 
 /**
  * Destroys the current thread pool, waiting for the current tasks to be finished.
@@ -206,35 +188,19 @@ int Thread_Pool_Result_Destroy(Result *result);
 int Thread_Pool_Destroy(void);
 
 /**
- * Obtain the result from a Result, blocking until it's ready. This is the only safe
- * way to obtain said result. Also note, if the thread pool is shutdown, then the
- * result returns NULL.
- * @param result Result to obtain result from.
- * @return The item stored inside of the result or NULL if thread pool is shut down.
- */ 
-void *Thread_Pool_Obtain_Result(Result *result);
-
-/**
  * Obtain the result from the task, blocking until it is ready or until the time 
  * elapses, in which it will return NULL.
  * @param result Result to obtain result from.
  * @param seconds Maximum amount of time to block for if result isn't ready.
  * @return The item stored inside the result, or NULL if timeout or thread pool is shutdown.
  */
-void *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds);
+void *Thread_Pool_Obtain_Result(TP_Result_t *result, long long int timeout);
 
 /**
- * Block until all tasks are finished.
+ * Block until all tasks are finished or timeout ellapses.
  * @return 1 on success.
  */
-int Thread_Pool_Wait(void);
-
-/**
- * Block until all tasks are finished or time elapses.
- * @param seconds Maximum amount of time to block for.
- * @return 1 if all tasks are finished, 0 if timeout.
- */
-int Thread_Pool_Timed_Wait(unsigned int seconds);
+int Thread_Pool_Wait(long long int timeout);
 
 /**
  * Pause all operations in the task queue. Even NO_PAUSE flagged tasks will enter
@@ -242,15 +208,10 @@ int Thread_Pool_Timed_Wait(unsigned int seconds);
  * once it determines whether it is or not. Primitive blocking functions like
  * sleep and select should return perfectly since SA_RESTART is flagged in sigaction.
  * @return 1 on success, 0 if at least one thread is not able to pause.
- */
-int Thread_Pool_Pause(void);
-
-/**
- * Pause the thread pool for the given amount of time or resumed. Note: See: Thread_Pool_Pause.
  * @param seconds Amount of time to pause for.
  * @return 1 on success, 0 if at least one thread cannot pause.
  */
-int Thread_Pool_Timed_Pause(unsigned int seconds);
+int Thread_Pool_Pause(long long int timeout);
 
 /**
  * Resume all worker threads that are paused. If the thread pool is not paused, or it is

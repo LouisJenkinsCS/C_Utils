@@ -1,13 +1,21 @@
-09:24:07 PM [INFO](./Net_Utils/NU_Server.c:238) NU_Server_bind(): 
+11:44:08 AM [INFO](./Net_Utils/NU_Server.c:238) NU_Server_bind(): 
 "Bound a socket to 192.168.1.112
- on port 10000!"
-09:24:11 PM [INFO](./Net_Utils/NU_Server.c:305) NU_Server_accept(): 
-"2.0.217.181 connected to port 10000"
-09:24:11 PM [INFO](./Net_Utils/NU_Server.c:360) NU_Server_disconnect(): 
-"Disconnected from 2.0.217.181 on port 10000!"
-09:24:11 PM [SERVER](./Net_Utils/NU_Server.c:350) NU_Server_log(): 
-"Shutting down..."
-09:24:11 PM [INFO](./Net_Utils/NU_Server.c:140) NU_Bound_Socket_unbind(): 
+ on port 80!"
+11:44:13 AM [INFO](./Net_Utils/NU_Server.c:289) NU_Server_accept(): 
+"2.0.203.146 connected to port 80"
+11:44:13 AM [SERVER](./Net_Utils/NU_Server.c:334) NU_Server_log(): 
+"Binding second port!"
+11:44:13 AM [INFO](./Net_Utils/NU_Server.c:140) NU_Bound_Socket_unbind(): 
+"Unbound from port 80!"
+11:44:13 AM [INFO](./Net_Utils/NU_Server.c:270) NU_Server_unbind(): 
+"Unbound from port 80!"
+11:44:13 AM [INFO](./Net_Utils/NU_Server.c:238) NU_Server_bind(): 
+"Bound a socket to 192.168.1.112 on port 10000!"
+11:44:23 AM [INFO](./Net_Utils/NU_Server.c:289) NU_Server_accept(): 
+"2.0.225.112 connected to port 10000"
+11:44:23 AM [WARNING](./Net_Utils/NU_Connection.c:99) NU_Connection_send_file(): 
+"Was unable to send all of file to 2.0.225.112!File Size is 4866, but could only send 0!"
+11:44:23 AM [INFO](./Net_Utils/NU_Server.c:140) NU_Bound_Socket_unbind(): 
 "Unbound from port 10000!"
-09:24:11 PM [VERBOSE](./Net_Utils/NU_Server.c:116) NU_Bound_Socket_destroy(): 
+11:44:23 AM [VERBOSE](./Net_Utils/NU_Server.c:116) NU_Bound_Socket_destroy(): 
 "Destroyed a bound socket!"

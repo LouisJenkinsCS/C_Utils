@@ -5,34 +5,22 @@
 #include <assert.h>
 #include <errno.h>
 #include <Thread_Pool.h>
-#include <Misc_Utils.h>
 
-/* Define helper macros here. */
+static MU_Logger_t *logger = NULL;
 
-/// Simple macro to atomically increment an integer on a mutex.
-#define TP_INCREMENT(var, mutex) \
-do { \
-	pthread_mutex_lock(mutex); \
-	var++; \
-	MU_LOG_VERBOSE(logger, "Incremented " var " to %d\n", var); \
-	pthread_mutex_unlock(mutex); \
-} while(0)
-/// Simple macro to atomically decrement an integer on a mutex.
-#define TP_DECREMENT(var, mutex) \
-do { \
-	pthread_mutex_lock(mutex); \
-	var--; \
-	MU_LOG_VERBOSE(logger, "Decremented " var " to %d\n", var); \
-	pthread_mutex_unlock(mutex); \
-} while(0)
+#define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
-/* End definition of helper macros. */
+__attribute__((constructor)) static void init_logger(void){
+	logger = MU_Logger_create("./Thread_Pool/Logs/Thread_Pool.log", "w", MU_ALL);
+}
+
+__attribute__((destructor)) static void destroy_logger(void){
+	MU_Logger_destroy(logger);
+}
+
 
 /* Initialize Thread Pool as static. */
 static Thread_Pool *tp = NULL;
-
-/// Logger used to record events in the thread pool.
-static MU_Logger_t *logger;
 
 /// Constant to determine how long the queue timeout should be.
 static const unsigned int queue_timeout = 5;
@@ -115,33 +103,64 @@ static int is_selected(int flag, int mask){
 }
 
 /// Helper function to initialize a condition variable.
-static void init_cond(pthread_cond_t **cond, pthread_condattr_t *attr){
+static bool init_cond(pthread_cond_t **cond, pthread_condattr_t *attr){
 	*cond = malloc(sizeof(pthread_cond_t));
-   	pthread_cond_init(*cond, attr);
+	if(!*cond){
+		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		return false;
+	}
+   	int init_failed = pthread_cond_init(*cond, attr);
+   	if(init_failed){
+   		MU_LOG_ERROR(logger, "pthread_cond_init: '%s'", strerror(errno));
+   		free(*cond);
+   		return false;
+   	}
+   	return true;
 }
 
 /// Helper function to initialize a mutex.
-static void init_mutex(pthread_mutex_t **mutex, pthread_mutexattr_t *attr){
+static bool init_mutex(pthread_mutex_t **mutex, pthread_mutexattr_t *attr){
 	*mutex = malloc(sizeof(pthread_mutex_t));
-   	pthread_mutex_init(*mutex, attr);
+	if(!*mutex){
+		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		return false;
+	}
+   	int init_failed = pthread_mutex_init(*mutex, attr);
+   	if(init_failed){
+   		MU_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(errno));
+   		free(*mutex);
+   		return false;
+   	}
+   	return true;
 }
 
 /// Helper function to destroy a condition variable
-static void destroy_cond(pthread_cond_t *cond){
-	pthread_cond_destroy(cond);
+static bool destroy_cond(pthread_cond_t *cond){
+	int destroy_failed = pthread_cond_destroy(cond);
+	if(destroy_failed){
+		MU_LOG_ERROR(logger, "pthread_cond_destroy: '%s'", strerror(errno));
+		return false;
+	}
 	free(cond);
+	return true;
 }
 
 /// Helper function to destroy a mutex.
-static void destroy_mutex(pthread_mutex_t *mutex){
-	pthread_mutex_destroy(mutex);
+static bool destroy_mutex(pthread_mutex_t *mutex){
+	int destroy_failed = pthread_mutex_destroy(mutex);
+	if(destroy_failed){
+		MU_LOG_ERROR(logger, "pthread_cond_destroy: '%s'", strerror(errno));
+		return false;
+	}
 	free(mutex);
+	return true;
 }
 
 /// Helper function to destroy a worker.
-static void destroy_worker(Worker *worker){
+static bool destroy_worker(Worker *worker){
 	free(worker->thread);
 	free(worker);
+	return true;
 }
 
 /// The main thread loop to obtain tasks from the task queue.
@@ -199,14 +218,16 @@ static int compare_task_priority(void *task_one, void *task_two){
 
 /* End Static, Private functions. */
 
-int Thread_Pool_Init(size_t number_of_threads){
+bool Thread_Pool_Init(size_t number_of_threads){
 	// If the thread pool is already initialized, return.
 	if(tp) return 0; 
 	// Instead of directly allocating the static thread pool, we make a temporary one and make the static thread pool point to it later.
 	// The reason is because once the thread pool is allocated, it opens up the opportunity for undefined behavior since it no longer is NULL.
-	Thread_Pool *temp_tp = malloc(sizeof(Thread_Pool));
-	logger = malloc(sizeof(MU_Logger_t));
-	MU_Logger_Init(logger, "Thread_Pool_Log.txt", "w", MU_ALL);
+	Thread_Pool *temp_tp = calloc(sizeof(Thread_Pool));
+	if(!temp_tp){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		return false;
+	}
 	temp_tp->keep_alive = 1;
 	temp_tp->paused = 0;
 	temp_tp->seconds_to_pause = 0;
@@ -214,7 +235,6 @@ int Thread_Pool_Init(size_t number_of_threads){
 	temp_tp->queue = PBQueue_Create_Unbounded(compare_task_priority);
 	init_cond(&temp_tp->resume, NULL);
 	init_cond(&temp_tp->all_tasks_finished, NULL);
-	init_mutex(&temp_tp->thread_count_change, NULL);
 	init_mutex(&temp_tp->is_paused, NULL);
 	init_mutex(&temp_tp->no_tasks, NULL);
 	temp_tp->worker_threads = malloc(sizeof(pthread_t *) * number_of_threads);
@@ -224,7 +244,7 @@ int Thread_Pool_Init(size_t number_of_threads){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	int i = 0;
 	for(;i < number_of_threads; i++){
-		Worker *worker = malloc(sizeof(Worker));
+		Worker *worker = calloc(1, sizeof(Worker));
 		worker->thread = malloc(sizeof(pthread_t));
 		worker->thread_id = i+1;
 		worker->is_setup = 0;
@@ -236,6 +256,24 @@ int Thread_Pool_Init(size_t number_of_threads){
 	}
 	pthread_attr_destroy(&attr);
 	return 1;
+
+	error:
+		if(temp_tp){
+			size_t i = 0;
+			temp_tp->keep_alive = 0;
+			/// Since threads wake up on the timeout to ensure that the thread pool is still alive, we wait until they all wake up to exit.
+			if(temp_tp->worker_threads){
+				sleep(queue_timeout);
+				for(; i < temp_tp->thread_count; i++){
+					free(worker->thread);
+					free(worker);
+				}
+			}
+			MU_COND_COND_DESTROY(temp_tp->resume, logger);
+			MU_COND_COND_DESTROY(temp_tp->all_tasks_finished, logger);
+			MU_COND_MUTEX_DESTROY(temp_tp->is_paused, logger);
+			MU_COND_MUTEX_DESTROY(temp_tp->no_tasks, logger);
+		}
 }
 
 Result *Thread_Pool_Add_Task(thread_callback callback, void *args, int flags){
