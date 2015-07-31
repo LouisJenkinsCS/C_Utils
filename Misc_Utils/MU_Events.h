@@ -10,11 +10,11 @@
 
 typedef struct {
 	/// The lock associated with an event's condition variable.
-	pthread_mutex_t *lock;
+	pthread_mutex_t *event_lock;
 	/// The condition variable used to wait on an event.
-	pthread_cond_t *cond;
+	pthread_cond_t *event_signal;
 	/// An atomic flag signaling whether or not an event is set to be waited on or not.
-	atomic_bool flag;
+	atomic_bool signaled;
 	/// The amount of threads waiting on this event.
 	atomic_int waiting_threads;
 	/// The name of the event.
@@ -23,9 +23,9 @@ typedef struct {
 	MU_Logger_t *logger;
 } MU_Event_t;
 
-MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger);
+MU_Event_t *MU_Event_create(bool default_state, const char *event_name, MU_Logger_t *logger);
 
-bool MU_Event_set(MU_Event_t *event);
+bool MU_Event_reset(MU_Event_t *event);
 
 bool MU_Event_wait(MU_Event_t *event, long long int timeout);
 

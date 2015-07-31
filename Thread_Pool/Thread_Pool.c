@@ -53,8 +53,13 @@ static int is_selected(int flag, int mask){
 static void *Get_Tasks(void *args){
 	TP_Pool_t *tp = args;
 	// keep_alive thread is initialized to 0 meaning it isn't setup, but set to 1 after it is, so it is dual-purpose.
-	while(!tp->keep_alive){
+	while(!tp->init_error && !tp->keep_alive){
 		pthread_yield();
+	}
+	if(tp->init_error){
+		// If there is an initialization error, we need to abort ASAP as the thread actually gets freed, so we can't risk dereferencing self.
+		atomic_fetch_sub(&tp->thread_count, 1);
+		pthread_exit(NULL);
 	}
 	TP_Worker_t *self = Get_Self(tp);
 	// Note that this while loop checks for keep_alive to be true, rather than false. 
@@ -115,6 +120,7 @@ static int compare_task_priority(void *task_one, void *task_two){
 /* End Static, Private functions. */
 
 TP_Pool_t *TP_Pool_create(size_t pool_size){
+	size_t workers_allocated = 0;
 	TP_Pool_t *tp = calloc(1, sizeof(TP_Pool_t));
 	if(!tp){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
@@ -123,20 +129,39 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 	tp->thread_count = ATOMIC_VAR_INIT(0);
 	tp->active_threads = ATOMIC_VAR_INIT(0);
 	tp->queue = PBQueue_create(compare_task_priority, -1);
-	tp->resume = MU_Event_create("Pause/Resume", logger);
-	tp->finished = MU_Event_create("Finished", logger);
+	tp->resume = MU_Event_create(false, "Paused", logger);
+	if(!tp->resume){
+		MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create event Pause/Resume!'");
+		goto error;
+	}
+	tp->finished = MU_Event_create(false, "Finished", logger);
+	if(!tp->finished){
+		MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create event Finished!'");
+		goto error;
+	}
 	tp->worker_threads = malloc(sizeof(pthread_t *) * pool_size);
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	size_t i = 0;
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)
+;	size_t i = 0;
 	for(;i < pool_size; i++){
 		TP_Worker_t *worker = calloc(1, sizeof(TP_Worker_t));
+		if(!worker){
+			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			goto error;
+		}
+		workers_allocated++;
 		worker->thread = malloc(sizeof(pthread_t));
+		if(!worker->thread){
+			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			goto error;
+		}
 		worker->thread_id = i+1;
-		worker->is_setup = 0;
-		worker->task = NULL;
-		pthread_create(worker->thread, NULL, Get_Tasks, worker);
+		int create_error = pthread_create(worker->thread, NULL, Get_Tasks, tp);
+		if(create_error){
+			MU_LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
+			goto error;
+		}
 		tp->worker_threads[i] = worker;
 		tp->thread_count++;
 	}
@@ -147,11 +172,13 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 	error:
 		if(tp){
 			tp->init_error = true;
+			MU_Event_destroy(tp->resume);
+			MU_Event_destroy(tp->)
 		}
 		return NULL;
 }
 
-Result *TP_Pool_add(thread_callback callback, void *args, int flags){
+TP_Result_t *TP_Pool_add(thread_callback callback, void *args, int flags){
 	if(!tp) return NULL;
 	Result *result = NULL;
 	if(!is_selected(flags, TP_NO_RESULT)){

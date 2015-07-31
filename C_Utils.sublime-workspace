@@ -4,6 +4,62 @@
 		"selected_items":
 		[
 			[
+				"worker",
+				"workers_allocated"
+			],
+			[
+				"pool",
+				"pool_size"
+			],
+			[
+				"MU_EVE",
+				"MU_EVENT_MAX_LEN"
+			],
+			[
+				"event",
+				"event_name"
+			],
+			[
+				"even",
+				"event_name_len"
+			],
+			[
+				"get",
+				"Get_Self"
+			],
+			[
+				"seconds",
+				"seconds_to_pause"
+			],
+			[
+				"MU_L",
+				"MU_LOG_VERBOSE"
+			],
+			[
+				"cond",
+				"cond_initialized"
+			],
+			[
+				"lock",
+				"lock_initialized"
+			],
+			[
+				"MU_E",
+				"MU_Event_t"
+			],
+			[
+				"MU_even",
+				"MU_Event_t"
+			],
+			[
+				"resume",
+				"resume"
+			],
+			[
+				"NU_Bound",
+				"NU_Bound_Socket_unbind"
+			],
+			[
 				"recv",
 				"recv_flags"
 			],
@@ -168,10 +224,6 @@
 				"MU_Logger_Format_Info_t"
 			],
 			[
-				"MU_L",
-				"MU_Logger_Format_Info_t"
-			],
-			[
 				"formatter",
 				"formatter_orig_len"
 			],
@@ -260,10 +312,6 @@
 				"get_bucket_index"
 			],
 			[
-				"get",
-				"get_value_from_key"
-			],
-			[
 				"amount",
 				"amount_of_buckets"
 			],
@@ -282,10 +330,6 @@
 			[
 				"NU_Bo",
 				"NU_Bound_Socket_t"
-			],
-			[
-				"NU_Bound",
-				"NU_Bound_Socket_destroy"
 			],
 			[
 				"NU_Bound_",
@@ -470,63 +514,27 @@
 			[
 				"ready",
 				"ready_connections"
-			],
-			[
-				"NU_Connection_rece",
-				"NU_Connection_receive_to_file"
-			],
-			[
-				"N",
-				"NU_Connect_t"
-			],
-			[
-				"NU_Connec",
-				"NU_Connection_t"
-			],
-			[
-				"MU_T",
-				"MU_TIMER_H"
-			],
-			[
-				"bytes_",
-				"bytes_received"
-			],
-			[
-				"amou",
-				"amount_of_sockets"
-			],
-			[
-				"delete_",
-				"delete_all_sockets"
-			],
-			[
-				"curr",
-				"curr_client"
-			],
-			[
-				"clients",
-				"clients_str"
-			],
-			[
-				"ip",
-				"ip_address"
-			],
-			[
-				"tmp_",
-				"tmp_bsock"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"contents": "#ifndef NU_CONNECTION_H\n#define NU_CONNECTION_H\n\n#include <NU_Helper.h>\n\ntypedef struct NU_Connection_t {\n   /// Socket file descriptor associated with host.\n   volatile int sockfd;\n   /// The IP Address of the host connected to.\n   char ip_addr[INET_ADDRSTRLEN];\n   /// Port number that the host is bound to.\n   unsigned int port;\n   /// Read-Write lock to use for synchronization if initialized.\n   pthread_rwlock_t *lock;\n   /// A reusable buffer for each connection.\n   volatile bool in_use;\n   /// Logger associated with each connection.\n   MU_Logger_t *logger;\n} NU_Connection_t;\n\n\nNU_Connection_t *NU_Connection_create(bool init_locks, MU_Logger_t *logger);\n\n\nsize_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, int flags);\n\n\nsize_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, int flags);\n\n\n/// Sent in BUFSIZ buffers\nsize_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags);\n\n\n///  Written in blksize chunks\nsize_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags);\n\n\nNU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);\n\n\nint NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, unsigned int timeout, MU_Logger_t *logger);\n\n\n\nint NU_Connection_get_sockfd(NU_Connection_t *conn);\n\n\nbool NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd);\n\n\nconst char *NU_Connection_get_ip_addr(NU_Connection_t *conn);\n\n\nbool NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr);\n\n\nunsigned int NU_Connection_get_port(NU_Connection_t *conn);\n\n\nbool NU_Connection_set_port(NU_Connection_t *conn, unsigned int port);\n\n\nMU_Logger_t *NU_Connection_get_logger(NU_Connection_t *conn);\n\n\nbool NU_Connection_set_logger(NU_Connection_t *conn, MU_Logger_t *logger);\n\n\nbool NU_Connection_is_valid(NU_Connection_t *conn);\n\n\nbool NU_Connection_in_use(NU_Connection_t *conn);\n\n\nbool NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);\n\n\nbool NU_Connection_disconnect(NU_Connection_t *conn);\n\n\nbool NU_Connection_destroy(NU_Connection_t *conn);\n\n#endif /* END NU_CONNECTION_H */\n",
-			"file": "Net_Utils/NU_Connection.h",
-			"file_size": 2487,
-			"file_write_time": 130826885673463048,
+			"contents": "#include <stdio.h>\n#include <stdlib.h>\n#include <pthread.h>\n#include <signal.h>\n#include <assert.h>\n#include <errno.h>\n#include <Thread_Pool.h>\n\nstatic MU_Logger_t *logger = NULL;\n\n#define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, \"SERVER\", message, ##__VA_ARGS__)\n\n__attribute__((constructor)) static void init_logger(void){\n	logger = MU_Logger_create(\"./Thread_Pool/Logs/Thread_Pool.log\", \"w\", MU_ALL);\n}\n\n__attribute__((destructor)) static void destroy_logger(void){\n	MU_Logger_destroy(logger);\n}\n\n/* Begin Static, Private functions */\n\n/// Return the Worker associated with the calling thread.\nstatic TP_Worker_t *Get_Self(TP_Pool_t *tp){\n	pthread_t self = pthread_self();\n	int thread_count = tp->thread_count;\n	int i = 0;\n	for(;i<thread_count;i++){\n		if(pthread_equal(*(tp->worker_threads[i]->thread), self)){\n			return tp->worker_threads[i];\n		}\n	}\n	MU_LOG_ERROR(logger, \"A worker thread could not be identified from pthread_self!\\n\");\n	return NULL;\n}\n\n\nstatic void Process_Task(TP_Task_t *task){\n	void *retval = task->callback(task->args);\n	if(task->result){\n		task->result->item = retval;\n		MU_Event_signal(task->result->is_ready);\n	}\n	free(task);\n}\n\n/// Determines whether or not the flag has been passed.\nstatic int is_selected(int flag, int mask){\n	return (flag & mask);\n}\n\n/// The main thread loop to obtain tasks from the task queue.\nstatic void *Get_Tasks(void *args){\n	TP_Pool_t *tp = args;\n	// keep_alive thread is initialized to 0 meaning it isn't setup, but set to 1 after it is, so it is dual-purpose.\n	while(!tp->init_error && !tp->keep_alive){\n		pthread_yield();\n	}\n	if(tp->init_error){\n		// If there is an initialization error, we need to abort ASAP as the thread actually gets freed, so we can't risk dereferencing self.\n		atomic_fetch_sub(&tp->thread_count, 1);\n		pthread_exit(NULL);\n	}\n	TP_Worker_t *self = Get_Self(tp);\n	// Note that this while loop checks for keep_alive to be true, rather than false. \n	while(tp->keep_alive){\n		TP_Task_t *task = NULL;\n		task = PBQueue_dequeue(tp->queue, -1);\n		if(!tp->keep_alive){\n			break;\n		}\n		// Note that the paused event is only waited upon if it the event interally is flagged.\n		MU_Event_wait(tp->resume, tp->seconds_to_pause);\n		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.\n		if(!tp->keep_alive){\n			break;\n		}\n		atomic_fetch_add(&tp->active_threads, 1);\n		MU_LOG_VERBOSE(logger, \"Thread #%d: received a task!\\n\", self->thread_id);\n		Process_Task(task);\n		MU_LOG_VERBOSE(logger, \"Thread #%d: finished a task!\\n\", self->thread_id);\n		atomic_fetch_sub(&tp->active_threads, 1);\n		// Close as we are going to get testing if the queue is fully empty. \n		if(PBQueue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0){\n			MU_Event_signal(tp->finished);\n		}\n	}\n	atomic_fetch_sub(&tp->thread_count, 1);\n	MU_LOG_VERBOSE(logger, \"Thread #%d: Exited!\\n\", self->thread_id);\n	return NULL;\n}\n\n/// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.\nstatic void Set_Task_Priority(TP_Task_t *task, int flags){\n	if(is_selected(flags, TP_LOWEST_PRIORITY)) task->priority = TP_LOWEST;\n	else if(is_selected(flags, TP_LOW_PRIORITY)) task->priority = TP_LOW;\n	else if(is_selected(flags, TP_HIGH_PRIORITY)) task->priority = TP_HIGH;\n	else if(is_selected(flags, TP_HIGHEST_PRIORITY)) task->priority = TP_HIGHEST;\n	else task->priority = TP_MEDIUM;\n\n}\n\nstatic char *Get_Task_Priority(TP_Task_t *task){\n	if(task->priority == TP_LOWEST) return \"Lowest\";\n	else if(task->priority == TP_LOW) return \"Low\";\n	else if(task->priority == TP_MEDIUM) return \"Medium\";\n	else if(task->priority == TP_HIGH) return \"High\";\n	else if(task->priority == TP_HIGHEST) return \"Highest\";\n	else{\n		MU_LOG_ERROR(logger, \"Was unable to retrieve the priority of the task!\\n\");\n		return NULL;\n	}\n}\n\n/// Simple comparator to compare two task priorities.\nstatic int compare_task_priority(void *task_one, void *task_two){\n	return ((TP_Task_t *)task_one)->priority - ((TP_Task_t *)task_two)->priority;\n}\n\n/* End Static, Private functions. */\n\nTP_Pool_t *TP_Pool_create(size_t pool_size){\n	size_t workers_allocated = 0;\n	TP_Pool_t *tp = calloc(1, sizeof(TP_Pool_t));\n	if(!tp){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		goto error;\n	}\n	tp->thread_count = ATOMIC_VAR_INIT(0);\n	tp->active_threads = ATOMIC_VAR_INIT(0);\n	tp->queue = PBQueue_create(compare_task_priority, -1);\n	tp->resume = MU_Event_create(\"Pause/Resume\", logger);\n	if(!tp->resume){\n		MU_LOG_ERROR(logger, \"MU_Event_create: 'Was unable to create event Pause/Resume!'\");\n		goto error;\n	}\n	tp->finished = MU_Event_create(\"Finished\", logger);\n	if(!tp->finished){\n		MU_LOG_ERROR(logger, \"MU_Event_create: 'Was unable to create event Finished!'\");\n		goto error;\n	}\n	tp->worker_threads = malloc(sizeof(pthread_t *) * pool_size);\n	pthread_attr_t attr;\n	pthread_attr_init(&attr);\n	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);\n	size_t i = 0;\n	for(;i < pool_size; i++){\n		TP_Worker_t *worker = calloc(1, sizeof(TP_Worker_t));\n		if(!worker){\n			MU_LOG_ASSERT(logger, \"malloc: '%s'\", strerror(errno));\n			goto error;\n		}\n		workers_allocated++;\n		worker->thread = malloc(sizeof(pthread_t));\n		if(!worker->thread){\n			MU_LOG_ASSERT(logger, \"malloc: '%s'\", strerror(errno));\n			goto error;\n		}\n		worker->thread_id = i+1;\n		int create_error = pthread_create(worker->thread, NULL, Get_Tasks, tp);\n		if(create_error){\n			MU_LOG_ERROR(logger, \"pthread_create: '%s'\", strerror(create_error));\n			goto error;\n		}\n		tp->worker_threads[i] = worker;\n		tp->thread_count++;\n	}\n	pthread_attr_destroy(&attr);\n	tp->keep_alive = 1;\n	return tp;\n\n	error:\n		if(tp){\n			tp->init_error = true;\n			MU_Event_destroy(tp->resume);\n			MU_Event_destroy(tp->)\n		}\n		return NULL;\n}\n\nResult *TP_Pool_add(thread_callback callback, void *args, int flags){\n	if(!tp) return NULL;\n	Result *result = NULL;\n	if(!is_selected(flags, TP_NO_RESULT)){\n		result = malloc(sizeof(Result));\n		result->ready = 0;\n		result->item = NULL;\n		init_mutex(&result->not_ready, NULL);\n		init_cond(&result->is_ready, NULL);\n	};\n	Task *task = malloc(sizeof(Task));\n	task->callback = callback;\n	task->args = args;\n	Set_Task_Priority(task, flags);\n	task->no_pause = is_selected(flags, TP_NO_PAUSE) ? 1 : 0;\n	task->delayed_pause = 0;\n	task->result = result;\n	PBQueue_Enqueue(tp->queue, task);\n	MU_LOG_VERBOSE(logger, \"A task of %s priority has been added to the task_queue!\\n\", Get_Task_Priority(task));\n	return result;\n}\n\nint Thread_Pool_Clear_Tasks(void){\n	MU_LOG_VERBOSE(logger, \"Clearing all tasks from Thread Pool!\\n\");\n	return PBQueue_Clear(tp->queue, NULL);\n}\n\n/// Will destroy the Result and set it's reference to NULL.\nint Thread_Pool_Result_Destroy(Result *result){\n	destroy_mutex(result->not_ready);\n	destroy_cond(result->is_ready);\n	free(result);\n	return 1;\n}\n/// Will block until result is ready. \nvoid *Thread_Pool_Obtain_Result(Result *result){\n	if(!tp || !result) return NULL;\n	pthread_mutex_lock(result->not_ready);\n	while(!result->ready) pthread_cond_wait(result->is_ready, result->not_ready);\n	pthread_mutex_unlock(result->not_ready);\n	return result->item;\n}\n\n/// Will block until result is ready or time ellapses.\nvoid *Thread_Pool_Timed_Obtain_Result(Result *result, unsigned int seconds){\n	if(!tp || !result) return NULL;\n	struct timespec timeout;\n	clock_gettime(CLOCK_REALTIME, &timeout);\n	timeout.tv_sec += seconds;\n	pthread_mutex_lock(result->not_ready);\n	while(!result->ready) {\n		int retval = pthread_cond_timedwait(result->is_ready, result->not_ready, &timeout);\n		if(retval == ETIMEDOUT) return NULL;\n	}\n	pthread_mutex_unlock(result->not_ready);\n	return result->item;\n}\n\n/// Will block until all tasks are finished.\nint Thread_Pool_Wait(void){\n	if(!tp) return 0;\n	pthread_mutex_lock(tp->no_tasks);\n	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) pthread_cond_wait(tp->all_tasks_finished, tp->no_tasks);\n	pthread_mutex_unlock(tp->no_tasks);\n	return 1;\n}\n\n/// Will block until all tasks are finished or time ellapses.\nint Thread_Pool_Timed_Wait(unsigned int seconds){\n	if(!tp) return 0;\n	struct timespec timeout;\n	clock_gettime(CLOCK_REALTIME, &timeout);\n	timeout.tv_sec += seconds;\n	pthread_mutex_lock(tp->no_tasks);\n	while(!PBQueue_Is_Empty(tp->queue) || tp->active_threads != 0) {\n		int retval = pthread_cond_timedwait(tp->all_tasks_finished, tp->no_tasks, &timeout);\n		if(retval == ETIMEDOUT) return 0;\n	}\n	pthread_mutex_unlock(tp->no_tasks);\n	return 1;\n}\n\nint Thread_Pool_Destroy(void){\n	if(!tp) return;\n	size_t thread_count = tp->thread_count;\n	tp->keep_alive = 0;\n	Thread_Pool_Wait();\n	// We wait until all tasks are finished before freeing the Thread Pool and threads.\n	/*while(tp->thread_count != 0) {\n		sleep(1);\n	}*/\n	destroy_mutex(tp->no_tasks);\n	destroy_cond(tp->all_tasks_finished);\n	PBQueue_Destroy(tp->queue);\n	destroy_mutex(tp->thread_count_change);\n	destroy_cond(tp->resume);\n	destroy_mutex(tp->is_paused);\n	int i = 0;\n	for(;i<thread_count;i++) destroy_worker(tp->worker_threads[i]);\n	free(tp->worker_threads);\n	free(tp);\n	tp = NULL;\n	MU_LOG_VERBOSE(logger, \"Thread pool has been properly destroyed!\\n\");\n	MU_Logger_Destroy(logger);\n	return 1;\n}\n\nint Thread_Pool_Pause(void){\n	if(!tp || tp->paused) return 0;\n	tp->paused = 1;\n	int successful_pauses = 0;\n	int i = 0;\n	for(;i<tp->thread_count;i++) if (pthread_kill(*tp->worker_threads[i]->thread, SIGUSR1) == 0) successful_pauses++;\n	// The only time this function is successful is if it successfully paused all threads.\n	return successful_pauses == tp->thread_count;\n}\n\nint Thread_Pool_Timed_Pause(unsigned int seconds){\n	if(!tp || tp->paused) return 0;\n	tp->seconds_to_pause = seconds;\n	return Thread_Pool_Pause();\n}\n\nint Thread_Pool_Resume(void){\n	if(!tp || !tp->paused) return 0;\n	tp->paused = 0;\n	return pthread_cond_broadcast(tp->resume) == 0;	\n}\n\n/* Undefine all user macros below. */\n\n#undef TP_INCREMENT\n#undef TP_DECREMENT",
+			"file": "Thread_Pool/Thread_Pool.c",
+			"file_size": 9047,
+			"file_write_time": 130827641111979320,
 			"settings":
 			{
-				"buffer_size": 2403,
+				"buffer_size": 9919,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Thread_Pool/Thread_Pool.h",
+			"settings":
+			{
+				"buffer_size": 7309,
 				"line_ending": "Windows"
 			}
 		}
@@ -740,24 +748,35 @@
 	"expanded_folders":
 	[
 		"/C/Users/theif519/Documents/GitHub/C_Utils",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils"
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Logs",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool"
 	],
 	"file_history":
 	[
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Code/Thread_Pool.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_File_Downloader.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Logs/NU_Server.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/C_Utils.sublime-project",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Code/Thread_Pool.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/README.md",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Client.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_File_Downloader.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_Client_Chat.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/NU_Server.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map_Test.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.h",
@@ -778,7 +797,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Retry.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server_File_Downloader.mk",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/C_Utils.sublime-project",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map_Test.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/DS_Hash_Map_Test.exe.stackdump",
@@ -866,12 +884,7 @@
 		"/C/Users/theif519/Documents/GitHub/BlackJack-In-C/BJStructs.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Misc_Utils/Misc_Utils_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool/Code/Thread_Pool.h",
-		"/C/ProgramData/Microsoft/Windows/Start Menu/Programs/Opera.lnk",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Code/PBQueue.dox",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils/Code/String_Utils_Tests.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Misc_Utils/Code/String_Utils.dox",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Misc_Utils/Tests/Misc_Utils_Test_Log.txt",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/String_Utils_Test_Log.txt"
+		"/C/ProgramData/Microsoft/Windows/Start Menu/Programs/Opera.lnk"
 	],
 	"find":
 	{
@@ -889,6 +902,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"no_tasks",
+			"bsock->is_bound",
 			", logger",
 			", MU_Logger_t \\*logger",
 			"\\(logger",
@@ -1014,9 +1029,7 @@
 			"[^_](send|recv|accept|select)\\(.*\\)",
 			"[^_](send|recv|accept)\\(.*\\)",
 			"[^_]recv\\(.*\\)",
-			"[^_]send\\(.*\\)",
-			"[^_(]send\\(.*\\)",
-			"[^\\s].*send\\(.*\\)"
+			"[^_]send\\(.*\\)"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1135,32 +1148,60 @@
 			[
 				{
 					"buffer": 0,
-					"file": "Net_Utils/NU_Connection.h",
-					"semi_transient": true,
+					"file": "Thread_Pool/Thread_Pool.c",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2403,
+						"buffer_size": 9919,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								4813,
+								4813
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/C++/C.tmLanguage",
-							"tab_size": 3,
-							"translate_tabs_to_spaces": true
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 225.0,
+						"translation.y": 1890.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "Thread_Pool/Thread_Pool.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7309,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3426,
+								3426
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1395.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
