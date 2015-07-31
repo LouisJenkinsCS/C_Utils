@@ -67,11 +67,12 @@ bool MU_Event_reset(MU_Event_t *event){
 
 bool MU_Event_wait(MU_Event_t *event, long long int timeout){
 	if(!event) return false;
+	atomic_fetch_add(&event->waiting_threads, 1);
 	if(atomic_load(&event->signaled) == true){
+		atomic_fetch_sub(&event->waiting_threads, 1);
 		return true;
 	}
 	MU_LOG_VERBOSE(event->logger, format, event->name, "Waiting on event signal!");
-	atomic_fetch_add(&event->waiting_threads, 1);
 	pthread_mutex_lock(event->event_lock);
 	if(timeout < 0){
 		while(atomic_load(&event->signaled) == false){
@@ -100,6 +101,7 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout){
 		} // End atomic_load loop.
 	} // End timeout condwait
 	MU_LOG_VERBOSE(event->logger, format, event->name, "Received event signal!");
+	pthread_mutex_unlock(event->event_lock);
 	atomic_fetch_sub(&event->waiting_threads, 1);
 	return true;
 } // End function

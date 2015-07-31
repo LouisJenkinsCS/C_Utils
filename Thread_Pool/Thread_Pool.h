@@ -70,7 +70,7 @@
 #include <MU_Arg_Check.h>
 #include <MU_Logger.h>
 
-typedef void *(*thread_callback)(void *args);
+typedef void *(*TP_Callback)(void *args);
 
 typedef enum {
 	/// Lowest possible priority
@@ -89,12 +89,12 @@ typedef struct {
 	/// Determines if result is ready.
 	MU_Event_t *is_ready;
 	/// The returned item from the task.
-	void *item;
+	void *retval;
 } TP_Result_t;
 
 typedef struct TP_Task_t{
 	/// Task to be executed.
-	thread_callback callback;
+	TP_Callback callback;
 	/// Arguments to be passed to the task.
 	void *args;
 	/// Result from the Task.
@@ -150,13 +150,13 @@ TP_Pool_t *TP_Pool_create(size_t pool_size);
  * | TP_HIGHEST_PRIORITY | TP_NO_RESULT | TP_NO_PAUSE.
  * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
-TP_Result_t *TP_Pool_add(thread_callback callback, void *args, int flags);
+TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int flags);
 
 /**
  * Clear all tasks in the task queue. Note: Will not cancel currently run tasks.
  * @return 1 on success.
  */
-bool TP_Pool_clear(void);
+bool TP_Pool_clear(TP_Pool_t *tp);
 
 /**
  * Destroys the Result from a task.
@@ -169,7 +169,7 @@ bool TP_Result_destroy(TP_Result_t *result);
  * Destroys the current thread pool, waiting for the current tasks to be finished.
  * @return 1 on success.
  */
-bool TP_Pool_destroy(void);
+bool TP_Pool_destroy(TP_Pool_t *tp);
 
 /**
  * Obtain the result from the task, blocking until it is ready or until the time 
@@ -184,7 +184,7 @@ void *TP_Result_get(TP_Result_t *result, long long int timeout);
  * Block until all tasks are finished or timeout ellapses.
  * @return 1 on success.
  */
-bool TP_Pool_wait(long long int timeout);
+bool TP_Pool_wait(TP_Pool_t *tp, long long int timeout);
 
 /**
  * Pause all operations in the task queue. Even NO_PAUSE flagged tasks will enter
@@ -195,7 +195,7 @@ bool TP_Pool_wait(long long int timeout);
  * @param seconds Amount of time to pause for.
  * @return 1 on success, 0 if at least one thread cannot pause.
  */
-bool TP_Pool_pause(long long int timeout);
+bool TP_Pool_pause(TP_Pool_t *tp, long long int timeout);
 
 /**
  * Resume all worker threads that are paused. If the thread pool is not paused, or it is
@@ -203,6 +203,6 @@ bool TP_Pool_pause(long long int timeout);
  * @return 1 on success, 0 if at least one thread cannot be resumed, thread pool is not paused
  * or does not exist..
  */
-bool TP_Pool_resume(void);
+bool TP_Pool_resume(TP_Pool_t *tp);
 
 #endif /* END THREAD_POOL_H */
