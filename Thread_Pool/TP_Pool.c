@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
-#include <Thread_Pool.h>
+#include <TP_Pool.h>
 
 static const char *pause_event_name = "Thread Pool Resume";
 static const char *finished_event_name = "Thread Pool Finished";
@@ -15,7 +15,7 @@ static MU_Logger_t *logger = NULL;
 #define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
 __attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Thread_Pool/Logs/Thread_Pool.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Thread_Pool/Logs/TP_Pool.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -32,6 +32,12 @@ static void Destroy_Task(TP_Task_t *task){
 		free(task->result);
 	}
 	free(task);
+}
+
+static void Destroy_Worker(TP_Worker_t *worker){
+	if(!worker) return;
+	free(worker->thread);
+	free(worker);
 }
 
 /// Return the Worker associated with the calling thread.
@@ -80,7 +86,7 @@ static void *Get_Tasks(void *args){
 	// Note that this while loop checks for keep_alive to be true, rather than false. 
 	while(tp->keep_alive){
 		TP_Task_t *task = NULL;
-		task = PBQueue_dequeue(tp->queue, -1);
+		task = DS_PBQueue_dequeue(tp->queue, -1);
 		if(!tp->keep_alive){
 			break;
 		}
@@ -96,7 +102,7 @@ static void *Get_Tasks(void *args){
 		MU_LOG_VERBOSE(logger, "Thread #%d: finished a task!", self->thread_id);
 		atomic_fetch_sub(&tp->active_threads, 1);
 		// Close as we are going to get testing if the queue is fully empty. 
-		if(PBQueue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0){
+		if(DS_PBQueue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0){
 			MU_Event_signal(tp->finished);
 		}
 	}
@@ -143,7 +149,7 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 	}
 	tp->thread_count = ATOMIC_VAR_INIT(0);
 	tp->active_threads = ATOMIC_VAR_INIT(0);
-	tp->queue = PBQueue_create(compare_task_priority, -1);
+	tp->queue = DS_PBQueue_create(0, (void *)compare_task_priority);
 	tp->resume = MU_Event_create(true, pause_event_name, logger);
 	if(!tp->resume){
 		MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create event: %s!'", pause_event_name);
@@ -214,7 +220,7 @@ TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int fl
 			goto error;
 		}
 		result->is_ready = MU_Event_create(false, result_event_name, logger);
-		if(result->is_ready){
+		if(!result->is_ready){
 			MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create event: %s!'", result_event_name);
 			goto error;
 		}
@@ -229,7 +235,7 @@ TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int fl
 	Set_Task_Priority(task, flags);
 	task->result = result;
 	MU_Event_reset(tp->finished);
-	bool enqueued = PBQueue_Enqueue(tp->queue, task);
+	bool enqueued = DS_PBQueue_enqueue(tp->queue, task, -1);
 	if(!enqueued){
 		MU_LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue task!'");
 		goto error;
@@ -253,7 +259,7 @@ TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int fl
 bool Thread_Pool_Clear_Tasks(TP_Pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	MU_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
-	return PBQueue_clear(tp->queue, Destroy_Task);
+	return DS_PBQueue_clear(tp->queue, (void *)Destroy_Task);
 }
 
 /// Will destroy the Result and set it's reference to NULL.
@@ -282,7 +288,7 @@ bool TP_Pool_destroy(TP_Pool_t *tp){
 	tp->keep_alive = false;
 	size_t old_thread_count = tp->thread_count;
 	// By destroying the PBQueue, it signals to threads waiting to wake up.
-	PBQueue_destroy(tp->queue, Destroy_Task);
+	DS_PBQueue_destroy(tp->queue, (void *)Destroy_Task);
 	// Then by destroying the resume event, anything waiting on a paused thread pool wakes up.
 	MU_Event_destroy(tp->resume);
 	// Then we wait for all threads to that wake up to exit gracefully.
@@ -290,21 +296,21 @@ bool TP_Pool_destroy(TP_Pool_t *tp){
 	// Finally, any threads waiting on the thread pool to finish will wake up.
 	MU_Event_destroy(tp->finished);
 	int i = 0;
-	for(; i < old_thread_count; i++) destroy_worker(tp->worker_threads[i]);
+	for(; i < old_thread_count; i++) Destroy_Worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
 	free(tp);
 	MU_LOG_VERBOSE(logger, "Thread pool has been properly destroyed!\n");
 	return true;
 }
 
-bool Thread_Pool_Pause(TP_Pool_t *tp, long long int timeout){
+bool TP_Pool_pause(TP_Pool_t *tp, long long int timeout){
 	MU_ARG_CHECK(logger, false, tp);
 	tp->seconds_to_pause = timeout;
 	bool event_reset = MU_Event_reset(tp->resume);
 	return event_reset;
 }
 
-bool Thread_Pool_Resume(TP_Pool_t *tp){
+bool TP_Pool_resume(TP_Pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	return MU_Event_signal(tp->resume);
 }

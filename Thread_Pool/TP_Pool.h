@@ -60,7 +60,7 @@
 /// Flags the task as highest priority.
 #define TP_HIGHEST_PRIORITY 1 << 6
 
-#include <PBQueue.h>
+#include <DS_PBQueue.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -114,7 +114,7 @@ typedef struct {
 	/// Array of threads.
 	TP_Worker_t **worker_threads;
 	/// The queue with all jobs assigned to it.
-	PBQueue *queue;
+	DS_PBQueue_t *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
 	_Atomic size_t thread_count;
 	/// Amount of threads currently active.

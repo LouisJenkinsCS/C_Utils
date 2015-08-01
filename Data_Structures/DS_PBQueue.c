@@ -1,9 +1,9 @@
-#include <PBQueue.h>
+#include <DS_PBQueue.h>
 
 static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Data_Structures/Logs/PBQueue.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Data_Structures/Logs/DS_PBQueue.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -53,7 +53,7 @@ static bool Add_Item(DS_PBQueue_t *queue, void *item){
 		if(queue->compare(item, queue->head->item) > 0) Add_As_Head(queue, node);
 		else Add_As_Tail(queue, node);
 	} else if(queue->compare(item, queue->head->item) > 0) Add_As_Head(queue, node);
-	else if(queue->compare(queue->tail->item, item) >= 0) Add_As_Tail(queue, node);
+	else if(queue->compare(item, queue->tail->item) <= 0) Add_As_Tail(queue, node);
 	else {
 		DS_Node_t *current_node = NULL;
 		DS_Node_t *previous_node = NULL;
@@ -246,8 +246,13 @@ bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del){
 	return true;
 }
 
+size_t DS_PBQueue_size(DS_PBQueue_t *queue){
+	MU_ARG_CHECK(logger, 0, queue);
+	return atomic_load(&queue->size);
+}
+
 /// Clears the queue then destroys the queue. Will execute a callback on every item in the queue if not null.
-bool PBQueue_Destroy(DS_PBQueue_t *queue, DS_delete_cb del){
+bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, queue);
 	DS_PBQueue_clear(queue, del);
 	pthread_mutex_lock(queue->manipulating_queue);

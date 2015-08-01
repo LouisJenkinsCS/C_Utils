@@ -85,4 +85,6 @@ void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
  */
 bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del);
 
+size_t DS_PBQueue_size(DS_PBQueue_t *queue);
+
 bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del);

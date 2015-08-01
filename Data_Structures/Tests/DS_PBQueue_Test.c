@@ -1,14 +1,18 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <PBQueue.h>
-#include <Misc_Utils.h>
+#include <unistd.h>
+#include <DS_PBQueue.h>
+#include <MU_Logger.h>
 
-volatile int global_var = 1;
-const int bounds = 5;
+static volatile int global_var = 1;
+static const int max_size = 5;
+static const int max_num = 10;
+static const int sleep_after = 5;
+static int arr[10];
 
-MU_Logger_t *logger;
-PBQueue *queue;
+static MU_Logger_t *logger;
+static DS_PBQueue_t *queue;
 
 void print_value(void *number){
 	MU_LOG_VERBOSE(logger, "Queue has value: %d\n", *(int *)number);
@@ -21,27 +25,28 @@ void *producer_timeout_thread(void *args){
 	MU_LOG_VERBOSE(logger, "Producer: sleeping for 10 seconds...\n");
 	sleep(10);
 	MU_LOG_VERBOSE(logger, "Producer: woke up, Enqueueing now!\n");
-	PBQueue_Timed_Enqueue(queue, i, 5);
+	DS_PBQueue_enqueue(queue, i, 5);
 	MU_LOG_VERBOSE(logger, "Producer: sleeping for 10 seconds...\n");
 	sleep(10);
-	MU_LOG_VERBOSE(logger, "Producer: woke up, timed enqueueing %d times for 10 second timeout!\n", bounds);
+	MU_LOG_VERBOSE(logger, "Producer: woke up, timed enqueueing %d times for 10 second timeout!\n", max_size);
 	int j = 0;
-	for(;j <= bounds; j++){
+	for(;j <= max_size; j++){
 		MU_LOG_VERBOSE(logger, "Producer: starting Enqueue %d\n", j);
-		PBQueue_Timed_Enqueue(queue, i, 10);
+		DS_PBQueue_enqueue(queue, i, 10);
 	}
 	free(i);
 	MU_LOG_VERBOSE(logger, "Producer: returning...\n");
+	return NULL;
 }
 
 void *consumer_timeout_thread(void *args){
 	int *i = NULL;
-	MU_LOG_VERBOSE(logger, "COnsumer: Timed Dequeueing for 5 second timeout!\n");
-	if((i = PBQueue_Timed_Dequeue(queue, 5)) == NULL){
+	MU_LOG_VERBOSE(logger, "Consumer: Timed Dequeueing for 5 second timeout!\n");
+	if((i = DS_PBQueue_dequeue(queue, 5)) == NULL){
 		MU_LOG_VERBOSE(logger, "Consumer: Successfully returned Null!\n");
 	}
 	MU_LOG_VERBOSE(logger, "Consumer: Timed Dequeueing for 10 second timeout!\n");
-	if((i = PBQueue_Timed_Dequeue(queue, 10))){
+	if((i = DS_PBQueue_dequeue(queue, 10))){
 		MU_LOG_VERBOSE(logger, "Consumer: Successfully returned %d\n", *i);
 	}
 	MU_LOG_VERBOSE(logger, "Consumer: returning...\n");
@@ -49,30 +54,27 @@ void *consumer_timeout_thread(void *args){
 }
 
 void *producer_thread(void *args){
-	int **i = malloc(sizeof(int *));
-	int j = 0;
-	while(global_var){
-		if(j % bounds == 0) sleep(3);
-		i[j] = malloc(sizeof(int));
-		*(i[j]) = j;
-		PBQueue_Enqueue(queue, i[j]);
-		MU_LOG_VERBOSE(logger, "Producer: pushed value: %d\n", *(i[j]));
-		j++;
-		i = realloc(i, sizeof(int *) * (j+1));
+	int i = 0;
+	for(; i < max_num; i++){
+		arr[i] = i;
+		DS_PBQueue_enqueue(queue, &arr[i], -1);
+		if(i % sleep_after){
+			sleep(3);
+		}
+		MU_LOG_VERBOSE(logger, "Enqueued: %d\n", i);
 	}
-	free(i);
 	MU_LOG_VERBOSE(logger, "Producer: returning...\n");
 	return NULL;
 }
 
 void *consumer_thread(void *args){
-	PBQueue *queue = args;
-	int *i = NULL;
-	while(global_var){
-		sleep(1);
-		i = PBQueue_Dequeue(queue);
-		MU_LOG_VERBOSE(logger, "Consumer: popped value: %d\n", *i);
-		free(i);
+	int i = 0;
+	for(; i < max_num; i++){
+		if(i % sleep_after){
+			sleep(5);
+		}
+		int val = *(int *)DS_PBQueue_dequeue(queue, -1);
+		MU_LOG_VERBOSE(logger, "Dequeued: %d\n", val);
 	}
 	MU_LOG_VERBOSE(logger, "Consumer: returning...\n");
 	return NULL;
@@ -116,14 +118,13 @@ void test_timed_enqueue_and_dequeue(void){
 }
 
 int main(void){
-	logger = malloc(sizeof(MU_Logger_t));
-	MU_Logger_Init(logger, "PBQueue_Test_Log.txt", "w", MU_ALL);
-	queue = PBQueue_Create_Bounded(bounds, compare_integers);
+	logger = MU_Logger_create("./Data_Structures/Logs/DS_PBQueue_Test.log", "w", MU_ALL);
+	queue = DS_PBQueue_create(max_size, (void *)compare_integers);
 	test_enqueue_and_dequeue();
-	PBQueue_Clear(queue, print_value);
+	DS_PBQueue_clear(queue, print_value);
 	test_timed_enqueue_and_dequeue();
-	PBQueue_Destroy(queue, NULL);
+	DS_PBQueue_destroy(queue, NULL);
 	MU_LOG_VERBOSE(logger, "Finished All Tests!\n");
-	MU_Logger_Destroy(logger, 1);
+	MU_Logger_destroy(logger);
 	return EXIT_SUCCESS;
 }

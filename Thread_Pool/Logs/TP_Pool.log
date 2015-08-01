@@ -1,0 +1,108 @@
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:40) MU_Event_create(): 
+"~Thread Pool Resume~: 'Event created!'"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:40) MU_Event_create(): 
+"~Thread Pool Finished~: 'Event created!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Waiting on event signal!'"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Waiting on event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Waiting on event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Waiting on event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Waiting on event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:111) MU_Event_signal(): 
+"~Thread Pool Resume~: 'Event signaled!'"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Received event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #1: received a task!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Received event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #5: received a task!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Received event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #4: received a task!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Received event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #2: received a task!"
+05:56:48 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Resume~: 'Received event signal!'"
+05:56:48 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #3: received a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #5: finished a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #1: finished a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #4: finished a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #5: received a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #1: received a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #4: received a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #2: finished a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #3: finished a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #2: received a task!"
+05:56:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #3: received a task!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #5: finished a task!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #2: finished a task!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #1: finished a task!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #4: finished a task!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #3: finished a task!"
+05:56:58 PM [VERBOSE](./Misc_Utils/MU_Events.c:111) MU_Event_signal(): 
+"~Thread Pool Finished~: 'Event signaled!'"
+05:56:58 PM [VERBOSE](./Misc_Utils/MU_Events.c:111) MU_Event_signal(): 
+"~Thread Pool Resume~: 'Event signaled!'"
+05:56:58 PM [VERBOSE](./Misc_Utils/MU_Events.c:40) MU_Event_create(): 
+"~Thread Pool Result Is Ready~: 'Event created!'"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:243) TP_Pool_add(): 
+"A task of High priority has been added to the task_queue!"
+05:56:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:100) Get_Tasks(): 
+"Thread #5: received a task!"
+05:56:58 PM [VERBOSE](./Misc_Utils/MU_Events.c:75) MU_Event_wait(): 
+"~Thread Pool Result Is Ready~: 'Waiting on event signal!'"
+05:57:03 PM [VERBOSE](./Misc_Utils/MU_Events.c:111) MU_Event_signal(): 
+"~Thread Pool Result Is Ready~: 'Event signaled!'"
+05:57:03 PM [VERBOSE](./Misc_Utils/MU_Events.c:96) MU_Event_wait(): 
+"~Thread Pool Result Is Ready~: 'Received event signal!'"
+05:57:03 PM [VERBOSE](./Thread_Pool/TP_Pool.c:102) Get_Tasks(): 
+"Thread #5: finished a task!"
+05:57:03 PM [VERBOSE](./Misc_Utils/MU_Events.c:117) MU_Event_destroy(): 
+"~Thread Pool Result Is Ready~: 'Sending final signal to threads...'"
+05:57:03 PM [VERBOSE](./Misc_Utils/MU_Events.c:111) MU_Event_signal(): 
+"~Thread Pool Finished~: 'Event signaled!'"
