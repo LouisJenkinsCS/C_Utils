@@ -1,4 +1,6 @@
+#include <DS_Helpers.h>
 #include <pthread.h>
+#include <stdatomic.h>
 
 /*
  * PBQueue is a minimal priority blocking queue, which will insert elements sorted
@@ -23,40 +25,28 @@
  * depending on which constructor used to create it.
  */
 
-typedef struct PBQueue PBQueue;
-
-typedef struct PBQ_Node PBQ_Node;
-
-typedef enum PBQ_Type PBQ_Type;
-
-/// Easier to type comparator callback typedef.
-typedef int (*compare_elements)(void *item_one, void *item_two);
-
-struct PBQ_Node{
-	/// Pointer to the next node.
-	PBQ_Node *next;
-	/// The user's item added to the queue.
-	void *item;
-};
-
-struct PBQueue {
+typedef struct {
 	/// A pointer to the head node.
-	PBQ_Node *head;
+	DS_Node_t *head;
 	/// A pointer to the tail node.
-	PBQ_Node *tail;
+	DS_Node_t *tail;
 	/// To compare elements to determine priority.
-	compare_elements comparator;
+	DS_comparator_cb compare;
 	/// Size of the current queue, meaning amount of elements currently in the queue.
-	volatile size_t size;
+	_Atomic size_t size;
 	/// The maximum size of the queue if it is bounded. If it is unbounded it is 0.
 	size_t max_size;
 	/// A new element may be added to the PBQueue.
-	pthread_cond_t *is_not_full;
+	pthread_cond_t *not_full;
 	/// A element has been added and may be removed from the PBQueue.
-	pthread_cond_t *is_not_empty;
+	pthread_cond_t *not_empty;
 	/// The lock used to add or remove an element to/from the queue (respectively).
-	pthread_mutex_t *adding_or_removing_elements;
-};
+	pthread_mutex_t *manipulating_queue;
+	/// The amount of threads waiting.
+	_Atomic size_t threads_waiting;
+	/// Atomic flag for if it's being destroyed.
+	_Atomic bool shutting_down;
+} DS_PBQueue_t;
 
 /**
  * Returns an initialized bounded queue of max size max_elements.
@@ -64,14 +54,7 @@ struct PBQueue {
  * @param comparator Callback used to compare elements. Cannot be NULL!
  * @return A bounded priority blocking queue.
  */
-PBQueue *PBQueue_Create_Bounded(size_t max_elements, compare_elements comparator);
-
-/**
- * Returns an initialized unbounded queue.
- * @param comparator Callback used to compare elements. Cannot be NULL!
- * @return A unbounded priority blocking queue.
- */
-PBQueue *PBQueue_Create_Unbounded(compare_elements comparator);
+DS_PBQueue_t *DS_PBQueue_create(size_t max_elements, DS_comparator_cb compare);
 
 /**
  * Will attempt to add an element to the queue. If it is bounded, it will block
@@ -82,18 +65,7 @@ PBQueue *PBQueue_Create_Unbounded(compare_elements comparator);
  * @param item The item to add to the priority queue.
  * @return 1 if successful.
  */
-int PBQueue_Enqueue(PBQueue *queue, void *item);
-
-/**
- * Attempts to add an element to the queue and will return early if the time elapses.
- * This is the recommended way to deal with bounded queues, as it can timeout early,
- * allowing you to avoid an infinite deadlock.
- * @param queue Priority blocking queue to add an element to.
- * @param item Element to be added to the priority blocking queue.
- * @param seconds Maximum time spent waiting to add an element.
- * @return 1 if successful, 0 if timed out.
- */
-int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds);
+bool DS_PBQueue_enqueue(DS_PBQueue_t *queue, void *item, long long int timeout);
 
 /**
  * Attempts to obtain an item from the priority queue, blocking until one becomes available.
@@ -102,33 +74,7 @@ int PBQueue_Timed_Enqueue(PBQueue *queue, void *item, unsigned int seconds);
  * @param queue Priority blocking queue to obtain an element from.
  * @return The head item of the priority blocking queue.
  */
-void *PBQueue_Dequeue(PBQueue *queue);
-
-/**
- * Attempts to obtain an item from the priority queue, blocking until one becomes available,
- * or the amount of time elapses. This is the overall recommended way, as it allows
- * threads to return early.
- * @param queue Priority blocking queue to obtain an element from.
- * @param seconds Maximum amount of time to attempt waiting to retrieve an item.
- * @return The head item of the queue if successful, or NULL if it times out.
- */
-void *PBQueue_Timed_Dequeue(PBQueue *queue, unsigned int seconds);
-
-/**
- * Returns whether the queue is empty or not. Note: Just because the queue is empty
- * one second, doesn't mean it will also be the next. 
- * @param queue Priority blocking queue to obtain an element from.
- * @return 1 if it is empty at this moment, or 0 if not.
- */
-int PBQueue_Is_Empty(PBQueue *queue);
-
-/**
- * Returns whether the queue is full or not. Note: Just because the queue is full
- * one second, doesn't mean it will also be the next.
- * @param queue Priority blocking queue to obtain an element from.
- * @return 1 if it is full at this moment, or 0 if not.
- */
-int PBQueue_Is_Full(PBQueue *queue);
+void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
 
 /**
  * Returns the current size of the queue. Note: Just because the queue's size is
@@ -137,4 +83,6 @@ int PBQueue_Is_Full(PBQueue *queue);
  * @param queue Priority blocking queue to obtain an element from.
  * @return The size of the queue.
  */
-int PBQueue_Get_Size(PBQueue *queue);
+bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del);
+
+bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del);

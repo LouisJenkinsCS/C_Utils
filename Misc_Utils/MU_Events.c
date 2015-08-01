@@ -74,37 +74,30 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout){
 	}
 	MU_LOG_VERBOSE(event->logger, format, event->name, "Waiting on event signal!");
 	pthread_mutex_lock(event->event_lock);
-	if(timeout < 0){
-		while(atomic_load(&event->signaled) == false){
-			int errcode = pthread_cond_wait(event->event_signal, event->event_lock);
-			if(errcode){
-				MU_LOG_ERROR(event->logger, "pthread_cond_wait: '%s'", strerror(errcode));
-				pthread_mutex_unlock(event->event_lock);
-				atomic_fetch_sub(&event->waiting_threads, 1);
-				return false;
-			}
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += timeout;
+	while(atomic_load(&event->signaled) == false){
+		int errcode;
+		if(timeout < 0){
+			errcode = pthread_cond_wait(event->event_signal, event->event_lock);
+		} else {
+			errcode = pthread_cond_timedwait(event->event_signal, event->event_lock, &ts);
 		}
-	} else {
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec += timeout;
-		while(atomic_load(&event->signaled) == false){
-			int errcode = pthread_cond_timedwait(event->event_signal, event->event_lock, &ts);
-			if(errcode){
-				if(errcode != ETIMEDOUT){
-					MU_LOG_ERROR(event->logger, "pthread_cond_wait: '%s'", strerror(errcode));
-				}
-				pthread_mutex_unlock(event->event_lock);
-				atomic_fetch_sub(&event->waiting_threads, 1);
-				return false;
-			} // End errorcode check
-		} // End atomic_load loop.
-	} // End timeout condwait
+		if(errcode){
+			if(errcode != ETIMEDOUT){
+				MU_LOG_ERROR(event->logger, "pthread_cond_wait: '%s'", strerror(errcode));
+			}
+			pthread_mutex_unlock(event->event_lock);
+			atomic_fetch_sub(&event->waiting_threads, 1);
+			return false;
+		}
+	}
 	MU_LOG_VERBOSE(event->logger, format, event->name, "Received event signal!");
 	pthread_mutex_unlock(event->event_lock);
 	atomic_fetch_sub(&event->waiting_threads, 1);
 	return true;
-} // End function
+}
 
 bool MU_Event_signal(MU_Event_t *event){
 	if(!event) return false;

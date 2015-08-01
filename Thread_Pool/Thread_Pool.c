@@ -50,6 +50,7 @@ static TP_Worker_t *Get_Self(TP_Pool_t *tp){
 
 
 static void Process_Task(TP_Task_t *task){
+	if(!task) return;
 	void *retval = task->callback(task->args);
 	if(task->result){
 		task->result->retval = retval;
