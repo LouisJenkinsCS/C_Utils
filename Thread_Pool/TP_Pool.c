@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
+#include <MU_Flags.h>
 #include <TP_Pool.h>
 
 static const char *pause_event_name = "Resume";
@@ -12,8 +13,6 @@ static const char *result_event_name = "Result Ready";
 
 static MU_Logger_t *logger = NULL;
 static MU_Logger_t *event_logger = NULL;
-
-#define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Thread_Pool/Logs/TP_Pool.log", "w", MU_ALL);
@@ -68,11 +67,6 @@ static void Process_Task(TP_Task_t *task, unsigned int thread_id){
 	free(task);
 }
 
-/// Determines whether or not the flag has been passed.
-static int is_selected(int flag, int mask){
-	return (flag & mask);
-}
-
 /// The main thread loop to obtain tasks from the task queue.
 static void *Get_Tasks(void *args){
 	TP_Pool_t *tp = args;
@@ -116,10 +110,10 @@ static void *Get_Tasks(void *args){
 
 /// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.
 static void Set_Task_Priority(TP_Task_t *task, int flags){
-	if(is_selected(flags, TP_LOWEST_PRIORITY)) task->priority = TP_LOWEST;
-	else if(is_selected(flags, TP_LOW_PRIORITY)) task->priority = TP_LOW;
-	else if(is_selected(flags, TP_HIGH_PRIORITY)) task->priority = TP_HIGH;
-	else if(is_selected(flags, TP_HIGHEST_PRIORITY)) task->priority = TP_HIGHEST;
+	if(MU_FLAG_GET(flags, TP_LOWEST_PRIORITY)) task->priority = TP_LOWEST;
+	else if(MU_FLAG_GET(flags, TP_LOW_PRIORITY)) task->priority = TP_LOW;
+	else if(MU_FLAG_GET(flags, TP_HIGH_PRIORITY)) task->priority = TP_HIGH;
+	else if(MU_FLAG_GET(flags, TP_HIGHEST_PRIORITY)) task->priority = TP_HIGHEST;
 	else task->priority = TP_MEDIUM;
 
 }
@@ -216,7 +210,7 @@ TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int fl
 	MU_ARG_CHECK(logger, NULL, tp, callback, args);
 	TP_Result_t *result = NULL;
 	TP_Task_t *task = NULL;
-	if(!is_selected(flags, TP_NO_RESULT)){
+	if(!MU_FLAG_GET(flags, TP_NO_RESULT)){
 		result = calloc(1, sizeof(TP_Result_t));
 		if(!result){
 			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));

@@ -2,6 +2,20 @@
 
 static const char *format = "Thread #%u: '%s'";
 
+static void auto_reset_handler(MU_Event_t *event, unsigned int thread_id){
+	if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET_ON_LAST)){
+		// Last one out hits the lights. (If we are the last thread, reset event!)
+		if(atomic_load(&event->waiting_threads) == 1){
+			atomic_store(&event->signaled, false);
+			MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal As Last Thread...");
+		}
+	} else if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET)){
+		// Difference between this at ON_LAST is that this will reset the event when any thread leaves.
+		atomic_store(&event->signaled, false);
+		MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal...");
+	}
+}
+
 MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger, unsigned int flags){
 	bool lock_initialized = false, cond_initialized = false;
 	MU_Event_t *event = calloc(1, sizeof(MU_Event_t));
@@ -72,6 +86,7 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread
 	if(!event) return false;
 	atomic_fetch_add(&event->waiting_threads, 1);
 	if(atomic_load(&event->signaled) == true){
+		auto_reset_handler(event, thread_id);
 		atomic_fetch_sub(&event->waiting_threads, 1);
 		return true;
 	}
@@ -105,17 +120,7 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread
 		}
 	}
 	MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Received Event Signal...");
-	if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET_ON_LAST)){
-		// Last one out hits the lights. (If we are the last thread, reset event!)
-		if(atomic_load(&event->waiting_threads) == 1){
-			atomic_store(&event->signaled, false);
-			MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal As Last Thread...");
-		}
-	} else if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET)){
-		// Difference between this at ON_LAST is that this will reset the event when any thread leaves.
-		atomic_store(&event->signaled, false);
-		MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal...");
-	}
+	auto_reset_handler(event, thread_id);
 	pthread_mutex_unlock(event->event_lock);
 	atomic_fetch_sub(&event->waiting_threads, 1);
 	return true;

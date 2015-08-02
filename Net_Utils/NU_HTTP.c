@@ -69,7 +69,7 @@ static const char *NU_HTTP_Status_Codes[] = {
     [509] = "509 Bandwidth Limit Exceeded"
 };
 
-static void parse_http_field(NU_Header_t *header, const char *line){
+static void parse_http_field(DS_Hash_Map_t *header, const char *line){
 	MU_DEBUG("%s", line);
 	const char *delimiter = ": ";
 	const int delim_size = strlen(delimiter);
@@ -85,13 +85,13 @@ static void parse_http_field(NU_Header_t *header, const char *line){
 	MU_DEBUG("Line: '%s'\nOffset_Str: '%s'", line, offset_str);
 	snprintf(field, field_size, "%.*s", field_len, line);
 	snprintf(value, value_size, "%s", offset_str);
-	bool was_added = DS_Hash_Map_add(header->mapped_fields, strdup(field), strdup(value));
+	bool was_added = DS_Hash_Map_add(header, strdup(field), strdup(value));
 	if(!was_added){
 		MU_LOG_WARNING(logger, "DS_Hash_Map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
 	}
 }
 
-static void parse_http_method(NU_Header_t *header, const char *line){
+static void parse_http_method(NU_Request_t *header, const char *line){
 	MU_DEBUG("%s", line);
 	if(strncmp(line, "GET", 3) == 0){
 		header->method = NU_HTTP_GET;
@@ -110,12 +110,12 @@ static void parse_http_method(NU_Header_t *header, const char *line){
 	}
 }
 
-static void parse_http_path(NU_Header_t *header, const char *line){
+static void parse_http_path(NU_Request_t *header, const char *line){
 	MU_DEBUG("%s", line);
 	strncpy(header->file_path, line, 256);
 }
 
-static void parse_http_status(NU_Header_t *header, const char *line){
+static void parse_http_status(NU_Response_t *header, const char *line){
 	MU_DEBUG("%s", line);
 	int status = strtol(line, NULL, 10);
 	if(!status){
@@ -125,21 +125,22 @@ static void parse_http_status(NU_Header_t *header, const char *line){
 	header->status = status;
 }
 
-static void parse_http_version(NU_Header_t *header, const char *line){
+static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
 	MU_DEBUG("%s", line);
 	const int protocol_len = 8;
 	if(strncmp(line, "HTTP/1.1", protocol_len) == 0){
-		header->version = NU_HTTP_VER_1_1;
+		*version = NU_HTTP_VER_1_1;
 	} else if(strncmp(line, "HTTP/1.0", protocol_len) == 0){
-		header->version = NU_HTTP_VER_1_0;
+		*version = NU_HTTP_VER_1_0;
 	} else if(strncmp(line, "HTTP/1.x", protocol_len) == 0){
-		header->version = NU_HTTP_VER_1_X;
+		*version = NU_HTTP_VER_1_X;
 	} else {
 		MU_LOG_WARNING(logger, "Bad HTTP version!");
+		*version = NU_HTTP_NO_VER;
 	}
 }
 
-static void parse_http_header(NU_Header_t *header, char *header_str){
+static void parse_http_request(NU_Response_t *header, char *header_str){
 	MU_DEBUG("Header: \n%s", header_str);
 	char *first_line;
 	char *rest_of_lines;
@@ -156,7 +157,7 @@ static void parse_http_header(NU_Header_t *header, char *header_str){
 			return;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(header, line);
+			parse_http_version(&header->version, line);
 		} else if (isdigit((int)*line)){
 			parse_http_status(header, line);
 		} else if(*line == '/'){
@@ -219,3 +220,61 @@ char *NU_Header_to_string(NU_Header_t *header){
 	}
 	return tmp_buf;
 }
+
+NU_Response_t *NU_Response_create(void){
+	NU_Response_t *response = calloc(1, sizeof(NU_Response_t));
+}
+
+NU_Request_t *NU_Request_create(void);
+
+/*
+    NOTE: When parsing from header, make sure to NOT read past the header_size. Try to make sure header is of appropriate size.
+    This will append what it can to the mapped header, and return what it cannot. I.E After end of header, or incomplete portions.
+    header_size will be the size of what is left (I.E what is invalid or not part of the header). Response should be cleared before passing it!
+    TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
+*/
+char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
+
+char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size);
+
+/*
+    Clears the response header of all fields and attributes.
+*/
+bool NU_Response_clear(NU_Response_t *res);
+
+bool NU_Request_clear(NU_Request_t *req);
+
+/*
+    Returns the null-terminated string of the header.
+*/
+char *NU_Response_to_string(NU_Response_t *res);
+
+char *NU_Request_to_string(NU_Request_t *req);
+
+bool NU_Response_set_field(NU_Response_t *res, const char *field, const char *values);
+
+bool NU_Request_set_field(NU_Request_t *req, const char *field, const char *values);
+
+bool NU_Response_remove_field(NU_Response_t *res, const char *field);
+
+bool NU_Request_remove_field(NU_Request_t *req, const char *field);
+
+char *NU_Response_get_field(NU_Response_t *res, const char *field);
+
+char *NU_Request_get_field(NU_Request_t *req, const char *field);
+
+NU_HTTP_Version_e NU_Response_get_version(NU_Response_t *res);
+
+NU_HTTP_Version_e NU_Request_get_version(NU_Request_t *req);
+
+bool NU_Response_set_version(NU_Response_t *res, NU_HTTP_Version_e version);
+
+bool NU_Request_set_version(NU_Request_t *req, NU_HTTP_Version_e version);
+
+unsigned int NU_Response_get_status(NU_Response_t *res);
+
+bool NU_Response_set_status(NU_Response_t *res, unsigned int status);
+
+NU_HTTP_Method_e NU_Response_get_method(NU_Response_t *res);
+
+bool NU_Response_set_method(NU_Response_t *res, NU_HTTP_Method_e method);
