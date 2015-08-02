@@ -96,7 +96,7 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread
 					atomic_store(&event->signaled, true);
 					pthread_cond_broadcast(event->event_signal);
 					retval = true;
-					MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Timed Out... Signaling Other Threads");
+					MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Timed Out, Signaling Other Threads...");
 				}
 			}
 			pthread_mutex_unlock(event->event_lock);
@@ -105,6 +105,17 @@ bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread
 		}
 	}
 	MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Received Event Signal...");
+	if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET_ON_LAST)){
+		// Last one out hits the lights. (If we are the last thread, reset event!)
+		if(atomic_load(&event->waiting_threads) == 1){
+			atomic_store(&event->signaled, false);
+			MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal As Last Thread...");
+		}
+	} else if(MU_FLAG_GET(event->flags, MU_EVENT_AUTO_RESET)){
+		// Difference between this at ON_LAST is that this will reset the event when any thread leaves.
+		atomic_store(&event->signaled, false);
+		MU_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal...");
+	}
 	pthread_mutex_unlock(event->event_lock);
 	atomic_fetch_sub(&event->waiting_threads, 1);
 	return true;

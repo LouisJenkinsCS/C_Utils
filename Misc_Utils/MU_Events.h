@@ -14,8 +14,11 @@
 /// When the event is created, it is automatically flagged as signaled.
 #define MU_EVENT_SIGNALED_BY_DEFAULT 1 << 1
 
-/// When the last thread leaves the event, it will flag the event as being non-signaled.
+/// When a thread leaves the event, it will flag the event as being non-signaled.
 #define MU_EVENT_AUTO_RESET 1 << 2
+
+/// Like MU_EVENT_AUTO_RESET, execpt it will only flag the event as being non-signaled by the last thread to exit.
+#define MU_EVENT_AUTO_RESET_ON_LAST 1 << 3
 
 #define MU_EVENT_MAX_LEN 64
 
