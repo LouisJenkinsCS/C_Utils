@@ -30,7 +30,6 @@ void *print_hello(thread_task *task){
 		pthread_yield();
 	}
 	free(task);
-	sleep(1);
 	return NULL;
 }
 
@@ -39,7 +38,6 @@ int *high_priority_print(char *message){
 	int i = 0;
 	for(; i < 5; i++){
 		MU_DEBUG("%s\n", message);
-		sleep(1);
 	}
 	*retval = 5;
 	return retval;
@@ -48,8 +46,8 @@ int *high_priority_print(char *message){
 int main(void){
 	logger = MU_Logger_create("./Thread_Pool/Logs/TP_Pool_Test.log", "w", MU_ALL);
 	tp = TP_Pool_create(pool_size);
-	const unsigned int num_tasks = 10;
-	const int runs = 10000;
+	const unsigned int num_tasks = 10000;
+	const int runs = 10;
 	int i = 0;
 	MU_LOG_INFO(logger, "Pausing thread pool to add all tasks...");
 	TP_Pool_pause(tp, -1);
@@ -61,13 +59,9 @@ int main(void){
 	TP_Pool_resume(tp);
 	MU_LOG_INFO(logger, "All tasks added!Starting...");
 	sleep(5);
-	MU_LOG_INFO(logger, "Pausing...");
-	MU_DEBUG("Pausing...");
-	TP_Pool_pause(tp, 4);
-	sleep(5);
-	TP_Pool_resume(tp);
-	MU_LOG_INFO(logger, "Resumed...");
-	MU_DEBUG("Resumed!");
+	MU_LOG_INFO(logger, "Pausing for 5 seconds...");
+	MU_DEBUG("Pausing for 5 seconds...");
+	TP_Pool_pause(tp, 5);
 	MU_LOG_INFO(logger, "Injecting a high priority task...");
 	TP_Result_t *result = TP_Pool_add(tp, (void *)high_priority_print, "I'm so much better than you...", TP_HIGH_PRIORITY);
 	int retval = *(int *)TP_Result_get(result, -1);

@@ -32,14 +32,16 @@
  * to appear inside of the brackets, and also does not contain the file and line number.
  */
 typedef enum {
-	/// Display all types of warnings.
+	/// Display all log levels.
 	MU_ALL = 0,
-	/// Display Verbose, Info, Custom, Warnings, Errors and Assertions only.
+	/// Display Verbose, Info, Custom, Events, Warnings, Errors and Assertions only.
 	MU_VERBOSE,
-	/// Display Info, Custom, Warnings, Errors and Assertions only.
+	/// Display Info, Custom, Events, Warnings, Errors and Assertions only.
 	MU_INFO,
-	/// Display Custom, Warnings, Errors and Assertions only.
+	/// Display Custom, Events, Warnings, Errors and Assertions only.
 	MU_CUSTOM,
+	/// Display Events, Warnings, Errors and Assertions only.
+	MU_EVENT,
 	/// Display Warnings, Errors and Assertions only.
 	MU_WARNING,
 	/// Display Errors and Assertions only.
@@ -55,6 +57,7 @@ typedef struct {
 	char *verbose_f;
 	char *info_f;
 	char *custom_f;
+	char *event_f;
 	char *warning_f;
 	char *error_f;
 	char *assertion_f;
@@ -93,52 +96,41 @@ typedef struct {
 } while(0)
 #endif
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
-#define MU_ASSERT(condition, logger, message, ...) !condition ? MU_Logger_Log(logger, MU_ASSERTION, NULL, message, MU_LOGGER_STRINGIFY(condition), \
+#define MU_ASSERT(condition, logger, message, ...) !condition ? MU_Logger_log(logger, MU_ASSERTION, NULL, message, MU_LOGGER_STRINGIFY(condition), \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false;
 
 /// Simply log an assertion to the logfile rather than doing anything.
-#define MU_LOG_ASSERT(logger, message, ...) MU_Logger_Log(logger, MU_ASSERTION, NULL, message, NULL, \
+#define MU_LOG_ASSERT(logger, message, ...) MU_Logger_log(logger, MU_ASSERTION, NULL, message, NULL, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /// Log an error message along with timestamp, file and line of code.
-#define MU_LOG_ERROR(logger, message, ...) MU_Logger_Log(logger, MU_ERROR, NULL, message, NULL, \
+#define MU_LOG_ERROR(logger, message, ...) MU_Logger_log(logger, MU_ERROR, NULL, message, NULL, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /// Log a warning message along with timestamp, file and line of code.
-#define MU_LOG_WARNING(logger, message, ...) MU_Logger_Log(logger, MU_WARNING, NULL, message, NULL, \
+#define MU_LOG_WARNING(logger, message, ...) MU_Logger_log(logger, MU_WARNING, NULL, message, NULL, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /// Log a customer message along with timestamp, without file and line of code.
-#define MU_LOG_CUSTOM(logger, custom_level, message, ...) MU_Logger_Log(logger, MU_CUSTOM, custom_level, message, NULL, \
+#define MU_LOG_CUSTOM(logger, custom_level, message, ...) MU_Logger_log(logger, MU_CUSTOM, custom_level, message, NULL, \
+	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+
+#define MU_LOG_EVENT(logger, event, message, ...) MU_Logger_log(logger, MU_EVENT, NULL, message, event, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /// Log an info message along with timestamp, file and line of code.
-#define MU_LOG_INFO(logger, message, ...) MU_Logger_Log(logger, MU_INFO, NULL, message, NULL, \
+#define MU_LOG_INFO(logger, message, ...) MU_Logger_log(logger, MU_INFO, NULL, message, NULL, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /// Log a verbose message along with timestamp, file and line of code. This differs from INFO in that it is used for
 /// logging almost trivial information, good for if you want to log every single thing without having to remove it later.
-#define MU_LOG_VERBOSE(logger, message, ...) MU_Logger_Log(logger, MU_VERBOSE, NULL, message, NULL, \
+#define MU_LOG_VERBOSE(logger, message, ...) MU_Logger_log(logger, MU_VERBOSE, NULL, message, NULL, \
 	__FILE__, MU_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 #define MU_LOGGER_STRINGIFY(x) MU_LOGGER_STRINGIFY_THIS(x)
 #define MU_LOGGER_STRINGIFY_THIS(x) #x
 
-/**
- * @brief Initialize a logger passed to it.
- * 
- * Will initialize a logger passed to it, as long as logger, filename and the mode passed
- * are not NULL. Hence, logger must be allocated before being passed to this function.
- * If the filename or mode are invalid, and file isn't able to be created, then it returns 0
- * for failure. The level passed determines whether or not the log macros actually log the
- * message to file; if the level is not greater than the macro's level, it will log it to file.
- * 
- * @param logger Logger to Initialize.
- * @param filename Name of the log file to be created.
- * @param mode Mode to open the file in, I.E 'w', 'r', 'rw'.
- * @param level The minimum level of logging to be processed. Anything below it will be ignored.
- * @return 1 if successful, 0 if logger, filename or mode are NULL or if unable to open the file.
- */
+
 MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_e level);
 
 /// Returns the format for the log level, and if not initialized, returns all, then falls back to default if not specified either.
@@ -147,19 +139,12 @@ const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level);
 const char *MU_Logger_Level_to_string(MU_Logger_Level_e level);
 
 /// Used by the logger to directly log a message. Use macro for logging!
-bool MU_Logger_Log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
+bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
 
-/**
- * @brief Destroys the logger passed to it, freeing it if flagged.
- * @param logger Logger to be destroyed.
- * @return 1 on success, 0 if logger is NULL.
- */
-int MU_Logger_destroy(MU_Logger_t *logger);
 
-/**
- * Obtain the current timestamp in Hours:Minutes:Seconds AM/PM. (I.E 11:45:30 AM)
- * @return Formatted timestamp.
- */
+bool MU_Logger_destroy(MU_Logger_t *logger);
+
+
 char *MU_get_timestamp(void);
 
 #endif

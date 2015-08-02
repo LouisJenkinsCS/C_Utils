@@ -118,7 +118,8 @@ MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_
 		goto error;
 	}
 	logger->level = level;
-	//logger->format.all_f = strdup("\nTimestamp: %tsm\nFunction: %fnc()\nFile: %fle\nLine: %lno\nMessage: \"%msg\"\n");
+	logger->format.assertion_f = strdup("%tsm [%lvl](%fle:%lno) %fnc(): \nCondition: \"%cnd\"\nMessage: \"%msg\"\n");
+	logger->format.event_f = strdup("%tsm [%lvl] %cnd: \"%msg\"\n");
 	logger->format.default_f = "%tsm [%lvl](%fle:%lno) %fnc(): \n\"%msg\"\n";
 	return logger;
 
@@ -129,11 +130,11 @@ MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_
 		return NULL;
 }
 
-bool MU_Logger_Log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...){
+bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...){
 	if(!logger || !logger->file || logger->level > level) return false;
 	va_list args;
 	va_start(args, function_name);
-	MU_Logger_Format_Info_t info = { .msg = msg, .log_level = custom_level ? custom_level : MU_Logger_Level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name };
+	MU_Logger_Format_Info_t info = { .msg = msg, .log_level = custom_level ? custom_level : MU_Logger_Level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
 	const int log_buf_size = buffer_size * 2;
 	char buffer[log_buf_size + 1];
 	format_string(MU_Logger_Format_get(logger, level), buffer, log_buf_size, &info, args);
@@ -150,6 +151,7 @@ const char *MU_Logger_Level_to_string(MU_Logger_Level_e level){
 		case MU_ASSERTION: return "ASSERTION";
 		case MU_ERROR: return "ERROR";
 		case MU_WARNING: return "WARNING";
+		case MU_EVENT: return "EVENT";
 		case MU_INFO: return "INFO";
 		case MU_VERBOSE: return "VERBOSE";
 		default: return NULL;
@@ -161,12 +163,13 @@ const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level){
 	MU_Logger_Format_t format = logger->format;
 	char *real_format = NULL;
 	switch(level){
-		case MU_ASSERTION: real_format = format.assertion_f;
-		case MU_ERROR: real_format = format.error_f;
-		case MU_WARNING: real_format = format.warning_f;
-		case MU_CUSTOM: real_format = format.custom_f;
-		case MU_INFO: real_format = format.info_f;
-		case MU_VERBOSE: real_format = format.verbose_f;
+		case MU_ASSERTION: real_format = format.assertion_f; break;
+		case MU_ERROR: real_format = format.error_f; break;
+		case MU_WARNING: real_format = format.warning_f; break;
+		case MU_EVENT: real_format = format.event_f; break;
+		case MU_CUSTOM: real_format = format.custom_f; break;
+		case MU_INFO: real_format = format.info_f; break;
+		case MU_VERBOSE: real_format = format.verbose_f; break;
 		default: real_format = NULL;
 	}
 	if(!real_format){
@@ -178,16 +181,17 @@ const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level){
 	return real_format;
 }
 
-int MU_Logger_destroy(MU_Logger_t *logger){
-	if(!logger) return 0;
+bool MU_Logger_destroy(MU_Logger_t *logger){
+	if(!logger) return false;
 	if(logger->file) fclose(logger->file);
 	free(logger->format.all_f);
-	free(logger->format.info_f);
-	free(logger->format.assertion_f);
-	free(logger->format.error_f);
 	free(logger->format.verbose_f);
+	free(logger->format.info_f);
 	free(logger->format.custom_f);
+	free(logger->format.event_f);
 	free(logger->format.warning_f);
+	free(logger->format.error_f);
+	free(logger->format.assertion_f);
 	free(logger);
-	return 1;
+	return true;
 }
