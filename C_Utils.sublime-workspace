@@ -4,6 +4,98 @@
 		"selected_items":
 		[
 			[
+				"DS_Atomic_",
+				"DS_Atomic_Node_create"
+			],
+			[
+				"DS",
+				"DS_Stack_t"
+			],
+			[
+				"DS_Stack",
+				"DS_Stack_t"
+			],
+			[
+				"DS_A",
+				"DS_Atomic_Node_t"
+			],
+			[
+				"DS_At",
+				"DS_Atomic_Node_create"
+			],
+			[
+				"atomic",
+				"atomic_compare_exchange_strong"
+			],
+			[
+				"atomic_compare",
+				"atomic_compare_exchange_strong"
+			],
+			[
+				"atomic_",
+				"atomic_compare_exchange_weak"
+			],
+			[
+				"DS_Ato",
+				"DS_Atomic_Node_t"
+			],
+			[
+				"DS_Atom",
+				"DS_Atomic_Node_create"
+			],
+			[
+				"DS_Nod",
+				"DS_Atomic_Node_t"
+			],
+			[
+				"MU_L",
+				"MU_LOG_ASSERT"
+			],
+			[
+				"DS_Queue",
+				"DS_Queue_t"
+			],
+			[
+				"DS_",
+				"DS_Queue_t"
+			],
+			[
+				"NU_HTTP_",
+				"NU_HTTP_Version_e"
+			],
+			[
+				"MU",
+				"MU_LOG_EVENT"
+			],
+			[
+				"ret",
+				"retval"
+			],
+			[
+				"event",
+				"event_signal"
+			],
+			[
+				"thread",
+				"thread_id"
+			],
+			[
+				"TP_Pool_",
+				"TP_Pool_resume"
+			],
+			[
+				"Des",
+				"Destroy_Worker"
+			],
+			[
+				"sleep",
+				"sleep_after"
+			],
+			[
+				"max_",
+				"max_num"
+			],
+			[
 				"not",
 				"not_empty"
 			],
@@ -28,18 +120,6 @@
 				"DS_PBQueue_t"
 			],
 			[
-				"atomic_",
-				"atomic_fetch_add"
-			],
-			[
-				"atomic",
-				"atomic_fetch_sub"
-			],
-			[
-				"thread",
-				"threads_waiting"
-			],
-			[
 				"not_empty",
 				"not_empty_init"
 			],
@@ -48,24 +128,12 @@
 				"Add_As_Tail"
 			],
 			[
-				"DS",
-				"DS_comparator_cb"
-			],
-			[
-				"event",
-				"event_lock"
-			],
-			[
 				"Dest",
 				"Destroy_Task"
 			],
 			[
 				"tp",
 				"tp"
-			],
-			[
-				"Des",
-				"Destroy_Task"
 			],
 			[
 				"result",
@@ -102,10 +170,6 @@
 			[
 				"seconds",
 				"seconds_to_pause"
-			],
-			[
-				"MU_L",
-				"MU_LOG_VERBOSE"
 			],
 			[
 				"cond",
@@ -210,10 +274,6 @@
 			[
 				"MU_COND_",
 				"MU_COND_RWLOCK_UNLOCK"
-			],
-			[
-				"max_",
-				"max_bsocks"
 			],
 			[
 				"conn",
@@ -384,10 +444,6 @@
 				"amount_of_buckets"
 			],
 			[
-				"DS_",
-				"DS_Hash_Map_add"
-			],
-			[
 				"MU_Cond_",
 				"MU_Cond_rwlock_destroy"
 			],
@@ -458,104 +514,43 @@
 			[
 				"pt",
 				"pthread_rwlock_t"
-			],
-			[
-				"NU_rwl",
-				"NU_rwlock_unlock"
-			],
-			[
-				"NU_rwlock",
-				"NU_rwlock_unlock"
-			],
-			[
-				"is",
-				"is_disconnected"
-			],
-			[
-				"connection",
-				"connections_allocated"
-			],
-			[
-				"bsocks_",
-				"bsocks_allocated"
-			],
-			[
-				"amo",
-				"amount_of_connections"
-			],
-			[
-				"bsock_",
-				"bsock_pool_size"
-			],
-			[
-				"NU_Connection",
-				"NU_Connection_create"
-			],
-			[
-				"bsocks",
-				"bsocks_allocated"
-			],
-			[
-				"connect",
-				"connections_allocated"
-			],
-			[
-				"amount_",
-				"amount_of_sockets"
-			],
-			[
-				"data",
-				"data"
-			],
-			[
-				"NU_wr",
-				"NU_rwlock_rdlock"
-			],
-			[
-				"NU_rw",
-				"NU_rwlock_unlock"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "Thread_Pool/Thread_Pool.c",
+			"contents": "#include <DS_Queue.h>\n\nstatic MU_Logger_t *logger = NULL;\n\n__attribute__((constructor)) static void init_logger(void){\n	logger = MU_Logger_create(\"./Data_Structures/Logs/DS_Queue.log\", \"w\", MU_ALL);\n}\n\n__attribute__((destructor)) static void destroy_logger(void){\n	MU_Logger_destroy(logger);\n}\n\nstatic DS_Atomic_Node_t *DS_Atomic_Node_create(void *item){\n	DS_Atomic_Node_t *node = calloc(1, sizeof(DS_Atomic_Node_t));\n	if(!node){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		return NULL;\n	}\n	node->ptr = calloc(1, sizeof(DS_Atomic_Pointer_t));\n	if(!node->ptr){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		free(node);\n		return NULL;\n	}\n	node->ptr->next = ATOMIC_VAR_INIT(NULL);\n	node->ptr->id = ATOMIC_VAR_INIT(0);\n	return node;\n}\n\nDS_Queue_t *DS_Queue_create(void){\n	DS_Queue_t *queue = calloc(1, sizeof(DS_Queue_t));\n	if(!queue){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		goto error;\n	}\n	DS_Atomic_Node_t *node = DS_Atomic_Node_create(NULL);\n	queue->head = ATOMIC_VAR_INIT(NULL);\n	queue->tail = ATOMIC_VAR_INIT(NULL);\n	atomic_store(queue->head, *node);\n	queue->tail = queue->head;\n	return queue;\n\n	error:\n		return NULL;\n}\n\nbool DS_Queue_enqueue(DS_Queue_t *queue, void *data){\n	MU_ARG_CHECK(logger, false, queue);\n	DS_Atomic_Node_t *node = DS_Atomic_Node_create(data);\n	if(!node){\n		MU_LOG_ERROR(logger, \"DS_Atomic_Node_create: 'Was unable to create an atomic node!'\");\n		return false;\n	}\n	DS_Atomic_Node_t tail;\n	bool enqueued = false;\n	do {\n		/// Get tail from queue, atomically.\n		tail = queue->head;\n		/// Increment the id to prevent aba problem on change\n		atomic_fetch_add(&tail.ptr->id, 1);\n		/// If the tail is the last node, set node equal to tail.\n		enqueued = atomic_compare_exchange_weak(tail.ptr->next, NULL, *node);\n		/// If somehow, the tail of the queue isn't the last, then something went wrong\n		if(!enqueued){\n			/// So we set the new tail as the next one as a way of self-correcting.\n			atomic_compare_exchange_weak(queue->tail, &tail, *tail.ptr->next);\n		}\n	} while(!enqueued);\n	atomic_compare_exchange_strong(queue->tail, &tail, *node);\n	return true;\n}\n\nvoid *DS_Queue_dequeue(DS_Queue_t *queue, void *data){\n	DS_Atomic_Node_t head;\n	do {\n		head = atomic_load(queue->head);\n	} while()\n}\n\nvoid *DS_Queue_dequeue(DS_Queue_t *queue);\n\nsize_t DS_Queue_size(DS_Queue_t *queue);\n\nbool DS_Queue_destroy(DS_Queue_t *queue);\n",
+			"file": "Data_Structures/DS_Queue.c",
+			"file_size": 2485,
+			"file_write_time": 130830342182044888,
 			"settings":
 			{
-				"buffer_size": 9830,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Helpers.h",
-			"settings":
-			{
-				"buffer_size": 716,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Misc_Utils/MU_Events.c",
-			"settings":
-			{
-				"buffer_size": 3711,
+				"buffer_size": 2388,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "Misc_Utils/MU_Events.h",
+			"file": "Data_Structures/DS_Stack.h",
 			"settings":
 			{
-				"buffer_size": 987,
+				"buffer_size": 821,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "Thread_Pool/Thread_Pool.h",
+			"file": "Data_Structures/DS_Stack.c",
 			"settings":
 			{
-				"buffer_size": 7371,
+				"buffer_size": 1594,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Data_Structures/DS_Queue.h",
+			"settings":
+			{
+				"buffer_size": 859,
 				"line_ending": "Windows"
 			}
 		}
@@ -771,20 +766,40 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Logs",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Code",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool"
 	],
 	"file_history":
 	[
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Queue.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/README.md",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Misc/TP_Pool_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Test/TP_Pool_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs/TP_Pool_Events.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs/TP_Pool.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Flags.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.h",
+		"/C/cygwin64/usr/include/sys/types.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs/TP_Pool_Test.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_PBQueue_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_PBQueue.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_PBQueue.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_PBQueue_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Logs/DS_PBQueue_Test.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Helpers.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Thread_Pool.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Thread_Pool.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/PBQueue.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/PBQueue.c",
-		"/C/cygwin64/usr/include/sys/types.h",
 		"/C/cygwin64/usr/include/sys/signal.h",
 		"/C/cygwin64/usr/include/sys/tree.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Code/Thread_Pool.h",
@@ -793,16 +808,13 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/C_Utils.sublime-project",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Code/Thread_Pool.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/README.md",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Client.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_Client_Chat.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/NU_Server.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map_Test.mk",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Connection.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server.h",
@@ -810,7 +822,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_HTTP_Header_Test.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_HTTP_Header_Test.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Helpers.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Hash_Map.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_Server_File_Downloader.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_Server_Telnet_Client_Chat.mk",
@@ -819,7 +830,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Client_Test_File_Downloader.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/NU_Server_Telnet_Client_Char.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Arg_Check.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Logger.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Retry.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Hash_Map.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server_File_Downloader.mk",
@@ -889,27 +899,11 @@
 		"/C/Users/theif519/Documents/Regex Exercises/ex2.regex",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Tests/String_Utils_Test_Log.txt",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool/Code/Thread_Pool.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Thread Pool/Code/Thread_Pool.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool/Makefile",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Data_Structures/PBQueue/Makefile",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Data_Structures/PBQueue/Test/PBQueue_Test.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Thread Pool/Code/Thread_Pool.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Code/String_Utils.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Tests/String_Utils_Tests.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Code/String_Utils.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Data_Structures/Linked_List/Linked_List.c",
-		"/C/Users/theif519/Documents/GitHub/theif519.github.io/index.html",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Data_Structures/Linked_List/Linked_List.dox",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Data_Structures/Linked_List/String_Utils.dox",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Data_Structures/Linked_List/Makefile",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Data_Structures/Linked List/Linked_List.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Misc_Utils/Misc_Utils.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Misc_Utils/Misc_Utils.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Linked_List_Test_Log.txt"
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Thread Pool/Code/Thread_Pool.h"
 	],
 	"find":
 	{
-		"height": 34.0
+		"height": 46.0
 	},
 	"find_in_files":
 	{
@@ -923,6 +917,14 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"{\n",
+			"is_selected",
+			"thread",
+			"thread_t",
+			"pid_t",
+			"uint32_t",
+			"MU_event_signal",
+			"bounds",
 			"pthread",
 			"strerror",
 			"pthread_mutex_t",
@@ -1042,15 +1044,7 @@
 			";\n",
 			"NU_Server_Socket_t \\*",
 			"NU_Server_Socket_t /*",
-			"connection",
-			"NU_Server_Socket_t \\*\\*",
-			"NU_Server_Socket_t \\*\\*servers",
-			"NU_Server_Socket_t \\*server",
-			"NU_Server_Socket_t \\*\\*",
-			"NU_Server_Socket_t \\*\\*server",
-			"NU_Server_Socket_t \\*server",
-			"NUH_get_socket",
-			"result"
+			"connection"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1058,6 +1052,9 @@
 		"regex": true,
 		"replace_history":
 		[
+			"MU_FLAG_GET",
+			"__uint32_t",
+			"max_size",
 			"event_signal",
 			"signal_event",
 			"signaled",
@@ -1173,48 +1170,19 @@
 			[
 				{
 					"buffer": 0,
-					"file": "Thread_Pool/Thread_Pool.c",
+					"file": "Data_Structures/DS_Queue.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 9830,
+						"buffer_size": 2388,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								231,
-								231
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "Data_Structures/DS_Helpers.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 716,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								469,
-								469
+								1553,
+								1553
 							]
 						],
 						"settings":
@@ -1222,62 +1190,32 @@
 							"syntax": "Packages/C++/C.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 90.0,
+						"translation.y": 450.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "Misc_Utils/MU_Events.c",
+					"buffer": 1,
+					"file": "Data_Structures/DS_Stack.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3711,
+						"buffer_size": 821,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2067,
-								2067
+								488,
+								488
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 210.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "Misc_Utils/MU_Events.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 987,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								767,
-								767
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
+							"syntax": "Packages/C++/C.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -1287,32 +1225,59 @@
 					"type": "text"
 				},
 				{
-					"buffer": 4,
-					"file": "Thread_Pool/Thread_Pool.h",
+					"buffer": 2,
+					"file": "Data_Structures/DS_Stack.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7371,
+						"buffer_size": 1594,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4823,
-								4823
+								1449,
+								1453
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
+							"syntax": "Packages/C++/C.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 1620.0,
+						"translation.y": 385.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "Data_Structures/DS_Queue.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 859,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								609,
+								609
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -1361,7 +1326,7 @@
 	"project": "C_Utils.sublime-project",
 	"replace":
 	{
-		"height": 62.0
+		"height": 86.0
 	},
 	"save_all_on_build": true,
 	"select_file":
