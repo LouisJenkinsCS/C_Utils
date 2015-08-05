@@ -55,7 +55,7 @@ bool DS_Queue_enqueue(DS_Queue_t *queue, void *data){
 	bool enqueued = false;
 	do {
 		/// Get tail from queue, atomically.
-		tail = atomic_load(queue->tail);
+		tail = queue->head;
 		/// Increment the id to prevent aba problem on change
 		atomic_fetch_add(&tail.ptr->id, 1);
 		/// If the tail is the last node, set node equal to tail.

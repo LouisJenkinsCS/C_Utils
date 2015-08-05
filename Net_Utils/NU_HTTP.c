@@ -3,7 +3,7 @@
 #include <NU_HTTP.h>
 #include <ctype.h>
 
-MU_Logger_t *logger = NULL;
+static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Net_Utils/Logs/NU_HTTP.log", "w", MU_ALL);
@@ -91,20 +91,20 @@ static void parse_http_field(DS_Hash_Map_t *header, const char *line){
 	}
 }
 
-static void parse_http_method(NU_Request_t *header, const char *line){
+static void parse_http_method(NU_Request_t *req, const char *line){
 	MU_DEBUG("%s", line);
 	if(strncmp(line, "GET", 3) == 0){
-		header->method = NU_HTTP_GET;
+		req->method = NU_HTTP_GET;
 	} else if(strncmp(line, "POST", 4) == 0){
-		header->method = NU_HTTP_POST;
+		req->method = NU_HTTP_POST;
 	} else if(strncmp(line, "HEAD", 4) == 0){
-		header->method = NU_HTTP_HEAD;
+		req->method = NU_HTTP_HEAD;
 	} else if(strncmp(line, "DELETE", 6) == 0){
-		header->method = NU_HTTP_DELETE;
+		req->method = NU_HTTP_DELETE;
 	} else if(strncmp(line, "TRACE", 5) == 0){
-		header->method = NU_HTTP_TRACE;
+		req->method = NU_HTTP_TRACE;
 	} else if(strncmp(line, "CONNECT", 7) == 0){
-		header->method = NU_HTTP_CONNECT;
+		req->method = NU_HTTP_CONNECT;
 	} else {
 		MU_LOG_WARNING(logger, "Bad HTTP method!");
 	}
@@ -115,14 +115,14 @@ static void parse_http_path(NU_Request_t *header, const char *line){
 	strncpy(header->file_path, line, 256);
 }
 
-static void parse_http_status(NU_Response_t *header, const char *line){
+static void parse_http_status(NU_Response_t *res, const char *line){
 	MU_DEBUG("%s", line);
 	int status = strtol(line, NULL, 10);
 	if(!status){
 		MU_LOG_WARNING(logger, "Bad HTTP status!");
 		return;
 	}
-	header->status = status;
+	res->status = status;
 }
 
 static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
@@ -140,7 +140,37 @@ static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
 	}
 }
 
-static void parse_http_request(NU_Response_t *header, char *header_str){
+static void parse_http_response(NU_Response_t *header, char *header_str){
+	MU_DEBUG("Header: \n%s", header_str);
+	char *first_line;
+	char *rest_of_lines;
+	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
+	if(!line){
+		MU_LOG_WARNING(logger, "No header field found!");
+		return;
+	}
+	/// For the first line, tokenate out the method, path (if applicable) and http version.
+	line = strtok_r(line, " ", &first_line);
+	do {
+		if(!line){
+			MU_LOG_WARNING(logger, "Invalid first line of header!");
+			return;
+		}
+		if(strncmp(line, "HTTP", 4) == 0){
+			parse_http_version(&header->version, line);
+		} else if (isdigit((int)*line)){
+			parse_http_status(header, line);
+		} else {
+			MU_LOG_WARNING(logger, "Invalid header format!");
+			break;
+		}
+	} while((line = strtok_r(NULL, " ", &first_line)));
+	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
+		parse_http_field(header, line);
+	}
+}
+
+static void parse_http_request(NU_Request_t *req, char *header_str){
 	MU_DEBUG("Header: \n%s", header_str);
 	char *first_line;
 	char *rest_of_lines;

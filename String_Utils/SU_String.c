@@ -1,12 +1,16 @@
 #define _GNU_SOURCE
-#include "String_Utils.h"
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <ctype.h>
+#include "SU_String.h"
+
+static MU_Logger_t *logger = NULL;
+
+__attribute__((constructor)) static void init_logger(void){
+    logger = MU_Logger_create("./String_Utils/Logs/SU_String.log", "w", MU_ALL);
+}
+
+__attribute__((destructor)) static void destroy_logger(void){
+    MU_Logger_destroy(logger);
+}
+
 /*
  * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't
  * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it
@@ -22,17 +26,11 @@
  * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
  */
 
-static int is_selected(int mask, int flag){
-    return mask & flag;
-}
-
-char *String_Utils_concat(char **string_one, const char *string_two, int flags) {
-    assert(string_one);
-    assert(*string_one);
-    assert(string_two);
+char *String_Utils_concat(char **string_one, const char *string_two, int flags){
+    MU_ARG_CHECK(logger, NULL, string_one, string_one && *string_one, string_two);
     char *temp;
     asprintf(&temp, "%s%s", *string_one, string_two);
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string_one, temp);
         free(temp);
         return *string_one;
@@ -43,7 +41,7 @@ char *String_Utils_concat(char **string_one, const char *string_two, int flags) 
 int String_Utils_compare(const char *string_one, const char *string_two, int flags) {
     assert(string_one);
     assert(string_two);
-    return is_selected(flags, SU_IGNORE_CASE) ? strcasecmp(string_one, string_two) : strcmp(string_one, string_two);
+    return MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasecmp(string_one, string_two) : strcmp(string_one, string_two);
 }
 
 char String_Utils_char_at(const char *string, unsigned int index) {
@@ -54,7 +52,7 @@ char String_Utils_char_at(const char *string, unsigned int index) {
 int String_Utils_contains(const char *string, const char *search, int flags) { 
     assert(string);
     assert(search);
-    return is_selected(flags, SU_IGNORE_CASE) ? (strcasestr(string, search) != NULL) : (strstr(string, search) != NULL) ;
+    return MU_FLAG_GET(flags, SU_IGNORE_CASE) ? (strcasestr(string, search) != NULL) : (strstr(string, search) != NULL) ;
 }
 
 char *String_Utils_to_lowercase(char **string, int flags) {
@@ -65,7 +63,7 @@ char *String_Utils_to_lowercase(char **string, int flags) {
     int i = 0;
     while((*string)[i]) temp[i] = tolower((*string)[i++]);
     temp[length] = '\0';
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -80,7 +78,7 @@ char *String_Utils_to_uppercase(char **string, int flags) {
     int i = 0;
     while((*string)[i]) temp[i] = toupper((*string)[i++]);
     temp[length] = '\0';
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -102,7 +100,7 @@ char *String_Utils_from(char **string, unsigned int index, int flags) {
     char *temp = malloc((length - i) + 1);
     while((*string)[i]) temp[j++] = (*string)[i++];
     temp[j] = '\0'; 
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -114,11 +112,11 @@ char *String_Utils_from_token(char **string, const char *substring, int flags) {
     assert(*string);
     assert(substring);
     char *temp = NULL;
-    char *temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+    char *temp_string = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
     if(!temp_string) return NULL;
-    if(is_selected(flags, SU_LAST)){
+    if(MU_FLAG_GET(flags, SU_LAST)){
         while(temp_string) {
-            temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
+            temp_string = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);
             if(temp_string && strlen(temp_string) > strlen(substring)) {
                 temp = temp_string;
                 temp_string += strlen(substring);
@@ -126,7 +124,7 @@ char *String_Utils_from_token(char **string, const char *substring, int flags) {
         }
         temp_string = temp;
     }
-    if(is_selected(flags, SU_MODIFY)){
+    if(MU_FLAG_GET(flags, SU_MODIFY)){
         String_Utils_set(string, temp_string);
         return *string;
     } else return temp;
@@ -179,7 +177,7 @@ char *String_Utils_concat_all(int flags, size_t amount, char **string, ...) {
         final_string = String_Utils_concat(&final_string, temp, SU_MODIFY);
     }
     va_end(args);
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, final_string);
         free(final_string);
         return *string;
@@ -193,7 +191,7 @@ char *String_Utils_reverse(char **string, int flags) {
     char *temp = malloc(length + 1);
     for (;i < length; i++, j--) temp[i] = (*string)[j];
     temp[length] = '\0';
-    if (is_selected(flags, SU_MODIFY)) {
+    if (MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -206,10 +204,10 @@ char *String_Utils_replace(char **string, char old_char, char new_char, int flag
     int length = strlen(*string);
     char *temp = malloc(length + 1);
     int i = 0;
-    if(is_selected(flags, SU_IGNORE_CASE)){
+    if(MU_FLAG_GET(flags, SU_IGNORE_CASE)){
         for(;i <= length; i++) temp[i] = ((*string)[i] == tolower(old_char)) ? new_char : (*string)[i];
     } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char: (*string)[i];
-    if(is_selected(flags, SU_MODIFY)){
+    if(MU_FLAG_GET(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -231,7 +229,7 @@ char *String_Utils_join(const char **array_of_strings, const char *delimiter, si
 int String_Utils_starts_with(const char *string, const char *find, int flags){
     assert(string);
     assert(find);
-    int i = 0, lowercase = is_selected(flags, SU_IGNORE_CASE);
+    int i = 0, lowercase = MU_FLAG_GET(flags, SU_IGNORE_CASE);
     for(;i < strlen(find); i++){ 
         if(lowercase && tolower(string[i]) != tolower(find[i])) return 0;
         else if(!lowercase && string[i] != find[i]) return 0;
@@ -243,7 +241,7 @@ int String_Utils_ends_with(const char *string, const char *find, int flags){
     assert(string);
     assert(find);
     int string_length = strlen(string), find_length = strlen(find), i = string_length - find_length, j = 0;
-    int lowercase = is_selected(flags, SU_IGNORE_CASE);
+    int lowercase = MU_FLAG_GET(flags, SU_IGNORE_CASE);
     for(;i < string_length; i++, j++){
         if(lowercase && tolower(string[i]) != tolower(find[j])) return 0; 
         else if(!lowercase && string[i] != find[j]) return 0;
@@ -256,7 +254,7 @@ char *String_Utils_capitalize(char **string, int flags){
     assert(*string);
     char *temp = strdup(*string);
     temp[0] = toupper(temp[0]);
-    if(is_selected(flags, SU_MODIFY)) { 
+    if(MU_FLAG_GET(flags, SU_MODIFY)) { 
         String_Utils_set(string, temp); 
         free(temp); 
         return *string; 
@@ -271,7 +269,7 @@ char *String_Utils_trim(char **string, int flags){
     for(;i < length; i++) if(!isspace((*string)[i])) break;
     for(;j > i ; j--) if(!isspace((*string)[j])) break;
     temp = String_Utils_substring(string, i, j, SU_NONE);
-    if(is_selected(flags, SU_MODIFY)){
+    if(MU_FLAG_GET(flags, SU_MODIFY)){
         String_Utils_set(string, temp);
         free(temp);
         return *string;
@@ -290,7 +288,7 @@ char *String_Utils_substring(char **string, unsigned int begin, unsigned int end
     char *temp = malloc(size + 2);
     memcpy(temp, *string + begin, size + 1);
     temp[size + 1] = '\0';
-    if(is_selected(flags, SU_MODIFY)) {
+    if(MU_FLAG_GET(flags, SU_MODIFY)) {
         String_Utils_set(string, temp);
         free(temp); 
         return *string; 
@@ -303,12 +301,12 @@ int String_Utils_index_of(const char *string, const char *substring, int flags){
     assert(substring);
     char *temp = NULL;
     char *old_temp = NULL;
-    temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
+    temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
     if(!temp || strlen(temp) < strlen(substring)) return 0;
-    if(is_selected(flags, SU_LAST)){
+    if(MU_FLAG_GET(flags, SU_LAST)){
         temp += strlen(substring);
         while(temp) {
-            temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);
+            temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);
             if(temp && strlen(temp) > strlen(substring)) {
                 old_temp = temp;
                 temp += strlen(substring);
@@ -324,7 +322,7 @@ int String_Utils_count(const char *string, const char *substring, int flags){
     assert(substring);
     int count = 0;
     char *temp = string;
-    while(temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring)){
+    while(temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring)){
         count++;
         if(strlen(temp) < strlen(substring)) break;
         else temp += strlen(substring);
@@ -339,10 +337,10 @@ char *String_Utils_between(const char *string, const char *start, const char *en
     assert(end);
     char *temp = NULL; 
     char *new_temp = NULL;
-    temp  = (is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, start) : strstr(string, start));
+    temp  = (MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(string, start) : strstr(string, start));
     if(!temp) return NULL;
     temp += strlen(start);
-    new_temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, end) : strstr(temp, end);
+    new_temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, end) : strstr(temp, end);
     if(!new_temp) return NULL;
     size_t size_of_substring = strlen(temp) - strlen(new_temp);
     size_t index_of_start = strlen(string) - strlen(temp);

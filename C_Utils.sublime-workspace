@@ -520,38 +520,22 @@
 	"buffers":
 	[
 		{
-			"contents": "#include <DS_Queue.h>\n\nstatic MU_Logger_t *logger = NULL;\n\n__attribute__((constructor)) static void init_logger(void){\n	logger = MU_Logger_create(\"./Data_Structures/Logs/DS_Queue.log\", \"w\", MU_ALL);\n}\n\n__attribute__((destructor)) static void destroy_logger(void){\n	MU_Logger_destroy(logger);\n}\n\nstatic DS_Atomic_Node_t *DS_Atomic_Node_create(void *item){\n	DS_Atomic_Node_t *node = calloc(1, sizeof(DS_Atomic_Node_t));\n	if(!node){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		return NULL;\n	}\n	node->ptr = calloc(1, sizeof(DS_Atomic_Pointer_t));\n	if(!node->ptr){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		free(node);\n		return NULL;\n	}\n	node->ptr->next = ATOMIC_VAR_INIT(NULL);\n	node->ptr->id = ATOMIC_VAR_INIT(0);\n	return node;\n}\n\nDS_Queue_t *DS_Queue_create(void){\n	DS_Queue_t *queue = calloc(1, sizeof(DS_Queue_t));\n	if(!queue){\n		MU_LOG_ASSERT(logger, \"calloc: '%s'\", strerror(errno));\n		goto error;\n	}\n	DS_Atomic_Node_t *node = DS_Atomic_Node_create(NULL);\n	queue->head = ATOMIC_VAR_INIT(NULL);\n	queue->tail = ATOMIC_VAR_INIT(NULL);\n	atomic_store(queue->head, *node);\n	queue->tail = queue->head;\n	return queue;\n\n	error:\n		return NULL;\n}\n\nbool DS_Queue_enqueue(DS_Queue_t *queue, void *data){\n	MU_ARG_CHECK(logger, false, queue);\n	DS_Atomic_Node_t *node = DS_Atomic_Node_create(data);\n	if(!node){\n		MU_LOG_ERROR(logger, \"DS_Atomic_Node_create: 'Was unable to create an atomic node!'\");\n		return false;\n	}\n	DS_Atomic_Node_t tail;\n	bool enqueued = false;\n	do {\n		/// Get tail from queue, atomically.\n		tail = queue->head;\n		/// Increment the id to prevent aba problem on change\n		atomic_fetch_add(&tail.ptr->id, 1);\n		/// If the tail is the last node, set node equal to tail.\n		enqueued = atomic_compare_exchange_weak(tail.ptr->next, NULL, *node);\n		/// If somehow, the tail of the queue isn't the last, then something went wrong\n		if(!enqueued){\n			/// So we set the new tail as the next one as a way of self-correcting.\n			atomic_compare_exchange_weak(queue->tail, &tail, *tail.ptr->next);\n		}\n	} while(!enqueued);\n	atomic_compare_exchange_strong(queue->tail, &tail, *node);\n	return true;\n}\n\nvoid *DS_Queue_dequeue(DS_Queue_t *queue, void *data){\n	DS_Atomic_Node_t head;\n	do {\n		head = atomic_load(queue->head);\n	} while()\n}\n\nvoid *DS_Queue_dequeue(DS_Queue_t *queue);\n\nsize_t DS_Queue_size(DS_Queue_t *queue);\n\nbool DS_Queue_destroy(DS_Queue_t *queue);\n",
-			"file": "Data_Structures/DS_Queue.c",
-			"file_size": 2485,
-			"file_write_time": 130830342182044888,
+			"file": "Net_Utils/NU_HTTP.c",
 			"settings":
 			{
-				"buffer_size": 2388,
-				"line_ending": "Windows"
+				"buffer_size": 9673,
+				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "Data_Structures/DS_Stack.h",
+			"contents": "#define _GNU_SOURCE\n#include \"String_Utils.h\"\n#include <stdlib.h>\n#include <string.h>\n#include <strings.h>\n#include <stdio.h>\n#include <stdarg.h>\n#include <assert.h>\n#include <ctype.h>\n/*\n * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't\n * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it\n * literally did nothing of value except complicate code and even increase the program size by 3x. So, instead, I\n * opted to have another experiment, one which is already heavily tested. The macro TEMP uses the\n * cleanup attribute specific for GCC and Clang compilers, making it 100% dependent on them to compile, but\n * it's easy enough to remove either way. Besides, it accomplished what I want to do. \n *\n * Of course in the future I most likely (99.999% sure) I'm going to be replacing it entirely from the library functions,\n * as it currently is impossible to use without it being dependent on GCC and POSIX as is. Most likely, it will be apart of the whole C_Utils\n * package. However, I'll go into what TEMP does. What TEMP does is it will call the assigned callback for cleanup when it\n * leaves the variable's scope, most likely a function, but could be inside of a loop if it was declared there. TEMP will basically just free \n * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.\n */\n\nstatic int is_selected(int mask, int flag){\n    return mask & flag;\n}\n\nchar *String_Utils_concat(char **string_one, const char *string_two, int flags) {\n    assert(string_one);\n    assert(*string_one);\n    assert(string_two);\n    char *temp;\n    asprintf(&temp, \"%s%s\", *string_one, string_two);\n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string_one, temp);\n        free(temp);\n        return *string_one;\n    } else return temp;\n}\n\n\nint String_Utils_compare(const char *string_one, const char *string_two, int flags) {\n    assert(string_one);\n    assert(string_two);\n    return is_selected(flags, SU_IGNORE_CASE) ? strcasecmp(string_one, string_two) : strcmp(string_one, string_two);\n}\n\nchar String_Utils_char_at(const char *string, unsigned int index) {\n    assert(string);\n    return string[index > strlen(string) - 1 ? strlen(string) - 1 : index];\n}\n\nint String_Utils_contains(const char *string, const char *search, int flags) { \n    assert(string);\n    assert(search);\n    return is_selected(flags, SU_IGNORE_CASE) ? (strcasestr(string, search) != NULL) : (strstr(string, search) != NULL) ;\n}\n\nchar *String_Utils_to_lowercase(char **string, int flags) {\n    assert(string);\n    assert(*string);\n    int length = strlen(*string);\n    char *temp = malloc(length + 1);\n    int i = 0;\n    while((*string)[i]) temp[i] = tolower((*string)[i++]);\n    temp[length] = '\\0';\n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    } else return temp;\n}\n\nchar *String_Utils_to_uppercase(char **string, int flags) {\n    assert(string);\n    assert(*string);\n    int length = strlen(*string);\n    char *temp = malloc(length + 1);\n    int i = 0;\n    while((*string)[i]) temp[i] = toupper((*string)[i++]);\n    temp[length] = '\\0';\n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    } else return temp;\n}\n\nint String_Utils_equals(const char *string_one, const char *string_two, int flags) {\n    assert(string_one);\n    assert(string_two);\n    return String_Utils_compare(string_one, string_two, flags) == 0;\n}\n\nchar *String_Utils_from(char **string, unsigned int index, int flags) {\n    assert(string);\n    assert(*string);\n    int length = strlen(*string);\n    int i = index > (length - 1) ? length - 1 : index;\n    int j = 0;\n    char *temp = malloc((length - i) + 1);\n    while((*string)[i]) temp[j++] = (*string)[i++];\n    temp[j] = '\\0'; \n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    } else return temp;\n}\n\nchar *String_Utils_from_token(char **string, const char *substring, int flags) {\n    assert(string);\n    assert(*string);\n    assert(substring);\n    char *temp = NULL;\n    char *temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);\n    if(!temp_string) return NULL;\n    if(is_selected(flags, SU_LAST)){\n        while(temp_string) {\n            temp_string = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(*string, substring) : strstr(*string, substring);\n            if(temp_string && strlen(temp_string) > strlen(substring)) {\n                temp = temp_string;\n                temp_string += strlen(substring);\n            } else break;\n        }\n        temp_string = temp;\n    }\n    if(is_selected(flags, SU_MODIFY)){\n        String_Utils_set(string, temp_string);\n        return *string;\n    } else return temp;\n}\n\n// Not Thread Safe! Update later to use strtok_r for reentrant and thread-safe splitting.\nchar **String_Utils_split(const char *string, const char *delimiter, size_t *size) {\n    assert(string);\n    assert(delimiter);\n    assert(size); \n    char **string_array = malloc(sizeof (char *));\n    char *temp = NULL;\n    char *saveptr;\n    char *temp_string = strdup(string);\n    if(!(temp = strtok_r(temp_string, delimiter, &saveptr))){ \n        free(temp_string); \n        return NULL; \n    } \n    unsigned int index = 0;\n    while(temp){\n        if(index) string_array = realloc(string_array, (sizeof (char *) * (index + 1))); \n        string_array[index] = malloc(strlen(temp) + 1);\n        strcpy(string_array[index++], temp);\n        temp = strtok_r(NULL, delimiter, &saveptr);\n    }\n    *size = index;\n    free(temp_string);\n    return string_array;\n}\n\nchar *String_Utils_set(char **string_one, const char *string_two) {\n    assert(string_one);\n    assert(*string_one);\n    assert(string_two);\n    free(*string_one); // Will crash on a string literal.\n    *string_one = strdup(string_two);\n    return *string_one;\n}\n\nchar *String_Utils_concat_all(int flags, size_t amount, char **string, ...) {\n    assert(string);\n    assert(*string);\n    va_list args;\n    int i = 0;\n    va_start(args, string);\n    char *final_string = strdup(*string);\n    char *temp = NULL;\n    for(;i<amount; i++){\n        temp = va_arg(args, char *);\n        final_string = String_Utils_concat(&final_string, temp, SU_MODIFY);\n    }\n    va_end(args);\n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, final_string);\n        free(final_string);\n        return *string;\n    } else return final_string;\n}\n\nchar *String_Utils_reverse(char **string, int flags) {\n    assert(string);\n    assert(*string);\n    int i = 0, length = strlen(*string), j = length - 1;\n    char *temp = malloc(length + 1);\n    for (;i < length; i++, j--) temp[i] = (*string)[j];\n    temp[length] = '\\0';\n    if (is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    } else return temp;\n}\n\nchar *String_Utils_replace(char **string, char old_char, char new_char, int flags){\n    assert(string);\n    assert(*string);\n    int length = strlen(*string);\n    char *temp = malloc(length + 1);\n    int i = 0;\n    if(is_selected(flags, SU_IGNORE_CASE)){\n        for(;i <= length; i++) temp[i] = ((*string)[i] == tolower(old_char)) ? new_char : (*string)[i];\n    } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char: (*string)[i];\n    if(is_selected(flags, SU_MODIFY)){\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    } else return temp;\n}\n\nchar *String_Utils_join(const char **array_of_strings, const char *delimiter, size_t size){\n    assert(array_of_strings);\n    assert(delimiter);\n    char *temp = NULL;\n    int i = 0;\n    for(;i < size; i++){\n        if(!temp) temp = strdup(array_of_strings[i]);\n        else String_Utils_concat_all(SU_MODIFY, 2, &temp, delimiter, array_of_strings[i]);\n    }\n    return temp;\n}\n\nint String_Utils_starts_with(const char *string, const char *find, int flags){\n    assert(string);\n    assert(find);\n    int i = 0, lowercase = is_selected(flags, SU_IGNORE_CASE);\n    for(;i < strlen(find); i++){ \n        if(lowercase && tolower(string[i]) != tolower(find[i])) return 0;\n        else if(!lowercase && string[i] != find[i]) return 0;\n    }\n    return 1;\n}\n\nint String_Utils_ends_with(const char *string, const char *find, int flags){\n    assert(string);\n    assert(find);\n    int string_length = strlen(string), find_length = strlen(find), i = string_length - find_length, j = 0;\n    int lowercase = is_selected(flags, SU_IGNORE_CASE);\n    for(;i < string_length; i++, j++){\n        if(lowercase && tolower(string[i]) != tolower(find[j])) return 0; \n        else if(!lowercase && string[i] != find[j]) return 0;\n    }\n    return 1;\n}\n\nchar *String_Utils_capitalize(char **string, int flags){\n    assert(string);\n    assert(*string);\n    char *temp = strdup(*string);\n    temp[0] = toupper(temp[0]);\n    if(is_selected(flags, SU_MODIFY)) { \n        String_Utils_set(string, temp); \n        free(temp); \n        return *string; \n    } else return temp;\n}\n\nchar *String_Utils_trim(char **string, int flags){\n    assert(string);\n    assert(*string);\n    char *temp = NULL;\n    int length = strlen(*string), i = 0, j = length - 1;\n    for(;i < length; i++) if(!isspace((*string)[i])) break;\n    for(;j > i ; j--) if(!isspace((*string)[j])) break;\n    temp = String_Utils_substring(string, i, j, SU_NONE);\n    if(is_selected(flags, SU_MODIFY)){\n        String_Utils_set(string, temp);\n        free(temp);\n        return *string;\n    }\n    return temp;\n}\n\nchar *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int flags){\n    assert(string);\n    assert(*string);\n    unsigned int new_begin = begin > end ? 0 : begin; // Bounds checking for begin\n    unsigned int new_end = end >= strlen(*string) ? strlen(*string) - 1 : end; // Bounds checking for end.\n    new_end = (new_begin > new_end) ? new_begin : new_end; // Bounds checking to prevent unsigned int overflow (Or else 4GB+ malloc).\n    // I.E if new_end < new_begin, then new_end = new_begin - x. Size = (new_begin - x) - new_begin = -x. Then size = 4294967295 - x.\n    size_t size = new_end - new_begin;\n    char *temp = malloc(size + 2);\n    memcpy(temp, *string + begin, size + 1);\n    temp[size + 1] = '\\0';\n    if(is_selected(flags, SU_MODIFY)) {\n        String_Utils_set(string, temp);\n        free(temp); \n        return *string; \n    }\n    return temp;\n}\n\nint String_Utils_index_of(const char *string, const char *substring, int flags){\n    assert(string);\n    assert(substring);\n    char *temp = NULL;\n    char *old_temp = NULL;\n    temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);\n    if(!temp || strlen(temp) < strlen(substring)) return 0;\n    if(is_selected(flags, SU_LAST)){\n        temp += strlen(substring);\n        while(temp) {\n            temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);\n            if(temp && strlen(temp) > strlen(substring)) {\n                old_temp = temp;\n                temp += strlen(substring);\n            } else break;\n        }\n        temp = old_temp;\n    }\n    return strlen(string) - strlen(temp);\n}\n\nint String_Utils_count(const char *string, const char *substring, int flags){\n    assert(string);\n    assert(substring);\n    int count = 0;\n    char *temp = string;\n    while(temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring)){\n        count++;\n        if(strlen(temp) < strlen(substring)) break;\n        else temp += strlen(substring);\n    }\n    return count;\n}\n\n// Reimplement function to use strcasestr().\nchar *String_Utils_between(const char *string, const char *start, const char *end, int flags){\n    assert(string);\n    assert(start);\n    assert(end);\n    char *temp = NULL; \n    char *new_temp = NULL;\n    temp  = (is_selected(flags, SU_IGNORE_CASE) ? strcasestr(string, start) : strstr(string, start));\n    if(!temp) return NULL;\n    temp += strlen(start);\n    new_temp = is_selected(flags, SU_IGNORE_CASE) ? strcasestr(temp, end) : strstr(temp, end);\n    if(!new_temp) return NULL;\n    size_t size_of_substring = strlen(temp) - strlen(new_temp);\n    size_t index_of_start = strlen(string) - strlen(temp);\n    new_temp = String_Utils_substring(string, index_of_start, size_of_substring, SU_NONE);\n    return new_temp;\n}\n\nvoid String_Utils_destroy(char **string){\n    free(*string);\n}\n",
+			"file": "String_Utils/Code/String_Utils.c",
+			"file_size": 12720,
+			"file_write_time": 130830145557038581,
 			"settings":
 			{
-				"buffer_size": 821,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Stack.c",
-			"settings":
-			{
-				"buffer_size": 1594,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Data_Structures/DS_Queue.h",
-			"settings":
-			{
-				"buffer_size": 859,
-				"line_ending": "Windows"
+				"buffer_size": 12720,
+				"line_ending": "Unix"
 			}
 		}
 	],
@@ -766,13 +750,15 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Code",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool"
 	],
 	"file_history":
 	[
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Queue.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Queue.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/README.md",
@@ -896,10 +882,7 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Net_Utils/Code/Net_Utils.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Misc_Utils/Code/Misc_Utils.h",
 		"/C/Users/theif519/Documents/Regex Exercises/ex2.txt",
-		"/C/Users/theif519/Documents/Regex Exercises/ex2.regex",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/String_Utils/Tests/String_Utils_Test_Log.txt",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Development/Thread_Pool/Code/Thread_Pool.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Stable/Thread Pool/Code/Thread_Pool.h"
+		"/C/Users/theif519/Documents/Regex Exercises/ex2.regex"
 	],
 	"find":
 	{
@@ -1165,24 +1148,24 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "Data_Structures/DS_Queue.c",
+					"file": "Net_Utils/NU_HTTP.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2388,
+						"buffer_size": 9673,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1553,
-								1553
+								3489,
+								3489
 							]
 						],
 						"settings":
@@ -1190,94 +1173,40 @@
 							"syntax": "Packages/C++/C.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 450.0,
+						"translation.y": 1365.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "Data_Structures/DS_Stack.h",
-					"semi_transient": false,
+					"file": "String_Utils/Code/String_Utils.c",
+					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 821,
+						"buffer_size": 12720,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								488,
-								488
+								184,
+								184
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.tmLanguage"
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "Data_Structures/DS_Stack.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1594,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1449,
-								1453
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 385.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "Data_Structures/DS_Queue.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 859,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								609,
-								609
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
 					"type": "text"
 				}
 			]
