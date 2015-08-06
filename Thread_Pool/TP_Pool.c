@@ -158,6 +158,10 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 		goto error;
 	}
 	tp->worker_threads = malloc(sizeof(pthread_t *) * pool_size);
+	if(!tp->worker_threads){
+		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		goto error;
+	}
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -199,6 +203,9 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 					free(worker->thread);
 					free(worker);
 				}
+				while(atomic_load(&tp->thread_count)){
+					pthread_yield();
+				}
 				free(tp->worker_threads);
 			}
 			free(tp);
@@ -207,7 +214,7 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 }
 
 TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int flags){
-	MU_ARG_CHECK(logger, NULL, tp, callback, args);
+	MU_ARG_CHECK(logger, NULL, tp, callback);
 	TP_Result_t *result = NULL;
 	TP_Task_t *task = NULL;
 	if(!MU_FLAG_GET(flags, TP_NO_RESULT)){
@@ -253,7 +260,7 @@ TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int fl
 		return NULL;
 }
 
-bool Thread_Pool_Clear_Tasks(TP_Pool_t *tp){
+bool TP_Pool_clear(TP_Pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	MU_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
 	return DS_PBQueue_clear(tp->queue, (void *)Destroy_Task);

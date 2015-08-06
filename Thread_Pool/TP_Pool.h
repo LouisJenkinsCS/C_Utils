@@ -49,16 +49,14 @@
 #define TP_NONE 1 << 0
 /// Will not return a Result upon submitting a task.
 #define TP_NO_RESULT 1 << 1
-/// The flagged task will complete before the thread working on it pauses.
-#define TP_NO_PAUSE 1 << 2
 /// Flags the task as lowest priority.
-#define TP_LOWEST_PRIORITY 1 << 3
+#define TP_LOWEST_PRIORITY 1 << 2
 /// Flags the task as low priority.
-#define TP_LOW_PRIORITY 1 << 4
+#define TP_LOW_PRIORITY 1 << 3
 /// Flags the task as high priority.
-#define TP_HIGH_PRIORITY 1 << 5
+#define TP_HIGH_PRIORITY 1 << 4
 /// Flags the task as highest priority.
-#define TP_HIGHEST_PRIORITY 1 << 6
+#define TP_HIGHEST_PRIORITY 1 << 5
 
 #include <DS_PBQueue.h>
 #include <stdlib.h>
@@ -147,7 +145,7 @@ TP_Pool_t *TP_Pool_create(size_t pool_size);
  * @param callback Callback function to be called as the task.
  * @param args Arguments to pass to the thread pool.
  * @param flags TP_NONE | TP_LOWEST_PRIORITY | TP_LOW_PRIORITY | TP_HIGH_PRIORITY
- * | TP_HIGHEST_PRIORITY | TP_NO_RESULT | TP_NO_PAUSE.
+ * | TP_HIGHEST_PRIORITY | TP_NO_RESULT.
  * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
 TP_Result_t *TP_Pool_add(TP_Pool_t *tp, TP_Callback callback, void *args, int flags);
@@ -164,6 +162,8 @@ bool TP_Pool_clear(TP_Pool_t *tp);
  * @return 1 on success.
  */
 bool TP_Result_destroy(TP_Result_t *result);
+
+bool TP_Pool_clear(TP_Pool_t *tp);
 
 /**
  * Destroys the current thread pool, waiting for the current tasks to be finished.
