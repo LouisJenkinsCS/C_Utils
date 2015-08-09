@@ -106,7 +106,7 @@ SU_String_t SU_String_concat(SU_String_t base_str, const SU_String_t extra_str);
  * @param flags SU_IGNORE_CASE
  * @return true if equal, false if not.
  */
-int SU_String_equals(const SU_String_t string_one, const SU_String_t string_two, size_t len, bool ignore_case);
+bool SU_String_equals(const SU_String_t string_one, const SU_String_t string_two, size_t len, bool ignore_case);
 
 /**
  * Splits a string into an array of strings based on delimiter passed. size should be non-NULL,
@@ -205,7 +205,7 @@ SU_String_t SU_String_replace(SU_String_t string, char old_char, char new_char, 
  * @param flags SU_IGNORE_CASE
  * @return 1 if true, 0 if false.
  */
-int SU_String_starts_with(const SU_String_t string, const SU_String_t find, bool ignore_case);
+bool SU_String_starts_with(const SU_String_t string, const SU_String_t find, bool ignore_case);
 
 /**
  * Checks to see if a string ends with a substring.
@@ -214,7 +214,7 @@ int SU_String_starts_with(const SU_String_t string, const SU_String_t find, bool
  * @param flags SU_IGNORE_CASE
  * @return  1 if true, 0 if false.
  */
-int SU_String_ends_with(const SU_String_t string, const SU_String_t find, bool ignore_case);
+bool SU_String_ends_with(const SU_String_t string, const SU_String_t find, bool ignore_case);
 
 /**
  * Returns a substring of the string.
