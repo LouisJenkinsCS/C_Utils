@@ -26,60 +26,55 @@ __attribute__((destructor)) static void destroy_logger(void){
  * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
  */
 
-char SU_String_char_at(const SU_String_t string, unsigned int index){
-    MU_ARG_CHECK(logger, '\0', string, string && index <= strlen(string));
-    return string[index];
+char SU_String_char_at(const String str, unsigned int index){
+    MU_ARG_CHECK(logger, '\0', str, str && index <= strlen(str));
+    return str[index];
 }
 
-bool SU_String_contains(const SU_String_t str, const SU_String_t substr, size_t len, bool ignore_case){ 
+bool SU_String_contains(const String str, const String substr, size_t len, bool ignore_case){ 
     MU_ARG_CHECK(logger, false, str, substr);
     size_t str_len = len ? len : strlen(str);
     size_t substr_len = strlen(substr);
     if(substr_len > str_len) return false;
-    if(substr_len == str_len){
-        if(ignore_case){
-            return strcasecmp(str, substr) == 0;
-        }
-        return strcmp(str, substr) == 0;
-    }
+    if(substr_len == str_len) return SU_String_equal(str, substr, len, ignore_case);
     size_t i = 0;
     for(; i < str_len - substr_len; i++){
-        if(str[i] == substr[i]){
-            if(ignore_case){
-                if(strncasecmp(str, substr, substr_len) == 0) return true;
-                continue;
+        char c = str[i];
+        if(c == '\0') break;
+        if(c == substr[0]){
+            if(SU_String_equal(str + i, substr, substr_len, ignore_case)){
+                return true;
             }
-            if(strncmp(str, substr, substr_len) == 0) return true;
         }
     }
     return false;
 }
 
-SU_String_t SU_String_to_lowercase(SU_String_t string, size_t len){
-    MU_ARG_CHECK(logger, NULL, string);
-    size_t str_len = len ? len : strlen(string), i = 0;
+String SU_String_to_lowercase(String str, size_t len){
+    MU_ARG_CHECK(logger, NULL, str);
+    size_t str_len = len ? len : strlen(str), i = 0;
     for(; i < str_len; i++){
-        char c = string[i];
+        char c = str[i];
         if(c == '\0') break;
         // Since tolower takes an int, and returns an int, I ensure (un)signedness by casting.
-        string[i] = (char)tolower((unsigned char)c);
+        str[i] = (char)tolower((unsigned char)c);
     }
-    return string;
+    return str;
 }
 
-SU_String_t SU_String_to_uppercase(SU_String_t string, size_t len){
-    MU_ARG_CHECK(logger, NULL, string);
-    size_t str_len = len ? len : strlen(string), i = 0;
+String SU_String_to_uppercase(String str, size_t len){
+    MU_ARG_CHECK(logger, NULL, str);
+    size_t str_len = len ? len : strlen(str), i = 0;
     for(; i < str_len; i++){
-        char c = string[i];
+        char c = str[i];
         if(c == '\0') break;
         // Since tolower takes an int, and returns an int, I ensure (un)signedness by casting.
-        string[i] = (char)toupper((unsigned char)c);
+        str[i] = (char)toupper((unsigned char)c);
     }
-    return string;
+    return str;
 }
 
-bool SU_String_equals(const SU_String_t string_one, const SU_String_t string_two, size_t len, bool ignore_case){
+bool SU_String_equal(const String string_one, const String string_two, size_t len, bool ignore_case){
     MU_ARG_CHECK(logger, false, string_one, string_two);
     size_t str_len = len ? len : strlen(string_one);
     bool is_equal = false;
@@ -91,12 +86,11 @@ bool SU_String_equals(const SU_String_t string_one, const SU_String_t string_two
     return is_equal;
 }
 
-// Not Thread Safe! Update later to use strtok_r for reentrant and thread-safe splitting.
-SU_String_t *SU_String_split(const SU_String_t string, size_t len, const SU_String_t delimiter, size_t *size){
-    MU_ARG_CHECK(logger, NULL, string, delimiter);
-    size_t str_len = len ? len : strlen(string), num_strings = 0;
+String *SU_String_split(const String str, size_t len, const String delimiter, size_t *size){
+    MU_ARG_CHECK(logger, NULL, str, delimiter);
+    size_t str_len = len ? len : strlen(str), num_strings = 0;
     char str_copy[str_len + 1];
-    snprintf(str_copy, str_len, "%s", string);
+    snprintf(str_copy, str_len, "%s", str);
     char **split_strings = malloc(sizeof(char *));
     if(!split_strings){
         MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
@@ -108,21 +102,19 @@ SU_String_t *SU_String_split(const SU_String_t string, size_t len, const SU_Stri
         free(split_strings);
         return NULL; 
     } 
-    while(curr_string){
+    do {
         char **tmp = realloc(split_strings, (sizeof(char *) * (num_strings + 1)));
         if(!tmp){
             MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
             goto error;
         }
         split_strings = tmp;
-        split_strings[num_strings] = malloc(strlen(curr_string) + 1);
-        if(!split_strings[num_strings]){
+        if(!(split_strings[num_strings] = malloc(strlen(curr_string) + 1))){
             MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
             goto error;
         }
         sprintf(split_strings[num_strings++], "%s", curr_string);
-        curr_string = strtok_r(NULL, delimiter, &saveptr);
-    }
+    } while((curr_string = strtok_r(NULL, delimiter, &saveptr)));
     *size = num_strings;
     return split_strings;
 
@@ -136,168 +128,235 @@ SU_String_t *SU_String_split(const SU_String_t string, size_t len, const SU_Stri
         return NULL;
 }
 
-SU_String_t SU_String_reverse(SU_String_t string, size_t len){
-    MU_ARG_CHECK(logger, NULL, string);
-    size_t str_len = len ? len : strlen(string);
+String SU_String_reverse(String str, size_t len){
+    MU_ARG_CHECK(logger, NULL, str);
+    size_t str_len = len ? len : strlen(str);
     int i = 0, j = str_len - 1;
     for(; i < j; i++, j--){
-        char c = string[i];
-        string[i] = string[j];
-        string[j] = c;
+        char c = str[i];
+        str[i] = str[j];
+        str[j] = c;
     }
-    return string;
+    return str;
 }
 
-char *String_Utils_replace(char **string, char old_char, char new_char, int flags){
-    assert(string);
-    assert(*string);
-    int length = strlen(*string);
-    char *temp = malloc(length + 1);
+String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case){
+    MU_ARG_CHECK(logger, NULL, str);
+    size_t str_len = len ? len : strlen(str);
     int i = 0;
-    if(MU_FLAG_GET(flags, SU_IGNORE_CASE)){
-        for(;i <= length; i++) temp[i] = ((*string)[i] == tolower(old_char)) ? new_char : (*string)[i];
-    } else for(;i <= length; i++) temp[i] = ((*string)[i] == old_char) ? new_char: (*string)[i];
-    if(MU_FLAG_GET(flags, SU_MODIFY)){
-        String_Utils_set(string, temp);
-        free(temp);
-        return *string;
-    } else return temp;
-}
-
-char *String_Utils_join(const char **array_of_strings, const char *delimiter, size_t size){
-    assert(array_of_strings);
-    assert(delimiter);
-    char *temp = NULL;
-    int i = 0;
-    for(;i < size; i++){
-        if(!temp) temp = strdup(array_of_strings[i]);
-        else String_Utils_concat_all(SU_MODIFY, 2, &temp, delimiter, array_of_strings[i]);
-    }
-    return temp;
-}
-
-int String_Utils_starts_with(const char *string, const char *find, int flags){
-    assert(string);
-    assert(find);
-    int i = 0, lowercase = MU_FLAG_GET(flags, SU_IGNORE_CASE);
-    for(;i < strlen(find); i++){ 
-        if(lowercase && tolower(string[i]) != tolower(find[i])) return 0;
-        else if(!lowercase && string[i] != find[i]) return 0;
-    }
-    return 1;
-}
-
-int String_Utils_ends_with(const char *string, const char *find, int flags){
-    assert(string);
-    assert(find);
-    int string_length = strlen(string), find_length = strlen(find), i = string_length - find_length, j = 0;
-    int lowercase = MU_FLAG_GET(flags, SU_IGNORE_CASE);
-    for(;i < string_length; i++, j++){
-        if(lowercase && tolower(string[i]) != tolower(find[j])) return 0; 
-        else if(!lowercase && string[i] != find[j]) return 0;
-    }
-    return 1;
-}
-
-char *String_Utils_capitalize(char **string, int flags){
-    assert(string);
-    assert(*string);
-    char *temp = strdup(*string);
-    temp[0] = toupper(temp[0]);
-    if(MU_FLAG_GET(flags, SU_MODIFY)) { 
-        String_Utils_set(string, temp); 
-        free(temp); 
-        return *string; 
-    } else return temp;
-}
-
-char *String_Utils_trim(char **string, int flags){
-    assert(string);
-    assert(*string);
-    char *temp = NULL;
-    int length = strlen(*string), i = 0, j = length - 1;
-    for(;i < length; i++) if(!isspace((*string)[i])) break;
-    for(;j > i ; j--) if(!isspace((*string)[j])) break;
-    temp = String_Utils_substring(string, i, j, SU_NONE);
-    if(MU_FLAG_GET(flags, SU_MODIFY)){
-        String_Utils_set(string, temp);
-        free(temp);
-        return *string;
-    }
-    return temp;
-}
-
-char *String_Utils_substring(char **string, unsigned int begin, unsigned int end, int flags){
-    assert(string);
-    assert(*string);
-    unsigned int new_begin = begin > end ? 0 : begin; // Bounds checking for begin
-    unsigned int new_end = end >= strlen(*string) ? strlen(*string) - 1 : end; // Bounds checking for end.
-    new_end = (new_begin > new_end) ? new_begin : new_end; // Bounds checking to prevent unsigned int overflow (Or else 4GB+ malloc).
-    // I.E if new_end < new_begin, then new_end = new_begin - x. Size = (new_begin - x) - new_begin = -x. Then size = 4294967295 - x.
-    size_t size = new_end - new_begin;
-    char *temp = malloc(size + 2);
-    memcpy(temp, *string + begin, size + 1);
-    temp[size + 1] = '\0';
-    if(MU_FLAG_GET(flags, SU_MODIFY)) {
-        String_Utils_set(string, temp);
-        free(temp); 
-        return *string; 
-    }
-    return temp;
-}
-
-int String_Utils_index_of(const char *string, const char *substring, int flags){
-    assert(string);
-    assert(substring);
-    char *temp = NULL;
-    char *old_temp = NULL;
-    temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(string, substring) : strstr(string, substring);
-    if(!temp || strlen(temp) < strlen(substring)) return 0;
-    if(MU_FLAG_GET(flags, SU_LAST)){
-        temp += strlen(substring);
-        while(temp) {
-            temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring);
-            if(temp && strlen(temp) > strlen(substring)) {
-                old_temp = temp;
-                temp += strlen(substring);
-            } else break;
+    char search_char = ignore_case ? tolower((unsigned char) old_char) : old_char;
+    for(; i < str_len; i++){
+        char curr_char = ignore_case ? tolower((unsigned char) str[i]) : str[i];
+        if(curr_char == '\0') break;
+        if(search_char == curr_char){
+            str[i] = new_char;
         }
-        temp = old_temp;
     }
-    return strlen(string) - strlen(temp);
+    return str;
 }
 
-int String_Utils_count(const char *string, const char *substring, int flags){
-    assert(string);
-    assert(substring);
-    int count = 0;
-    char *temp = string;
-    while(temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, substring) : strstr(temp, substring)){
-        count++;
-        if(strlen(temp) < strlen(substring)) break;
-        else temp += strlen(substring);
+String SU_String_join(const String arr[], const String delimiter, size_t size){
+    MU_ARG_CHECK(logger, NULL, arr, delimiter);
+    size_t buf_size = BUFSIZ;
+    char *buf = calloc(1, buf_size + 1);
+    if(!buf){
+        MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        goto error;
+    }
+    size_t allocated = 0, size_left = buf_size, i = 0;
+    for(; i < size; i++){
+        char *curr_string = arr[i];
+        size_t str_len = strlen(curr_string);
+        // If this is not the last iteration, we need to make room for the delimiter.
+        if(i != (size - 1)){
+            str_len += strlen(delimiter);
+        }
+        while(size_left < str_len){
+            buf_size *= 2;
+            char *tmp = realloc(buf, buf_size + 1);
+            if(!tmp){
+                MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+                goto error;
+            }
+            buf = tmp;
+            size_left = buf_size - allocated;
+        }
+        // If this is the last iteration, do not append the delimiter.
+        if(i == (size - 1)){
+            sprintf(buf, "%s%s", buf, curr_string);
+        } else {
+            sprintf(buf, "%s%s%s", buf, curr_string, delimiter);
+        }
+        allocated += str_len;
+        size_left -= str_len;
+    }
+    // Shrink the buffer size to the actual string size.
+    char *tmp = realloc(buf, strlen(buf) + 1);
+    if(!tmp){
+        MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        goto error;
+    }
+    return buf;
+
+    error:
+        if(buf){
+            free(buf);
+        }
+        return NULL;
+}
+
+bool SU_String_starts_with(const String str, const String find, bool ignore_case){
+    MU_ARG_CHECK(logger, false, str, find);
+    size_t str_len = strlen(str), find_len = strlen(find);
+    if(find_len > str_len) return false;
+    else return SU_String_equal(str, find, find_len, ignore_case);
+}
+
+bool SU_String_ends_with(const String str, const String find, bool ignore_case){
+    MU_ARG_CHECK(logger, false, str, find);
+    size_t str_len = strlen(str), find_len = strlen(find), offset = str_len - find_len;;
+    if(find_len > str_len) return false;
+    else return SU_String_equal(str + offset, find, find_len, ignore_case);
+}
+
+String SU_String_trim(String *str_ptr, size_t len){
+    MU_ARG_CHECK(logger, NULL, str_ptr, str_ptr && *str_ptr);
+    char *str = *str_ptr;
+    size_t str_len = len ? len : strlen(str);
+    char *buf = malloc(str_len + 1); 
+    if(!buf){
+        MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        goto error;
+    }
+    size_t i = 0, j = str_len - 1;
+    for(; i < str_len; i++){
+        if(!isspace((unsigned char)str[i])) break;
+    }
+    for(; j > i; j--){
+        if(!isspace((unsigned char)str[j])) break;
+    }
+    /* 
+        We must now copy the string from the offset past any empty spaces at the beginning and before the end.
+        +2 because +1 for null terminator, and +1 because we start at index 0 for j, so we offset for it.
+    */
+    snprintf(buf, j - i + 2, "%s", str + i);
+    // Now we shrink it to the new size.
+    char *tmp = realloc(buf, strlen(buf) + 1);
+    if(!tmp){
+        MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        goto error;
+    }
+    *str_ptr = (buf = tmp);
+    return buf;
+
+    error:
+        if(buf){
+            free(buf);
+        }
+        return NULL;
+}
+
+String SU_String_substring(String str, unsigned int offset, unsigned int end){
+    MU_ARG_CHECK(logger, NULL, str);
+    if(end && offset > end){
+        return NULL;
+    }
+    size_t new_end = end ? end : strlen(str);
+    size_t buf_size = (new_end - offset);
+    char *buf = malloc(buf_size + 1);
+    if(!buf){
+        MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        goto error;
+    }
+    snprintf(buf, buf_size, "%s", str + offset);
+    // In case a null terminator was found, it will shrink the buffer to actual size.
+    char *tmp = realloc(buf, strlen(buf) + 1);
+    if(!tmp){
+        MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        goto error;
+    }
+    buf = tmp;
+    return buf;
+
+    error:
+        if(buf){
+            free(buf);
+        }
+        return NULL;
+}
+
+int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case){
+    MU_ARG_CHECK(logger, -1, str, substr);
+    size_t substr_len = strlen(substr), str_len = len ? len : strlen(str);
+    if(substr_len > str_len) return -1;
+    if(substr_len == str_len){
+        if(SU_String_equal(str, substr, len, ignore_case)) return 0;
+        return -1;
+    }
+    size_t i = 0;
+    for(; i < str_len - substr_len; i++){
+        char c = str[i];
+        if(c == '\0') break;
+        if(c == substr[0]){
+            if(SU_String_equal(str + i, substr, substr_len, ignore_case)){
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case){
+    MU_ARG_CHECK(logger, 0, str, substr);
+    size_t str_len = len ? len : strlen(str), substr_len = strlen(substr), i = 0, count = 0;
+    if(substr_len > str_len) return 0;
+    if(substr_len == str_len){
+        if(SU_String_equal(str, substr, str_len, ignore_case)) return 1;
+        return 0;
+    }
+    for(; i < str_len - substr_len; i++){
+        char c = str[i];
+        if(c == '\0') break;
+        if(c == substr[0]){
+            if(SU_String_equal(str + i, substr, substr_len, ignore_case)){
+                count++;
+                i += (substr_len - 1);
+            }
+        }
     }
     return count;
 }
 
 // Reimplement function to use strcasestr().
-char *String_Utils_between(const char *string, const char *start, const char *end, int flags){
-    assert(string);
-    assert(start);
-    assert(end);
-    char *temp = NULL; 
-    char *new_temp = NULL;
-    temp  = (MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(string, start) : strstr(string, start));
-    if(!temp) return NULL;
-    temp += strlen(start);
-    new_temp = MU_FLAG_GET(flags, SU_IGNORE_CASE) ? strcasestr(temp, end) : strstr(temp, end);
-    if(!new_temp) return NULL;
-    size_t size_of_substring = strlen(temp) - strlen(new_temp);
-    size_t index_of_start = strlen(string) - strlen(temp);
-    new_temp = String_Utils_substring(string, index_of_start, size_of_substring, SU_NONE);
-    return new_temp;
+String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case){
+    MU_ARG_CHECK(logger, NULL, str, start, end);
+    size_t str_len = len ? len : strlen(str), start_len = strlen(start), end_len = strlen(end), i = 0, str_left = str_len;
+    size_t start_offset = 0, end_offset = 0;
+    // Easy stack allocated buffer for non-null terminated strings.
+    char buf[str_len + 1];
+    snprintf(buf, str_len, "%s", str);
+    // Attempt to find the offset of start.
+    for(; i < str_len; i++){
+        bool char_equal;
+        if(ignore_case){
+            char_equal = (tolower((unsigned char)str[i]) == tolower((unsigned char)start[0]));
+        } else {
+            char_equal = str[i] == start[0];
+        }
+        if(char_equal){
+            if(SU_String_equal(str, start, start_len, ignore_case)){
+                start_offset = i;
+                i += start_len;
+                break;
+            }
+        }
+        str_left--;
+    }
+    // Check if we even have enough left in the string to search for the end.
+    if(end_len >= str_left) return NULL;
+    // TODO: Continue
 }
 
-void String_Utils_destroy(char **string){
-    free(*string);
+void String_Utils_destroy(char **str){
+    free(*str);
 }
