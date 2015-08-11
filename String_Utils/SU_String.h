@@ -111,7 +111,7 @@ bool SU_String_equal(const String string_one, const String string_two, size_t le
  */
 String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
 
-#define SU_STRING_CONCAT_ALL(flags, str_storage_ptr, delim, ...) do { \
+#define SU_STRING_CONCAT_ALL(str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
 	int arg_size = (sizeof((String[]){__VA_ARGS__})/sizeof(String)); \
 	char format[BUFSIZ + 1]; \
@@ -133,7 +133,7 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
 			If there isn't enough space left to hold the format, break. \
 		*/ \
 		if(str_left < arg_len) break; \
-		snprintf(format, arg_len, "%s%s%s", format, delim ? delim : "", "%s"); \
+		snprintf(format, str_left, "%s%s%s", format, delim ? delim : "", "%s"); \
 		str_left -= arg_len; \
 	} \
 	asprintf(str_storage_ptr, format, __VA_ARGS__); \

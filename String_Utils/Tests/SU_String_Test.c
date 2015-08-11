@@ -40,7 +40,11 @@ int main(void){
     free(str);
     str = SU_String_join(arr, "\n", arr_size);
     MU_TEST(strcmp(str, "Worldly world of worldington is out of this world\n Word to your world\n Word to my world\n Word to every world\n WORLD") == 0, logger, "SU_String_join");
+    char *new_str;
+    SU_STRING_CONCAT_ALL(&new_str, "\n", arr[0], arr[1], arr[2], arr[3], arr[4]);
+    MU_TEST(strcmp(str, new_str) == 0, logger, "SU_STRING_CONCAT_ALL");
     SU_String_replace(str, 'o', 'e', 0, true);
     MU_TEST(strcmp(str, "Werldly werld ef werldingten is eut ef this werld\n Werd te yeur werld\n Werd te my werld\n Werd te every werld\n WeRLD") == 0, logger, "SU_String_join");
+    free(str);
     return EXIT_SUCCESS;
 }
