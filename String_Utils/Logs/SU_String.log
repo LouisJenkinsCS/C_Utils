@@ -1,0 +1,2 @@
+02:07:34 PM [ERROR](./String_Utils/SU_String.c:29) SU_String_char_at(): 
+"SU_String_char_at: Invalid Arguments=> {  str: TRUE; str && index <= strlen(str): FALSE! }"

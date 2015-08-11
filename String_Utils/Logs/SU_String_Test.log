@@ -1,0 +1,28 @@
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:13) main(): 
+"Passed: SU_String_upper"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:15) main(): 
+"Passed: SU_String_lower"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:17) main(): 
+"Passed: SU_String_reverse"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:20) main(): 
+"Passed: SU_String_index_of"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:22) main(): 
+"Passed: SU_String_substring"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:25) main(): 
+"Passed: SU_String_starts_with"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:27) main(): 
+"Passed: SU_String_ends_with"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:30) main(): 
+"Passed: SU_String_char_at"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:34) main(): 
+"Passed: SU_String_contains"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:36) main(): 
+"Passed: SU_String_count"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:39) main(): 
+"Passed: SU_String_split"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:42) main(): 
+"Passed: SU_String_join"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:45) main(): 
+"Passed: SU_STRING_CONCAT_ALL"
+02:07:34 PM [INFO](./String_Utils/Tests/SU_String_Test.c:47) main(): 
+"Passed: SU_String_join"
