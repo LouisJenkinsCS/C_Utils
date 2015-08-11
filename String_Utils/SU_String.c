@@ -255,7 +255,7 @@ String SU_String_trim(String *str_ptr, size_t len){
         return NULL;
 }
 
-String SU_String_substring(String str, unsigned int offset, unsigned int end){
+String SU_String_substring(const String str, unsigned int offset, unsigned int end){
     MU_ARG_CHECK(logger, NULL, str);
     if(end && offset > end){
         return NULL;
