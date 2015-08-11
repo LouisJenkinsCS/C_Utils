@@ -90,15 +90,6 @@ String SU_String_upper(String str, size_t len);
 char SU_String_char_at(const String str, unsigned int index);
 
 /**
- * Concatenates two strings together. Both must be NULL terminated.
- * @param string_one Pointer to the The first string.
- * @param string_two The second string.
- * @param flags SU_MODIFY
- * @return Returns the concatenated string.
- */
-String SU_String_concat(String base_str, const String extra_str);
-
-/**
  * Checks to see if two strings are equal. It will compare up to the length passed if declared, otherwise strlen is used.
  * @param string_one First string to compare.
  * @param string_two Second string to compare.
@@ -118,17 +109,7 @@ bool SU_String_equal(const String string_one, const String string_two, size_t le
  * @param size Records size of the string array.
  * @return The array of strings, plus sets size to record the size of the array.
  */
-String *SU_String_split(const String str, size_t len, const String delimiter, size_t *size);
-
-/*
-* * Returns the offset of the string at the first character of the token found.
- * @param string Pointer to the String to search
- * @param len The length to search up to.
- * @param substring Substring to search for
- * @param flags SU_IGNORE_CASE |  SU_MODIFY
- * @return A copy of the string from where the substring is found, NULL if not found.
- */
-String SU_String_from_token(String str, size_t len, const String substr, bool ignore_case);
+String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
 
 #define SU_STRING_CONCAT_ALL(flags, str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
@@ -215,7 +196,7 @@ bool SU_String_ends_with(const String str, const String find, bool ignore_case);
  * @param flags SU_NONE | SU_MODIFY
  * @return The substring of the string.
  */
-String SU_String_substring(String str, unsigned int offset, unsigned int end);
+String SU_String_substring(const String str, unsigned int offset, unsigned int end);
 
 /**
  * Trims the string of all leading and trailing spaces.

@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "SU_String.h"
 
 static MU_Logger_t *logger = NULL;
@@ -86,7 +85,7 @@ bool SU_String_equal(const String string_one, const String string_two, size_t le
     return is_equal;
 }
 
-String *SU_String_split(const String str, size_t len, const String delimiter, size_t *size){
+String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size){
     MU_ARG_CHECK(logger, NULL, str, delimiter);
     size_t str_len = len ? len : strlen(str), num_strings = 0;
     char str_copy[str_len + 1];
@@ -262,7 +261,7 @@ String SU_String_substring(String str, unsigned int offset, unsigned int end){
         return NULL;
     }
     size_t new_end = end ? end : strlen(str);
-    size_t buf_size = (new_end - offset);
+    size_t buf_size = (new_end - offset) + 1;
     char *buf = malloc(buf_size + 1);
     if(!buf){
         MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
@@ -295,9 +294,9 @@ int SU_String_index_of(const String str, const String substr, size_t len, bool i
     }
     size_t i = 0;
     for(; i < str_len - substr_len; i++){
-        char c = str[i];
+        char c = ignore_case ? tolower((unsigned char)str[i]) : str[i];
         if(c == '\0') break;
-        if(c == substr[0]){
+        if(c == ignore_case ? tolower((unsigned char)substr[0]) : substr[0]){
             if(SU_String_equal(str + i, substr, substr_len, ignore_case)){
                 return i;
             }
