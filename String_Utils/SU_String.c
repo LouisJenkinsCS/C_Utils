@@ -50,7 +50,7 @@ bool SU_String_contains(const String str, const String substr, size_t len, bool 
     return false;
 }
 
-String SU_String_to_lowercase(String str, size_t len){
+String SU_String_lower(String str, size_t len){
     MU_ARG_CHECK(logger, NULL, str);
     size_t str_len = len ? len : strlen(str), i = 0;
     for(; i < str_len; i++){
@@ -62,7 +62,7 @@ String SU_String_to_lowercase(String str, size_t len){
     return str;
 }
 
-String SU_String_to_uppercase(String str, size_t len){
+String SU_String_upper(String str, size_t len){
     MU_ARG_CHECK(logger, NULL, str);
     size_t str_len = len ? len : strlen(str), i = 0;
     for(; i < str_len; i++){
@@ -330,33 +330,26 @@ unsigned int SU_String_count(const String str, const String substr, size_t len, 
 // Reimplement function to use strcasestr().
 String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case){
     MU_ARG_CHECK(logger, NULL, str, start, end);
-    size_t str_len = len ? len : strlen(str), start_len = strlen(start), end_len = strlen(end), i = 0, str_left = str_len;
-    size_t start_offset = 0, end_offset = 0;
-    // Easy stack allocated buffer for non-null terminated strings.
+    size_t str_len = len ? len : strlen(str), start_len = strlen(start), end_len = strlen(end);
     char buf[str_len + 1];
     snprintf(buf, str_len, "%s", str);
-    // Attempt to find the offset of start.
-    for(; i < str_len; i++){
-        bool char_equal;
-        if(ignore_case){
-            char_equal = (tolower((unsigned char)str[i]) == tolower((unsigned char)start[0]));
-        } else {
-            char_equal = str[i] == start[0];
-        }
-        if(char_equal){
-            if(SU_String_equal(str, start, start_len, ignore_case)){
-                start_offset = i;
-                i += start_len;
-                break;
-            }
-        }
-        str_left--;
+    SU_String_lower(buf, str_len);
+    char *start_str = strstr(buf, start);
+    if(!start_str) return NULL;
+    size_t start_offset = (str_len - strlen(start_str)) + start_len;
+    char *end_str = strstr(buf + start_offset, end);
+    if(!end_str) return NULL;
+    size_t end_offset = (str_len - strlen(end_str)) - end_len;
+    size_t new_len = end_offset - start_offset;
+    char *substr = malloc(new_len + 1);
+    if(!substr){
+        MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        return NULL;
     }
-    // Check if we even have enough left in the string to search for the end.
-    if(end_len >= str_left) return NULL;
-    // TODO: Continue
+    snprintf(substr, new_len, "%s", str + start_offset);
+    return substr;
 }
 
-void String_Utils_destroy(char **str){
-    free(*str);
+void SU_String_destroy(String *str_ptr){
+    free(*str_ptr);
 }

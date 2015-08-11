@@ -67,7 +67,7 @@ bool SU_String_contains(const String str, const String substr, size_t len, bool 
  * @param flags SU_MODIFY
  * @return Lowercase string.
  */
-String SU_String_to_lowercase(String string_ptr, size_t len);
+String SU_String_lower(String str, size_t len);
 
 /**
  * Creates a copy of the string and converts it to uppercase. If SU_MODIFY is passed, it
@@ -78,7 +78,7 @@ String SU_String_to_lowercase(String string_ptr, size_t len);
  * @param flags SU_MODIFY
  * @return Uppercase string.
  */
-String SU_String_to_uppercase(String string, size_t len);
+String SU_String_upper(String str, size_t len);
 
 /**
  * Returns the character at the given index, and if it is out of bounds, it will return
@@ -87,7 +87,7 @@ String SU_String_to_uppercase(String string, size_t len);
  * @param index Index of the char.
  * @return The character at the index of the string, or NULL terminator upon overflow.
  */
-char SU_String_char_at(const String string, unsigned int index);
+char SU_String_char_at(const String str, unsigned int index);
 
 /**
  * Concatenates two strings together. Both must be NULL terminated.
@@ -118,7 +118,7 @@ bool SU_String_equal(const String string_one, const String string_two, size_t le
  * @param size Records size of the string array.
  * @return The array of strings, plus sets size to record the size of the array.
  */
-String *SU_String_split(const String string, size_t len, const String delimiter, size_t *size);
+String *SU_String_split(const String str, size_t len, const String delimiter, size_t *size);
 
 /*
 * * Returns the offset of the string at the first character of the token found.
@@ -128,7 +128,7 @@ String *SU_String_split(const String string, size_t len, const String delimiter,
  * @param flags SU_IGNORE_CASE |  SU_MODIFY
  * @return A copy of the string from where the substring is found, NULL if not found.
  */
-String SU_String_from_token(String string, size_t len, const String substring, bool ignore_case);
+String SU_String_from_token(String str, size_t len, const String substr, bool ignore_case);
 
 #define SU_STRING_CONCAT_ALL(flags, str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
@@ -165,7 +165,7 @@ String SU_String_from_token(String string, size_t len, const String substring, b
  * @param flags SU_MODIFY
  * @return The reversed string.
  */
-String SU_String_reverse(String string, size_t len);
+String SU_String_reverse(String str, size_t len);
 
 /**
  * Joins an array of strings together into one with the delimiter prepended to each string after the first.
@@ -187,7 +187,7 @@ String SU_String_join(const String arr[], const String delimiter, size_t size);
  * @param flags SU_IGNORE_CASE | SU_MODIFY
  * @return The new string with replaced characters.
  */
-String SU_String_replace(String string, char old_char, char new_char, size_t len, bool ignore_case);
+String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case);
 
 /**
  * Checks to see if a string starts with a substring
@@ -196,7 +196,7 @@ String SU_String_replace(String string, char old_char, char new_char, size_t len
  * @param flags SU_IGNORE_CASE
  * @return 1 if true, 0 if false.
  */
-bool SU_String_starts_with(const String string, const String find, bool ignore_case);
+bool SU_String_starts_with(const String str, const String find, bool ignore_case);
 
 /**
  * Checks to see if a string ends with a substring.
@@ -205,7 +205,7 @@ bool SU_String_starts_with(const String string, const String find, bool ignore_c
  * @param flags SU_IGNORE_CASE
  * @return  1 if true, 0 if false.
  */
-bool SU_String_ends_with(const String string, const String find, bool ignore_case);
+bool SU_String_ends_with(const String str, const String find, bool ignore_case);
 
 /**
  * Returns a substring of the string.
@@ -215,7 +215,7 @@ bool SU_String_ends_with(const String string, const String find, bool ignore_cas
  * @param flags SU_NONE | SU_MODIFY
  * @return The substring of the string.
  */
-String SU_String_substring(String string, unsigned int offset, unsigned int end);
+String SU_String_substring(String str, unsigned int offset, unsigned int end);
 
 /**
  * Trims the string of all leading and trailing spaces.
@@ -232,7 +232,7 @@ String SU_String_trim(String *string_ptr, size_t len);
  * @param flags SU_NONE | SU_IGNORE_CASE | SU_LAST
  * @return Index of the starting position of the found substring.
  */
-int SU_String_index_of(const String string, const String substring, size_t len, bool ignore_case);
+int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
  * Counts occurrences that the delimiter (or substring) occurs in a string.
@@ -241,7 +241,7 @@ int SU_String_index_of(const String string, const String substring, size_t len, 
  * @param flags SU_NONE | SU_IGNORE_CASE
  * @return Amount of times the delimiter appears in your string, or 0 if NULL string passed
  */
-unsigned int SU_String_count(const String string, const String substring, size_t len, bool ignore_case);
+unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
  * Returns a substring from between a start and end substring or delimiter in a string.
@@ -251,7 +251,7 @@ unsigned int SU_String_count(const String string, const String substring, size_t
  * @param flags SU_NONE | SU_IGNORE_CASE
  * @return The substring of what is between start and end, or NULL if NULL string is passed.
  */
-String SU_String_between(const String string, const String start, const String end, size_t len, bool ignore_case);
+String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case);
 
 /**
  * Callback function for GCC attribute cleanup. Called when the string leaves the scope of the function.
