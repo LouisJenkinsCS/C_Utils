@@ -73,11 +73,70 @@ Very Outdated: Documentation for version 1.1 available [here](http://theif519.gi
 
 ####Dynamic Pool [<b>Unimplemented</b>]
 
-### String Utils [<b>Stable</b>] Version: 1.2
+### String Utils [<b>Stable</b>] Version: 2.0
 
-A basic, non-intrusive and well-tested string manipulations library as well as parsing strings with regular expressions (future).
+####String Manipulations [<b>Stable</b>] Version: 2.0
 
-Documentation for version 1.2 available [here](http://theif519.github.io/String_Utils_Documentation/).
+A basic, yet very powerful and conventional string manipulations library. Supports ASCII strings only, and some functions support the use of non NULL-terminated functions.
+
+From simple string reversal or splitting and joining a string based on a delimiter, or even dynamic concatenation of strings, is all included in this library. This library fixes and improves upon the standard libc and glibc library by adding functionality that is sorely missing, in an efficient manner.
+
+There is also a convenience typedef for cstrings, String, which abstracts the need to use pointers. Lastly, there is a convenience macro that can be used to handle memory management of non-constant strings, TEMP, which utilitizes the GCC or Clang's compiler attributes.
+
+Examples of it's use can be seen below...
+
+```c
+
+/*
+    The below demonstrates the ease of use of declaring a string with the
+    typedef provided. Alternatively, you can declare it as char *str, which
+    can be used interchangeably.
+*/
+String str = "Hello World";
+/*
+    The below demonstrates the memory management of strings being handled by
+    the compiler, automatically being destroyed when it leaves the scope of the
+    block of code.
+*/
+String TEMP str = strdup("Hello World");
+/*
+    Now, on to the actual functions of this string manipulation library.
+    First, we will attempt to reverse a portion of the string, str, declared
+    above. We only wish to reverse "World" however, so we will make use of
+    pointer arithmetic to get the offset of the string. We want to reverse
+    everything after after "Hello ", so we pass 0 as the length to specify
+    that it is null terminated and that strlen can be used.
+*/
+SU_String_reverse(str + 6, 0);
+/*
+    Now, for the next example, imagine we have a fixed amount, but a somewhat
+    large amount of strings to concatenate together, and you not only wish to
+    concatenate them together, but also apply some kind of delimiter. For
+    instance, SU_String_split can split an array into an array of strings
+    based on a delimiter, and you wish to join them together with a new
+    delimiter. While SU_String_replace can do the job just as well (better),
+    lets assume you actually modify the array of strings somehow. You have
+    two options here, either SU_String_join, which is easier, but you need to
+    pass an array, but what if you wish to append a new string, then you have
+    resize the array (if it's not constant), or create an entirely new one.
+    Instead, SU_STRING_CONCAT_ALL allows you to concatenate any number of
+    strings with an optional delimiter.
+*/
+String storage;
+SU_STRING_CONCAT_ALL(&storage, ",", str, "How are you today", "Good I hope", "Good day!");
+/*
+    The other functions are rather straight forward, however to go more into 
+    SU_STRING_CONCAT_ALL, notice you do not need to add a NULL dummy parameter
+    or specify the size. That's because the preprocessor can determine it for
+    you, which it does.
+*/
+```
+
+SU_String is rather powerful, and also very simple. The String typedef makes it easier for programmers coming from other languages to read, the TEMP modifier helps with memory management, and the string manipulation functions are rather intuitive and easy to use. 
+
+OUTDATED: Documentation for version 1.2 available [here](http://theif519.github.io/String_Utils_Documentation/).
+
+####Regular Expressions [<b>Unimplemented</b>]
 
 ### File Utils [<b>Unimplemented</b>]
 
@@ -245,7 +304,10 @@ DS_PBQueue_dequeue(queue, -1);
 /// Now imagine this is called in another thread...
 DS_PBQueue_destroy(queue, free);
 /*
-    DS_PBQueue_destroy takes a callback which fits free perfectly, but any other function can be used. If the queue has threads waiting on it, like MU_Events, it will wake up all threads and wait for it to exit appropriately before destruction.
+    DS_PBQueue_destroy takes a callback which fits free perfectly, but any 
+    other function can be used. If the queue has threads waiting on it, like 
+    MU_Events, it will wake up all threads and wait for it to exit 
+    appropriately before destruction.
 */
 ```
 
@@ -309,14 +371,20 @@ An example of it's usage can be seen below...
 MU_Logger_t *event_logger;
 /*
     The event object used for signaling and waiting on events.
-    This event is named "Test Event" and logs to the event logger, inituitively. It is signaled by default, hence those calling to wait on it will return immediately. The first thread to leave this event successfully, will reset the event to non-signaled state.
+    This event is named "Test Event" and logs to the event logger,
+    inituitively. It is signaled by default, hence those calling to wait on it
+    will return immediately. The first thread to leave this event
+    successfully, will reset the event to non-signaled state.
 */
 MU_Event_t *event = MU_Event_create("Test Event", event_logger, MU_EVENT_SIGNALED_BY_DEFAULT | MU_EVENT_AUTO_RESET);
 /// We now to want wait on this event. Thread identifier can be anything, but lets just use pthread_self.
 MU_Event_wait(event, -1, (unsigned int) pthread_self());
 /// Now some other thread signals this...
 MU_Event_signal(event, (unsigned int) pthread_self());
-/// Now, we're done with said event. Destroy it. Note that if any threads are waiting on it, they are woken up and can gracefully exit.
+/* 
+    Now, we're done with said event. Destroy it. Note that if any threads are 
+    waiting on it, they are woken up and can gracefully exit.
+*/
 MU_Event_destroy(event, (unsigned int) pthread_self());
 
 ```
