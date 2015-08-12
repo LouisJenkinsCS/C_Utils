@@ -139,10 +139,10 @@ bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *cus
 	char buffer[log_buf_size + 1];
 	format_string(MU_Logger_Format_get(logger, level), buffer, log_buf_size, &info, args);
 	fprintf(logger->file, "%s", buffer);
+	fflush(logger->file);
 	if(level == MU_ASSERTION){
 		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
-	fflush(logger->file);
 	return true;
 }
 

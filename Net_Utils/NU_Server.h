@@ -2,7 +2,6 @@
 #define NET_UTILS_SERVER_H
 
 #include <NU_Connection.h>
-#include <NU_Helper.h>
 
 /**
  * @brief Wraps a bound socket on a given port.
@@ -23,15 +22,9 @@ typedef struct NU_Bound_Socket_t{
    volatile int sockfd;
    /// Port the socket is bound to.
    unsigned int port;
-   /// RWLock to ensure thread safety.
-   pthread_rwlock_t *lock;
    /// Flag to determine if it is bound.
    volatile bool is_bound;
-   /// Logger associated with socket, for when it has it's own file.
-   MU_Logger_t *logger;
 } NU_Bound_Socket_t;
-
-// TODO: Put NU_Bound_Socket_t inside of it's own file, NU_Bound_Socket
 
 /**
  * @brief Wraps a server's created, bound and listening socket as well keeping track of connected connections.
@@ -51,16 +44,16 @@ typedef struct {
    /// Size of the list of bound sockets to a port.
    volatile size_t amount_of_sockets;
    /// RWLock associated with server for type safety.
-   pthread_rwlock_t *lock;
-   /// Whether or not to initialize locks on everything.
-   bool is_threaded;
+   pthread_mutex_t *lock;
+   /// Whether or not to synchronize access.
+   bool synchronized;
 } NU_Server_t;
 
 // TODO: Change rwlock to a mutex!
 
 /* Create a fully initialized server that is unconnected. The socket used is
    bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks);
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool synchronized);
 
 /* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
    than one port. The amount specified will be the amount to listen for. */
@@ -72,6 +65,9 @@ bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    connections should not be freed, and it is also managed by the server. */
 NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, unsigned int timeout);
+
+/* Accept a new connection until timeout ellapses, on any of the bound ports created by this server. */
+NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, unsigned int timeout);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */

@@ -1,4 +1,10 @@
 #include <NU_Server.h>
+#include <MU_Retry.h>
+#include <MU_Cond_Locks.h>
+#include <MU_Arg_Check.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 static MU_Logger_t *logger = NULL;
 
@@ -14,8 +20,35 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-specific helper functions */
 
-static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
-	if(!bsock) return 0;
+static int timed_accept(int sockfd, char *ip_addr, unsigned int timeout){
+   int accepted = 0;
+   fd_set can_accept;
+   struct timeval tv;
+   tv.tv_sec = timeout;
+   tv.tv_usec = 0;
+   FD_ZERO(&can_accept);
+   FD_SET(sockfd, &can_accept);
+   MU_TEMP_FAILURE_RETRY(accepted, select(sockfd + 1, &can_accept, NULL, NULL, &tv));
+   if(accepted <= 0){
+      if(!accepted) MU_LOG_VERBOSE(logger, "select: 'Timed out!'");
+      else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
+      return -1;
+   }
+   struct sockaddr_in addr;
+   socklen_t size = sizeof(struct sockaddr_in);
+   MU_TEMP_FAILURE_RETRY(accepted, accept(sockfd, (struct sockaddr *)&addr, &size));
+   if(accepted == -1){
+      MU_LOG_ERROR(logger, "accept: '%s'", strerror(errno));
+      return -1;
+   }
+   if(ip_addr){
+      if(!inet_ntop(AF_INET, &addr, ip_addr , INET_ADDRSTRLEN)) MU_LOG_WARNING(logger, "inet_ntop: '%s'", strerror(errno));
+   }
+   return accepted;
+}
+
+static bool bsock_setup(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned int port, const char *ip_addr){
+	if(!bsock) return false;
 	int flag = 1;
 	struct sockaddr_in my_addr;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,7 +75,7 @@ static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, un
 	bsock->port = port;
 	bsock->sockfd = sockfd;
 	bsock->is_bound = 1;
-	return 1;
+	return true;
 
 	error:
 		if(sockfd != -1){
@@ -52,57 +85,34 @@ static int NU_Bound_Socket_setup(NU_Bound_Socket_t *bsock, size_t queue_size, un
 				MU_LOG_ERROR(logger, "close: '%s'", strerror(errno));
 			}
 		}
-		return 0;
+		return false;
 }
 
-static NU_Bound_Socket_t *NU_Bound_Socket_create(bool init_locks){
+static NU_Bound_Socket_t *bsock_create(void){
 	NU_Bound_Socket_t *bsock = calloc(1, sizeof(NU_Bound_Socket_t));
 	if(!bsock){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
-	if(init_locks){
-		bsock->lock = malloc(sizeof(pthread_rwlock_t));
-		if(!bsock->lock){
-			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
-	}
-	int is_initialized = 1;
-	MU_COND_RWLOCK_INIT(bsock->lock, NULL, is_initialized, logger);
-	if(!is_initialized){
-		goto error;
+		return NULL;
 	}
 	return bsock;
-
-	error:
-		if(bsock){
-			MU_COND_RWLOCK_DESTROY(bsock->lock, logger);
-			free(bsock);
-		}
-		return NULL;
 }
 
-static NU_Bound_Socket_t *NU_Bound_Socket_reuse(NU_Bound_Socket_t **sockets, size_t queue_size, size_t size, unsigned int port, const char *ip_addr){
+static NU_Bound_Socket_t *bsock_reuse(NU_Bound_Socket_t **sockets, size_t size, size_t queue_size, unsigned int port, const char *ip_addr){
 	size_t i = 0;
 	for(;i < size; i++){
 		NU_Bound_Socket_t *bsock = sockets[i];
-		MU_COND_RWLOCK_WRLOCK(bsock->lock, logger);
 		if(!bsock->is_bound){
-			if(!NU_Bound_Socket_setup(bsock, queue_size, port, ip_addr)){
-				MU_LOG_WARNING(logger, "NU_Bound_Socket_setup: 'Was unable to setup bound socket!'");
-				MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
+			if(!bsock_setup(bsock, queue_size, port, ip_addr)){
+				MU_LOG_WARNING(logger, "bsock_setup: 'Was unable to setup bound socket!'");
 				return NULL;
 			}
-			MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
 			return bsock;
 		}
-		MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
 	}
 	return NULL;
 }
 
-static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
+static int bsock_destroy(NU_Bound_Socket_t *bsock){
 	if(!bsock) return 0;
 	int close_failed = 0;
 	if(bsock->is_bound){
@@ -111,14 +121,13 @@ static int NU_Bound_Socket_destroy(NU_Bound_Socket_t *bsock){
 			MU_LOG_ERROR(logger, "close: '%s'", strerror(errno));
 		}
 	}
-	MU_COND_RWLOCK_DESTROY(bsock->lock, logger);
 	free(bsock);
 	MU_LOG_VERBOSE(logger, "Destroyed a bound socket!");
 	return close_failed == 0;
 }
 
-static bool NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
-	MU_COND_RWLOCK_WRLOCK(bsock->lock, logger);
+static bool bsock_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
+	if(!bsock) return false;
 	unsigned int port = bsock->port;
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
@@ -136,29 +145,28 @@ static bool NU_Bound_Socket_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock
 		MU_LOG_ERROR(logger, "close: '%s'", strerror(errno));
 	}
 	bsock->is_bound = 0;
-	MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
 	MU_LOG_INFO(logger, "Unbound from port %u!", port);
 	return true;
 }
 
-NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks){
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool synchronized){
 	NU_Server_t *server = calloc(1, sizeof(NU_Server_t));
 	if(!server){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
-	server->is_threaded = init_locks;
+	server->synchronized = synchronized;
 	// Keep track of everything allocated. If anything fails to allocate, we will free up all memory allocated in this (very long) block.
 	size_t connections_allocated = 0, bsocks_allocated = 0;
-	if(init_locks){
-		server->lock = malloc(sizeof(pthread_rwlock_t));
+	if(synchronized){
+		server->lock = malloc(sizeof(pthread_mutex_t));
 		if(!server->lock){
 			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
-		int failure = pthread_rwlock_init(server->lock, NULL);
+		int failure = pthread_mutex_init(server->lock, NULL);
 		if(failure){
-			MU_LOG_ERROR(logger, "pthread_rwlock_init: '%s'", strerror(failure));
+			MU_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(failure));
 			goto error;
 		}
 	}
@@ -170,12 +178,11 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	}
 	size_t i = 0;
 	for(;i < server->amount_of_sockets; i++){
-		NU_Bound_Socket_t *bsock = NU_Bound_Socket_create(init_locks);
+		NU_Bound_Socket_t *bsock = bsock_create();
 		if(!bsock){
-			MU_LOG_ERROR(logger, "NU_Bound_Socket_create: 'Was unable to create bound socket #%zu'", ++i);
+			MU_LOG_ERROR(logger, "bsock_create: 'Was unable to create bound socket #%zu'", ++i);
 			goto error;
 		}
-		bsock->is_bound = 0;
 		server->sockets[i] = bsock;
 		bsocks_allocated++;
 	}
@@ -187,7 +194,7 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 	}
 	i = 0;
 	for(;i < server->amount_of_connections; i++){
-		NU_Connection_t *conn = NU_Connection_create(init_locks, logger);
+		NU_Connection_t *conn = NU_Connection_create(synchronized, logger);
 		if(!conn){
 			MU_LOG_ASSERT(logger, "NU_Connection_create: 'Was unable to create connection #%zu!'", ++i);
 			goto error;
@@ -214,15 +221,15 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 			if(server->sockets){
 				size_t i = 0;
 				for(;i < bsocks_allocated; i++){
-					int is_destroyed = NU_Bound_Socket_destroy(server->sockets[i]);
+					int is_destroyed = bsock_destroy(server->sockets[i]);
 					if(!is_destroyed){
-						MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy: 'Was unable to destroy a socket!'");
+						MU_LOG_ERROR(logger, "bsock_destroy: 'Was unable to destroy a socket!'");
 					}
 				}
 				free(server->sockets);
 			}
-			if(init_locks){
-				MU_COND_RWLOCK_DESTROY(server->lock, logger);
+			if(synchronized){
+				MU_COND_MUTEX_DESTROY(server->lock, logger);
 			}
 			free(server);
 		}
@@ -231,83 +238,95 @@ NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_siz
 
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr){
 	MU_ARG_CHECK(logger, NULL, server, port > 0, queue_size > 0);
-	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
-	NU_Bound_Socket_t *bsock = NU_Bound_Socket_reuse(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+	MU_COND_MUTEX_LOCK(server->lock, logger);
+	NU_Bound_Socket_t *bsock = bsock_reuse(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
 	if(bsock){
 		MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr, port);
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		return bsock;
 	}
-	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
-	bsock = NU_Bound_Socket_create(server->is_threaded);
+	bsock = bsock_create();
 	if(!bsock){
-		MU_LOG_ERROR(logger, "NU_Bound_Socket_create: 'Was unable to create a bound socket!'");
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+		MU_LOG_ERROR(logger, "bsock_create: 'Was unable to create a bound socket!'");
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		return NULL;
 	}
-	NU_Bound_Socket_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * server->amount_of_sockets + 1);
+	NU_Bound_Socket_t **tmp_sockets = realloc(server->sockets, sizeof(NU_Bound_Socket_t *) * (server->amount_of_sockets + 1));
 	if(!tmp_sockets){
 		MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-		NU_Bound_Socket_destroy(bsock);
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
+		bsock_destroy(bsock);
 		return NULL;
 	}
 	server->sockets = tmp_sockets;
 	server->sockets[server->amount_of_sockets++] = bsock;
-	NU_Bound_Socket_setup(bsock, queue_size, port, ip_addr);
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+	bsock_setup(bsock, queue_size, port, ip_addr);
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
 	MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr, port);
 	return bsock;
 }
 
 bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	MU_ARG_CHECK(logger, false, server, bsock);
-	// Even though the server isn't directly modified, in order to send data to a connection, the readlock must be acquired, hence this will prevent
-	// any connections from sending to a shutting down socket. Also the socket will not shutdown until the readlocks are released.
-	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
-	NU_Bound_Socket_unbind(server, bsock);
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+	MU_COND_MUTEX_LOCK(server->lock, logger);
+	bsock_unbind(server, bsock);
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
 	MU_LOG_INFO(logger, "Unbound from port %u!", bsock->port);
-	return 1;
+	return true;
 }
 
 NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned int timeout){
 	MU_ARG_CHECK(logger, NULL, server, bsock);
-	char ip_addr[INET_ADDRSTRLEN];
-	MU_COND_RWLOCK_RDLOCK(bsock->lock, logger);
+	char ip_addr[INET_ADDRSTRLEN + 1];
+	MU_COND_MUTEX_LOCK(server->lock, logger);
 	unsigned int port = bsock->port;
-	int sockfd = NU_timed_accept(bsock->sockfd, ip_addr, timeout, logger);
-	if(sockfd == -1){
-		MU_LOG_INFO(logger, "accept: 'Was unable to accept a connection!'");
+	int bsock_fd = bsock->sockfd;
+	bool is_bound = bsock->is_bound;
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
+	if(!is_bound){
+		MU_LOG_WARNING(logger, "Socket is not bound!");
 		return NULL;
 	}
-	MU_COND_RWLOCK_UNLOCK(bsock->lock, logger);
-	MU_COND_RWLOCK_RDLOCK(server->lock, logger);
+	int sockfd = timed_accept(bsock_fd, ip_addr, timeout);
+	if(sockfd == -1){
+		MU_LOG_VERBOSE(logger, "timed_accept: 'Was unable to accept a connection!'");
+		return NULL;
+	}
+	MU_COND_MUTEX_LOCK(server->lock, logger);
+	/// In case that in between acquiring the lock and sockfd the socket gets unbound.
+	if(!bsock->is_bound){
+		MU_LOG_WARNING(logger, "Socket is not bound!");
+		int failure = 0;
+		MU_TEMP_FAILURE_RETRY(failure, close(sockfd));
+		if(failure){
+			MU_LOG_ERROR(logger, "close: '%s'", strerror(errno));
+		}
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
+		return NULL;
+	}
 	NU_Connection_t *conn = NU_Connection_reuse(server->connections, server->amount_of_connections, sockfd, port, ip_addr, logger);
 	if(conn){
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		MU_LOG_INFO(logger, "%s connected to port %d", ip_addr, bsock->port);
 		return conn;
 	}
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
 	// If the NULL is returned, then a connection could not be reused, hence we initialize a new one below.
-	conn = NU_Connection_create(server->is_threaded, logger);
+	conn = NU_Connection_create(server->synchronized, logger);
 	if(!conn){
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		MU_LOG_ERROR(logger, "NU_Connection_create: 'Was unable to create a connection!'");
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 		return NULL;
 	}
-	NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * server->amount_of_connections + 1);
+	NU_Connection_t **tmp_connections = realloc(server->connections, sizeof(NU_Connection_t *) * (server->amount_of_connections + 1));
 	if(!tmp_connections){
+		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		MU_COND_RWLOCK_UNLOCK(server->lock, logger);
 		return NULL;
 	}
 	server->connections = tmp_connections;
 	server->connections[server->amount_of_connections++] = conn;
 	int is_initialized = NU_Connection_init(conn, sockfd, bsock->port, ip_addr, logger);
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
 	if(!is_initialized){
 		MU_LOG_ERROR(logger, "NU_Connection_init: 'Was unable to initialize a connection!'");
 		int close_failed;
@@ -321,6 +340,54 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	return conn;
 }
 
+NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, unsigned int timeout){
+	MU_ARG_CHECK(logger, NULL, server);
+	fd_set are_bound;
+    struct timeval tv;
+    tv.tv_sec = timeout;
+    tv.tv_usec = 0;
+    FD_ZERO(&are_bound);
+ 	MU_COND_MUTEX_LOCK(server->lock, logger);
+ 	size_t i = 0;
+ 	int max_fd = 0;
+ 	for(; i < server->amount_of_sockets; i++){
+ 		NU_Bound_Socket_t *bsock = server->sockets[i];
+ 		if(!bsock) continue;
+ 		if(bsock->is_bound){
+ 			FD_SET(bsock->sockfd, &are_bound);
+ 			if(bsock->sockfd > max_fd) max_fd = bsock->sockfd;
+ 		}
+ 	}
+ 	MU_COND_MUTEX_UNLOCK(server->lock, logger);
+ 	int ready = 0; 
+ 	MU_TEMP_FAILURE_RETRY(ready, select(max_fd + 1, &are_bound, NULL, NULL, &tv));
+ 	if(ready <= 0){
+ 		if(!ready) MU_LOG_VERBOSE(logger, "select: 'Timed out'");
+ 		else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
+ 		return NULL;
+ 	}
+ 	MU_COND_MUTEX_LOCK(server->lock, logger);
+ 	NU_Bound_Socket_t *bsock = NULL;
+ 	bool sockfd_found = false;
+ 	for(i = 0; i < server->amount_of_sockets; i++){
+ 		bsock = server->sockets[i];
+ 		if(!bsock) continue;
+ 		if(bsock->is_bound){
+ 			if(FD_ISSET(bsock->sockfd, &are_bound)){
+ 				sockfd_found = true;
+ 				break;
+ 			}
+ 		}
+ 	}
+ 	if(!sockfd_found){
+ 		MU_COND_MUTEX_UNLOCK(server->lock, logger);
+ 		MU_LOG_VERBOSE(logger, "Could not accept a connection!");
+ 		return NULL;
+ 	}
+ 	MU_COND_MUTEX_UNLOCK(server->lock, logger);
+ 	return NU_Server_accept(server, bsock, timeout);
+}
+
 bool NU_Server_log(NU_Server_t *server, const char *message, ...){
 	MU_ARG_CHECK(logger, false, server, message);
 	va_list args;
@@ -329,10 +396,10 @@ bool NU_Server_log(NU_Server_t *server, const char *message, ...){
 	char buffer[buf_size];
 	if(vsnprintf(buffer, buf_size, message, args) < 0){ 
 		MU_LOG_WARNING(logger, "vsnprintf: '%s'", strerror(errno));
-		return 0;
+		return false;
 	}
 	MU_LOG_SERVER("%s", buffer);
-	return 1;
+	return true;
 }
 
 bool NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn){
@@ -347,16 +414,16 @@ bool NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn){
 
 bool NU_Server_shutdown(NU_Server_t *server){
 	MU_ARG_CHECK(logger, false, server);
-	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
+	MU_COND_MUTEX_LOCK(server->lock, logger);
 	size_t i = 0;
 	for(;i < server->amount_of_sockets; i++){
-		int successful = NU_Bound_Socket_unbind(server, server->sockets[i]);
+		int successful = bsock_unbind(server, server->sockets[i]);
 		if(!successful){
-			MU_LOG_ERROR(logger, "NU_Bound_Socket_unbind: 'Was unable to fully unbind a socket!'");
+			MU_LOG_ERROR(logger, "bsock_unbind: 'Was unable to fully unbind a socket!'");
 		}
 	}
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-	return 1;
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
+	return true;
 }
 
 bool NU_Server_destroy(NU_Server_t *server){
@@ -364,9 +431,9 @@ bool NU_Server_destroy(NU_Server_t *server){
 	int is_shutdown = NU_Server_shutdown(server);
 	if(!is_shutdown){
 		MU_LOG_ERROR(logger, "NU_Server_shutdown: 'Was unable to shutdown server!'");
-		return 0;
+		return false;
 	}
-	MU_COND_RWLOCK_WRLOCK(server->lock, logger);
+	MU_COND_MUTEX_LOCK(server->lock, logger);
 	size_t i = 0;
 	for(;i < server->amount_of_connections; i++){
 		int successful = NU_Connection_destroy(server->connections[i]);
@@ -375,15 +442,15 @@ bool NU_Server_destroy(NU_Server_t *server){
 		}
 	}
 	for(i = 0;i < server->amount_of_sockets; i++){
-		int successful = NU_Bound_Socket_destroy(server->sockets[i]);
+		int successful = bsock_destroy(server->sockets[i]);
 		if(!successful){
-			MU_LOG_ERROR(logger, "NU_Bound_Socket_destroy: 'Was unable to fully destroy a bound socket!'");
+			MU_LOG_ERROR(logger, "bsock_destroy: 'Was unable to fully destroy a bound socket!'");
 		}
 	}
-	MU_COND_RWLOCK_UNLOCK(server->lock, logger);
-	MU_COND_RWLOCK_DESTROY(server->lock, logger);
+	MU_COND_MUTEX_UNLOCK(server->lock, logger);
+	MU_COND_MUTEX_DESTROY(server->lock, logger);
 	free(server->connections);
 	free(server->sockets);
 	free(server);
-	return 1;
+	return true;
 }

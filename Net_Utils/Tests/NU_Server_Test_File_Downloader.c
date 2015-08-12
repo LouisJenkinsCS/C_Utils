@@ -39,7 +39,7 @@ static void *handle_connection(void *args){
   MU_ASSERT((fstat(file_fd, &file_stats) != -1), logger, "fstat: '%s'\n", strerror(errno));
   size_t file_size = file_stats.st_size;
   sprintf(header, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %zu\r\n\r\n", file_size);
-  size_t sent = NU_Connection_send(conn, header, BUFSIZ, timeout, send_flags);
+  size_t sent = NU_Connection_send(conn, header, strlen(header), timeout, send_flags);
   if(!sent){
     MU_DEBUG("Unable to send response!");
     fclose(file);

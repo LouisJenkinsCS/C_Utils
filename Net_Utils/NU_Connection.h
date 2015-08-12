@@ -1,7 +1,12 @@
 #ifndef NU_CONNECTION_H
 #define NU_CONNECTION_H
 
-#include <NU_Helper.h>
+#include <MU_Logger.h>
+#include <stdint.h>
+#include <stdatomic.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <arpa/inet.h>
 
 typedef struct NU_Connection_t {
    /// Socket file descriptor associated with host.
