@@ -64,10 +64,10 @@ bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 
 /* Accept new connections until the timeout ellapses, up to the given amount. The returned
    connections should not be freed, and it is also managed by the server. */
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, unsigned int timeout);
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, long long int timeout);
 
 /* Accept a new connection until timeout ellapses, on any of the bound ports created by this server. */
-NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, unsigned int timeout);
+NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, long long int timeout);
 
 /* The server will no longer be accepting current connections, but will continue dealing with it's
    current connections until the time specified ellapses, upon which it will close all connections. */

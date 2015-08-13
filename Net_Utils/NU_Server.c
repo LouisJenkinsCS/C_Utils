@@ -20,7 +20,7 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 /* Server-specific helper functions */
 
-static int timed_accept(int sockfd, char *ip_addr, unsigned int timeout){
+static int timed_accept(int sockfd, char *ip_addr, long long int timeout){
    int accepted = 0;
    fd_set can_accept;
    struct timeval tv;
@@ -28,7 +28,7 @@ static int timed_accept(int sockfd, char *ip_addr, unsigned int timeout){
    tv.tv_usec = 0;
    FD_ZERO(&can_accept);
    FD_SET(sockfd, &can_accept);
-   MU_TEMP_FAILURE_RETRY(accepted, select(sockfd + 1, &can_accept, NULL, NULL, &tv));
+   MU_TEMP_FAILURE_RETRY(accepted, select(sockfd + 1, &can_accept, NULL, NULL, timeout < 0 ? NULL : &tv));
    if(accepted <= 0){
       if(!accepted) MU_LOG_VERBOSE(logger, "select: 'Timed out!'");
       else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
@@ -275,7 +275,7 @@ bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *bsock){
 	return true;
 }
 
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, unsigned int timeout){
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock, long long int timeout){
 	MU_ARG_CHECK(logger, NULL, server, bsock);
 	char ip_addr[INET_ADDRSTRLEN + 1];
 	MU_COND_MUTEX_LOCK(server->lock, logger);
@@ -340,7 +340,8 @@ NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *bsock,
 	return conn;
 }
 
-NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, unsigned int timeout){
+// TODO: change timeout to long long int and pass NULL instead of &tv if timeout < 0.
+NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, long long int timeout){
 	MU_ARG_CHECK(logger, NULL, server);
 	fd_set are_bound;
     struct timeval tv;
@@ -360,7 +361,7 @@ NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, unsigned int timeout)
  	}
  	MU_COND_MUTEX_UNLOCK(server->lock, logger);
  	int ready = 0; 
- 	MU_TEMP_FAILURE_RETRY(ready, select(max_fd + 1, &are_bound, NULL, NULL, &tv));
+ 	MU_TEMP_FAILURE_RETRY(ready, select(max_fd + 1, &are_bound, NULL, NULL, timeout < 0 ? NULL : &tv));
  	if(ready <= 0){
  		if(!ready) MU_LOG_VERBOSE(logger, "select: 'Timed out'");
  		else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));

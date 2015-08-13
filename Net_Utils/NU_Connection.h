@@ -27,24 +27,24 @@ typedef struct NU_Connection_t {
 NU_Connection_t *NU_Connection_create(bool init_locks, MU_Logger_t *logger);
 
 
-size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, int flags);
+size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, long long int timeout, int flags);
 
 
-size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, int flags);
+size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, long long int timeout, int flags);
 
 
 /// Sent in BUFSIZ buffers
-size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags);
+size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, long long int timeout, int flags);
 
 
 ///  Written in blksize chunks
-size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags);
+size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, long long int timeout, int flags);
 
 
 NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
 
 
-int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, unsigned int timeout, MU_Logger_t *logger);
+int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, long long int timeout, MU_Logger_t *logger);
 
 
 

@@ -9,17 +9,17 @@ typedef struct {
    NU_Connection_t **connections;
    /// Amount of servers currently connected to.
    size_t amount_of_connections;
-   /// RWLock to ensure thread safety on modifying connections and amount;
-   pthread_rwlock_t *lock;
+   /// Lock used for synchronization and thread safety.
+   pthread_mutex_t *lock;
    /// Whether or not to initialize locks on everything.
-   bool is_threaded;
+   bool synchronized;
 } NU_Client_t;
 
 /*  Creates a basic client template, fully initialized and connected to the host. */
 NU_Client_t *NU_Client_create(size_t initial_size, bool init_locks);
 
 /* Connects the client to some host! */
-NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, unsigned int timeout);
+NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, long long int timeout);
 
 bool NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection);
 

@@ -1,4 +1,5 @@
 #include <MU_Logger.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <NU_Server.h>
@@ -69,13 +70,10 @@ int main(void){
   MU_ASSERT(bsock_one, logger, "Failed while attempting to bind a socket!");
   NU_Bound_Socket_t *bsock_two = NU_Server_bind(server, queue_max, second_port_num, ip_addr);
   MU_ASSERT(bsock_two, logger, "Failed while attempting to bind a socket!");
-  NU_Connection_t *client;
   while(1){
-    if((client = NU_Server_accept(server, bsock_one, 0)) || (client = NU_Server_accept(server, bsock_two, 0))){
-      MU_DEBUG("Client connected...");
-      TP_Pool_add(tp, handle_connection, client, TP_NO_RESULT);
-    }
-    sleep(1);
+    NU_Connection_t *client = NU_Server_accept_any(server, -1); 
+    MU_DEBUG("Client connected...");
+    TP_Pool_add(tp, handle_connection, client, TP_NO_RESULT);
   }  
   NU_Server_destroy(server);
   MU_Logger_destroy(logger);
