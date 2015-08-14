@@ -66,10 +66,9 @@ int main(void){
   MU_ASSERT(server, logger, "Was unable to create server!");
   tp = TP_Pool_create(worker_threads);
   MU_ASSERT(tp, logger, "Was unable to create thread pool!");
-  NU_Bound_Socket_t *bsock_one = NU_Server_bind(server, queue_max, port_num, ip_addr);
-  MU_ASSERT(bsock_one, logger, "Failed while attempting to bind a socket!");
-  NU_Bound_Socket_t *bsock_two = NU_Server_bind(server, queue_max, second_port_num, ip_addr);
-  MU_ASSERT(bsock_two, logger, "Failed while attempting to bind a socket!");
+  // Notice, we do not have to maintain a reference to the bound socket as server manages them for us.
+  MU_ASSERT(NU_Server_bind(server, queue_max, port_num, ip_addr), logger, "Failed while attempting to bind a socket!");
+  MU_ASSERT(NU_Server_bind(server, queue_max, second_port_num, ip_addr), logger, "Failed while attempting to bind a socket!");
   while(1){
     NU_Connection_t *client = NU_Server_accept_any(server, -1); 
     MU_DEBUG("Client connected...");

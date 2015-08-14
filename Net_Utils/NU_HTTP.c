@@ -1,5 +1,3 @@
-/* TODO: Implement! */
-
 #include <NU_HTTP.h>
 #include <ctype.h>
 
@@ -12,10 +10,6 @@ __attribute__((constructor)) static void init_logger(void){
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
-
-static const int field_size = 32;
-static const int value_size = 256;
-static const int header_size = 4096;
 
 static const char *NU_HTTP_Status_Codes[] = {
 	[100] = "100 Continue",
@@ -69,23 +63,27 @@ static const char *NU_HTTP_Status_Codes[] = {
     [509] = "509 Bandwidth Limit Exceeded"
 };
 
-static void parse_http_field(DS_Hash_Map_t *header, const char *line){
+static void parse_http_field(DS_Hash_Map_t *mapped_fields, const char *line){
 	MU_DEBUG("%s", line);
 	const char *delimiter = ": ";
 	const int delim_size = strlen(delimiter);
-	char field[field_size], value[value_size];
+	char field[NU_HTTP_HEADER_FIELD_LEN + 1], value[NU_HTTP_HEADER_VALUE_LEN + 1];
 	char *offset_str = strstr(line, delimiter);
 	if(!offset_str){
 		MU_LOG_WARNING(logger, "No delimiter offset for line: '%s'!", line);
 		return;
 	}
-	// A bit of math required here. We must find the length of the field to read into field buffer.
-	int field_len = strlen(line) - strlen(offset_str);
+	/*
+		A bit of math required here. We must find the length of the field to read into field buffer.
+		offset_str is just (line + x) for some offset 'x', so it evaluates to the following:
+		(line + x) - line = x. Hence field_len is the offset, from 0 to x.
+	*/
+	int field_len = offset_str - line;
 	offset_str += delim_size;
-	MU_DEBUG("Line: '%s'\nOffset_Str: '%s'", line, offset_str);
-	snprintf(field, field_size, "%.*s", field_len, line);
-	snprintf(value, value_size, "%s", offset_str);
-	bool was_added = DS_Hash_Map_add(header, strdup(field), strdup(value));
+	MU_DEBUG("Field: '%.*s'\nValue: '%s'", field_len, line, offset_str);
+	snprintf(field, NU_HTTP_HEADER_FIELD_LEN, "%.*s", field_len, line);
+	snprintf(value, NU_HTTP_HEADER_VALUE_LEN, "%s", offset_str);
+	bool was_added = DS_Hash_Map_add(mapped_fields, field, strdup(value));
 	if(!was_added){
 		MU_LOG_WARNING(logger, "DS_Hash_Map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
 	}
@@ -106,13 +104,16 @@ static void parse_http_method(NU_Request_t *req, const char *line){
 	} else if(strncmp(line, "CONNECT", 7) == 0){
 		req->method = NU_HTTP_CONNECT;
 	} else {
-		MU_LOG_WARNING(logger, "Bad HTTP method!");
+		MU_LOG_WARNING(logger, "Bad HTTP method!'%s'", line);
 	}
 }
 
-static void parse_http_path(NU_Request_t *header, const char *line){
+static void parse_http_path(NU_Request_t *req, const char *line){
 	MU_DEBUG("%s", line);
-	strncpy(header->file_path, line, 256);
+	if(strlen(line) == 1){
+		sprintf(req->file_path, "/index.html");
+	}
+	snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "%s", line);
 }
 
 static void parse_http_status(NU_Response_t *res, const char *line){
@@ -153,20 +154,19 @@ static void parse_http_response(NU_Response_t *header, char *header_str){
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
-			MU_LOG_WARNING(logger, "Invalid first line of header!");
+			MU_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
 			return;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
 			parse_http_version(&header->version, line);
-		} else if (isdigit((int)*line)){
+		} else if (isdigit((unsigned char)*line)){
 			parse_http_status(header, line);
 		} else {
-			MU_LOG_WARNING(logger, "Invalid header format!");
-			break;
+			MU_LOG_WARNING(logger, "Invalid header format!'%s'", line);
 		}
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
-		parse_http_field(header, line);
+		parse_http_field(header->header, line);
 	}
 }
 
@@ -176,26 +176,24 @@ static void parse_http_request(NU_Request_t *req, char *header_str){
 	char *rest_of_lines;
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
-		MU_LOG_WARNING(logger, "No header field found!");
+		MU_LOG_WARNING(logger, "No header field found!'%s'", line);
 		return;
 	}
 	/// For the first line, tokenate out the method, path (if applicable) and http version.
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
-			MU_LOG_WARNING(logger, "Invalid first line of header!");
+			MU_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
 			return;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(&header->version, line);
-		} else if (isdigit((int)*line)){
-			parse_http_status(header, line);
+			parse_http_version(&req->version, line);
 		} else if(*line == '/'){
-			parse_http_path(header, line);
-		} else parse_http_method(header, line);
+			parse_http_path(req, line);
+		} else parse_http_method(req, line);
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
-		parse_http_field(header, line);
+		parse_http_field(req->header, line);
 	}
 }
 

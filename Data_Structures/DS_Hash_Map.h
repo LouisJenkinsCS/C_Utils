@@ -1,8 +1,14 @@
 #include <DS_Helpers.h>
 
+#ifdef DS_HASH_MAP_KEY_MAX_SIZE
+#define DS_HASH_MAP_KEY_SIZE DS_HASH_MAP_KEY_MAX_SIZE
+#else
+#define DS_HASH_MAP_KEY_SIZE 128
+#endif
+
 typedef struct DS_Bucket_t {
 	/// The key associated with each bucket.
-	char *key;
+	char key[DS_HASH_MAP_KEY_SIZE + 1];
 	/// The value associated with each key.
 	void *value;
 	/// Determines whether or not the bucket is in use, to allow for "caching".

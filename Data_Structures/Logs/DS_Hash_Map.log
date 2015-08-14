@@ -1,14 +1,14 @@
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Keep-Alive'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Accept-Language'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Accept'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Cache-Control'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'User-Agent'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Accept'; Found Key: TRUE"
-09:28:33 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
+02:56:09 PM [VERBOSE](./Data_Structures/DS_Hash_Map.c:80) get_value_from_bucket(): 
 "Search Key: 'Cache-Control'; Found Key: TRUE"

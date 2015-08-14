@@ -1,4 +1,4 @@
-#include "DS_Hash_Map.h"
+#include <DS_Hash_Map.h>
 
 static MU_Logger_t *logger = NULL;
 
@@ -73,7 +73,7 @@ static void *get_value_from_bucket(DS_Bucket_t *bucket, const char *key){
 	if(!bucket) return NULL;
 	do {
 		if(!bucket->in_use) continue;
-		if(strcmp(bucket->key, key) == 0){
+		if(strncmp(bucket->key, key, DS_HASH_MAP_KEY_SIZE) == 0){
 			break;
 		}
 	} while((bucket = bucket->next));
@@ -110,7 +110,7 @@ static DS_Bucket_t *create_bucket(char *key, void *value, DS_Bucket_t *next){
 		MU_LOG_ASSERT(logger, "create_bucket->malloc: \"%s\"", strerror(errno));
 		return NULL;
 	}
-	bucket->key = key;
+	snprintf(bucket->key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 	bucket->value = value;
 	bucket->next = next;
 	return bucket;
@@ -155,10 +155,12 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
 bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 	MU_ARG_CHECK(logger, false, map, key);
 	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
-	size_t index = get_bucket_index(key, map->amount_of_buckets);
+	char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
+	snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+	size_t index = get_bucket_index(trunc_key, map->amount_of_buckets);
 	DS_Bucket_t *bucket = map->buckets[index];
 	if(!bucket){
-		bucket = (map->buckets[index] = create_bucket(key, value, NULL));
+		bucket = (map->buckets[index] = create_bucket(trunc_key, value, NULL));
 		if(!bucket){
 			MU_LOG_ERROR(logger, "DS_Hash_Map_add->create_bucket: \"Was unable to create a bucket!\"");
 			MU_COND_RWLOCK_UNLOCK(map->lock, logger);
@@ -169,20 +171,20 @@ bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return true;
 	}
-	void *key_exists = get_value_from_bucket(bucket, key);
+	void *key_exists = get_value_from_bucket(bucket, trunc_key);
 	if(key_exists){
 		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return false;
 	}
 	do {
 		if(!bucket->in_use){
-			bucket->key = key;
+			sprintf(bucket->key, "%s", trunc_key);
 			bucket->value = value;
 			bucket->in_use = 1;
 			map->size++;
 			break;
 		} else if(!bucket->next){
-			bucket->next = create_bucket(key, value, NULL);
+			bucket->next = create_bucket(trunc_key, value, NULL);
 			bucket->next->in_use = 1;
 			break;
 		}
@@ -195,12 +197,14 @@ bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key){
 	MU_ARG_CHECK(logger, NULL, map, map && map->size, map && map->buckets, key);
 	MU_COND_RWLOCK_RDLOCK(map->lock, logger);
-	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, key);
+	char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
+	snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
 	if(!bucket_is_valid(bucket)){
 		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return NULL;
 	}
-	void *value = get_value_from_bucket(bucket, key);
+	void *value = get_value_from_bucket(bucket, trunc_key);
 	MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 	return value;
 }
@@ -209,12 +213,14 @@ void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key){
 void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del){
 	MU_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size, key);
 	MU_COND_RWLOCK_WRLOCK(map->lock, logger);
-	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, key);
+	char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
+	snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+	DS_Bucket_t *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
 	if(!bucket_is_valid(bucket)){
 		MU_COND_RWLOCK_UNLOCK(map->lock, logger);
 		return NULL;
 	}
-	void *value = get_value_from_bucket(bucket, key);
+	void *value = get_value_from_bucket(bucket, trunc_key);
 	bucket->in_use = 0;
 	map->size--;
 	MU_COND_RWLOCK_UNLOCK(map->lock, logger);

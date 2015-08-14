@@ -43,7 +43,7 @@ typedef struct {
    volatile size_t amount_of_connections;
    /// Size of the list of bound sockets to a port.
    volatile size_t amount_of_sockets;
-   /// RWLock associated with server for type safety.
+   /// Lock used for synchronization and thread safety.
    pthread_mutex_t *lock;
    /// Whether or not to synchronize access.
    bool synchronized;

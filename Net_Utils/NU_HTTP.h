@@ -1,6 +1,30 @@
 #ifndef NET_UTILS_HTTP_H
 #define NET_UTILS_HTTP_H
 
+#ifdef NU_HTTP_FILE_PATH_MAX_LEN
+#define NU_HTTP_FILE_PATH_LEN NU_HTTP_FILE_PATH_MAX_LEN
+#else
+#define NU_HTTP_FILE_PATH_LEN 128
+#endif
+
+#ifdef NU_HTTP_HEADER_FIELD_MAX_LEN
+#define NU_HTTP_HEADER_FIELD_LEN NU_HTTP_HEADER_FIELD_MAX_LEN
+#else
+#define NU_HTTP_HEADER_FIELD_LEN 128
+#endif
+
+#ifdef NU_HTTP_HEADER_VALUE_MAX_LEN
+#define NU_HTTP_HEADER_VALUE_LEN NU_HTTP_HEADER_VALUE_MAX_LEN
+#else
+#define NU_HTTP_HEADER_VALUE_LEN 1024
+#endif
+
+#ifdef NU_HTTP_HEADER_MAX_LEN
+#define NU_HTTP_HEADER_LEN NU_HTTP_HEADER_MAX_LEN
+#else
+#define NU_HTTP_HEADER_LEN 4096
+#endif
+
 #include <NU_Helper.h>
 #include <NU_Connection.h>
 #include <DS_Hash_Map.h>
@@ -39,7 +63,7 @@ typedef struct {
     /// The HTTP method.
     NU_HTTP_Method_e method;
     /// The request file path.
-    char file_path[256];
+    char file_path[NU_HTTP_FILE_PATH_LEN];
     /// The HTTP version.
     NU_HTTP_Version_e version;
 } NU_Request_t;
