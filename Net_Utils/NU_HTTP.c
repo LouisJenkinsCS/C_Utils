@@ -114,7 +114,7 @@ static void parse_http_method(NU_Request_t *req, const char *line){
 static void parse_http_path(NU_Request_t *req, const char *line){
 	MU_DEBUG("%s", line);
 	if(strlen(line) == 1){
-		sprintf(req->file_path, "/index.html");
+		snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "/index.html");
 	}
 	snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "%s", line);
 }
@@ -223,7 +223,7 @@ NU_Response_t *NU_Response_create(void){
 }
 
 NU_Request_t *NU_Request_create(void){
-	NU_Request_t *req = calloc(1, sizeof(NU_Response_t));
+	NU_Request_t *req = calloc(1, sizeof(NU_Request_t));
 	if(!req){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;

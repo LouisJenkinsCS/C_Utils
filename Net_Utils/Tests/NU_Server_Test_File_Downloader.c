@@ -17,10 +17,10 @@ static const unsigned int queue_max = 1;
 static const size_t worker_threads = 10;
 static const unsigned int max_sockets = 1;
 static const unsigned char is_threaded = 1;
-static const char *ip_addr = "192.168.1.112";
+static const char *ip_addr = NULL;
 static const int recv_flags = 0;
 static const int send_flags = 0;
-static const char *filepath = "C:/Users/theif519/Documents/theif519.html";
+static const char *filepath = "/home/theif519/Pictures/index.html";
 
 static void *handle_connection(void *args){
   NU_Connection_t *conn = args;
@@ -31,12 +31,12 @@ static void *handle_connection(void *args){
     MU_DEBUG("Unable to receive request");
     return NULL;
   }
-  //NU_Request_t *req = NU_Request_create();
-  //MU_ASSERT(req, logger, "Was unable to allocate memory for HTTP request!");
-  //char *retval = NU_Request_append_header(req, buf, &received);
-  //MU_DEBUG("Leftovers: '%.*s'", (int)received, retval);
-  //retval = NU_Request_to_string(req);
-  //MU_DEBUG("Received request:\n%s\n", retval);
+  NU_Request_t *req = NU_Request_create();
+  MU_ASSERT(req, logger, "Was unable to allocate memory for HTTP request!");
+  char *retval = NU_Request_append_header(req, buf, &received);
+  MU_DEBUG("Leftovers: '%.*s'", (int)received, retval);
+  retval = NU_Request_to_string(req);
+  MU_DEBUG("Received request:\n%s\n", retval);
   // When HTTP is implemented, I will handle HTTP requests dynamically. For now I just return a consistent header.
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "fopen: '%s'", strerror(errno));

@@ -77,7 +77,6 @@ static void *get_value_from_bucket(DS_Bucket_t *bucket, const char *key){
 			break;
 		}
 	} while((bucket = bucket->next));
-	MU_LOG_VERBOSE(logger, "Search Key: '%s'; Found Key: %s", key, MU_ARG_BOOL_EVAL(strcmp(key, bucket->key) == 0));
 	return bucket ? bucket->value : NULL;
 }
 
