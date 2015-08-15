@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <NU_Server.h>
+#include <NU_HTTP.h>
 #include <TP_Pool.h>
 #include <unistd.h>
 
@@ -30,7 +31,12 @@ static void *handle_connection(void *args){
     MU_DEBUG("Unable to receive request");
     return NULL;
   }
-  MU_DEBUG("Received request:\n%s\n", buf);
+  //NU_Request_t *req = NU_Request_create();
+  //MU_ASSERT(req, logger, "Was unable to allocate memory for HTTP request!");
+  //char *retval = NU_Request_append_header(req, buf, &received);
+  //MU_DEBUG("Leftovers: '%.*s'", (int)received, retval);
+  //retval = NU_Request_to_string(req);
+  //MU_DEBUG("Received request:\n%s\n", retval);
   // When HTTP is implemented, I will handle HTTP requests dynamically. For now I just return a consistent header.
   FILE *file = fopen(filepath, "rb");
   MU_ASSERT(file, logger, "fopen: '%s'", strerror(errno));

@@ -1,6 +1,9 @@
 #include <NU_HTTP.h>
 #include <ctype.h>
 
+/// 31 is close enough to the amount of HTTP statuses, but is also a prime number.
+static const int bucket_size = 31;
+
 static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
@@ -170,21 +173,24 @@ static void parse_http_response(NU_Response_t *header, char *header_str){
 	}
 }
 
-static void parse_http_request(NU_Request_t *req, char *header_str){
+static size_t parse_http_request(NU_Request_t *req, char *header_str){
 	MU_DEBUG("Header: \n%s", header_str);
+	size_t header_size = 0;
 	char *first_line;
 	char *rest_of_lines;
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
 		MU_LOG_WARNING(logger, "No header field found!'%s'", line);
-		return;
+		return 0;
 	}
+	// strlen(line) + strlen("\r\n");
+	header_size += strlen(line) + 2;
 	/// For the first line, tokenate out the method, path (if applicable) and http version.
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
 			MU_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
-			return;
+			return 0;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
 			parse_http_version(&req->version, line);
@@ -194,66 +200,42 @@ static void parse_http_request(NU_Request_t *req, char *header_str){
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
 		parse_http_field(req->header, line);
+		// strlen(line) + strlen("\r\n");
+		header_size += strlen(line) + 2;
 	}
-}
-
-NU_Header_t *NU_Header_create(void){
-	NU_Header_t *header = calloc(1, sizeof(NU_Header_t));
-	if(!header){
-		MU_LOG_ASSERT(logger, "malloc: '%s'");
-		goto error;
-	}
-	header->mapped_fields = DS_Hash_Map_create(31, true);
-	if(!header->mapped_fields){
-		MU_LOG_ERROR(logger, "DS_Hash_Map_create: 'Was unable to create hash map!'");
-		goto error;
-	}
-	return header;
-
-	error:
-		if(header){
-			free(header);
-		}
-		return NULL;
-}
-
-NU_Header_t *NU_Header_from(const char *header_str, int header_size){
-	MU_ARG_CHECK(logger, NULL, header_str);
-	NU_Header_t *header = NU_Header_create();
-	if(!header){
-		MU_LOG_ERROR(logger, "NU_Header_create: 'Was unable to create base header!'");
-		return NULL;
-	}
-	char *new_header_str;
-	asprintf(&new_header_str, "%.*s", header_size, header_str);
-	parse_http_header(header, new_header_str);
-	free(new_header_str);
-	return header;
-}
-
-char *NU_Header_to_string(NU_Header_t *header){
-	char *buf = calloc(1, header_size);
-	size_t size, i = 0;
-	char **arr = DS_Hash_Map_key_value_to_string(header->mapped_fields, NULL, ": ", NULL, &size, NULL);
-	for(; i < size; i++){
-		sprintf(buf, "%s%s\r\n", buf, arr[i]);
-		free(arr[i]);
-	}
-	sprintf(buf, "%s\r\n\r\n", buf);
-	free(arr);
-	char *tmp_buf = realloc(buf, strlen(buf) + 1);
-	if(!tmp_buf){
-		MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		return buf;
-	}
-	return tmp_buf;
+	// strlen(line) + strlen("\r\n");
+	return header_size += 2;
 }
 
 NU_Response_t *NU_Response_create(void){
-	NU_Response_t *response = calloc(1, sizeof(NU_Response_t));
+	NU_Response_t *res = calloc(1, sizeof(NU_Response_t));
+	if(!res){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		return NULL;
+	}
+	res->header = DS_Hash_Map_create(bucket_size, true);
+	if(!res->header){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_create: 'Was unable to create Hash Table!'");
+		free(res);
+		return NULL;
+	}
+	return res;
 }
 
-NU_Request_t *NU_Request_create(void);
+NU_Request_t *NU_Request_create(void){
+	NU_Request_t *req = calloc(1, sizeof(NU_Response_t));
+	if(!req){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		return NULL;
+	}
+	req->header = DS_Hash_Map_create(bucket_size, true);
+	if(!req->header){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_create: 'Was unable to create Hash Table!'");
+		free(req);
+		return NULL;
+	}
+	return req;
+}
 
 /*
     NOTE: When parsing from header, make sure to NOT read past the header_size. Try to make sure header is of appropriate size.
@@ -263,7 +245,14 @@ NU_Request_t *NU_Request_create(void);
 */
 char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
 
-char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size);
+char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size){
+	char header_cpy[*header_size + 1];
+	snprintf(header_cpy, *header_size + 1, "%s", header);
+	size_t header_read = parse_http_request(req, header_cpy);
+	MU_DEBUG("Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
+	*header_size -= header_read;
+	return (char *)header + header_read;
+}
 
 /*
     Clears the response header of all fields and attributes.
@@ -277,7 +266,27 @@ bool NU_Request_clear(NU_Request_t *req);
 */
 char *NU_Response_to_string(NU_Response_t *res);
 
-char *NU_Request_to_string(NU_Request_t *req);
+char *NU_Request_to_string(NU_Request_t *req){
+	char *buf = calloc(1, NU_HTTP_HEADER_LEN + 1);
+	size_t size, i = 0, size_left = NU_HTTP_HEADER_LEN + 1;
+	char **arr = DS_Hash_Map_key_value_to_string(req->header, NULL, ": ", NULL, &size, NULL);
+	for(; i < size; i++){
+		// Length of the mapped value plus 2 bytes for carriage return.
+		size_t str_len = strlen(arr[i]) + 2;
+		if(size_left < str_len) break;
+		snprintf(buf, size_left, "%s%s\r\n", buf, arr[i]);
+		free(arr[i]);
+		size_left -= str_len;
+	}
+	sprintf(buf, "%s\r\n\r\n", buf);
+	free(arr);
+	char *tmp_buf = realloc(buf, strlen(buf) + 1);
+	if(!tmp_buf){
+		MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+		return buf;
+	}
+	return tmp_buf;
+}
 
 bool NU_Response_set_field(NU_Response_t *res, const char *field, const char *values);
 
