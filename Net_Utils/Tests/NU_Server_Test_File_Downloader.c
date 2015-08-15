@@ -20,7 +20,7 @@ static const unsigned char is_threaded = 1;
 static const char *ip_addr = NULL;
 static const int recv_flags = 0;
 static const int send_flags = 0;
-static const char *filepath = "/home/theif519/Pictures/index.html";
+static const char *filepath = "C:/users/theif519/Documents/theif519.html";
 
 static void *handle_connection(void *args){
   NU_Connection_t *conn = args;

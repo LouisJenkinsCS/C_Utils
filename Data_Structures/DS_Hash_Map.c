@@ -185,6 +185,7 @@ bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value){
 		} else if(!bucket->next){
 			bucket->next = create_bucket(trunc_key, value, NULL);
 			bucket->next->in_use = 1;
+			map->size++;
 			break;
 		}
 	} while((bucket = bucket->next));
