@@ -241,7 +241,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsign
 	MU_COND_MUTEX_LOCK(server->lock, logger);
 	NU_Bound_Socket_t *bsock = bsock_reuse(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
 	if(bsock){
-		MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr, port);
+		MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr ? ip_addr : "localhost", port);
 		MU_COND_MUTEX_UNLOCK(server->lock, logger);
 		return bsock;
 	}
@@ -262,7 +262,7 @@ NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsign
 	server->sockets[server->amount_of_sockets++] = bsock;
 	bsock_setup(bsock, queue_size, port, ip_addr);
 	MU_COND_MUTEX_UNLOCK(server->lock, logger);
-	MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr, port);
+	MU_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr ? ip_addr : "localhost", port);
 	return bsock;
 }
 

@@ -1,162 +1,18 @@
-02:57:46 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
 "A task of Medium priority has been added to the task_queue!"
-02:57:46 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #6: received a task!"
-02:57:46 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:46 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #7: received a task!"
-02:57:46 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #6: finished a task!"
-02:57:47 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #7: finished a task!"
-02:57:47 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:47 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #2: received a task!"
-02:57:47 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #2: finished a task!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #9: received a task!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #9: finished a task!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #9: received a task!"
-02:57:50 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #9: finished a task!"
-02:57:51 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:51 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #10: received a task!"
-02:57:51 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #10: finished a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
 "Thread #5: received a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
 "A task of Medium priority has been added to the task_queue!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #1: received a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #5: finished a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #1: finished a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
 "Thread #3: received a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #3: finished a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
+"Thread #5: finished a task!"
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
 "A task of Medium priority has been added to the task_queue!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #8: received a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #6: received a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #8: finished a task!"
-02:57:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #6: finished a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #7: received a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #7: finished a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #2: received a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #2: finished a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #4: received a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #4: finished a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
 "Thread #9: received a task!"
-02:57:54 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #9: finished a task!"
-02:57:55 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:55 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #10: received a task!"
-02:57:55 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:55 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #5: received a task!"
-02:57:55 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #10: finished a task!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #5: finished a task!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #1: received a task!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #1: finished a task!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:56 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #3: received a task!"
-02:57:57 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:57 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #8: received a task!"
-02:57:57 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
+09:03:52 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
 "Thread #3: finished a task!"
-02:57:57 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #8: finished a task!"
-02:57:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #6: received a task!"
-02:57:58 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #6: finished a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #7: received a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #7: finished a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #2: received a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #2: finished a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #4: received a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #4: finished a task!"
-02:57:59 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #4: received a task!"
-02:58:00 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:58:00 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #10: received a task!"
-02:58:00 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #4: finished a task!"
-02:58:00 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #10: finished a task!"
-02:58:01 PM [VERBOSE](./Thread_Pool/TP_Pool.c:247) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-02:58:01 PM [VERBOSE](./Thread_Pool/TP_Pool.c:97) Get_Tasks(): 
-"Thread #5: received a task!"
-02:58:01 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
-"Thread #5: finished a task!"
+09:03:53 PM [VERBOSE](./Thread_Pool/TP_Pool.c:99) Get_Tasks(): 
+"Thread #9: finished a task!"

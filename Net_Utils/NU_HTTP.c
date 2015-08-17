@@ -67,7 +67,7 @@ static const char *NU_HTTP_Status_Codes[] = {
 };
 
 static void parse_http_field(DS_Hash_Map_t *mapped_fields, const char *line){
-	MU_DEBUG("%s", line);
+	MU_LOG_TRACE(logger, "%s", line);
 	const char *delimiter = ": ";
 	const int delim_size = strlen(delimiter);
 	char field[NU_HTTP_HEADER_FIELD_LEN + 1], value[NU_HTTP_HEADER_VALUE_LEN + 1];
@@ -83,7 +83,7 @@ static void parse_http_field(DS_Hash_Map_t *mapped_fields, const char *line){
 	*/
 	int field_len = offset_str - line;
 	offset_str += delim_size;
-	MU_DEBUG("Field: '%.*s'\nValue: '%s'", field_len, line, offset_str);
+	MU_LOG_TRACE(logger, "Field: '%.*s'\nValue: '%s'", field_len, line, offset_str);
 	snprintf(field, NU_HTTP_HEADER_FIELD_LEN, "%.*s", field_len, line);
 	snprintf(value, NU_HTTP_HEADER_VALUE_LEN, "%s", offset_str);
 	bool was_added = DS_Hash_Map_add(mapped_fields, field, strdup(value));
@@ -93,26 +93,26 @@ static void parse_http_field(DS_Hash_Map_t *mapped_fields, const char *line){
 }
 
 static void parse_http_method(NU_Request_t *req, const char *line){
-	MU_DEBUG("%s", line);
+	MU_LOG_TRACE(logger, "%s", line);
 	if(strncmp(line, "GET", 3) == 0){
-		req->method = NU_HTTP_GET;
+		req->meth = NU_HTTP_GET;
 	} else if(strncmp(line, "POST", 4) == 0){
-		req->method = NU_HTTP_POST;
+		req->meth = NU_HTTP_POST;
 	} else if(strncmp(line, "HEAD", 4) == 0){
-		req->method = NU_HTTP_HEAD;
+		req->meth = NU_HTTP_HEAD;
 	} else if(strncmp(line, "DELETE", 6) == 0){
-		req->method = NU_HTTP_DELETE;
+		req->meth = NU_HTTP_DELETE;
 	} else if(strncmp(line, "TRACE", 5) == 0){
-		req->method = NU_HTTP_TRACE;
+		req->meth = NU_HTTP_TRACE;
 	} else if(strncmp(line, "CONNECT", 7) == 0){
-		req->method = NU_HTTP_CONNECT;
+		req->meth = NU_HTTP_CONNECT;
 	} else {
 		MU_LOG_WARNING(logger, "Bad HTTP method!'%s'", line);
 	}
 }
 
 static void parse_http_path(NU_Request_t *req, const char *line){
-	MU_DEBUG("%s", line);
+	MU_LOG_TRACE(logger, "%s", line);
 	if(strlen(line) == 1){
 		snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "/index.html");
 	}
@@ -120,23 +120,23 @@ static void parse_http_path(NU_Request_t *req, const char *line){
 }
 
 static void parse_http_status(NU_Response_t *res, const char *line){
-	MU_DEBUG("%s", line);
+	MU_LOG_TRACE(logger, "%s", line);
 	int status = strtol(line, NULL, 10);
 	if(!status){
 		MU_LOG_WARNING(logger, "Bad HTTP status!");
 		return;
 	}
-	res->status = status;
+	res->stat = status;
 }
 
 static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
-	MU_DEBUG("%s", line);
+	MU_LOG_TRACE(logger, "%s", line);
 	const int protocol_len = 8;
-	if(strncmp(line, "HTTP/1.1", protocol_len) == 0){
+	if(strncasecmp(line, "HTTP/1.1", protocol_len) == 0){
 		*version = NU_HTTP_VER_1_1;
-	} else if(strncmp(line, "HTTP/1.0", protocol_len) == 0){
+	} else if(strncasecmp(line, "HTTP/1.0", protocol_len) == 0){
 		*version = NU_HTTP_VER_1_0;
-	} else if(strncmp(line, "HTTP/1.x", protocol_len) == 0){
+	} else if(strncasecmp(line, "HTTP/1.X", protocol_len) == 0){
 		*version = NU_HTTP_VER_1_X;
 	} else {
 		MU_LOG_WARNING(logger, "Bad HTTP version!");
@@ -144,24 +144,48 @@ static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
 	}
 }
 
-static void parse_http_response(NU_Response_t *header, char *header_str){
-	MU_DEBUG("Header: \n%s", header_str);
+static char *http_method_to_string(NU_HTTP_Method_e meth){
+	switch(meth){
+		case NU_HTTP_GET: return "GET";
+		case NU_HTTP_POST: return "POST";
+		case NU_HTTP_CONNECT: return "CONNECT";
+		case NU_HTTP_TRACE: return "TRACE";
+		case NU_HTTP_DELETE: return "DELETE";
+		case NU_HTTP_HEAD: return "HEAD";
+		default: return NULL;
+	}
+}
+
+static char *http_version_to_string(NU_HTTP_Version_e ver){
+	switch(ver){
+		case NU_HTTP_VER_1_0: return "HTTP/1.0";
+		case NU_HTTP_VER_1_1: return "HTTP/1.1";
+		case NU_HTTP_VER_1_X: return "HTTP/1.X";
+		default: return NULL;
+	}
+}
+
+static size_t parse_http_response(NU_Response_t *header, char *header_str){
+	MU_LOG_TRACE(logger, "Header: \n%s", header_str);
+	size_t header_size = 0;
 	char *first_line;
 	char *rest_of_lines;
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
 		MU_LOG_WARNING(logger, "No header field found!");
-		return;
+		return 0;
 	}
+	// strlen(line) + strlen("\r\n");
+	header_size += strlen(line) + 2;
 	/// For the first line, tokenate out the method, path (if applicable) and http version.
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
 			MU_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
-			return;
+			return 0;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(&header->version, line);
+			parse_http_version(&header->ver, line);
 		} else if (isdigit((unsigned char)*line)){
 			parse_http_status(header, line);
 		} else {
@@ -169,12 +193,16 @@ static void parse_http_response(NU_Response_t *header, char *header_str){
 		}
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	while((line = strtok_r(NULL, "\r\n", &rest_of_lines))){
+		// strlen(line) + strlen("\r\n");
+		header_size += strlen(line) + 2;
 		parse_http_field(header->header, line);
 	}
+	// header_size + strlen("\r\n")
+	return header_size += 2;
 }
 
 static size_t parse_http_request(NU_Request_t *req, char *header_str){
-	MU_DEBUG("Header: \n%s", header_str);
+	MU_LOG_TRACE(logger, "Header: \n%s", header_str);
 	size_t header_size = 0;
 	char *first_line;
 	char *rest_of_lines;
@@ -193,7 +221,7 @@ static size_t parse_http_request(NU_Request_t *req, char *header_str){
 			return 0;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(&req->version, line);
+			parse_http_version(&req->ver, line);
 		} else if(*line == '/'){
 			parse_http_path(req, line);
 		} else parse_http_method(req, line);
@@ -203,7 +231,7 @@ static size_t parse_http_request(NU_Request_t *req, char *header_str){
 		// strlen(line) + strlen("\r\n");
 		header_size += strlen(line) + 2;
 	}
-	// strlen(line) + strlen("\r\n");
+	// header_size + strlen("\r\n")
 	return header_size += 2;
 }
 
@@ -243,13 +271,20 @@ NU_Request_t *NU_Request_create(void){
     header_size will be the size of what is left (I.E what is invalid or not part of the header). Response should be cleared before passing it!
     TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
 */
-char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
+char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size){
+	char header_cpy[*header_size + 1];
+	snprintf(header_cpy, *header_size + 1, "%s", header);
+	size_t header_read = parse_http_response(res, header_cpy);
+	MU_LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
+	*header_size -= header_read;
+	return (char *)header + header_read;
+}
 
 char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size){
 	char header_cpy[*header_size + 1];
 	snprintf(header_cpy, *header_size + 1, "%s", header);
 	size_t header_read = parse_http_request(req, header_cpy);
-	MU_DEBUG("Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
+	MU_LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
 	*header_size -= header_read;
 	return (char *)header + header_read;
 }
@@ -257,18 +292,104 @@ char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *he
 /*
     Clears the response header of all fields and attributes.
 */
-bool NU_Response_clear(NU_Response_t *res);
+bool NU_Response_clear(NU_Response_t *res){
+	MU_ARG_CHECK(logger, false, res);
+	bool header_cleared = DS_Hash_Map_clear(res->header, free);
+	if(!header_cleared){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_clear: 'Was unable to clear hash map!'");
+		return false;
+	}
+	res->ver = NU_HTTP_NO_VER;
+	res->stat = 0;
+	return true;
 
-bool NU_Request_clear(NU_Request_t *req);
+}
+
+bool NU_Request_clear(NU_Request_t *req){
+	MU_ARG_CHECK(logger, false, req);
+	bool header_cleared = DS_Hash_Map_clear(req->header, free);
+	if(!header_cleared){
+		MU_LOG_ERROR(logger, "DS_Hash_Map_clear: 'Was unable to clear hash map!'");
+		return false;
+	}
+	memset(&req->file_path, '\0', NU_HTTP_FILE_PATH_LEN + 1);
+	req->ver = NU_HTTP_NO_VER;
+	req->meth = NU_HTTP_NO_METHOD;
+	return true;
+}
 
 /*
     Returns the null-terminated string of the header.
 */
-char *NU_Response_to_string(NU_Response_t *res);
+char *NU_Response_to_string(NU_Response_t *res){
+	MU_ARG_CHECK(logger, NULL, res);
+	char *buf = calloc(1, NU_HTTP_HEADER_LEN + 1);
+	if(!buf){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		goto error;
+	}
+	size_t size, i = 0, size_left = NU_HTTP_HEADER_LEN + 1;
+	const char *status = (res->stat > 509) ? NULL : NU_HTTP_Status_Codes[res->stat];
+	if(!status){
+		MU_LOG_INFO(logger, "Invalid HTTP Status!");
+		goto error;
+	}
+	char *ver = http_version_to_string(res->ver);
+	if(!ver){
+		MU_LOG_INFO(logger, "Invalid HTTP Version!");
+		goto error;
+	}
+	size_t retval = snprintf(buf, size_left, "%s %s\r\n", status, ver);
+	size_left -= retval;
+	char **arr = DS_Hash_Map_key_value_to_string(res->header, NULL, ": ", NULL, &size, NULL);
+	for(; i < size; i++){
+		// Length of the mapped value plus 2 bytes for carriage return.
+		size_t str_len = strlen(arr[i]) + 2;
+		if(size_left < str_len) break;
+		snprintf(buf, size_left, "%s%s\r\n", buf, arr[i]);
+		free(arr[i]);
+		size_left -= str_len;
+	}
+	sprintf(buf, "%s\r\n\r\n", buf);
+	free(arr);
+	char *tmp_buf = realloc(buf, strlen(buf) + 1);
+	if(!tmp_buf){
+		MU_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+		return buf;
+	}
+	return tmp_buf;
+
+	error:
+		if(buf){
+			free(buf);
+		}
+		return NULL;
+}
 
 char *NU_Request_to_string(NU_Request_t *req){
+	MU_ARG_CHECK(logger, NULL, req);
 	char *buf = calloc(1, NU_HTTP_HEADER_LEN + 1);
+	if(!buf){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		goto error;
+	}
 	size_t size, i = 0, size_left = NU_HTTP_HEADER_LEN + 1;
+	char *method = http_method_to_string(req->meth);
+	if(!method){
+		MU_LOG_INFO(logger, "Invalid HTTP Method!");
+		goto error;
+	}
+	if(!*(req->file_path)){
+		MU_LOG_INFO(logger, "Invalid File Path!");
+		goto error;
+	}
+	char *ver = http_version_to_string(req->ver);
+	if(!ver){
+		MU_LOG_INFO(logger, "Invalid HTTP Version!");
+		goto error;
+	}
+	size_t retval = snprintf(buf, size_left, "%s %s %s\r\n", method, req->file_path, ver);
+	size_left -= retval;
 	char **arr = DS_Hash_Map_key_value_to_string(req->header, NULL, ": ", NULL, &size, NULL);
 	for(; i < size; i++){
 		// Length of the mapped value plus 2 bytes for carriage return.
@@ -286,32 +407,92 @@ char *NU_Request_to_string(NU_Request_t *req){
 		return buf;
 	}
 	return tmp_buf;
+
+	error:
+		if(buf){
+			free(buf);
+		}
+		return NULL;
 }
 
-bool NU_Response_set_field(NU_Response_t *res, const char *field, const char *values);
+bool NU_Response_set_field(NU_Response_t *res, char *field, char *values){
+	MU_ARG_CHECK(logger, false, res, field, values);
+	DS_Hash_Map_remove(res->header, field, free);
+	DS_Hash_Map_add(res->header, field, values);
+	return true;
+}
 
-bool NU_Request_set_field(NU_Request_t *req, const char *field, const char *values);
+bool NU_Request_set_field(NU_Request_t *req, char *field, char *values){
+	MU_ARG_CHECK(logger, false, req, field, values);
+	DS_Hash_Map_remove(req->header, field, free);
+	DS_Hash_Map_add(req->header, field, values);
+	return true;
+}
 
-bool NU_Response_remove_field(NU_Response_t *res, const char *field);
+bool NU_Response_remove_field(NU_Response_t *res, const char *field){
+	MU_ARG_CHECK(logger, false, res, field);
+	DS_Hash_Map_remove(res->header, field, free);
+	return true;
+}
 
-bool NU_Request_remove_field(NU_Request_t *req, const char *field);
+bool NU_Request_remove_field(NU_Request_t *req, const char *field){
+	MU_ARG_CHECK(logger, false, req, field);
+	DS_Hash_Map_remove(req->header, field, free);
+	return true;
+}
 
-char *NU_Response_get_field(NU_Response_t *res, const char *field);
+char *NU_Response_get_field(NU_Response_t *res, const char *field){
+	MU_ARG_CHECK(logger, false, res, field);
+	char *value = DS_Hash_Map_get(res->header, field);
+	return value;
+}
 
-char *NU_Request_get_field(NU_Request_t *req, const char *field);
+char *NU_Request_get_field(NU_Request_t *req, const char *field){
+	MU_ARG_CHECK(logger, false, req, field);
+	char *value = DS_Hash_Map_get(req->header, field);
+	return value;
+}
 
-NU_HTTP_Version_e NU_Response_get_version(NU_Response_t *res);
+NU_HTTP_Version_e NU_Response_get_version(NU_Response_t *res){
+	MU_ARG_CHECK(logger, NU_HTTP_NO_VER, res);
+	return res->ver;
+}
 
-NU_HTTP_Version_e NU_Request_get_version(NU_Request_t *req);
+NU_HTTP_Version_e NU_Request_get_version(NU_Request_t *req){
+	MU_ARG_CHECK(logger, NU_HTTP_NO_VER, req);
+	return req->ver;
+}
 
-bool NU_Response_set_version(NU_Response_t *res, NU_HTTP_Version_e version);
+bool NU_Response_set_version(NU_Response_t *res, NU_HTTP_Version_e version){
+	MU_ARG_CHECK(logger, false, res);
+	res->ver = version;
+	return true;
+}
 
-bool NU_Request_set_version(NU_Request_t *req, NU_HTTP_Version_e version);
+bool NU_Request_set_version(NU_Request_t *req, NU_HTTP_Version_e version){
+	MU_ARG_CHECK(logger, false, req);
+	req->ver = version;
+	return true;
+}
 
-unsigned int NU_Response_get_status(NU_Response_t *res);
+unsigned int NU_Response_get_status(NU_Response_t *res){
+	MU_ARG_CHECK(logger, false, res);
+	return res->stat;
+}
 
-bool NU_Response_set_status(NU_Response_t *res, unsigned int status);
+bool NU_Response_set_status(NU_Response_t *res, unsigned int status){
+	MU_ARG_CHECK(logger, false, res, status <= 509 && NU_HTTP_Status_Codes[status]);
+	res->stat = status;
+	return true;
+}
 
-NU_HTTP_Method_e NU_Response_get_method(NU_Response_t *res);
+NU_HTTP_Method_e NU_Request_get_method(NU_Request_t *req){
+	MU_ARG_CHECK(logger, NU_HTTP_NO_METHOD, req);
+	return req->meth;
+}
 
-bool NU_Response_set_method(NU_Response_t *res, NU_HTTP_Method_e method);
+bool NU_Request_set_method(NU_Request_t *req, NU_HTTP_Method_e method){
+	MU_ARG_CHECK(logger, false, req);
+	req->meth = method;
+	return true;
+}

@@ -1,0 +1,207 @@
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:205) parse_http_request(): 
+"Header: 
+GET / HTTP/1.1
+Host: 192.168.1.112
+Connection: keep-alive
+Cache-Control: max-age=0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36
+DNT: 1
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: en-US,en;q=0.8
+
+"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:96) parse_http_method(): 
+"GET"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:115) parse_http_path(): 
+"/"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:133) parse_http_version(): 
+"HTTP/1.1"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Host: 192.168.1.112"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Host'
+Value: '192.168.1.112'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Connection: keep-alive"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Connection'
+Value: 'keep-alive'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Cache-Control: max-age=0"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Cache-Control'
+Value: 'max-age=0'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept'
+Value: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Upgrade-Insecure-Requests: 1"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Upgrade-Insecure-Requests'
+Value: '1'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'User-Agent'
+Value: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"DNT: 1"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'DNT'
+Value: '1'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Encoding: gzip, deflate, sdch"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Encoding'
+Value: 'gzip, deflate, sdch'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Language: en-US,en;q=0.8"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Language'
+Value: 'en-US,en;q=0.8'"
+09:03:52 PM [VERBOSE](./Net_Utils/NU_HTTP.c:287) NU_Request_append_header(): 
+"Read 405 of 405 bytes of header; New header size = 0!"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:205) parse_http_request(): 
+"Header: 
+GET /theif519_files/scale.fix.js HTTP/1.1
+Host: 192.168.1.112
+Connection: keep-alive
+Cache-Control: max-age=0
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36
+DNT: 1
+Referer: http://192.168.1.112/
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: en-US,en;q=0.8
+
+"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:96) parse_http_method(): 
+"GET"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:115) parse_http_path(): 
+"/theif519_files/scale.fix.js"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:133) parse_http_version(): 
+"HTTP/1.1"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Host: 192.168.1.112"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Host'
+Value: '192.168.1.112'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Connection: keep-alive"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Connection'
+Value: 'keep-alive'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Cache-Control: max-age=0"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Cache-Control'
+Value: 'max-age=0'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept: */*"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept'
+Value: '*/*'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'User-Agent'
+Value: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"DNT: 1"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'DNT'
+Value: '1'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Referer: http://192.168.1.112/"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Referer'
+Value: 'http://192.168.1.112/'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Encoding: gzip, deflate, sdch"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Encoding'
+Value: 'gzip, deflate, sdch'"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Language: en-US,en;q=0.8"
+09:03:52 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Language'
+Value: 'en-US,en;q=0.8'"
+09:03:52 PM [VERBOSE](./Net_Utils/NU_HTTP.c:287) NU_Request_append_header(): 
+"Read 363 of 363 bytes of header; New header size = 0!"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:205) parse_http_request(): 
+"Header: 
+GET /favicon.ico HTTP/1.1
+Host: 192.168.1.112
+Connection: keep-alive
+Pragma: no-cache
+Cache-Control: no-cache
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36
+Accept: */*
+DNT: 1
+Referer: http://192.168.1.112/
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: en-US,en;q=0.8
+
+"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:96) parse_http_method(): 
+"GET"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:115) parse_http_path(): 
+"/favicon.ico"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:133) parse_http_version(): 
+"HTTP/1.1"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Host: 192.168.1.112"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Host'
+Value: '192.168.1.112'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Connection: keep-alive"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Connection'
+Value: 'keep-alive'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Pragma: no-cache"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Pragma'
+Value: 'no-cache'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Cache-Control: no-cache"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Cache-Control'
+Value: 'no-cache'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'User-Agent'
+Value: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept: */*"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept'
+Value: '*/*'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"DNT: 1"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'DNT'
+Value: '1'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Referer: http://192.168.1.112/"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Referer'
+Value: 'http://192.168.1.112/'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Encoding: gzip, deflate, sdch"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Encoding'
+Value: 'gzip, deflate, sdch'"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:70) parse_http_field(): 
+"Accept-Language: en-US,en;q=0.8"
+09:03:53 PM [TRACE](./Net_Utils/NU_HTTP.c:86) parse_http_field(): 
+"Field: 'Accept-Language'
+Value: 'en-US,en;q=0.8'"
+09:03:53 PM [VERBOSE](./Net_Utils/NU_HTTP.c:287) NU_Request_append_header(): 
+"Read 364 of 364 bytes of header; New header size = 0!"

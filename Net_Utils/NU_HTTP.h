@@ -52,20 +52,20 @@ typedef struct {
     /// Contains the fields parsed from the header in a hash table.
     DS_Hash_Map_t *header;
     /// The HTTP version.
-    NU_HTTP_Version_e version;
+    NU_HTTP_Version_e ver;
     /// The HTTP status.
-    unsigned int status;
+    unsigned int stat;
 } NU_Response_t;
 
 typedef struct {
     /// Contains the fields parsed from the header in a hash table.
     DS_Hash_Map_t *header;
     /// The HTTP method.
-    NU_HTTP_Method_e method;
+    NU_HTTP_Method_e meth;
     /// The request file path.
-    char file_path[NU_HTTP_FILE_PATH_LEN];
+    char file_path[NU_HTTP_FILE_PATH_LEN + 1];
     /// The HTTP version.
-    NU_HTTP_Version_e version;
+    NU_HTTP_Version_e ver;
 } NU_Request_t;
 
 // TODO: Make Field Values case-insensitive!
@@ -98,9 +98,9 @@ char *NU_Response_to_string(NU_Response_t *res);
 
 char *NU_Request_to_string(NU_Request_t *req);
 
-bool NU_Response_set_field(NU_Response_t *res, const char *field, const char *values);
+bool NU_Response_set_field(NU_Response_t *res, char *field, char *values);
 
-bool NU_Request_set_field(NU_Request_t *req, const char *field, const char *values);
+bool NU_Request_set_field(NU_Request_t *req, char *field, char *values);
 
 bool NU_Response_remove_field(NU_Response_t *res, const char *field);
 
@@ -122,8 +122,8 @@ unsigned int NU_Response_get_status(NU_Response_t *res);
 
 bool NU_Response_set_status(NU_Response_t *res, unsigned int status);
 
-NU_HTTP_Method_e NU_Response_get_method(NU_Response_t *res);
+NU_HTTP_Method_e NU_Request_get_method(NU_Request_t *req);
 
-bool NU_Response_set_method(NU_Response_t *res, NU_HTTP_Method_e method);
+bool NU_Request_set_method(NU_Request_t *req, NU_HTTP_Method_e method);
 
 #endif /* end NET_UTILS_HTTP_H */
