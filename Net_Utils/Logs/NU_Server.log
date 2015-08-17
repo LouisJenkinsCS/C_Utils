@@ -1,16 +1,64 @@
-09:03:50 PM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
+02:48:37 PM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
 "Bound a socket to 192.168.1.112 on port 10000!"
-09:03:50 PM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
+02:48:37 PM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
 "Bound a socket to 192.168.1.112 on port 80!"
-09:03:52 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.229.64 connected to port 80"
-09:03:52 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.229.65 connected to port 80"
-09:03:52 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.229.64 on port 80!"
-09:03:52 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.229.66 connected to port 80"
-09:03:52 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.229.65 on port 80!"
-09:03:53 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.229.66 on port 80!"
+02:48:41 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.116 connected to port 80"
+02:48:41 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.117 connected to port 80"
+02:48:41 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.118 connected to port 80"
+02:48:41 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.118 on port 80!"
+02:48:41 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.117 on port 80!"
+02:48:42 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.118 on port 80!"
+02:48:53 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.134 connected to port 80"
+02:48:53 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.135 connected to port 80"
+02:48:54 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.134 on port 80!"
+02:49:02 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.136 connected to port 80"
+02:49:02 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.135 on port 80!"
+02:49:02 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.144 connected to port 10000"
+02:49:02 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.145 connected to port 10000"
+02:49:02 PM [ERROR](./Net_Utils/NU_Connection.c:65) send_all(): 
+"send: 'Broken pipe'"
+02:49:02 PM [ERROR](./Net_Utils/NU_Connection.c:65) send_all(): 
+"send: 'Broken pipe'"
+02:49:03 PM [WARNING](./Net_Utils/NU_Connection.c:159) NU_Connection_send_file(): 
+"NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to 2.0.210.144'"
+02:49:03 PM [WARNING](./Net_Utils/NU_Connection.c:159) NU_Connection_send_file(): 
+"NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to 2.0.210.145'"
+02:49:03 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.151 connected to port 80"
+02:49:03 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.136 on port 80!"
+02:49:03 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.151 on port 80!"
+02:49:03 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.152 connected to port 80"
+02:49:03 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.152 on port 80!"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.162 connected to port 10000"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.163 connected to port 10000"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.162 on port 10000!"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.163 on port 10000!"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.164 connected to port 10000"
+02:49:12 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.164 on port 10000!"
+02:49:13 PM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
+"2.0.210.165 connected to port 10000"
+02:49:13 PM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
+"Disconnected from 2.0.210.165 on port 10000!"

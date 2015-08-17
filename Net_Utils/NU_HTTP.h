@@ -52,21 +52,26 @@ typedef struct {
     /// Contains the fields parsed from the header in a hash table.
     DS_Hash_Map_t *header;
     /// The HTTP version.
-    NU_HTTP_Version_e ver;
+    NU_HTTP_Version_e version;
     /// The HTTP status.
-    unsigned int stat;
+    unsigned int status;
 } NU_Response_t;
 
 typedef struct {
     /// Contains the fields parsed from the header in a hash table.
     DS_Hash_Map_t *header;
     /// The HTTP method.
-    NU_HTTP_Method_e meth;
+    NU_HTTP_Method_e method;
     /// The request file path.
-    char file_path[NU_HTTP_FILE_PATH_LEN + 1];
+    char *path;
     /// The HTTP version.
-    NU_HTTP_Version_e ver;
+    NU_HTTP_Version_e version;
 } NU_Request_t;
+
+typedef struct {
+    char *field;
+    char *value;
+} NU_Field_t;
 
 // TODO: Make Field Values case-insensitive!
 
@@ -98,9 +103,37 @@ char *NU_Response_to_string(NU_Response_t *res);
 
 char *NU_Request_to_string(NU_Request_t *req);
 
-bool NU_Response_set_field(NU_Response_t *res, char *field, char *values);
+/*
+    You can add multiple HTTP fields by passing a struct to it containing the key-value pair.
+    I.E:
+    NU_RESPONSE_WRITE(res, 200, NU_HTTP_VER_1_0, { "Content-Length", "100" }, { "Content-Type", "text/html" });
+*/
+#define NU_RESPONSE_WRITE(response, http_status, http_version, ...) do { \
+    NU_Field_t *fields = (NU_Field_t[]){ __VA_ARGS__ }; \
+    size_t arr_size = sizeof((NU_Field_t[]){ __VA_ARGS__ }) / sizeof(NU_Field_t); \
+    int i = 0; \
+    response->status = http_status; \
+    response->version = http_version; \
+    for(; i < arr_size; i++){ \
+        NU_Response_set_field(response, fields[i].field, fields[i].value); \
+    } \
+} while(0);
 
-bool NU_Request_set_field(NU_Request_t *req, char *field, char *values);
+#define NU_REQUEST_WRITE(request, http_method, http_version, file_path, ...) do { \
+    NU_Field_t *fields = (NU_Field_t[]){ __VA_ARGS__ }; \
+    size_t arr_size = sizeof((NU_Field_t[]){ __VA_ARGS__ }) / sizeof(NU_Field_t); \
+    int i = 0; \
+    request->method = http_method; \
+    request->verison = http_version; \
+    request->path = file_path; \
+    for(; i < arr_size; i++){ \
+        NU_Request_set_field(request, fields[i].field, fields[i].value); \
+    } \
+} while(0);
+
+bool NU_Response_set_field(NU_Response_t *res, char *field, char *value);
+
+bool NU_Request_set_field(NU_Request_t *req, char *field, char *value);
 
 bool NU_Response_remove_field(NU_Response_t *res, const char *field);
 
@@ -110,20 +143,8 @@ char *NU_Response_get_field(NU_Response_t *res, const char *field);
 
 char *NU_Request_get_field(NU_Request_t *req, const char *field);
 
-NU_HTTP_Version_e NU_Response_get_version(NU_Response_t *res);
+char *NU_Request_get_file_path(NU_Request_t *req);
 
-NU_HTTP_Version_e NU_Request_get_version(NU_Request_t *req);
-
-bool NU_Response_set_version(NU_Response_t *res, NU_HTTP_Version_e version);
-
-bool NU_Request_set_version(NU_Request_t *req, NU_HTTP_Version_e version);
-
-unsigned int NU_Response_get_status(NU_Response_t *res);
-
-bool NU_Response_set_status(NU_Response_t *res, unsigned int status);
-
-NU_HTTP_Method_e NU_Request_get_method(NU_Request_t *req);
-
-bool NU_Request_set_method(NU_Request_t *req, NU_HTTP_Method_e method);
+bool NU_Request_set_file_path(NU_Request_t *req, const char *file_path);
 
 #endif /* end NET_UTILS_HTTP_H */

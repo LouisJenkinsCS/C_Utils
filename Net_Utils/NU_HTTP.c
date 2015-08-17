@@ -95,17 +95,17 @@ static void parse_http_field(DS_Hash_Map_t *mapped_fields, const char *line){
 static void parse_http_method(NU_Request_t *req, const char *line){
 	MU_LOG_TRACE(logger, "%s", line);
 	if(strncmp(line, "GET", 3) == 0){
-		req->meth = NU_HTTP_GET;
+		req->method = NU_HTTP_GET;
 	} else if(strncmp(line, "POST", 4) == 0){
-		req->meth = NU_HTTP_POST;
+		req->method = NU_HTTP_POST;
 	} else if(strncmp(line, "HEAD", 4) == 0){
-		req->meth = NU_HTTP_HEAD;
+		req->method = NU_HTTP_HEAD;
 	} else if(strncmp(line, "DELETE", 6) == 0){
-		req->meth = NU_HTTP_DELETE;
+		req->method = NU_HTTP_DELETE;
 	} else if(strncmp(line, "TRACE", 5) == 0){
-		req->meth = NU_HTTP_TRACE;
+		req->method = NU_HTTP_TRACE;
 	} else if(strncmp(line, "CONNECT", 7) == 0){
-		req->meth = NU_HTTP_CONNECT;
+		req->method = NU_HTTP_CONNECT;
 	} else {
 		MU_LOG_WARNING(logger, "Bad HTTP method!'%s'", line);
 	}
@@ -114,9 +114,10 @@ static void parse_http_method(NU_Request_t *req, const char *line){
 static void parse_http_path(NU_Request_t *req, const char *line){
 	MU_LOG_TRACE(logger, "%s", line);
 	if(strlen(line) == 1){
-		snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "/index.html");
+		req->path = "/index.html";
+		return;
 	}
-	snprintf(req->file_path, NU_HTTP_FILE_PATH_LEN, "%s", line);
+	req->path = strdup(line);
 }
 
 static void parse_http_status(NU_Response_t *res, const char *line){
@@ -126,7 +127,7 @@ static void parse_http_status(NU_Response_t *res, const char *line){
 		MU_LOG_WARNING(logger, "Bad HTTP status!");
 		return;
 	}
-	res->stat = status;
+	res->status = status;
 }
 
 static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
@@ -144,8 +145,8 @@ static void parse_http_version(NU_HTTP_Version_e *version, const char *line){
 	}
 }
 
-static char *http_method_to_string(NU_HTTP_Method_e meth){
-	switch(meth){
+static char *http_method_to_string(NU_HTTP_Method_e method){
+	switch(method){
 		case NU_HTTP_GET: return "GET";
 		case NU_HTTP_POST: return "POST";
 		case NU_HTTP_CONNECT: return "CONNECT";
@@ -156,8 +157,8 @@ static char *http_method_to_string(NU_HTTP_Method_e meth){
 	}
 }
 
-static char *http_version_to_string(NU_HTTP_Version_e ver){
-	switch(ver){
+static char *http_version_to_string(NU_HTTP_Version_e version){
+	switch(version){
 		case NU_HTTP_VER_1_0: return "HTTP/1.0";
 		case NU_HTTP_VER_1_1: return "HTTP/1.1";
 		case NU_HTTP_VER_1_X: return "HTTP/1.X";
@@ -185,7 +186,7 @@ static size_t parse_http_response(NU_Response_t *header, char *header_str){
 			return 0;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(&header->ver, line);
+			parse_http_version(&header->version, line);
 		} else if (isdigit((unsigned char)*line)){
 			parse_http_status(header, line);
 		} else {
@@ -221,7 +222,7 @@ static size_t parse_http_request(NU_Request_t *req, char *header_str){
 			return 0;
 		}
 		if(strncmp(line, "HTTP", 4) == 0){
-			parse_http_version(&req->ver, line);
+			parse_http_version(&req->version, line);
 		} else if(*line == '/'){
 			parse_http_path(req, line);
 		} else parse_http_method(req, line);
@@ -299,8 +300,8 @@ bool NU_Response_clear(NU_Response_t *res){
 		MU_LOG_ERROR(logger, "DS_Hash_Map_clear: 'Was unable to clear hash map!'");
 		return false;
 	}
-	res->ver = NU_HTTP_NO_VER;
-	res->stat = 0;
+	res->version = NU_HTTP_NO_VER;
+	res->status = 0;
 	return true;
 
 }
@@ -312,9 +313,11 @@ bool NU_Request_clear(NU_Request_t *req){
 		MU_LOG_ERROR(logger, "DS_Hash_Map_clear: 'Was unable to clear hash map!'");
 		return false;
 	}
-	memset(&req->file_path, '\0', NU_HTTP_FILE_PATH_LEN + 1);
-	req->ver = NU_HTTP_NO_VER;
-	req->meth = NU_HTTP_NO_METHOD;
+	memset(&req->path, '\0', NU_HTTP_FILE_PATH_LEN + 1);
+	req->version = NU_HTTP_NO_VER;
+	req->method = NU_HTTP_NO_METHOD;
+	free(req->path);
+	req->path = NULL;
 	return true;
 }
 
@@ -329,17 +332,17 @@ char *NU_Response_to_string(NU_Response_t *res){
 		goto error;
 	}
 	size_t size, i = 0, size_left = NU_HTTP_HEADER_LEN + 1;
-	const char *status = (res->stat > 509) ? NULL : NU_HTTP_Status_Codes[res->stat];
+	const char *status = (res->status > 509) ? NULL : NU_HTTP_Status_Codes[res->status];
 	if(!status){
 		MU_LOG_INFO(logger, "Invalid HTTP Status!");
 		goto error;
 	}
-	char *ver = http_version_to_string(res->ver);
-	if(!ver){
+	char *version = http_version_to_string(res->version);
+	if(!version){
 		MU_LOG_INFO(logger, "Invalid HTTP Version!");
 		goto error;
 	}
-	size_t retval = snprintf(buf, size_left, "%s %s\r\n", status, ver);
+	size_t retval = snprintf(buf, size_left, "%s %s\r\n", version, status);
 	size_left -= retval;
 	char **arr = DS_Hash_Map_key_value_to_string(res->header, NULL, ": ", NULL, &size, NULL);
 	for(; i < size; i++){
@@ -374,21 +377,21 @@ char *NU_Request_to_string(NU_Request_t *req){
 		goto error;
 	}
 	size_t size, i = 0, size_left = NU_HTTP_HEADER_LEN + 1;
-	char *method = http_method_to_string(req->meth);
+	char *method = http_method_to_string(req->method);
 	if(!method){
 		MU_LOG_INFO(logger, "Invalid HTTP Method!");
 		goto error;
 	}
-	if(!*(req->file_path)){
+	if(!*(req->path)){
 		MU_LOG_INFO(logger, "Invalid File Path!");
 		goto error;
 	}
-	char *ver = http_version_to_string(req->ver);
-	if(!ver){
+	char *version = http_version_to_string(req->version);
+	if(!version){
 		MU_LOG_INFO(logger, "Invalid HTTP Version!");
 		goto error;
 	}
-	size_t retval = snprintf(buf, size_left, "%s %s %s\r\n", method, req->file_path, ver);
+	size_t retval = snprintf(buf, size_left, "%s %s %s\r\n", method, req->path, version);
 	size_left -= retval;
 	char **arr = DS_Hash_Map_key_value_to_string(req->header, NULL, ": ", NULL, &size, NULL);
 	for(; i < size; i++){
@@ -453,46 +456,7 @@ char *NU_Request_get_field(NU_Request_t *req, const char *field){
 	return value;
 }
 
-NU_HTTP_Version_e NU_Response_get_version(NU_Response_t *res){
-	MU_ARG_CHECK(logger, NU_HTTP_NO_VER, res);
-	return res->ver;
-}
-
-NU_HTTP_Version_e NU_Request_get_version(NU_Request_t *req){
-	MU_ARG_CHECK(logger, NU_HTTP_NO_VER, req);
-	return req->ver;
-}
-
-bool NU_Response_set_version(NU_Response_t *res, NU_HTTP_Version_e version){
-	MU_ARG_CHECK(logger, false, res);
-	res->ver = version;
-	return true;
-}
-
-bool NU_Request_set_version(NU_Request_t *req, NU_HTTP_Version_e version){
-	MU_ARG_CHECK(logger, false, req);
-	req->ver = version;
-	return true;
-}
-
-unsigned int NU_Response_get_status(NU_Response_t *res){
-	MU_ARG_CHECK(logger, false, res);
-	return res->stat;
-}
-
-bool NU_Response_set_status(NU_Response_t *res, unsigned int status){
-	MU_ARG_CHECK(logger, false, res, status <= 509 && NU_HTTP_Status_Codes[status]);
-	res->stat = status;
-	return true;
-}
-
-NU_HTTP_Method_e NU_Request_get_method(NU_Request_t *req){
-	MU_ARG_CHECK(logger, NU_HTTP_NO_METHOD, req);
-	return req->meth;
-}
-
-bool NU_Request_set_method(NU_Request_t *req, NU_HTTP_Method_e method){
-	MU_ARG_CHECK(logger, false, req);
-	req->meth = method;
-	return true;
+char *NU_Request_get_file_path(NU_Request_t *req){
+	MU_ARG_CHECK(logger, NULL, req);
+	return req->path;
 }

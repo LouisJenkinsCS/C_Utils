@@ -20,12 +20,31 @@ static const unsigned char is_threaded = 1;
 static const char *ip_addr = "192.168.1.112";
 static const int recv_flags = 0;
 static const int send_flags = 0;
-static const char *filepath = "C:/users/theif519/Documents/theif519.html";
+static const char *filepath = "Net_Utils/Misc/Web_Pages";
+
+static FILE *open_web_page(const char *page){
+  char buf[NU_HTTP_FILE_PATH_LEN + 1];
+  snprintf(buf, NU_HTTP_FILE_PATH_LEN + 1, "%s%s", filepath, page);
+  FILE *file = fopen(buf, "rb");
+  return file;
+}
+
+static char *get_page_size(FILE *file){
+  const int page_size_len = 32;
+  char *buf = malloc(page_size_len + 1);
+  MU_ASSERT(buf, logger, "Was unable to allocate buffer for page size!");
+  struct stat file_stats; 
+  int file_fd = fileno(file);
+  MU_ASSERT((file_fd != -1), logger, "fileno: '%s'", strerror(errno));
+  MU_ASSERT((fstat(file_fd, &file_stats) != -1), logger, "fstat: '%s'\n", strerror(errno));
+  size_t file_size = file_stats.st_size;
+  snprintf(buf, page_size_len + 1, "%zu", file_size);
+  return buf;
+}
 
 static void *handle_connection(void *args){
   NU_Connection_t *conn = args;
   char buf[BUFSIZ + 1];
-  char header[BUFSIZ + 1];
   size_t received = NU_Connection_receive(conn, buf, BUFSIZ, timeout, recv_flags);
   if(!received){
     MU_DEBUG("Unable to receive request");
@@ -37,16 +56,19 @@ static void *handle_connection(void *args){
   MU_DEBUG("Leftovers: '%.*s'", (int)received, retval);
   retval = NU_Request_to_string(req);
   MU_DEBUG("Received request:\n%s\n", retval);
+  retval = NU_Request_get_file_path(req);
   // When HTTP is implemented, I will handle HTTP requests dynamically. For now I just return a consistent header.
-  FILE *file = fopen(filepath, "rb");
-  MU_ASSERT(file, logger, "fopen: '%s'", strerror(errno));
-  struct stat file_stats; 
-  int file_fd = fileno(file);
-  MU_ASSERT((file_fd != -1), logger, "fileno: '%s'", strerror(errno));
-  MU_ASSERT((fstat(file_fd, &file_stats) != -1), logger, "fstat: '%s'\n", strerror(errno));
-  size_t file_size = file_stats.st_size;
-  sprintf(header, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %zu\r\n\r\n", file_size);
-  size_t sent = NU_Connection_send(conn, header, strlen(header), timeout, send_flags);
+  unsigned int status = 200;
+  FILE *file = open_web_page(retval);
+  if(!file){
+    file = open_web_page("/404.html");
+    status = 400;
+    MU_ASSERT(file, logger, "Missing vital core web pages!");
+  }
+  NU_Response_t *res = NU_Response_create();
+  NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", "text/html; charset=UTF-8" });
+  retval = NU_Response_to_string(res);
+  size_t sent = NU_Connection_send(conn, retval, strlen(retval), timeout, send_flags);
   if(!sent){
     MU_DEBUG("Unable to send response!");
     fclose(file);

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <link rel="stylesheet" href="styles/main.css" type="text/css"/>
+        <title>Database Testing...</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body onload="checkCookie()">
+        
+        <form id="mainForm" action="BankingControl" method="POST">
+            <input type="hidden" value ="login" name="submitInformation">
+            <h1>Welcome to banking by Louis Jenkins </h1>
+            <p>Please Enter your First and Last Name</p>
+            <p>First Name: <input type="text" name="FirstName" id="fName" value=""/> </p>
+            <p>Last Name: <input type="text" name="LastName" id="lName" value="" /> </p>
+            <input type="submit" value="Login" name="LoginButton" />
+        </form>
+        <script>
+            function checkCookie(){ // Checks for cookie
+                var fullName = "";
+                var cookie = document.cookie;
+                if(cookie.length === 0){
+                    return;
+                }
+                fullName = cookie.slice(9, cookie.length);
+                forwardRequest(fullName); // If Cookie exists
+            }
+            function forwardRequest(fullName){
+                alert("Welcome " + fullName); // Welcome user then set the fields
+                document.getElementById("fName").value = fullName.substring(1, fullName.lastIndexOf(" "));
+                document.getElementById("lName").value = fullName.substring(fullName.lastIndexOf(" ")+1, fullName.length-1);
+            } // Note: Does not call submit
+        </script>
+    </body>
+</html>
