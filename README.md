@@ -248,15 +248,11 @@ char *left_overs = NU_Request_init(&req, request, &request_size);
 /// Assume that no header is actually over 1kb, although it is possible, not for this example.
 char *file_path = NU_Request_get_file_path(&req);
 FILE *file = fopen(file_path, "r");
-NU_Response_t res;
-NU_Response_init(&res, NULL, NULL);
-NU_Response_set_status(&res, 200);
-NU_Response_set_version(&res, NU_HTTP_VER_1_X);
-NU_Response_set_field(&res, "Content-Length", file_size);
+NU_Response_t *res = NU_Response_create();
+NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
 /// Assume you got file_size from fstat.
 char [BUFSIZ] response;
 NU_Response_to_string(&res, response, BUFSIZ);
-
 /*
     Alternatively, what you CAN do is this...
     NU_Response_append_header(&res, "HTTP/1.1 200 OK\r\nContent-Length: XYZ\r\n\r\n");
@@ -265,7 +261,7 @@ NU_Response_to_string(&res, response, BUFSIZ);
 
 ```
 
-Unfortunately, it's rather long winded. But it's still in development, so it's bound to improve as I go along. Overall, it should allow you to set and get header fields.
+It's a lot less long-winded, making use of a macro to allow the ease-of-use field-value pairs in the guise of a struct.
 
 ### Data Structures [<b>In Development</b>]
 

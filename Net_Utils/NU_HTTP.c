@@ -455,8 +455,3 @@ char *NU_Request_get_field(NU_Request_t *req, const char *field){
 	char *value = DS_Hash_Map_get(req->header, field);
 	return value;
 }
-
-char *NU_Request_get_file_path(NU_Request_t *req){
-	MU_ARG_CHECK(logger, NULL, req);
-	return req->path;
-}

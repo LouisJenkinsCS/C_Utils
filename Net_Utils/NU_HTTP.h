@@ -143,8 +143,4 @@ char *NU_Response_get_field(NU_Response_t *res, const char *field);
 
 char *NU_Request_get_field(NU_Request_t *req, const char *field);
 
-char *NU_Request_get_file_path(NU_Request_t *req);
-
-bool NU_Request_set_file_path(NU_Request_t *req, const char *file_path);
-
 #endif /* end NET_UTILS_HTTP_H */

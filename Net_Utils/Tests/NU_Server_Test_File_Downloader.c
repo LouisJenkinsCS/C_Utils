@@ -56,17 +56,20 @@ static void *handle_connection(void *args){
   MU_DEBUG("Leftovers: '%.*s'", (int)received, retval);
   retval = NU_Request_to_string(req);
   MU_DEBUG("Received request:\n%s\n", retval);
-  retval = NU_Request_get_file_path(req);
+  char *content_type;
+  if(strncmp(req->path, "/styles", strlen("/styles")) == 0){
+    content_type = "text/css; charset=UTF-8";
+  } else content_type = "text/html; charset=UTF-8";
   // When HTTP is implemented, I will handle HTTP requests dynamically. For now I just return a consistent header.
   unsigned int status = 200;
-  FILE *file = open_web_page(retval);
+  FILE *file = open_web_page(req->path);
   if(!file){
     file = open_web_page("/404.html");
     status = 400;
     MU_ASSERT(file, logger, "Missing vital core web pages!");
   }
   NU_Response_t *res = NU_Response_create();
-  NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", "text/html; charset=UTF-8" });
+  NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
   retval = NU_Response_to_string(res);
   size_t sent = NU_Connection_send(conn, retval, strlen(retval), timeout, send_flags);
   if(!sent){

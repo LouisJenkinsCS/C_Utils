@@ -1,28 +1,12 @@
-02:48:41 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:49 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:48:41 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:49 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:48:42 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:49 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:48:54 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:58 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:02 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:58 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:02 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:02 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:03 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:03 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:03 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:12 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:12 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:12 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
-"DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"
-02:49:13 PM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
+11:09:58 AM [ERROR](./Data_Structures/DS_Hash_Map.c:214) DS_Hash_Map_remove(): 
 "DS_Hash_Map_remove: Invalid Arguments=> {  map: TRUE; map && map->buckets: TRUE; map && map->size: FALSE; key: TRUE! }"

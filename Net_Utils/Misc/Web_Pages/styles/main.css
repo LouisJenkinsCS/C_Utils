@@ -1,0 +1,53 @@
+/* The styles for the elements */
+body { /* All elements in the body inherit these settings */
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 85%; /*use 85% of browser's default front size*/ 
+    margin-left: 2em; /* an em is roughly the width of a capital M */ 
+    margin-right: 2em;
+    width: 100%; /* 400px was not enough width */
+}
+h1 { /*normally 200% of deafult font size*/    
+    font-size: 140%;
+    color: teal;
+    margin-bottom: .5em;
+}
+label {
+    float: left; /*labels to the left, what follows to the right */
+    width: 7em; /* We don't need tables now to line up labels */
+    margin-bottom: 0.5em;
+    font-weight: bold;
+}
+input[type="text"], input[type="email"], input[type="password"]  {  /* An attribute selector */
+    width: 15em; /*space for user to type */
+    margin-left: 0.5em;    
+    margin-bottom: 0.5em;
+    margin-top: 0.5em
+}
+span {
+    margin-left: 0.5em;    
+    margin-bottom: 0.5em;    
+}
+br {
+    clear: both; /* Clears the float specified by the tag above br*/  
+} /* In our case (index.html) it was the float specified by the label tag */
+
+table{
+    border: 1px solid saddlebrown;
+}
+th,td{
+    border: 1px solid saddlebrown;
+    text-align: left;
+    padding: .5em;
+}
+/* The styles for the classes */
+.pad_top {
+    padding-top: 0.25em;
+}
+.margin_left {
+    margin-left: 0.5em;
+}
+.align_right{
+    text-align: right;
+}
+
+ 
