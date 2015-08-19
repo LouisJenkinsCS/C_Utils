@@ -39,6 +39,7 @@
  */
 
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 /* Typedef for structs */
@@ -119,7 +120,7 @@ void *Linked_List_get_at(Linked_List_t *list, unsigned int index);
  * @param compare The comparator used to sort the list.
  * @return 1 on success, 0 if list or compare is NULL.
  */
-int Linked_List_sort(Linked_List_t *list, Linked_List_Compare compare);
+bool Linked_List_sort(Linked_List_t *list, Linked_List_Compare compare);
 
 /**
  * Removes the item from the list if it is found, along with the node associated with it.
@@ -129,7 +130,7 @@ int Linked_List_sort(Linked_List_t *list, Linked_List_Compare compare);
  * @param delete_item Callback used to free the item.
  * @return 1 on success, 0 if list is NULL, or if the item is not found in the list.
  */
-int Linked_List_remove_item(Linked_List_t *list, void *item, Linked_List_Delete delete_item);
+bool Linked_List_remove_item(Linked_List_t *list, void *item, Linked_List_Delete delete_item);
 
 /**
  * Removes the item at the given index if it is in bounds. If delete_item is NULL, 
@@ -189,7 +190,7 @@ void *Linked_List_remove_current(Linked_List_t *list, Linked_List_Delete delete_
  * @param item Item to be added.
  * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
  */
-int Linked_List_add_after(Linked_List_t *list, void *item);
+bool Linked_List_add_after(Linked_List_t *list, void *item);
 
 /**
  * Adds the requested item before the current node in the list. Note: This flags the
@@ -199,7 +200,7 @@ int Linked_List_add_after(Linked_List_t *list, void *item);
  * @param item Item to be added.
  * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
  */
-int Linked_List_add_before(Linked_List_t *list, void *item);
+bool Linked_List_add_before(Linked_List_t *list, void *item);
 
 /**
  * Adds the item to the list, in sorted order if the callback is not NULL, or at the tail if it is.
@@ -208,7 +209,7 @@ int Linked_List_add_before(Linked_List_t *list, void *item);
  * @param compare Comparator to add the item sorted.
  * @return 1 upon success, 0 if the list is NULL.
  */
-int Linked_List_add(Linked_List_t *list, void *item, Linked_List_Compare compare);
+bool Linked_List_add(Linked_List_t *list, void *item, Linked_List_Compare compare);
 
 /**
  * Returns an array of items inside of the Linked List, setting the array_size parameter
@@ -225,7 +226,7 @@ void **Linked_List_to_array(Linked_List_t *list, size_t *array_size);
  * @param callback Callback to manipulate the item in the list.
  * @return 1 on success, 0 if list or callback is NULL.
  */
-int Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item));
+bool Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item));
 
 /**
  * Prints all items in a formatted, bracketed and comma separated way based on the
@@ -235,7 +236,7 @@ int Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item));
  * @param file The file to print to, I.E stdio or an actual FILE.
  * @param to_string Callback to obtain a string representation of each item in the list.
  */
-void Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(void *item));
+bool Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(void *item));
 
 /**
  * Returns whether or not the list contains the given item.
@@ -243,7 +244,7 @@ void Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(v
  * @param item Item to search for.
  * @return 1 if it does contain the item, 0 if the list is NULL or it doesn't exist in the list.
  */
-int Linked_List_contains(Linked_List_t *list, void *item);
+bool Linked_List_contains(Linked_List_t *list, void *item);
 
 /**
  * Returns the current node's item in the iterator.
@@ -261,7 +262,7 @@ void *Linked_List_get_current(Linked_List_t *list);
  * @param list List to destroy.
  * @param delete_item Callback used on each item.
  */
-void Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item);
+bool Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item);
 
 
 #endif /* LINKED_LIST_H */
