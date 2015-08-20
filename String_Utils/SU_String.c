@@ -11,19 +11,11 @@ __attribute__((destructor)) static void destroy_logger(void){
 }
 
 /*
- * String_Utils has had it's garbage_collector garbage removed from it. For now, even as an experiment, it wasn't
- * worth claiming it as stable when it was unstable in and of itself. The garbage collector may have worked, but it
- * literally did nothing of value except complicate code and even increase the program size by 3x. So, instead, I
- * opted to have another experiment, one which is already heavily tested. The macro TEMP uses the
- * cleanup attribute specific for GCC and Clang compilers, making it 100% dependent on them to compile, but
- * it's easy enough to remove either way. Besides, it accomplished what I want to do. 
- *
- * Of course in the future I most likely (99.999% sure) I'm going to be replacing it entirely from the library functions,
- * as it currently is impossible to use without it being dependent on GCC and POSIX as is. Most likely, it will be apart of the whole C_Utils
- * package. However, I'll go into what TEMP does. What TEMP does is it will call the assigned callback for cleanup when it
- * leaves the variable's scope, most likely a function, but could be inside of a loop if it was declared there. TEMP will basically just free 
- * the string without further ado, preventing any memory leaks and pretty much eliminated needs to call free yourself.
- */
+    String_Utils is not called SU_String, conforming to the naming convention of all of my other files, plus had a VERY much needed update.
+    Now it's much more efficient, no more useless heap allocations for temporary storage,and I even cut down on the total amount
+    of temporary storages I use, and on my overall design of the library. Now it tries to be as efficient as possible, which is 10x better
+    than it was last version, hence it is in version 2.0, because it got a major overhaul.
+*/
 
 char SU_String_char_at(const String str, unsigned int index){
     MU_ARG_CHECK(logger, '\0', str, str && index <= strlen(str));
