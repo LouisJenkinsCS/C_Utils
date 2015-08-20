@@ -19,7 +19,7 @@ bool dispatch_iterator(void *args){
 bool dispatch_string(void *args){
 	static int i = 0;
 	i++;
-	if((i % 500) == 0) MU_DEBUG("Hello World!\n");
+	if((i % 500) == 0) MU_DEBUG("Hello World!");
 	return false;
 }
 
@@ -55,6 +55,8 @@ int main(void){
 	MU_Event_Loop_add(loop, timed_source_two);
 	MU_Event_Loop_add(loop, timed_source_one);
 	MU_Event_Loop_add(loop, timed_source_three);
+	MU_Event_Loop_add(loop, source_one);
+	MU_Event_Loop_add(loop, source_two);
 	MU_Event_Loop_run(loop);
 	return 0;
 }

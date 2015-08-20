@@ -227,41 +227,36 @@ NU_Connection_t *conn = NU_Client_connect(client, ip_addr, port, timeout);
 
 Even shorter than NU_Server is. Create the client and go. Just like NU_Server, if you are finished with a NU_Connection, call NU_Client_disconnect to add it back to the pool.
 
-####HTTP [<b>In Development</b>]
+####HTTP [<b>Unstable</b>] Version 0.5
 
-As NU_HTTP is currently in development, I'll state the long term philosophy and a general demo of what it should look like as an end result.
+NU_HTTP, or Net_Utils's HTTP Parser, is a simple yet minimal parsing, and generating, HTTP library. It allows you to parse HTTP requests and responses, as well generate your own by setting fields, resposne statuses, etc. by the use of it's API.
 
-Firstly, NU_HTTP is a simple HTTP parser, which takes a buffer, and if it finds any header fields (I.E fields which end in /r/n), it will parse out the fields and attributes into a hash map, making it easier to retrieve at a later time. Basically, it takes in a header, and spits out the rest of the message (I.E body of the message) as well as updating to you the new length of the message. This also allows it to parse incomplete headers, as if you combine the incomplete header with the rest of the header and body, it will eventually be able to finish parsing it.
+NU_HTTP takes a buffer, not having to be NULL-terimainted, and returns what's left in the buffer after it parses out the rest. Hence, if you pass both the HTTP header and the message body, it will return the offset (note here) of where the message body begins. It allows you to check if a field is set by using a hash table of it's field-value pairs, file path, response status, HTTP version, etc. 
 
-After parsing the header, it can return the header as a string according to the w3 standards. It allows you to retrieve individual fields from the header files as well as set them yourself.
-
-An optimistic example would be the following...
+Lastly, it allows you to create an HTTP response or request in an elegant way. An example can be seen below...
 
 ```c
 
-char[BUFSIZ] request;
+/// Assume header gets filled out by some request.
+char header[BUFSIZ];
 size_t request_size;
-/// Imagine it gets filled out by NU_Connection at some time before the following calls.
-NU_Request_t req;
-char *left_overs = NU_Request_init(&req, request, &request_size);
-/// init not only initializes the request object, but also fills it out with applicable information.
-/// Assume that no header is actually over 1kb, although it is possible, not for this example.
-char *file_path = NU_Request_get_file_path(&req);
-FILE *file = fopen(file_path, "r");
+NU_Request_t *req = NU_Request_create();
+NU_Request_append_header(req, header, &request_size);
+FILE *file = fopen(req->path, "r");
 NU_Response_t *res = NU_Response_create();
-NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
-/// Assume you got file_size from fstat.
-char [BUFSIZ] response;
-NU_Response_to_string(&res, response, BUFSIZ);
 /*
-    Alternatively, what you CAN do is this...
-    NU_Response_append_header(&res, "HTTP/1.1 200 OK\r\nContent-Length: XYZ\r\n\r\n");
-    Which of course is faster.
+    Note that it takes a rather elegant looking key-value pair, in the guise
+    of a struct with two char * members. What the macro does, in gist, is
+    that it takes (NU_Field_t){ x, y}, into { x, y} by converting it for you.
+    Hence (NU_Field_t){ "Content-Length", file_size } becomes a much better:
+    { "Content-Length", file_size }.
 */
+NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
+char *response = NU_Response_to_string(res);
 
 ```
 
-It's a lot less long-winded, making use of a macro to allow the ease-of-use field-value pairs in the guise of a struct.
+It's rather simple and elegant (in the creator's biased opinion).
 
 ### Data Structures [<b>In Development</b>]
 
@@ -386,6 +381,63 @@ MU_Event_destroy(event, (unsigned int) pthread_self());
 ```
 
 Once again, simple and easy to use. The thread_id is to help with debugging, as it is unfortunately impossible to get an actual workable number to work with for a thread, but it's irrelevant in the example. Assigning your own thread_id to any given thread you spawn makes debugging easier. Alternatively, you can just past 0 if you don't care. 
+
+####Event Loop [<b>Unstable</b>] Version 0.5
+
+MU_Event_Loop, is a simple, minimal event loop, which allows you to add event sources, and have them be polled on at regular intervals. The Event Loop also has support for timed or timer events, upon which the dispatch callback will be called when it's timeout ellapses.
+
+The Event Loop is rather simple and bare bones for now, polling once every 10ms, hence the amount of precision is very high, yet somewhat expensive, however not too much so, but does not scale well when idle and does better when it has a lot of tasks to do/poll for.
+
+The Event Loop takes a prepare callback (to prepare any such data to be passed to an event when ready), a check callback (to check if the event is ready), a dispatch callback (to notify any threads waiting on the event), and finally a finalize callback (to destroy the user data when it is finished).
+
+An example of it's completed state (optimistically) will look somewhat akin to this...
+
+```c
+
+void *prepare_event(void *data){
+    return malloc(sizeof(struct some_event_t));
+}
+
+bool check_event(void *data){
+    if(do_something_with(data)) return true;
+    return false;
+}
+
+bool dispatch_event(void *data){
+    notify_thread_waiting_on(data);
+    return true;
+}
+
+bool finalize_event(void *data){
+    free(data);
+    return true;
+}
+
+bool print_something(void *data){
+    printf("Something!\n");
+    return true;
+}
+
+/*
+    The below is an example of how to use the event loop.
+    It creates a simple event with it's appropriate callbacks,
+    then sets it's timeout to 0, meaning it is polled on once every
+    10ms. Next is a timed_event, which is will print "Something!" once
+    every 10 seconds.
+*/
+int main(void){
+    MU_Event_Source_t *event = MU_Event_Source_create(prepare_event, check_event, dispatch_event, finalize_event, 0);
+    MU_Event_Source_t *timed_event = MU_Event_Source_create(NULL, NULL, print_something, NULL, 10);
+    MU_Event_Loop_t *loop = NU_Event_Loop_create();
+    MU_Event_Loop_add(loop, event);
+    MU_Event_Loop_add(loop, timed_event);
+    MU_Event_Loop_run(loop);
+    return 0;
+}
+
+```
+
+It's very simple, and as always, easy to use. Right now it's not entirely stable, but I'm working on fixing bugs and adding appropriate features.
 
 ####Flags [<b>Stable</b>] Version: 1.0
 

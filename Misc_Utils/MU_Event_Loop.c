@@ -117,10 +117,8 @@ bool MU_Event_Loop_run(MU_Event_Loop_t *loop){
 				}
 			}
 		}
-		MU_LOG_TRACE(logger, "Initialized event source data!");
 		Linked_List_for_each(loop->sources, event_loop_proxy);
-		MU_LOG_TRACE(logger, "Looping through sources to dispatch!");
-		usleep(50);
+		usleep(10000);
 	}
 	return true;
 }
