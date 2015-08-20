@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <TP_Pool.h>
+#include <sys/time.h>
 #include <Linked_List.h>
 
 typedef void *(*MU_Event_Prepare)();
@@ -23,10 +24,12 @@ typedef struct {
 	MU_Event_Dispatch dispatch;
 	/// Callback used whenever the main loop finishes.
 	MU_Event_Finalize finalize;
-	/// Determines if the data has been prepared.
-	bool is_prepared;
-	/// Determines if the data is finished.
-	bool is_finished;
+	/// Internal flags used to help maintain information about the event source.
+	unsigned int flags;
+	/// The timeval used to record the absolute time of the last check.
+	struct timeval last_check;
+	/// The timeout the timeval will be set to after triggering.
+	unsigned int timeout;
 } MU_Event_Source_t;
 
 typedef struct {
@@ -36,7 +39,7 @@ typedef struct {
 	_Atomic bool keep_alive;
 } MU_Event_Loop_t;
 
-MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb);
+MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout);
 
 bool MU_Event_Source_destroy(MU_Event_Source_t *source);
 
@@ -45,5 +48,7 @@ MU_Event_Loop_t *MU_Event_Loop_create(void);
 bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source);
 
 bool MU_Event_Loop_run(MU_Event_Loop_t *loop);
+
+bool MU_Event_Loop_stop(MU_Event_Loop_t *loop);
 
 #endif /* endif MU_EVENT_LOOP_H */
