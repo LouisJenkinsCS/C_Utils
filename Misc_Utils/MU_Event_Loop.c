@@ -35,13 +35,15 @@ static void event_loop_proxy(void *args){
 		MU_FLAG_SET(source->flags, event_timeout_reset);
 		//MU_DEBUG("Time: %s", ctime((const time_t *)&source->last_check.tv_sec));
 	}
-	if(source->dispatch(source->data)){
-		if(source->finalize) source->finalize(source->data);
-		MU_FLAG_SET(source->flags, event_finished);
+	if(source->check == NULL || source->check(source->data)){
+		if(source->dispatch(source->data)){
+			if(source->finalize) source->finalize(source->data);
+			MU_FLAG_SET(source->flags, event_finished);
+		}
 	}
 }
 
-MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout){
+MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Check check_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout){
 	MU_ARG_CHECK(logger, NULL, dispatch_cb);
 	MU_Event_Source_t *source = calloc(1, sizeof(MU_Event_Source_t));
 	if(!source){
@@ -49,6 +51,7 @@ MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_
 		goto error;
 	}
 	source->prepare = prepare_cb;
+	source->check = check_cb;
 	source->dispatch = dispatch_cb;
 	source->finalize = finalize_cb;
 	MU_FLAG_SET(source->flags, event_timeout_reset);

@@ -1,6 +1,8 @@
 #include <MU_Event_Loop.h>
 
-MU_Event_Loop_t *loop = NULL;
+static const int max_events = 10;
+
+static MU_Event_Loop_t *loop = NULL;
 
 void *prepare_iterator(){
 	int *i = malloc(sizeof(int));
@@ -9,32 +11,36 @@ void *prepare_iterator(){
 	return i;
 }
 
+void *prepare_timer(){
+	static int num = 0;
+	int *i = malloc(sizeof(int));
+	*i = ++num;
+	return i;
+}
+
+bool check_iterator(void *args){
+	int *i = args;
+	return (++(*i) % 1000) == 0;
+}
+
 bool dispatch_iterator(void *args){
 	int *i = args;
-	if((++(*i) % 1000) != 0) return false;
 	MU_DEBUG("Incremented i to %d!", *i);
 	return false;
 }
 
-bool dispatch_string(void *args){
+bool check_string(void *args){
 	static int i = 0;
-	i++;
-	if((i % 500) == 0) MU_DEBUG("Hello World!");
+	return (++i % 500) == 0;
+}
+
+bool dispatch_string(void *args){
+	MU_DEBUG("Hello World!");
 	return false;
 }
 
-bool dispatch_short_timer(void *args){
-	MU_DEBUG("One Second Ellapsed!");
-	return false;
-}
-
-bool dispatch_medium_timer(void *args){
-	MU_DEBUG("Five Second Ellapsed!");
-	return false;
-}
-
-bool dispatch_long_timer(void *args){
-	MU_DEBUG("Ten Second Ellapsed!");
+bool dispatch_timer(void *args){
+	MU_DEBUG("%d seconds passed!", *(int *)args);
 	return false;
 }
 
@@ -46,17 +52,13 @@ bool finalize_iterator(void *args){
 }
 
 int main(void){
-	MU_Event_Source_t *source_one = MU_Event_Source_create(prepare_iterator, dispatch_iterator, finalize_iterator, 0);
-	MU_Event_Source_t *source_two = MU_Event_Source_create(NULL, dispatch_string, NULL, 0);
-	MU_Event_Source_t *timed_source_one = MU_Event_Source_create(NULL, dispatch_short_timer, NULL, 1000);
-	MU_Event_Source_t *timed_source_two = MU_Event_Source_create(NULL, dispatch_medium_timer, NULL, 5000);
-	MU_Event_Source_t *timed_source_three = MU_Event_Source_create(NULL, dispatch_long_timer, NULL, 10000);
+	int i = 0;
 	loop = MU_Event_Loop_create();
-	MU_Event_Loop_add(loop, timed_source_two);
-	MU_Event_Loop_add(loop, timed_source_one);
-	MU_Event_Loop_add(loop, timed_source_three);
-	MU_Event_Loop_add(loop, source_one);
-	MU_Event_Loop_add(loop, source_two);
+	MU_Event_Source_t *events[max_events];
+	for(; i < max_events; i++){
+		events[i] = MU_Event_Source_create(prepare_timer, NULL, dispatch_timer, NULL, (i + 1) * 1000);
+		MU_Event_Loop_add(loop, events[i]);
+	}
 	MU_Event_Loop_run(loop);
 	return 0;
 }
