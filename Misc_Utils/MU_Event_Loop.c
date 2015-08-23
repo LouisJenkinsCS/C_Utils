@@ -16,29 +16,38 @@ __attribute__((destructor)) static void destroy_logger(void){
 
 static const int event_finished = 1 << 0;
 static const int event_prepared = 1 << 1;
-static const int event_timeout_reset = 1 << 2;
 
 /*
-	Accept listener dispatches event to the Receive listener, with NU_Connection initialized.
-	Receive listener poll until information can be acquired, then it will parse HTTP header and send its response.
-	Receiver listener finalizes the data when it loses connection, EPIPE or SIGPIPE.
+	Checks for the following:
+	A) If the timeout has ellapses and the event already triggered, hence if it should reset the timeout.
+	B) If any data is needing to be prepared, if the prepare callback is specified.
+	C) If any events are finished and should be removed from the list.
 */
-static void event_loop_proxy(void *args){
+static void event_loop_main(void *args){
 	MU_Event_Source_t *source = args;
 	if(MU_FLAG_GET(source->flags, event_finished)) return;
+	if(source->prepare && !MU_FLAG_GET(source->flags, event_prepared)){
+		source->data = source->prepare();
+		MU_FLAG_SET(source->flags, event_prepared);
+	}
+	bool do_event = true;
 	if(source->timeout){
 		struct timeval curr_time;
 		gettimeofday(&curr_time, NULL);
-		if(timercmp(&source->last_check, &curr_time, >=)){
-			return;
-		}
-		MU_FLAG_SET(source->flags, event_timeout_reset);
-		//MU_DEBUG("Time: %s", ctime((const time_t *)&source->last_check.tv_sec));
+		if(timercmp(&source->next_timeout, &curr_time, <)){
+			if(!timerisset(&source->next_timeout)) do_event = false;
+			size_t seconds = source->timeout / 1000;
+			size_t milliseconds = (source->timeout % 1000) * 1000;
+			struct timeval timeout_time = { seconds, milliseconds };
+			timeradd(&curr_time, &timeout_time, &source->next_timeout);
+		} else do_event = false;
 	}
-	if(source->check == NULL || source->check(source->data)){
-		if(source->dispatch(source->data)){
-			if(source->finalize) source->finalize(source->data);
-			MU_FLAG_SET(source->flags, event_finished);
+	if(do_event){
+		if(source->check == NULL || source->check(source->data)){
+			if(source->dispatch(source->data)){
+				if(source->finalize) source->finalize(source->data);
+				MU_FLAG_SET(source->flags, event_finished);
+			}
 		}
 	}
 }
@@ -54,9 +63,8 @@ MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_
 	source->check = check_cb;
 	source->dispatch = dispatch_cb;
 	source->finalize = finalize_cb;
-	MU_FLAG_SET(source->flags, event_timeout_reset);
 	if(timeout){
-		timerclear(&source->last_check);
+		timerclear(&source->next_timeout);
 		source->timeout = timeout;
 	}
 	return source;
@@ -99,28 +107,7 @@ bool MU_Event_Loop_run(MU_Event_Loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
-		MU_Event_Source_t *curr_source = NULL;
-		for(curr_source = Linked_List_head(loop->sources); curr_source; curr_source = Linked_List_next(loop->sources)){
-			if(!MU_FLAG_GET(curr_source->flags, event_prepared) && curr_source->prepare){
-				curr_source->data = curr_source->prepare();
-				MU_FLAG_SET(curr_source->flags, event_prepared);
-			}
-			if(curr_source->timeout && MU_FLAG_GET(curr_source->flags, event_timeout_reset)){
-				struct timeval curr_time;
-				gettimeofday(&curr_time, NULL);
-				if(timercmp(&curr_source->last_check, &curr_time, <)){
-					size_t seconds = curr_source->timeout / 1000;
-					size_t milliseconds = (curr_source->timeout % 1000) * 1000;
-					struct timeval timeout_time = { seconds, milliseconds };
-					//MU_DEBUG("Old Time: %s\n", ctime((const time_t *)&curr_source->last_check.tv_sec));
-					timeradd(&curr_time, &timeout_time, &curr_source->last_check);
-					//MU_DEBUG("Adding: %s\nNew Time: %s", ctime((const time_t *)&curr_time.tv_sec),
-						//ctime((const time_t *)&timeout_time.tv_sec));
-					MU_FLAG_CLEAR(curr_source->flags, event_timeout_reset);
-				}
-			}
-		}
-		Linked_List_for_each(loop->sources, event_loop_proxy);
+		Linked_List_for_each(loop->sources, event_loop_main);
 		usleep(10000);
 	}
 	return true;
