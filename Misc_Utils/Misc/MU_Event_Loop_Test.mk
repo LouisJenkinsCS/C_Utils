@@ -3,7 +3,7 @@ PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
 CFLAGS=-g -D_GNU_SOURCE -Wall
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=Linked_List.c MU_Event_Loop.c MU_Logger.c MU_Arg_Check.c MU_Event_Loop_Test.c
+SOURCES=Linked_List.c MU_Event_Loop.c MU_Logger.c MU_Arg_Check.c MU_Event_Loop_Test.c MU_Events.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=MU_Event_Loop_Test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))

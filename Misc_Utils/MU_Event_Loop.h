@@ -2,9 +2,9 @@
 #define MU_EVENT_LOOP_H
 
 #include <stdbool.h>
-#include <TP_Pool.h>
 #include <sys/time.h>
 #include <Linked_List.h>
+#include <MU_Events.h>
 
 typedef void *(*MU_Event_Prepare)();
 typedef bool (*MU_Event_Check)(void *);
@@ -16,6 +16,8 @@ typedef struct {
 	Linked_List_t *sources;
 	/// Keep-Alive flag
 	_Atomic bool keep_alive;
+	/// The event to wait on for it to finish.
+	MU_Event_t *finished;
 } MU_Event_Loop_t;
 
 /*
@@ -53,5 +55,7 @@ bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source);
 bool MU_Event_Loop_run(MU_Event_Loop_t *loop);
 
 bool MU_Event_Loop_stop(MU_Event_Loop_t *loop);
+
+bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources);
 
 #endif /* endif MU_EVENT_LOOP_H */

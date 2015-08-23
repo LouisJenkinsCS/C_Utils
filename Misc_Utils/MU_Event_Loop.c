@@ -3,14 +3,17 @@
 #include <MU_Arg_Check.h>
 #include <unistd.h>
 
-MU_Logger_t *logger = NULL;
+static MU_Logger_t *logger = NULL;
+static MU_Logger_t *event_logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Misc_Utils/Logs/MU_Event_Loop.log", "w", MU_ALL);
+	event_logger = MU_Logger_create("./Misc_Utils/Logs/MU_Event_Loop_Events.log", "w", MU_ALL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
+	MU_Logger_destroy(event_logger);
 }
 
 
@@ -91,11 +94,22 @@ MU_Event_Loop_t *MU_Event_Loop_create(void){
 	loop->sources = Linked_List_create();
 	if(!loop->sources){
 		MU_LOG_ERROR(logger, "Linked_List_create: 'Was unable to create Linked List!");
-		free(loop);
-		return NULL;
+		goto error;
+	}
+	loop->finished = MU_Event_create("Finished", event_logger, 0);
+	if(!loop->finished){
+		MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create Finished event!");
+		goto error;
 	}
 	loop->keep_alive = ATOMIC_VAR_INIT(false);
 	return loop;
+
+	error:
+		if(loop){
+			free(loop->sources);
+			free(loop->finished);
+		}
+		return NULL;
 }
 
 bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source){
@@ -110,11 +124,21 @@ bool MU_Event_Loop_run(MU_Event_Loop_t *loop){
 		Linked_List_for_each(loop->sources, event_loop_main);
 		usleep(10000);
 	}
+	MU_Event_signal(loop->finished, 0);
 	return true;
 }
 
 bool MU_Event_Loop_stop(MU_Event_Loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, false);
+	return true;
+}
+
+bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources){
+	MU_ARG_CHECK(logger, false, loop);
+	MU_Event_Loop_stop(loop);
+	MU_Event_wait(loop->finished, -1, 0);
+	Linked_List_destroy(loop->sources, free_sources ? free : NULL);
+	free(loop);
 	return true;
 }
