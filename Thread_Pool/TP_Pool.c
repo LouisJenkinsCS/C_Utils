@@ -4,8 +4,34 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
+#include <MU_Arg_Check.h>
 #include <MU_Flags.h>
+#include <MU_Logger.h>
 #include <TP_Pool.h>
+
+typedef enum {
+	/// Lowest possible priority
+	TP_LOWEST,
+	/// Low priority, above Lowest.
+	TP_LOW,
+	/// Medium priority, considered the "average".
+	TP_MEDIUM,
+	/// High priority, or "above average".
+	TP_HIGH,
+	/// Highest priority, or "imminent"
+	TP_HIGHEST
+} TP_Priority_e;
+
+typedef struct {
+	/// Task to be executed.
+	TP_Callback callback;
+	/// Arguments to be passed to the task.
+	void *args;
+	/// Result from the Task.
+	TP_Result_t *result;
+	/// Priority of task.
+	TP_Priority_e priority;
+} TP_Task_t;
 
 static const char *pause_event_name = "Resume";
 static const char *finished_event_name = "Finished";

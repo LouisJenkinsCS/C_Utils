@@ -39,14 +39,46 @@ typedef struct {
 	MU_Logger_t *logger;
 } MU_Event_t;
 
+/**
+ * 
+ * @param event_name
+ * @param logger
+ * @param flags
+ * @return 
+ */
 MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger, unsigned int flags);
 
+/**
+ * 
+ * @param event
+ * @param thread_id
+ * @return 
+ */
 bool MU_Event_reset(MU_Event_t *event, unsigned int thread_id);
 
+/**
+ * 
+ * @param event
+ * @param timeout
+ * @param thread_id
+ * @return 
+ */
 bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread_id);
 
+/**
+ * 
+ * @param event
+ * @param thread_id
+ * @return 
+ */
 bool MU_Event_signal(MU_Event_t *event, unsigned int thread_id);
 
+/**
+ * 
+ * @param event
+ * @param thread_id
+ * @return 
+ */
 bool MU_Event_destroy(MU_Event_t *event, unsigned int thread_id);
 
 #endif /* endif MU_EVENTS_H */

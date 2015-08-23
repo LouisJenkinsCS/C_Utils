@@ -28,31 +28,88 @@ typedef struct {
 	pthread_rwlock_t *lock;
 } DS_Hash_Map_t;
 
-/// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
+/**
+ * 
+ * @param amount_of_buckets
+ * @param init_locks
+ * @return 
+ */
 DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks);
 
-/// Add a key-value pair to a hash map, and if the comparator is not NULL, it will be a hash-set operation.
+/**
+ * 
+ * @param map
+ * @param key
+ * @param value
+ * @return 
+ */
 bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
 
-/// Obtains the value from the key provided.
+/**
+ * 
+ * @param map
+ * @param key
+ * @return 
+ */
 void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
 
-/// Return and remove the value at the key provided, deleting it if the deletion callback is not NULL.
+/**
+ * 
+ * @param map
+ * @param key
+ * @param del
+ * @return 
+ */
 void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
 
-/// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
+/**
+ * 
+ * @param map
+ * @param value
+ * @param cmp
+ * @return 
+ */
 const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
 
-/// TODO: Implement
+/**
+ * 
+ * @param map
+ * @param key_prefix
+ * @param delimiter
+ * @param val_suffix
+ * @param size
+ * @param to_string
+ * @return 
+ */
 char **DS_Hash_Map_key_value_to_string(DS_Hash_Map_t *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, DS_to_string_cb to_string);
 
-/// Uses said callback on all elements inside of the map based on the general callback supplied.
+/**
+ * 
+ * @param map
+ * @param cb
+ * @return 
+ */
 bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
 
-/// Will clear the map of all elements, calling the deletion callback on each element if it is not NULL.
+/**
+ * 
+ * @param map
+ * @param del
+ * @return 
+ */
 bool DS_Hash_Map_clear(DS_Hash_Map_t *map, DS_delete_cb del);
 
-/// Determines the size at the time this function is called.
+/**
+ * 
+ * @param map
+ * @return 
+ */
 size_t DS_Hash_Map_size(DS_Hash_Map_t *map);
 
+/**
+ * 
+ * @param map
+ * @param del
+ * @return 
+ */
 bool DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del);

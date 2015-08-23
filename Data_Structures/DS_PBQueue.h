@@ -49,42 +49,49 @@ typedef struct {
 } DS_PBQueue_t;
 
 /**
- * Returns an initialized bounded queue of max size max_elements.
- * @param max_elements The maximum size of the bounded queue.
- * @param comparator Callback used to compare elements. Cannot be NULL!
- * @return A bounded priority blocking queue.
+ * 
+ * @param max_elements
+ * @param compare
+ * @return 
  */
 DS_PBQueue_t *DS_PBQueue_create(size_t max_elements, DS_comparator_cb compare);
 
 /**
- * Will attempt to add an element to the queue. If it is bounded, it will block
- * until it is no longer full. Note: It is recommended you use the Timed_Enqueue
- * if your queue is bounded, due to the fact that it will block indefinitely until
- * an element is removed.
- * @param queue The priority queue to add an element to.
- * @param item The item to add to the priority queue.
- * @return 1 if successful.
+ * 
+ * @param queue
+ * @param item
+ * @param timeout
+ * @return 
  */
 bool DS_PBQueue_enqueue(DS_PBQueue_t *queue, void *item, long long int timeout);
 
 /**
- * Attempts to obtain an item from the priority queue, blocking until one becomes available.
- * It should be noted that Timed_Dequeue is recommended for general, non-specific use,
- * as this will cause the thread to block indefinitely until it can obtain an element.
- * @param queue Priority blocking queue to obtain an element from.
- * @return The head item of the priority blocking queue.
+ * 
+ * @param queue
+ * @param timeout
+ * @return 
  */
 void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
 
 /**
- * Returns the current size of the queue. Note: Just because the queue's size is
- * returned, does not mean that by the time you act on the queue size, it will be the
- * same if other threads are manipulating the queue.
- * @param queue Priority blocking queue to obtain an element from.
- * @return The size of the queue.
+ * 
+ * @param queue
+ * @param del
+ * @return 
  */
 bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del);
 
+/**
+ * 
+ * @param queue
+ * @return 
+ */
 size_t DS_PBQueue_size(DS_PBQueue_t *queue);
 
+/**
+ * 
+ * @param queue
+ * @param del
+ * @return 
+ */
 bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del);

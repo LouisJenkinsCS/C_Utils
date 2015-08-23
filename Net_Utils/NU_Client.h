@@ -4,6 +4,9 @@
 #include <NU_Helper.h>
 #include <NU_Connection.h>
 
+/**
+ * The manager for connections, recycles existing connections to be re-used.
+ */
 typedef struct {
    /// Socket associated with this server.
    NU_Connection_t **connections;
@@ -15,21 +18,53 @@ typedef struct {
    bool synchronized;
 } NU_Client_t;
 
-/*  Creates a basic client template, fully initialized and connected to the host. */
-NU_Client_t *NU_Client_create(size_t initial_size, bool init_locks);
+/**
+ * 
+ * @param initial_size
+ * @param synchronized
+ * @return 
+ */
+NU_Client_t *NU_Client_create(size_t initial_size, bool synchronized);
 
-/* Connects the client to some host! */
+/**
+ * 
+ * @param client
+ * @param host
+ * @param port
+ * @param timeout
+ * @return 
+ */
 NU_Connection_t *NU_Client_connect(NU_Client_t *client, const char *host, unsigned int port, long long int timeout);
 
+/**
+ * 
+ * @param client
+ * @param connection
+ * @return 
+ */
 bool NU_Client_disconnect(NU_Client_t *client, NU_Connection_t *connection);
 
+/**
+ * 
+ * @param client
+ * @param message
+ * @param ...
+ * @return 
+ */
 bool NU_Client_log(NU_Client_t *client, const char *message, ...);
 
-/* Will shutdown the client's socket after the time given has ellapsed.
-   The client is not freed nor deallocated memory and can be reused. */
+/**
+ * 
+ * @param client
+ * @return 
+ */
 bool NU_Client_shutdown(NU_Client_t *client);
 
-/* The client immediately closes it's socket, free up all resources, and destroy itself. */
+/**
+ * 
+ * @param client
+ * @return 
+ */
 bool NU_Client_destroy(NU_Client_t *client);
 
 #endif /* endif NET_UTILS_CLIENT_H */

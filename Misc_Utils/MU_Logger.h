@@ -10,17 +10,9 @@
 #include <time.h>
 #include <assert.h>
 
-/*
- * Miscallaneous Utilities for the C Programming Language, or Misc_Utils, is a collection,
- * albeit a small one, of utilities that aren't big enough to deserve it's own package.
- * 
- * Inside, it contains basic logging macros to log information to a file, a debugging
- * macro to output information to stderr in a prettified format. It should also be
- * noted that the logging functions also show the name of the file and the line where 
- * the macro is invoked, thanks to GCC magic.
- * 
- * Inside also is a timer, which is extremely bare bones for now, and allows you
- * to start, stop and obtain the total time in string format.
+/**
+ * A simple logging utility that supports various log levels, accurate logging of
+ * location it is called, time and date and even supports custom logging format.
  */
 
 /**
@@ -70,13 +62,8 @@ typedef struct {
 /**
  * @brief Logger utility to log various types of messages according to different MU_Logger_Level_t levels.
  * 
- * The logger will log any messages that are above the logger level, and if any are above, is macro dependent.
- * For exmaple, MU_LOG_WARNING will do nothing if the logger level is above MU_WARNING level, but something like
- * MU_ASSERT or MU_ASSERT_RETURN will call assert or return respectively while not logging the condition at all.
- * 
- * It should also be noted that, if the logger has not been created or if errors occur during initialization barring
- * ones that cause a segmentation fault, as in the cases where *alloc return NULL or if the logfile failed to be created,
- * then it would count as if the logger level was above the macro's minimum-required level.
+ * The base structure for the logger, contains the logging formats, it's current log level,
+ * and the file it is logging to.
  */
 typedef struct {
 	/// The log file to write to.
@@ -156,21 +143,57 @@ typedef struct {
 #define MU_LOGGER_STRINGIFY(x) MU_LOGGER_STRINGIFY_THIS(x)
 #define MU_LOGGER_STRINGIFY_THIS(x) #x
 
-
+/**
+ * 
+ * @param filename
+ * @param mode
+ * @param level
+ * @return 
+ */
 MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_e level);
 
-/// Returns the format for the log level, and if not initialized, returns all, then falls back to default if not specified either.
+/**
+ * Returns the format for the log level, and if not initialized, returns all, 
+ * then falls back to default if not specified either.
+ * @param logger
+ * @param level
+ * @return 
+ */
 const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level);
 
+/**
+ * 
+ * @param level
+ * @return 
+ */
 const char *MU_Logger_Level_to_string(MU_Logger_Level_e level);
 
-/// Used by the logger to directly log a message. Use macro for logging!
+/**
+ * 
+ * @param logger
+ * @param level
+ * @param custom_level
+ * @param msg
+ * @param cond
+ * @param file_name
+ * @param line_number
+ * @param function_name
+ * @param ...
+ * @return 
+ */
 bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
 
-
+/**
+ * 
+ * @param logger
+ * @return 
+ */
 bool MU_Logger_destroy(MU_Logger_t *logger);
 
-
+/**
+ * 
+ * @return 
+ */
 char *MU_get_timestamp(void);
 
 #endif

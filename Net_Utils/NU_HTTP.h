@@ -85,22 +85,50 @@ NU_Request_t *NU_Request_create(void);
     header_size will be the size of what is left (I.E what is invalid or not part of the header). Response should be cleared before passing it!
     TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
 */
+/**
+ * 
+ * @param res
+ * @param header
+ * @param header_size
+ * @return 
+ */
 char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
 
+/**
+ * 
+ * @param req
+ * @param header
+ * @param header_size
+ * @return 
+ */
 char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size);
 
-/*
-    Clears the response header of all fields and attributes.
-*/
+/**
+ * 
+ * @param res
+ * @return 
+ */
 bool NU_Response_clear(NU_Response_t *res);
 
+/**
+ * 
+ * @param req
+ * @return 
+ */
 bool NU_Request_clear(NU_Request_t *req);
 
-/*
-    Returns the null-terminated string of the header.
-*/
+/**
+ * 
+ * @param res
+ * @return 
+ */
 char *NU_Response_to_string(NU_Response_t *res);
 
+/**
+ * 
+ * @param req
+ * @return 
+ */
 char *NU_Request_to_string(NU_Request_t *req);
 
 /*
@@ -108,6 +136,13 @@ char *NU_Request_to_string(NU_Request_t *req);
     I.E:
     NU_RESPONSE_WRITE(res, 200, NU_HTTP_VER_1_0, { "Content-Length", "100" }, { "Content-Type", "text/html" });
 */
+/**
+ * 
+ * @param res
+ * @param field
+ * @param value
+ * @return 
+ */
 #define NU_RESPONSE_WRITE(response, http_status, http_version, ...) do { \
     NU_Field_t *fields = (NU_Field_t[]){ __VA_ARGS__ }; \
     size_t arr_size = sizeof((NU_Field_t[]){ __VA_ARGS__ }) / sizeof(NU_Field_t); \
@@ -119,6 +154,13 @@ char *NU_Request_to_string(NU_Request_t *req);
     } \
 } while(0);
 
+/**
+ * 
+ * @param res
+ * @param field
+ * @param value
+ * @return 
+ */
 #define NU_REQUEST_WRITE(request, http_method, http_version, file_path, ...) do { \
     NU_Field_t *fields = (NU_Field_t[]){ __VA_ARGS__ }; \
     size_t arr_size = sizeof((NU_Field_t[]){ __VA_ARGS__ }) / sizeof(NU_Field_t); \
@@ -131,16 +173,54 @@ char *NU_Request_to_string(NU_Request_t *req);
     } \
 } while(0);
 
+/**
+ * 
+ * @param res
+ * @param field
+ * @param value
+ * @return 
+ */
 bool NU_Response_set_field(NU_Response_t *res, char *field, char *value);
 
+/**
+ * 
+ * @param req
+ * @param field
+ * @param value
+ * @return 
+ */
 bool NU_Request_set_field(NU_Request_t *req, char *field, char *value);
 
+/**
+ * 
+ * @param res
+ * @param field
+ * @return 
+ */
 bool NU_Response_remove_field(NU_Response_t *res, const char *field);
 
+/**
+ * 
+ * @param req
+ * @param field
+ * @return 
+ */
 bool NU_Request_remove_field(NU_Request_t *req, const char *field);
 
+/**
+ * 
+ * @param res
+ * @param field
+ * @return 
+ */
 char *NU_Response_get_field(NU_Response_t *res, const char *field);
 
+/**
+ * 
+ * @param req
+ * @param field
+ * @return 
+ */
 char *NU_Request_get_field(NU_Request_t *req, const char *field);
 
 #endif /* end NET_UTILS_HTTP_H */

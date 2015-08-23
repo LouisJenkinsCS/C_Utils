@@ -24,8 +24,8 @@
 typedef char *String;
 
 /**
- * Uses GCC attributes to cleanup strings after leaving the scope of the function.
- * Used as a "feature", it's available without SU_String, and requires GCC, but
+ * Uses compiler attributes to cleanup strings after leaving the scope of the function.
+ * Used as a "feature", it's available without SU_String, and requires GCC and Clang, but
  * it is a nice enough feature. To use it, declare a string like so:
  * 
  * String string TEMP = "Example String";
@@ -35,30 +35,78 @@ typedef char *String;
  */
 #define TEMP __attribute__ ((__cleanup__(SU_String_destroy)))
 
-#include <stdlib.h> /* Can't malloc without it */
-#include <string.h> /* Standard libc library. */
-#include <stdio.h> /* ??? */
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include <stdbool.h>
-#include <stdarg.h> /* For variadic function concat_all */
-#include <assert.h> /* Asserts NULL parameters */
-#include <ctype.h> /* To trim strings and check isspace(...). */
+#include <stdarg.h>
+#include <assert.h>
+#include <ctype.h> 
 #include <MU_Logger.h>
 #include <MU_Arg_Check.h>
 #include <MU_Flags.h>
 
-
+/**
+ * 
+ * @param str
+ * @param substr
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 bool SU_String_contains(const String str, const String substr, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param len
+ * @return 
+ */
 String SU_String_lower(String str, size_t len);
 
+/**
+ * 
+ * @param str
+ * @param len
+ * @return 
+ */
 String SU_String_upper(String str, size_t len);
 
+/**
+ * 
+ * @param str
+ * @param index
+ * @return 
+ */
 char SU_String_char_at(const String str, unsigned int index);
 
+/**
+ * 
+ * @param string_one
+ * @param string_two
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 bool SU_String_equal(const String string_one, const String string_two, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param delimiter
+ * @param len
+ * @param size
+ * @return 
+ */
 String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
 
+/**
+ * 
+ * @param str_storage_ptr
+ * @param delim
+ * @param ...
+ * @return 
+ */
 #define SU_STRING_CONCAT_ALL(str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
 	int arg_size = (sizeof((String[]){__VA_ARGS__})/sizeof(String)); \
@@ -87,26 +135,104 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
 	asprintf(str_storage_ptr, format, __VA_ARGS__); \
 } while(0)
 
+/**
+ * 
+ * @param str
+ * @param len
+ * @return 
+ */
 String SU_String_reverse(String str, size_t len);
 
+/**
+ * 
+ * @param arr
+ * @param delimiter
+ * @param size
+ * @return 
+ */
 String SU_String_join(const String arr[], const String delimiter, size_t size);
 
+/**
+ * 
+ * @param str
+ * @param old_char
+ * @param new_char
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param find
+ * @param ignore_case
+ * @return 
+ */
 bool SU_String_starts_with(const String str, const String find, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param find
+ * @param ignore_case
+ * @return 
+ */
 bool SU_String_ends_with(const String str, const String find, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param offset
+ * @param end
+ * @return 
+ */
 String SU_String_substring(const String str, unsigned int offset, unsigned int end);
 
+/**
+ * 
+ * @param string_ptr
+ * @param len
+ * @return 
+ */
 String SU_String_trim(String *string_ptr, size_t len);
 
+/**
+ * 
+ * @param str
+ * @param substr
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param substr
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param str
+ * @param start
+ * @param end
+ * @param len
+ * @param ignore_case
+ * @return 
+ */
 String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case);
 
+/**
+ * 
+ * @param string_ptr
+ */
 void SU_String_destroy(String *string_ptr);
 
 #endif	/* SU_String_H */

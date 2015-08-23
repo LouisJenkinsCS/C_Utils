@@ -27,12 +27,8 @@ typedef struct NU_Bound_Socket_t{
 } NU_Bound_Socket_t;
 
 /**
- * @brief Wraps a server's created, bound and listening socket as well keeping track of connected connections.
- * 
- * This type is reusable, in the sense that not only can you bind more than one socket, but also that it's
- * bound sockets are reusable, as well as it's connections. This type allows the user to create a robust server
- * which allows it to easily keep track of more than one bound socket, and connections connected, as well as 
- * the total data sent and received from/to this server. 
+ * A manager for bound sockets and connections, recycles and re-uses them when accepting
+ * and binding new connection/sockets. 
  */
 typedef struct {
    /// List of bound sockets owned by this server; I.E How many bound ports.
@@ -49,37 +45,79 @@ typedef struct {
    bool synchronized;
 } NU_Server_t;
 
-// TODO: Change rwlock to a mutex!
-
-/* Create a fully initialized server that is unconnected. The socket used is
-   bound to the passed port, but no connections are being accepted on creation. */
+/**
+ * 
+ * @param connection_pool_size
+ * @param bsock_pool_size
+ * @param synchronized
+ * @return 
+ */
 NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool synchronized);
 
-/* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
-   than one port. The amount specified will be the amount to listen for. */
+/**
+ * 
+ * @param server
+ * @param queue_size
+ * @param port
+ * @param ip_addr
+ * @return 
+ */
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr);
 
-/* Will unbind the server from the port specified in socket. Will free the socket! */
+/**
+ * 
+ * @param server
+ * @param socket
+ * @return 
+ */
 bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 
-/* Accept new connections until the timeout ellapses, up to the given amount. The returned
-   connections should not be freed, and it is also managed by the server. */
+/**
+ * 
+ * @param server
+ * @param socket
+ * @param timeout
+ * @return 
+ */
 NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, long long int timeout);
 
-/* Accept a new connection until timeout ellapses, on any of the bound ports created by this server. */
+/**
+ * 
+ * @param server
+ * @param timeout
+ * @return 
+ */
 NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, long long int timeout);
 
-/* The server will no longer be accepting current connections, but will continue dealing with it's
-   current connections until the time specified ellapses, upon which it will close all connections. */
+/**
+ * 
+ * @param server
+ * @return 
+ */
 bool NU_Server_shutdown(NU_Server_t *server);
 
-/* Disconnect the server from the client. */
+/**
+ * 
+ * @param server
+ * @param conn
+ * @return 
+ */
 bool NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn);
 
-/* Allows the user to log to server's logfile. */
+/**
+ * 
+ * @param server
+ * @param message
+ * @param ...
+ * @return 
+ */
 bool NU_Server_log(NU_Server_t *server, const char *message, ...);
 
-/* The server will immediately close all connections, free up all resources, and destroy itself. */
+/**
+ * 
+ * @param server
+ * @return 
+ */
 bool NU_Server_destroy(NU_Server_t *server);
 
 #endif /* endif NET_UTILS_SERVER_H */

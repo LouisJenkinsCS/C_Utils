@@ -21,9 +21,10 @@ typedef struct {
 } MU_Event_Loop_t;
 
 /*
-	MU_Event_Prepare -> Data; Prepares the event
-	MU_Event_Dispatch -> Data; Dispatches the data if it is ready.
-	MU_Event_Finalize -> Data; Destroys the data if it is finished.
+	void*::MU_Event_Prepare(Void); Prepares the event.
+	bool::MU_Event_Check(Void*); Checks if event is ready. 
+	bool::MU_Event_Dispatch(Void*); Dispatches the event.
+	bool::MU_Event_Finalize(Void*); Destroys the data if it is finished.
 */
 typedef struct {
 	/// Data returned from an event.
@@ -44,18 +45,58 @@ typedef struct {
 	unsigned int timeout;
 } MU_Event_Source_t;
 
+/**
+ * 
+ * @param prepare_cb
+ * @param check_cb
+ * @param dispatch_cb
+ * @param finalize_cb
+ * @param timeout
+ * @return 
+ */
 MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Check check_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout);
 
+/**
+ * 
+ * @param source
+ * @return 
+ */
 bool MU_Event_Source_destroy(MU_Event_Source_t *source);
 
+/**
+ * 
+ * @return 
+ */
 MU_Event_Loop_t *MU_Event_Loop_create(void);
 
+/**
+ * 
+ * @param loop
+ * @param source
+ * @return 
+ */
 bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source);
 
+/**
+ * 
+ * @param loop
+ * @return 
+ */
 bool MU_Event_Loop_run(MU_Event_Loop_t *loop);
 
+/**
+ * 
+ * @param loop
+ * @return 
+ */
 bool MU_Event_Loop_stop(MU_Event_Loop_t *loop);
 
+/**
+ * 
+ * @param loop
+ * @param free_sources
+ * @return 
+ */
 bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources);
 
 #endif /* endif MU_EVENT_LOOP_H */
