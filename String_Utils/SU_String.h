@@ -47,65 +47,77 @@ typedef char *String;
 #include <MU_Flags.h>
 
 /**
- * 
- * @param str
- * @param substr
- * @param len
- * @param ignore_case
- * @return 
+ * Scans the string for the passed substring up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. String can be READ-ONLY.
+ * @param str String to search.
+ * @param substr Substring to find. Must be NULL-terminated.
+ * @param len How much of the string to search. If 0, strlen is used.
+ * @param ignore_case If true, case insensitive, else case sensitive.
+ * @return true if it contains the substr, or false if it doesn't or if str or substr is NULL.
  */
 bool SU_String_contains(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param len
- * @return 
+ * Converts a string to lowercase, up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. The string must NOT be READ-ONLY, as it modifies the string passed.
+ * @param str String to lower.
+ * @param len Amount of string to lower. If 0, strlen is used.
+ * @return The beginning of str, or NULL if str is NULL.
  */
 String SU_String_lower(String str, size_t len);
 
 /**
- * 
- * @param str
- * @param len
- * @return 
+ * Converts the string to uppercase, up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. The string must NOT be READ-ONLY, as it modifies
+ * the string passed.
+ * @param str String to upper.
+ * @param len Amount of string to upper. If 0, strlen is used.
+ * @return The beginning of str, or NULL if str is NULL.
  */
 String SU_String_upper(String str, size_t len);
 
 /**
- * 
- * @param str
- * @param index
- * @return 
+ * Obtains the character at the given index, with bounds checking. The string MUST be
+ * NULL-terminated, but CAN be READ-ONLY. If the index is out of bounds of the string, it will return the NULL-terminator '\0'.
+ * @param str The string.
+ * @param index The index, if out of bounds it defaults to the index of the NULL-terminator.
+ * @return The character at the index, or '\0' if it is out of bounds or if str is NULL.
  */
 char SU_String_char_at(const String str, unsigned int index);
 
 /**
- * 
- * @param string_one
- * @param string_two
- * @param len
- * @param ignore_case
- * @return 
+ * Compares two string to see if they are equal, up to len. If len is 0, strlen is used to determine the string's length,
+ * hence theoretically a non NULL-terminated string can be safely used, if and only if the length does not exceed the valid bounds of
+ * both strings.
+ * @param string_one First string to compare.
+ * @param string_two Second string to compare.
+ * @param len The amount to compare up to, if 0 strlen of the first string is used.
+ * @param ignore_case If true, comparison is case insensitive.
+ * @return true if they are equal, false if they are not or if either string_one or string_two are NULL.
  */
 bool SU_String_equal(const String string_one, const String string_two, size_t len, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param delimiter
- * @param len
- * @param size
- * @return 
+ * Splits the given string into many strings according to the delimiter. The pointer to a size_t variable is
+ * used to return additional information, I.E the size of the array. If len is 0, strlen is used to determine
+ * the length of the string to split up to, hence a non NULL-terminated string may safely be used.
+ * @param str The string
+ * @param delimiter Delimiter to split by.
+ * @param len The length of the string.
+ * @param size Used to return the size of the array of strings.
+ * @return An array of strings with updated to indicate it's size, or NULL if either str or delimiter are NULL or if the delimiter could not be found.
  */
 String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
 
 /**
- * 
- * @param str_storage_ptr
- * @param delim
- * @param ...
- * @return 
+ * Concatenates all strings passed, with the delimiter inserted in between each string, into one string.
+ * The result is placed inside str_storage_ptr. Each string MUST be NULL-terminated.
+ * @param str_storage_ptr Pointer to a string to hold the result.
+ * @param delim Delimiter to insert between each string.
+ * @param ... List of strings to be concatenated.
  */
 #define SU_STRING_CONCAT_ALL(str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
@@ -136,10 +148,11 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
 } while(0)
 
 /**
- * 
- * @param str
- * @param len
- * @return 
+ * Reverses the string up to the passed length. If len is 0, strlen is used. If len is specified, 
+ * the string does not need to be NULL-terminated. String must NOT be READ-ONLY.
+ * @param str The string.
+ * @param len Length of the string to reverse up to. If len is 0, strlen is used to determine string length.
+ * @return The start of the reversed string.
  */
 String SU_String_reverse(String str, size_t len);
 
