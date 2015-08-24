@@ -157,94 +157,101 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
 String SU_String_reverse(String str, size_t len);
 
 /**
- * 
- * @param arr
- * @param delimiter
- * @param size
- * @return 
+ * Joins the array of strings together, with the passed delimiter in between, into
+ * one string. All strings in arr must be NULL-terminated. 
+ * @param arr Array of strings.
+ * @param delimiter Delimiter to insert between each string.
+ * @param size Size of the array of strings.
+ * @return The combined string.
  */
 String SU_String_join(const String arr[], const String delimiter, size_t size);
 
 /**
- * 
- * @param str
- * @param old_char
- * @param new_char
- * @param len
- * @param ignore_case
- * @return 
+ * Scans the string for old_char and replaces it with new_chat, up to the passed length. 
+ * If len is 0, strlen is used to determine string length. str does not need to be NULL-terminated
+ * but it does have to be READ-ONLY.
+ * @param str The string
+ * @param old_char Old character to search for.
+ * @param new_char New character to replace old_char with.
+ * @param len Length to read up to. Strlen is used if len is 0.
+ * @param ignore_case Case insensitive comparison is used if true.
+ * @return The beginning of str, NULL if str is NULL.
  */
 String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param find
- * @param ignore_case
- * @return 
+ * Determines if the string passed starts with find. Both must be NULL-terminated.
+ * @param str The string
+ * @param find String to find
+ * @param ignore_case Case insensitive if true.
+ * @return  true if it does, false if it does not or if str or find are NULL.
  */
 bool SU_String_starts_with(const String str, const String find, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param find
- * @param ignore_case
- * @return 
+ * Determines if the string passed ends with find. Both must be NULL-terminated.
+ * @param str The string
+ * @param find String to find
+ * @param ignore_case Case insensitive if true.
+ * @return  true if it does, false if it does not or if str or find are NULL.
  */
 bool SU_String_ends_with(const String str, const String find, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param offset
- * @param end
- * @return 
+ * Creates a substring at the given offset up to end. str need not be NULL-terminated,
+ * but offset and end must be within it's bounds.
+ * @param str The string
+ * @param offset Offset to start at
+ * @param end The end of the string.
+ * @return The substring or NULL if str is NULL.
  */
 String SU_String_substring(const String str, unsigned int offset, unsigned int end);
 
 /**
- * 
- * @param string_ptr
- * @param len
- * @return 
+ * Trims the string of leading and trailing white spaces. If len is 0, strlen is used
+ * to determine the string length. The string pointed to by string_ptr does not need to be
+ * NULL-terminated nor READ-ONLY.
+ * @param string_ptr Pointer to a string to store the result, as well as the original string.
+ * @param len Length fo the string to trim up to.
+ * @return The new string.
  */
 String SU_String_trim(String *string_ptr, size_t len);
 
 /**
- * 
- * @param str
- * @param substr
- * @param len
- * @param ignore_case
- * @return 
+ * Obtains the beginning index of the substr in str if it exists, up to len. If len is 0, strlen is used
+ * to determine the string length. The string does not need to be NULL-terminated if length is specified.
+ * @param str The string.
+ * @param substr The substring to search for.
+ * @param len The length of the string to search up to.
+ * @param ignore_case if true, search is case insensitive.
+ * @return The index at the beginning of the substr.
  */
 int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param substr
- * @param len
- * @param ignore_case
- * @return 
+ * Counts the occurences of the substr in the given str up to len (strlen if len == 0).
+ * @param str The string
+ * @param substr Substring to count.
+ * @param len The length of the string to read up to. strlen used if len == 0.
+ * @param ignore_case Search is case insensitive if true.
+ * @return The occurences of the substr in str.
  */
 unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * 
- * @param str
- * @param start
- * @param end
- * @param len
- * @param ignore_case
- * @return 
+ * Returns the substring between start and end in str, up to len (strlen if len == 0).
+ * @param str The string.
+ * @param start The first substr to find.
+ * @param end The second substr to find.
+ * @param len Length of string to search up to.
+ * @param ignore_case Search is case insensitive if true.
+ * @return The substring between start and end.
  */
 String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case);
 
 /**
- * 
- * @param string_ptr
+ * Destroys the passed string, used by compiler attribute.
+ * @param string_ptr Pointer to the string being destroyed.
  */
 void SU_String_destroy(String *string_ptr);
 
