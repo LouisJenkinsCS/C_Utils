@@ -1,81 +1,20 @@
-#ifndef LINKED_LIST_H
-#define LINKED_LIST_H
-
-/*
- * This Linked List implementation is meant for general and generic usage, and is
- * by no means a replacement for more specific-purpose data structures. On top
- * of that, this Linked List should be thread-safe, however iteration is not thread-ideal.
- * 
- * The Linked List allows you to add items in a sorted order and even sort the entire list
- * by means of a passed comparator, and whether or not it chooses to add items in a sorted
- * order depends on whether or not the callback is NULL or not. Hence, if you want
- * to add an item to the list without having to deal with creating and passing a comparator
- * function, you can easily do like so...
- * 
- * Linked_List_add(list, item, NULL);
- * 
- * Inversely, you may add an item in sorted order by doing so like this:
- * 
- * Linked_List_add(list, item, comparator);
- * 
- * Upon deletion, you have the option to delete the item as well as the node by passing
- * a comparator, similar to above.
- * 
- * Linked_List_remove_at(list, 0, NULL);
- * 
- * or
- * 
- * Linked_List_remove_at(list, 0, free);
- * 
- * Iteration is thread-safe, however not thread-ideal. As there is only one iterator,
- * if multiple threads attempt to maneuver it, you may not like the results. Adding,
- * removing and sorting is thread safe and thread ideal, as multiple threads can safely,
- * but in a synchronized way. However, retrieval is is thread-safe and allows multiple
- * threads to read over items in the list, as the Linked List uses a rwlock.
- * 
- * This Linked List, once again is general purpose, and should not be used if performance is of utmost
- * importance. The sort is slow for elements over 2,500, however if you keep it under
- * 1,000, it definitely will do it's job.
- */
+#ifndef DS_LIST_H
+#define DS_LIST_H
 
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <DS_Helpers.h>
 
-/* Typedef for structs */
-typedef struct Node_t Node_t;
-typedef struct Linked_List_t Linked_List_t;
-/* End Typedef for structs */
+/* End DS_List_t function pointers and callbacks. */
 
-
-/* Linked_List_t Callbacks */
-
-/// Callback used on an item to ensure proper deletion.
-typedef void (*Linked_List_Delete)(void *item);
-/// This should be used on two items to compare the two, for sorting.
-typedef int (*Linked_List_Compare)(void *item_one, void *item_two);
-
-/* End Linked_List_t Callbacks */
-
-
-/* End Linked_List_t function pointers and callbacks. */
-
-struct Node_t {
-    /// Next node in the list.
-	Node_t *next;
-    /// Previous node in the list.
-	Node_t *prev;
-    /// Data held by the node.
-	void *item;
-};
-
-struct Linked_List_t{
+typedef struct {
 	/// The head node of the list.
-	Node_t *head;
+	DS_Node_t *head;
 	/// The tail node of the list.
-	Node_t *tail;
+	DS_Node_t *tail;
 	/// The current node for the iterator.
-	Node_t *current;
+	DS_Node_t *current;
 	/// The current size of the linked list.
 	size_t size;
 	/// Determines whether the list is sorted.
@@ -84,13 +23,13 @@ struct Linked_List_t{
 	pthread_rwlock_t *manipulating_list;
 	/// Ensures that only one thread can move the iterator, but many can read the current value.
 	pthread_rwlock_t *manipulating_iterator;
-};
+} DS_List_t;
 
 /**
  * Allocates and initializes a new empty Linked List.
- * @return Empty Linked_List or NULL if out of memory error.
+ * @return Empty DS_List or NULL if out of memory error.
  */
-Linked_List_t *Linked_List_create(void);
+DS_List_t *DS_List_create(bool synchronized);
 
 /**
  * Allocates and initializes a Linked List with the elements from the passed array.
@@ -100,9 +39,9 @@ Linked_List_t *Linked_List_create(void);
  * @param array Array of elements to be initialized to the linked list.
  * @param size The size of the array; the amount of the array to be read up to.
  * @param compare Used to add sorted, if not NULL, otherwise added unsorted.
- * @return An initialized Linked_List with all elements, or NULL if out of memory error.
+ * @return An initialized DS_List with all elements, or NULL if out of memory error.
  */
-Linked_List_t *Linked_List_create_from(void **array, size_t size, Linked_List_Compare compare);
+DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compare, bool synchronized);
 
 /**
  * Retrieves the element at the requested index if in bounds. If it is out of bounds,
@@ -111,7 +50,7 @@ Linked_List_t *Linked_List_create_from(void **array, size_t size, Linked_List_Co
  * @param index The index of the element to retrieve.
  * @return The element at the requested index, or NULL if out of bounds or if list is NULL.
  */
-void *Linked_List_get_at(Linked_List_t *list, unsigned int index);
+void *DS_List_get_at(DS_List_t *list, unsigned int index);
 
 /**
  * Sort the Linked List relative to the passed comparator. If no comparator is passed,
@@ -120,7 +59,7 @@ void *Linked_List_get_at(Linked_List_t *list, unsigned int index);
  * @param compare The comparator used to sort the list.
  * @return 1 on success, 0 if list or compare is NULL.
  */
-bool Linked_List_sort(Linked_List_t *list, Linked_List_Compare compare);
+bool DS_List_sort(DS_List_t *list, DS_comparator_cb compare);
 
 /**
  * Removes the item from the list if it is found, along with the node associated with it.
@@ -130,7 +69,7 @@ bool Linked_List_sort(Linked_List_t *list, Linked_List_Compare compare);
  * @param delete_item Callback used to free the item.
  * @return 1 on success, 0 if list is NULL, or if the item is not found in the list.
  */
-bool Linked_List_remove_item(Linked_List_t *list, void *item, Linked_List_Delete delete_item);
+bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb delete_item);
 
 /**
  * Removes the item at the given index if it is in bounds. If delete_item is NULL, 
@@ -140,7 +79,7 @@ bool Linked_List_remove_item(Linked_List_t *list, void *item, Linked_List_Delete
  * @param delete_item Callback used to free the item.
  * @return The item at the given index, whether or not delete_item is passed, or NULL list is NULL or out of bounds.
  */
-void *Linked_List_remove_at(Linked_List_t *list, unsigned int index, Linked_List_Delete delete_item);
+void *DS_List_remove_at(DS_List_t *list, unsigned int index, DS_delete_cb delete_item);
 
 /**
  * Advances the Linked List's iterator forward by one if applicable. If the next node
@@ -148,7 +87,7 @@ void *Linked_List_remove_at(Linked_List_t *list, unsigned int index, Linked_List
  * @param list The list to advance.
  * @return The item at the next node, or NULL if list is NULL or there is no next node in the list.
  */
-void *Linked_List_next(Linked_List_t *list);
+void *DS_List_next(DS_List_t *list);
 
 /**
  * Moves the Linked List's iterator back by one if applicable. If the previous node
@@ -156,7 +95,7 @@ void *Linked_List_next(Linked_List_t *list);
  * @param list The list to advance.
  * @return The item at the previous node, or NULL if the list is NULL or there is no previous node.
  */
-void * Linked_List_previous(Linked_List_t *list);
+void * DS_List_previous(DS_List_t *list);
 
 /**
  * Moves the Linked List's iterator to the tail of the list if applicable. If the list is
@@ -164,7 +103,7 @@ void * Linked_List_previous(Linked_List_t *list);
  * @param list The list to advance.
  * @return The item at the tail node, or NULL if the list is NULL or is empty.
  */
-void * Linked_List_tail(Linked_List_t *list);
+void * DS_List_tail(DS_List_t *list);
 
 /**
  * Moves the Linked List's iterator to the head of the list if applicable. If the list is
@@ -172,7 +111,7 @@ void * Linked_List_tail(Linked_List_t *list);
  * @param list The list to advance.
  * @return The item at the head node, or NULL if the list is NULL or is empty.
  */
-void * Linked_List_head(Linked_List_t *list);
+void * DS_List_head(DS_List_t *list);
 
 /**
  * Remove the current node from the linked list, calling the callback on the node's item if not NULL.
@@ -180,7 +119,7 @@ void * Linked_List_head(Linked_List_t *list);
  * @param delete_item The callback to call on the node's item.
  * @return The item at the current node, or NULL if the list is empty or the list passed is NULL.
  */
-void *Linked_List_remove_current(Linked_List_t *list, Linked_List_Delete delete_item);
+void *DS_List_remove_current(DS_List_t *list, DS_delete_cb delete_item);
 
 /**
  * Adds the requested item after the current node in the list. Note: This flags the
@@ -190,7 +129,7 @@ void *Linked_List_remove_current(Linked_List_t *list, Linked_List_Delete delete_
  * @param item Item to be added.
  * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
  */
-bool Linked_List_add_after(Linked_List_t *list, void *item);
+bool DS_List_add_after(DS_List_t *list, void *item);
 
 /**
  * Adds the requested item before the current node in the list. Note: This flags the
@@ -200,7 +139,7 @@ bool Linked_List_add_after(Linked_List_t *list, void *item);
  * @param item Item to be added.
  * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
  */
-bool Linked_List_add_before(Linked_List_t *list, void *item);
+bool DS_List_add_before(DS_List_t *list, void *item);
 
 /**
  * Adds the item to the list, in sorted order if the callback is not NULL, or at the tail if it is.
@@ -209,7 +148,7 @@ bool Linked_List_add_before(Linked_List_t *list, void *item);
  * @param compare Comparator to add the item sorted.
  * @return 1 upon success, 0 if the list is NULL.
  */
-bool Linked_List_add(Linked_List_t *list, void *item, Linked_List_Compare compare);
+bool DS_List_add(DS_List_t *list, void *item, DS_comparator_cb compare);
 
 /**
  * Returns an array of items inside of the Linked List, setting the array_size parameter
@@ -218,7 +157,7 @@ bool Linked_List_add(Linked_List_t *list, void *item, Linked_List_Compare compar
  * @param array_size Used to return the size of the array.
  * @return Array of items, or NULL if list or array_size is NULL.
  */
-void **Linked_List_to_array(Linked_List_t *list, size_t *array_size);
+void **DS_List_to_array(DS_List_t *list, size_t *array_size);
 
 /**
  * Calls the passed callback on all items in the linked list.
@@ -226,7 +165,7 @@ void **Linked_List_to_array(Linked_List_t *list, size_t *array_size);
  * @param callback Callback to manipulate the item in the list.
  * @return 1 on success, 0 if list or callback is NULL.
  */
-bool Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item));
+bool DS_List_for_each(DS_List_t *list, DS_general_cb callback);
 
 /**
  * Prints all items in a formatted, bracketed and comma separated way based on the
@@ -236,7 +175,7 @@ bool Linked_List_for_each(Linked_List_t *list, void (*callback)(void *item));
  * @param file The file to print to, I.E stdio or an actual FILE.
  * @param to_string Callback to obtain a string representation of each item in the list.
  */
-bool Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(void *item));
+bool DS_List_print_all(DS_List_t *list, FILE *file, DS_to_string_cb to_string);
 
 /**
  * Returns whether or not the list contains the given item.
@@ -244,14 +183,14 @@ bool Linked_List_print_all(Linked_List_t *list, FILE *file, char *(*to_string)(v
  * @param item Item to search for.
  * @return 1 if it does contain the item, 0 if the list is NULL or it doesn't exist in the list.
  */
-bool Linked_List_contains(Linked_List_t *list, void *item);
+bool DS_List_contains(DS_List_t *list, void *item);
 
 /**
  * Returns the current node's item in the iterator.
  * @param list List to obtain the current element of.
  * @return The current item, or NULL if the list passed is NULL or if the list is empty.
  */
-void *Linked_List_get_current(Linked_List_t *list);
+void *DS_List_get_current(DS_List_t *list);
 
 /**
  * Destroys the passed linked list, freeing and destroying any of it's members, as well
@@ -262,7 +201,7 @@ void *Linked_List_get_current(Linked_List_t *list);
  * @param list List to destroy.
  * @param delete_item Callback used on each item.
  */
-bool Linked_List_destroy(Linked_List_t *list, Linked_List_Delete delete_item);
+bool DS_List_destroy(DS_List_t *list, DS_delete_cb del);
 
 
-#endif /* LINKED_LIST_H */
+#endif /* DS_LIST_H */

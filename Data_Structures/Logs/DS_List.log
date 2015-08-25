@@ -1,0 +1,4 @@
+12:54:12 PM [ERROR](./Data_Structures/DS_List.c:336) DS_List_add_after(): 
+"DS_List_add_after: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+12:54:12 PM [ERROR](./Data_Structures/DS_List.c:356) DS_List_add_before(): 
+"DS_List_add_before: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
