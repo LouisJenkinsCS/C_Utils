@@ -91,7 +91,7 @@ MU_Event_Loop_t *MU_Event_Loop_create(void){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
-	loop->sources = Linked_List_create();
+	loop->sources = DS_List_create(true);
 	if(!loop->sources){
 		MU_LOG_ERROR(logger, "Linked_List_create: 'Was unable to create Linked List!");
 		goto error;
@@ -114,14 +114,14 @@ MU_Event_Loop_t *MU_Event_Loop_create(void){
 
 bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source){
 	MU_ARG_CHECK(logger, false, loop, source);
-	return Linked_List_add(loop->sources, source, NULL);
+	return DS_List_add(loop->sources, source, NULL);
 }
 
 bool MU_Event_Loop_run(MU_Event_Loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
-		Linked_List_for_each(loop->sources, event_loop_main);
+		DS_List_for_each(loop->sources, event_loop_main);
 		usleep(10000);
 	}
 	MU_Event_signal(loop->finished, 0);
@@ -138,7 +138,7 @@ bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources){
 	MU_ARG_CHECK(logger, false, loop);
 	MU_Event_Loop_stop(loop);
 	MU_Event_wait(loop->finished, -1, 0);
-	Linked_List_destroy(loop->sources, free_sources ? free : NULL);
+	DS_List_destroy(loop->sources, free_sources ? free : NULL);
 	free(loop);
 	return true;
 }

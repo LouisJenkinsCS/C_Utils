@@ -192,6 +192,8 @@ bool DS_List_contains(DS_List_t *list, void *item);
  */
 void *DS_List_get_current(DS_List_t *list);
 
+bool DS_List_clear(DS_List_t *list, DS_delete_cb del);
+
 /**
  * Destroys the passed linked list, freeing and destroying any of it's members, as well
  * as freeing the list pointer. Note that operations on a linked list should cease before

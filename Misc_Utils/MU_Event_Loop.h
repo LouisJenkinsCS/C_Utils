@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <sys/time.h>
-#include <Linked_List.h>
+#include <DS_List.h>
 #include <MU_Events.h>
 
 typedef void *(*MU_Event_Prepare)();
@@ -13,7 +13,7 @@ typedef bool (*MU_Event_Finalize)(void *);
 
 typedef struct {
 	/// Maintains list of sources to check.
-	Linked_List_t *sources;
+	DS_List_t *sources;
 	/// Keep-Alive flag
 	_Atomic bool keep_alive;
 	/// The event to wait on for it to finish.

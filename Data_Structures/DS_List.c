@@ -296,13 +296,19 @@ DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compa
 	return list;
 }
 
-bool DS_List_destroy(DS_List_t *list, DS_delete_cb del){
-	MU_ARG_CHECK(logger, NULL, list);
+bool DS_List_clear(DS_List_t *list, DS_delete_cb del){
+	MU_ARG_CHECK(logger, false, list);
 	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
 	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
 	delete_all_nodes(list, del);
 	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
 	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	return true;
+}
+
+bool DS_List_destroy(DS_List_t *list, DS_delete_cb del){
+	MU_ARG_CHECK(logger, false, list);
+	DS_List_clear(list, del);
 	MU_COND_RWLOCK_DESTROY(list->manipulating_iterator, logger);
 	MU_COND_RWLOCK_DESTROY(list->manipulating_list, logger);
 	free(list);
