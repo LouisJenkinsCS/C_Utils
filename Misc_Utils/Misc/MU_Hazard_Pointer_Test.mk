@@ -1,6 +1,6 @@
 CC=gcc
 PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
-CFLAGS=-g -D_GNU_SOURCE -Wall -std=c99
+CFLAGS=-g -D_GNU_SOURCE -Wall -std=c11
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
 SOURCES=DS_List.c MU_Logger.c MU_Arg_Check.c MU_Hazard_Pointers.c MU_Hazard_Pointers_Test.c

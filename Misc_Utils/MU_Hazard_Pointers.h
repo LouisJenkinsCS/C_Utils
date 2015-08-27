@@ -3,8 +3,6 @@
 
 #include <MU_Logger.h>
 #include <DS_List.h>
-#include <stdint.h>
-#include <stdatomic.h>
 
 #ifdef MU_HAZARD_POINTERS_MAX_THREAD_COUNT
 #define MU_HAZARD_POINTERS_MAX_THREADS MU_HAZARD_POINTERS_MAX_THREAD_COUNT
@@ -21,7 +19,7 @@
 typedef struct MU_Hazard_Pointer_t MU_Hazard_Pointer_t;
 
 struct MU_Hazard_Pointer_t{
-	_Atomic bool in_use;
+	volatile bool in_use;
 	DS_List_t *retired;
 	void *owned[MU_HAZARD_POINTERS_PER_THREAD];
 	void (*destructor)(void *);
@@ -31,6 +29,10 @@ struct MU_Hazard_Pointer_t{
 MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void);
 
 bool MU_Hazard_Pointer_register_destructor(void (*destructor)(void *));
+
+bool MU_Hazard_Pointer_retire(MU_Hazard_Pointer_t *hp, void *data);
+
+bool MU_Hazard_Pointer_retire_all(MU_Hazard_Pointer_t *hp);
 
 bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp);
 

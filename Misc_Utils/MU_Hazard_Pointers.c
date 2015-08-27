@@ -95,7 +95,7 @@ static void help_scan(MU_Hazard_Pointer_t *hp){
 	for(MU_Hazard_Pointer_t *tmp_hp = hazard_table->head; tmp_hp; tmp_hp = tmp_hp->next){
 		// If we fail to mark the hazard pointer as active, then it's already in use.
 		bool expected = false;
-		if(atomic_load(&tmp_hp->in_use) || atomic_compare_exchange_strong(&tmp_hp->in_use, &expected, true)) continue; 
+		if(tmp_hp->in_use || __sync_bool_compare_and_swap(&tmp_hp->in_use, &expected, true)) continue;
 		void *data;
 		while((data = DS_List_remove_at(tmp_hp->retired, 0, NULL))){
 			DS_List_add(hp->retired, data, NULL);
@@ -124,10 +124,10 @@ static MU_Hazard_Pointer_t *create(){
 MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void){
 	for(MU_Hazard_Pointer_t *tmp_hp = hazard_table->head; tmp_hp; tmp_hp = tmp_hp->next){
 		bool expected = false;
-		if(atomic_load(&tmp_hp->in_use) || atomic_compare_exchange_strong(&tmp_hp->in_use, &expected, true)) continue;
+		if(tmp_hp->in_use || __sync_bool_compare_and_swap(&tmp_hp->in_use, &expected, true)) continue;
 		else return tmp_hp;
 	}
-	atomic_fetch_add(&hazard_table->size, MU_HAZARD_POINTERS_PER_THREAD);
+	__sync_fetch_and_add(&hazard_table->size, MU_HAZARD_POINTERS_PER_THREAD);
 	MU_Hazard_Pointer_t *hp = create();
 	if(!hp){
 		MU_LOG_ERROR(logger, "create_hp: 'Was unable to allocate a Hazard Pointer!");
@@ -141,7 +141,7 @@ MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void){
 	return hp;
 }
 
-bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp){
+bool MU_Hazard_Pointer_retire_all(MU_Hazard_Pointer_t *hp){
 	MU_ARG_CHECK(logger, false, hp);
 	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
 		if(hp->owned[i]){
@@ -156,10 +156,33 @@ bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp){
 	return true;
 }
 
+bool MU_Hazard_Pointer_retire(MU_Hazard_Pointer_t *hp, void *data){
+	MU_ARG_CHECK(logger, false, hp);
+	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
+		if(hp->owned[i] == data){
+			DS_List_add(hp->retired, hp->owned[i], NULL);
+			hp->owned[i] = NULL;
+			if(hp->retired->size >= max_hazard_pointers){
+				scan(hp);
+				help_scan(hp);
+			}
+			break;
+		}
+	}
+}
+
+bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp){
+	MU_ARG_CHECK(logger, false, hp);
+	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
+		hp->owned[i] = NULL;
+	}
+	return true;
+}
+
 bool MU_Hazard_Pointer_release(MU_Hazard_Pointer_t *hp){
 	MU_ARG_CHECK(logger, false, hp);
 	MU_Hazard_Pointer_reset(hp);
-	atomic_store(&hp->in_use, false);
+	hp->in_use = false;
 	return true;
 }
 
