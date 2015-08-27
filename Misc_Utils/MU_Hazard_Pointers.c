@@ -56,6 +56,7 @@ __attribute__((destructor)) static void destroy_hazard_table(void){
 	}
 	free(prev_hp);
 	DS_List_destroy(del_list, hazard_table->destructor);
+	free(hazard_table);
 }
 
 static void scan(MU_Hazard_Pointer_t *hp){
@@ -85,8 +86,9 @@ static void scan(MU_Hazard_Pointer_t *hp){
 		} else {
 			hazard_table->destructor(tmp_arr[i]);
 		}
-		free(tmp_arr);
 	}
+	free(tmp_arr);
+	DS_List_destroy(private_list, NULL);
 }
 
 static void help_scan(MU_Hazard_Pointer_t *hp){
