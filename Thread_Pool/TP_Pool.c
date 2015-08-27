@@ -205,7 +205,7 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 			goto error;
 		}
 		worker->thread_id = i+1;
-		int create_error = pthread_create(worker->thread, NULL, Get_Tasks, tp);
+		int create_error = pthread_create(worker->thread, &attr, Get_Tasks, tp);
 		if(create_error){
 			MU_LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
 			goto error;
@@ -326,6 +326,7 @@ bool TP_Pool_destroy(TP_Pool_t *tp){
 	// Finally, any threads waiting on the thread pool to finish will wake up.
 	MU_Event_destroy(tp->finished, 0);
 	int i = 0;
+	while(atomic_load(&tp->active_threads)) pthread_yield();
 	for(; i < old_thread_count; i++) Destroy_Worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
 	free(tp);

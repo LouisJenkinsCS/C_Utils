@@ -1,5 +1,6 @@
 #include <DS_Stack.h>
 #include <stdatomic.h>
+#include <unistd.h>
 #include <MU_Hazard_Pointers.h>
 
 static MU_Logger_t *logger = NULL;
@@ -39,11 +40,17 @@ bool DS_Stack_push(DS_Stack_t *stack, void *item){
 		head = stack->head;
 		if(head) MU_Hazard_Pointer_acquire(head);
 		// Ensures head isn't freed before it was tagged by hazard pointer.
-		if(head != stack->head) continue;
+		if(head != stack->head){
+			MU_Hazard_Pointer_release(head, false);
+			usleep(250);
+			continue;
+		}
 		node->_single.next = head;
 		if(__sync_bool_compare_and_swap(&stack->head, head, node)) break;
+		usleep(250);
 	}
 	if(head) MU_Hazard_Pointer_release(head, false);
+	__sync_fetch_and_add(&stack->size, 1);
 	return true;
 }
 
@@ -54,14 +61,30 @@ void *DS_Stack_pop(DS_Stack_t *stack){
 		head = stack->head;
 		if(!head) return NULL;
 		MU_Hazard_Pointer_acquire(head);
-		if(head != stack->head) continue;
+		if(head != stack->head){
+			MU_Hazard_Pointer_release(head, false);
+			usleep(250);
+			continue;
+		}
 		if(__sync_bool_compare_and_swap(&stack->head, head, stack->head->_single.next)) break;
+		usleep(250);
 	}
 	void *data = head->item;
 	MU_Hazard_Pointer_release(head, true);
+	__sync_fetch_and_sub(&stack->size, 1);
 	return data;
 }
 
-size_t DS_Stack_size(DS_Stack_t *stack);
-
-size_t DS_Stack_destroy(DS_Stack_t *stack);
+bool DS_Stack_destroy(DS_Stack_t *stack, DS_delete_cb del){
+	MU_ARG_CHECK(logger, false, stack);
+	MU_Hazard_Pointer_release_all(false);
+	DS_Node_t *prev_node = NULL;
+	for(DS_Node_t *node = stack->head; node; node = node->_single.next){
+		free(prev_node);
+		if(del) del(node->item);
+		prev_node = node;
+	}
+	free(prev_node);
+	free(stack);
+	return true;
+}

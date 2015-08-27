@@ -16,8 +16,6 @@ bool DS_Stack_push(DS_Stack_t *stack, void *item);
 
 void *DS_Stack_pop(DS_Stack_t *stack);
 
-size_t DS_Stack_size(DS_Stack_t *stack);
-
-size_t DS_Stack_destroy(DS_Stack_t *stack);
+bool DS_Stack_destroy(DS_Stack_t *stack, DS_delete_cb del);
 
 #endif /* endif DS_STACK_H */

@@ -2,7 +2,7 @@
 #include <MU_Logger.h>
 #include <TP_Pool.h>
 
-static const int num_threads = 10;
+static const int num_threads = 4;
 
 static DS_Stack_t *stack = NULL;
 
@@ -10,17 +10,20 @@ static MU_Logger_t *logger = NULL;
 
 volatile int counter = 0;
 
+volatile bool running = true;
+
 static void *push_to_stack(void *args){
-	while(true){
+	while(running){
 		int *i = malloc(sizeof(int));
 		*i = __sync_add_and_fetch(&counter, 1);
 		DS_Stack_push(stack, i);
+		pthread_yield();
 	}
 	return NULL;
 }
 
 static void *pop_from_stack(void *args){
-	while(true){
+	while(running){
 		int *i = DS_Stack_pop(stack);
 		if(!i){
 			pthread_yield();
@@ -40,6 +43,11 @@ int main(void){
 	for(; i < num_threads; i++){
 		TP_Pool_add(tp, (i % 2 == 0) ? push_to_stack : pop_from_stack, NULL, TP_NO_RESULT);
 	}
+	TP_Pool_wait(tp, 20);
+	running = 0;
 	TP_Pool_wait(tp, -1);
+	TP_Pool_destroy(tp);
+	MU_Logger_destroy(logger);
+	DS_Stack_destroy(stack, free);
 	return 0;
 }

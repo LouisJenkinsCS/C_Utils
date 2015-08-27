@@ -148,6 +148,8 @@ bool MU_Event_destroy(MU_Event_t *event, unsigned int thread_id){
 	}
 	pthread_mutex_destroy(event->event_lock);
 	pthread_cond_destroy(event->event_signal);
+	free(event->event_lock);
+	free(event->event_signal);
 	MU_LOG_EVENT(event->logger, event->name, "Destroying Event...");
 	free(event);
 	return true;

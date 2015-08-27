@@ -17,7 +17,7 @@ static MU_Logger_t *logger = NULL;
 static const int max_hazard_pointers = MU_HAZARD_POINTERS_MAX_THREADS * MU_HAZARD_POINTERS_PER_THREAD;
 
 __attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Misc_Utils/Logs/MU_Hazard_Pointers.log", "w", MU_ALL);
+	logger = MU_Logger_create("./Misc_Utils/Logs/MU_Hazard_Pointers.log", "w", MU_INFO);
 }
 
 __attribute__((constructor)) static void init_hazard_table(void){
@@ -63,6 +63,7 @@ __attribute__((destructor)) static void destroy_hazard_table(void){
 	free(prev_hp);
 	DS_List_destroy(del_list, hazard_table->destructor);
 	free(hazard_table);
+	pthread_key_delete(tls);
 }
 
 static void scan(MU_Hazard_Pointer_t *hp){
