@@ -47,6 +47,7 @@ bool DS_Stack_push(DS_Stack_t *stack, void *item){
 		}
 		node->_single.next = head;
 		if(__sync_bool_compare_and_swap(&stack->head, head, node)) break;
+		MU_Hazard_Pointer_release(head, false);
 		usleep(250);
 	}
 	if(head) MU_Hazard_Pointer_release(head, false);
@@ -67,6 +68,7 @@ void *DS_Stack_pop(DS_Stack_t *stack){
 			continue;
 		}
 		if(__sync_bool_compare_and_swap(&stack->head, head, stack->head->_single.next)) break;
+		MU_Hazard_Pointer_release(head, false);
 		usleep(250);
 	}
 	void *data = head->item;

@@ -308,11 +308,48 @@ Very Outdated: Documentation for version 1.0 available [here](http://theif519.gi
 
 ####Vector [<b>Unimplemented</b>]
 
+####Lockless Stack [<b>Unstable</b>]
+
+The lockless stack utilizes MU_Hazard_Pointers to avoid the ABA problem and allow safe deallocation of nodes after they are popped off the stack. The stack is guaranteed not to lock, hence all threads are constantly making progress, with the obligatory 250 microseconds of sleep to avoid thrashing the CPU. 
+
+Overall, it's a simple, yet powerful thread-safe, lockless data structure.
+
+```c
+
+DS_Stack_t *stack = DS_Stack_create();
+DS_Stack_push(stack, "Hello World");
+DS_Stack_pop(stack);
+DS_Stack_destroy(stack);
+
+```
+
+That's all there is to it.
+
 ####Ring Buffer [<b>Unimplemented</b>]
 
 ####Hash Map [<b>In Development</b>]
 
-A basic thread-safe hash map. Follows the template of <char *, void *>, where you have a string as a key, and a generic void * as a value.
+A basic, synchronized hash map implementation. It's thread-safe, but not lockless, yet it fulfills it's purpose. It takes string keys, but it's value can be anything. 
+
+As a hash table isn't anything special, I'll give a simple demonstration of it's use below.
+
+```c
+
+const int init_bucket_size = 31;
+const bool synchronized = true;
+
+// Assume it just returns the string directly.
+char *to_string(void *data);
+
+DS_Map_t *map = DS_Map_create(init_bucket_size, synchronized);
+DS_Map_add("Hello World", "How are you");
+printf("%s", DS_Map_get("Hello World"));
+size_t key_val_size;
+char **key_val_pairs = DS_Map_key_value_to_string(map, "(", ",", ")",&key_val_size, to_string);
+
+```
+
+Overall, it's simple and intuitive to use.
 
 ####Deque [<b>Unimplemented</b>]
 
@@ -439,48 +476,51 @@ int main(void){
 
 It's very simple, and as always, easy to use. Right now it's not entirely stable, but I'm working on fixing bugs and adding appropriate features.
 
-####Hazard Pointers [<b>In Development</b>]
+####Hazard Pointers [<b>Unstable</b>]
 
 Provides a flexible and easy to use implementation of hazard pointers, described in the research paper by Maged M. Michael, [here](http://www.research.ibm.com/people/m/michael/ieeetpds-2004.pdf).
 
-The implementation is still in development and needing of testing, however I have an optimistic outlook on how it will look. Basically, you will "acquire" data via it's pointer and "release" it when you are finished. As of yet, the act of "acquiring" it requires directly dereferencing the hazard pointer to add it, hence, you can control when you "release" the pointer to begin with.
+The implementation is still in development and needing of testing, however I have an optimistic outlook on how it will look. Basically, you will "acquire" data via it's pointer and "release" it when you are finished. You must make sure to release the reference once finished with it, through the API calls MU_Hazard_Pointer_acquire() and MU_Hazard_Pointer_release and MU_Hazard_Pointer_release_all.
+
+Another notable feature is that you do not need to keep your own reference to the hazard pointer itself, as it's allocated as thread-local storage and allocated on first use. Lastly, any remaining data not freed before the program ends, will be destroyed when the library is unlinked (I.E program termination).
 
 An optimistic example of it's finished API looks like this...
 
 ```c
 
 /*
-    First we declare a thread local hazard pointer. Import that
-    it be thread-local, or else it's of no actual use.
+    For an example, lets assume the structure of a basic
+    lock-free stack.
 */
-thread_local MU_Hazard_Pointer_t *hp = NULL;
+Stack_t *stack;
 /*
-    Next, we optionally initialize it if it already hasn't.
+    Lets emulate a simple pop lockless procedure.
 */
-if(!hp){
-    hp = MU_Hazard_Pointer_acquire();
-}
-/*
-    Then lets say we have some data to we need to atomically modify,
-    with the use of a CAS, I.E a lockless stack. Note below that it ensures
-    that the node was not freed before compare_and_swap.
-*/
-Node_t *node;
-while(true)
-    node = stack->head;
-    hp->owned[0] = node;
-    if(node != stack->head) continue;
-    if(__sync_bool_compare_and_swap(stack->head, node, node->next)){
-        void *data = node->data;
-        MU_Hazard_Pointer_retire(hp, node);
-        return data;
+Node_t *head, *next;
+while(true){
+    head = stack->head;
+    if(!head) return NULL;
+    MU_Hazard_Pointer_acquire(head);
+    if(head != stack->head){
+        MU_Hazard_Pointer_release(head);
+        usleep(250);
+        continue;
     }
+    next = head->next;
+    if(__sync_bool_compare_and_swap(&stack->head, head, next)) break;
+    MU_Hazard_Pointer_release(head);
+    usleep(250);
 }
+void *data = head->item;
+// true = retire data, set to be deleted later, false = just remove reference
+MU_Hazard_Pointer_release(head, true);
+
 ```
 
-Optimistically, it should work just fine. Once again, you declare a hazard pointer as thread local, initialize it if needed, which adds it to the global list of hazard pointers, which ideally should be one per thread. Add the node to the hazard pointer's owned pointers, check if it is still valid, etc. By calling retire, it will be destroyed at a later date when no longer in use.
+That's it. The above is a snippet of the lockfree stack I created using it. Note that each time you, must release reference to the pointer, and usleep is used to lower overall contention to prevent threashing of the CPU.
 
-Hence, Acquire, Tag, Retire.
+Overall, it's rather simple.
+
 
 ####Flags [<b>Stable</b>] Version: 1.0
 
