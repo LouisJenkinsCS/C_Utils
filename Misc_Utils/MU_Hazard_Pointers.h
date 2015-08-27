@@ -23,24 +23,17 @@ typedef struct MU_Hazard_Pointer_t MU_Hazard_Pointer_t;
 struct MU_Hazard_Pointer_t{
 	_Atomic bool in_use;
 	DS_List_t *retired;
-	void *hazard_pointers[MU_HAZARD_POINTERS_PER_THREAD];
+	void *owned[MU_HAZARD_POINTERS_PER_THREAD];
+	void (*destructor)(void *);
 	struct MU_Hazard_Pointer_t *next;
 };
 
-typedef struct {
-	MU_Hazard_Pointer_t *head;
-	_Atomic size_t size;
-	void (*destructor)(void *);
-} MU_Hazard_Pointer_List_t;
+MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void);
 
-MU_Hazard_Pointer_List_t *MU_Hazard_Pointer_init(void (*destructor)(void *));
+bool MU_Hazard_Pointer_register_destructor(void (*destructor)(void *));
 
-MU_Hazard_Pointer_t *MU_Hazard_Pointer_get(MU_Hazard_Pointer_List_t *hp);
+bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp);
 
-void MU_Hazard_Pointer_acquire(MU_Hazard_Pointer_List_t *list, MU_Hazard_Pointer_t *hp, void *data);
-
-void MU_Hazard_Pointer_release(MU_Hazard_Pointer_List_t *list, MU_Hazard_Pointer_t *hp, void *data);
-
-void MU_Hazard_Pointer_release_all(MU_Hazard_Pointer_List_t *list, MU_Hazard_Pointer_t *hp);
+bool MU_Hazard_Pointer_release(MU_Hazard_Pointer_t *hp);
 
 #endif /* endif MU_HAZARD_POINTERS_H */
