@@ -439,6 +439,49 @@ int main(void){
 
 It's very simple, and as always, easy to use. Right now it's not entirely stable, but I'm working on fixing bugs and adding appropriate features.
 
+####Hazard Pointers [<b>In Development</b>]
+
+Provides a flexible and easy to use implementation of hazard pointers, described in the research paper by Maged M. Michael, [here](http://www.research.ibm.com/people/m/michael/ieeetpds-2004.pdf).
+
+The implementation is still in development and needing of testing, however I have an optimistic outlook on how it will look. Basically, you will "acquire" data via it's pointer and "release" it when you are finished. As of yet, the act of "acquiring" it requires directly dereferencing the hazard pointer to add it, hence, you can control when you "release" the pointer to begin with.
+
+An optimistic example of it's finished API looks like this...
+
+```c
+
+/*
+    First we declare a thread local hazard pointer. Import that
+    it be thread-local, or else it's of no actual use.
+*/
+thread_local MU_Hazard_Pointer_t *hp = NULL;
+/*
+    Next, we optionally initialize it if it already hasn't.
+*/
+if(!hp){
+    hp = MU_Hazard_Pointer_acquire();
+}
+/*
+    Then lets say we have some data to we need to atomically modify,
+    with the use of a CAS, I.E a lockless stack. Note below that it ensures
+    that the node was not freed before compare_and_swap.
+*/
+Node_t *node;
+while(true)
+    node = stack->head;
+    hp->owned[0] = node;
+    if(node != stack->head) continue;
+    if(__sync_bool_compare_and_swap(stack->head, node, node->next)){
+        void *data = node->data;
+        MU_Hazard_Pointer_retire(hp, node);
+        return data;
+    }
+}
+```
+
+Optimistically, it should work just fine. Once again, you declare a hazard pointer as thread local, initialize it if needed, which adds it to the global list of hazard pointers, which ideally should be one per thread. Add the node to the hazard pointer's owned pointers, check if it is still valid, etc. By calling retire, it will be destroyed at a later date when no longer in use.
+
+Hence, Acquire, Tag, Retire.
+
 ####Flags [<b>Stable</b>] Version: 1.0
 
 Provides extremely simple yet extremely useful flags for bitmasking. In fact, it is so simple, you actually do not even need to know how bitwise operations even work. They provide macros that allow you to determine if a flag is set in a mask, to set a flag, clear a flag or even toggle a flag. They are extremely simple, once again.
