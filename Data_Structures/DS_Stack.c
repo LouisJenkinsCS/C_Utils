@@ -37,13 +37,13 @@ bool DS_Stack_push(DS_Stack_t *stack, void *item){
 	DS_Node_t *head;
 	while(true){
 		head = stack->head;
-		MU_Hazard_Pointer_acquire(head);
+		if(head) MU_Hazard_Pointer_acquire(head);
 		// Ensures head isn't freed before it was tagged by hazard pointer.
 		if(head != stack->head) continue;
 		node->_single.next = head;
 		if(__sync_bool_compare_and_swap(&stack->head, head, node)) break;
 	}
-	MU_Hazard_Pointer_release(head, false);
+	if(head) MU_Hazard_Pointer_release(head, false);
 	return true;
 }
 

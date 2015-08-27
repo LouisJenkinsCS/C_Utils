@@ -181,10 +181,11 @@ bool MU_Hazard_Pointer_release_all(bool retire){
 		return false;
 	}
 	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
-		if(hp->owned[i]){
+		void *data = hp->owned[i];
+		if(data){
 			hp->owned[i] = NULL;
 			if(retire){
-				DS_List_add(hp->retired, hp->owned[i], NULL);
+				DS_List_add(hp->retired, data, NULL);
 				MU_LOG_TRACE(logger, "Added data to retirement list!");
 				if(hp->retired->size >= max_hazard_pointers){
 					MU_LOG_TRACE(logger, "Retirement list filled, scanning...");
@@ -208,8 +209,8 @@ bool MU_Hazard_Pointer_release(void *data, bool retire){
 		if(hp->owned[i] == data){
 			hp->owned[i] = NULL;
 			if(retire){
-				DS_List_add(hp->retired, hp->owned[i], NULL);
-				MU_LOG_TRACE(logger, "Added data to retirement list!");
+				DS_List_add(hp->retired, data, NULL);
+				MU_LOG_TRACE(logger, "Added data to retirement list, size: %zu!", hp->retired->size);
 				if(hp->retired->size >= max_hazard_pointers){
 					MU_LOG_TRACE(logger, "Retirement list filled, scanning...");
 					scan(hp);

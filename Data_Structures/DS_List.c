@@ -35,6 +35,7 @@ static int add_as_tail(DS_List_t *list, DS_Node_t *node){
 	return 1;
 }
 
+#if 0
 static int add_between(DS_List_t *list, DS_Node_t *previous_node, DS_Node_t *current_node){
 	previous_node->_double.prev->_double.next = current_node;
 	current_node->_double.next = previous_node;
@@ -43,6 +44,7 @@ static int add_between(DS_List_t *list, DS_Node_t *previous_node, DS_Node_t *cur
 	list->size++;
 	return 1;
 }
+#endif
 
 static int add_after(DS_List_t *list, DS_Node_t *current_node, DS_Node_t *new_node){
 	current_node->_double.next->_double.prev = new_node;
@@ -101,7 +103,7 @@ static int remove_only(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 	list->current = NULL;
 	if(del) del(node->item);
 	free(node);
-	list->size = 0;
+	list->size--;
 	return 1;
 }
 
@@ -191,6 +193,7 @@ static int delete_all_nodes(DS_List_t *list, DS_delete_cb del){
 	return 1;
 }
 
+#if 0
 static int node_exists(DS_List_t *list, DS_Node_t *node){
 	DS_Node_t *temp_node = NULL;
 	for(temp_node = list->head; temp_node; temp_node = temp_node->_double.next) if(temp_node == node) return 1;
@@ -209,6 +212,8 @@ static int node_to_index(DS_List_t *list, DS_Node_t *node){
 	MU_LOG_WARNING(logger, "Node_To_Index failed as the node was not found!\n");
 	return 0;
 }
+#endif
+
 
 static DS_Node_t *item_to_node(DS_List_t *list, void *item){
 	if(list->head && list->head->item == item) return list->head;
@@ -219,7 +224,6 @@ static DS_Node_t *item_to_node(DS_List_t *list, void *item){
 			return node;
 		}
 	}
-	MU_LOG_WARNING(logger, "Item_To_Node was unable to find the item in the list, returning NULL");
 	return NULL;
 }
 
@@ -329,9 +333,9 @@ bool DS_List_add(DS_List_t *list, void *item, DS_comparator_cb compare){
 	if(!list->size){
 		add_as_only(list, node);
 		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		return 1;
+		return true;
 	}
-	int result = 0;
+	bool result = false;
 	if(compare) result = add_sorted(list, node, compare);
 	else result = add_unsorted(list, node);
 	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);

@@ -16,7 +16,7 @@ typedef struct {
 	/// The current node for the iterator.
 	DS_Node_t *current;
 	/// The current size of the linked list.
-	size_t size;
+	volatile size_t size;
 	/// Determines whether the list is sorted.
 	volatile unsigned char is_sorted;
 	/// Ensures only one thread manipulates the items in the list, but multiple threads can read.
