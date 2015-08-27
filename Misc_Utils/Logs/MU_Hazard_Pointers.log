@@ -1,0 +1,608 @@
+01:50:19 PM [ERROR](./Misc_Utils/MU_Hazard_Pointers.c:155) MU_Hazard_Pointer_acquire(): 
+"MU_Hazard_Pointer_acquire: Invalid Argument=> {  data: FALSE! }"
+01:50:19 PM [ERROR](./Misc_Utils/MU_Hazard_Pointers.c:202) MU_Hazard_Pointer_release(): 
+"MU_Hazard_Pointer_release: Invalid Argument=> {  data: FALSE! }"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:160) MU_Hazard_Pointer_acquire(): 
+"Hazard Pointer for this thread not allocated! Initializing..."
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:143) init_tls_hp(): 
+"Was unable to reclaim a previous hazard pointer, successfully created a new one!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:151) init_tls_hp(): 
+"Was successful in adding hazard pointer to hazard table!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 3!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 0!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 1!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:171) MU_Hazard_Pointer_acquire(): 
+"Acquired pointer to data at index 2!"
+01:50:19 PM [TRACE](./Misc_Utils/MU_Hazard_Pointers.c:212) MU_Hazard_Pointer_release(): 
+"Added data to retirement list!"

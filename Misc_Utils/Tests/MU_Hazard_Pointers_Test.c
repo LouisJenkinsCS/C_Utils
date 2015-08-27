@@ -6,11 +6,9 @@ struct hp_test {
 };
 
 int main(void){
-	MU_Hazard_Pointer_t *hp = MU_Hazard_Pointer_acquire();
-	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
-		hp->owned[i] = malloc(sizeof(struct hp_test));
+	for(int i = 0; i < 100; i++){
+		MU_Hazard_Pointer_acquire(malloc(sizeof(struct hp_test)));
 	}
-	MU_Hazard_Pointer_release(hp);
-	
+	MU_Hazard_Pointer_release_all(true);
 	return 0;
 }

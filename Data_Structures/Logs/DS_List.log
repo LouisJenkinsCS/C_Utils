@@ -1,8 +1,200 @@
-01:51:32 AM [WARNING](./Data_Structures/DS_List.c:222) item_to_node(): 
-"Item_To_Node was unable to find the item in the list, returning NULL"
-01:51:32 AM [WARNING](./Data_Structures/DS_List.c:222) item_to_node(): 
-"Item_To_Node was unable to find the item in the list, returning NULL"
-01:51:32 AM [WARNING](./Data_Structures/DS_List.c:222) item_to_node(): 
-"Item_To_Node was unable to find the item in the list, returning NULL"
-01:51:32 AM [WARNING](./Data_Structures/DS_List.c:222) item_to_node(): 
-"Item_To_Node was unable to find the item in the list, returning NULL"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"
+01:50:19 PM [ERROR](./Data_Structures/DS_List.c:321) DS_List_add(): 
+"DS_List_add: Invalid Arguments=> {  list: TRUE; item: FALSE! }"

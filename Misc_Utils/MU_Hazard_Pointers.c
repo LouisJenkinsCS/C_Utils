@@ -4,11 +4,13 @@
 
 typedef struct {
 	MU_Hazard_Pointer_t *head;
-	_Atomic size_t size;
+	volatile size_t size;
 	void (*destructor)(void *);
 } MU_Hazard_Pointer_List_t;
 
-MU_Hazard_Pointer_List_t *hazard_table = NULL;
+static MU_Hazard_Pointer_List_t *hazard_table = NULL;
+
+static pthread_key_t tls;
 
 static MU_Logger_t *logger = NULL;
 
@@ -25,7 +27,11 @@ __attribute__((constructor)) static void init_hazard_table(void){
 		return;
 	}
 	hazard_table->destructor = free;
-	hazard_table->size = ATOMIC_VAR_INIT(0);
+	hazard_table->size = 0;
+}
+
+__attribute__((constructor)) static void init_tls_key(void){
+	pthread_key_create(&tls, NULL);
 }
 
 __attribute__((destructor)) static void destroy_logger(void){
@@ -82,9 +88,11 @@ static void scan(MU_Hazard_Pointer_t *hp){
 	*/
 	for(int i = 0; i < arr_size; i++){
 		if(DS_List_contains(private_list, tmp_arr[i])){
+			MU_LOG_TRACE(logger, "Added data to retirement from hazard table!");
 			DS_List_add(hp->retired, tmp_arr[i], NULL);
 		} else {
 			hazard_table->destructor(tmp_arr[i]);
+			MU_LOG_TRACE(logger, "Deleted data from hazard table!");
 		}
 	}
 	free(tmp_arr);
@@ -94,14 +102,13 @@ static void scan(MU_Hazard_Pointer_t *hp){
 static void help_scan(MU_Hazard_Pointer_t *hp){
 	for(MU_Hazard_Pointer_t *tmp_hp = hazard_table->head; tmp_hp; tmp_hp = tmp_hp->next){
 		// If we fail to mark the hazard pointer as active, then it's already in use.
-		bool expected = false;
-		if(tmp_hp->in_use || __sync_bool_compare_and_swap(&tmp_hp->in_use, &expected, true)) continue;
+		if(tmp_hp->in_use || !__sync_bool_compare_and_swap(&tmp_hp->in_use, false, true)) continue;
 		void *data;
 		while((data = DS_List_remove_at(tmp_hp->retired, 0, NULL))){
 			DS_List_add(hp->retired, data, NULL);
 			if(hp->retired->size >= max_hazard_pointers) scan(hp);
 		}
-		atomic_store(&tmp_hp->in_use, false);
+		tmp_hp->in_use = false;
 	}
 }
 
@@ -111,7 +118,7 @@ static MU_Hazard_Pointer_t *create(){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
-	atomic_store(&hp->in_use, true);
+	hp->in_use = true;
 	hp->retired = DS_List_create(false);
 	if(!hp->retired){
 		MU_LOG_ERROR(logger, "DS_List_create: '%s'", strerror(errno));
@@ -121,68 +128,97 @@ static MU_Hazard_Pointer_t *create(){
 	return hp;
 }
 
-MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void){
+static void init_tls_hp(void){
 	for(MU_Hazard_Pointer_t *tmp_hp = hazard_table->head; tmp_hp; tmp_hp = tmp_hp->next){
-		bool expected = false;
-		if(tmp_hp->in_use || __sync_bool_compare_and_swap(&tmp_hp->in_use, &expected, true)) continue;
-		else return tmp_hp;
+		if(tmp_hp->in_use || __sync_bool_compare_and_swap(&tmp_hp->in_use, false, true)) continue;
+		pthread_setspecific(tls, tmp_hp);
+		MU_LOG_TRACE(logger, "Was able to reclaim a previous hazard pointer!");
+		return;
 	}
-	__sync_fetch_and_add(&hazard_table->size, MU_HAZARD_POINTERS_PER_THREAD);
 	MU_Hazard_Pointer_t *hp = create();
 	if(!hp){
 		MU_LOG_ERROR(logger, "create_hp: 'Was unable to allocate a Hazard Pointer!");
-		return NULL;
+		return;
 	}
+	MU_LOG_TRACE(logger, "Was unable to reclaim a previous hazard pointer, successfully created a new one!");
 	MU_Hazard_Pointer_t *old_head;
 	do {
 		old_head = hazard_table->head;
 		hp->next = old_head;
 	} while(!__sync_bool_compare_and_swap(&hazard_table->head, old_head, hp));
-	return hp;
+	__sync_fetch_and_add(&hazard_table->size, MU_HAZARD_POINTERS_PER_THREAD);
+	pthread_setspecific(tls, hp);
+	MU_LOG_TRACE(logger, "Was successful in adding hazard pointer to hazard table!");
 }
 
-bool MU_Hazard_Pointer_retire_all(MU_Hazard_Pointer_t *hp){
-	MU_ARG_CHECK(logger, false, hp);
+bool MU_Hazard_Pointer_acquire(void *data){
+	MU_ARG_CHECK(logger, false, data);
+	// Get the hazard pointer from thread-local storage if it is allocated.
+	MU_Hazard_Pointer_t *hp = pthread_getspecific(tls);
+	// If it hasn't been allocated, then we allocate it here.
+	if(!hp){
+		MU_LOG_TRACE(logger, "Hazard Pointer for this thread not allocated! Initializing...");
+		init_tls_hp();
+		hp = pthread_getspecific(tls);
+		if(!hp){
+			MU_LOG_ERROR(logger, "init_tls_hp: 'Was unable initialize thread-local storage!'");
+			return false;
+		}
+	}
+	// Start over if we already exceeded maximum, to overwrite oldest reference first.
+	if(hp->curr_index >= MU_HAZARD_POINTERS_PER_THREAD) hp->curr_index = 0;
+	hp->owned[hp->curr_index++] = data;
+	MU_LOG_TRACE(logger, "Acquired pointer to data at index %d!", hp->curr_index - 1);
+	return true;
+}
+
+bool MU_Hazard_Pointer_release_all(bool retire){
+	// Get the hazard pointer from thread-local storage if it is allocated.
+	MU_Hazard_Pointer_t *hp = pthread_getspecific(tls);
+	// If it hasn't been allocated, then surely the current thread never acquired anything.
+	if(!hp){
+		MU_LOG_TRACE(logger, "Attempt to release all data when no thread-local storage was allocated!");
+		return false;
+	}
 	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
 		if(hp->owned[i]){
-			DS_List_add(hp->retired, hp->owned[i], NULL);
 			hp->owned[i] = NULL;
-			if(hp->retired->size >= max_hazard_pointers){
-				scan(hp);
-				help_scan(hp);
+			if(retire){
+				DS_List_add(hp->retired, hp->owned[i], NULL);
+				MU_LOG_TRACE(logger, "Added data to retirement list!");
+				if(hp->retired->size >= max_hazard_pointers){
+					MU_LOG_TRACE(logger, "Retirement list filled, scanning...");
+					scan(hp);
+					MU_LOG_TRACE(logger, "Retirement list filled, help_scanning...");
+					help_scan(hp);
+				}
 			}
 		}
 	}
 	return true;
 }
 
-bool MU_Hazard_Pointer_retire(MU_Hazard_Pointer_t *hp, void *data){
-	MU_ARG_CHECK(logger, false, hp);
+bool MU_Hazard_Pointer_release(void *data, bool retire){
+	MU_ARG_CHECK(logger, false, data);
+	// Get the hazard pointer from thread-local storage if it is allocated.
+	MU_Hazard_Pointer_t *hp = pthread_getspecific(tls);
+	// If it hasn't been allocated, then surely the current thread never acquired anything.
+	if(!hp) return false;
 	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
 		if(hp->owned[i] == data){
-			DS_List_add(hp->retired, hp->owned[i], NULL);
 			hp->owned[i] = NULL;
-			if(hp->retired->size >= max_hazard_pointers){
-				scan(hp);
-				help_scan(hp);
+			if(retire){
+				DS_List_add(hp->retired, hp->owned[i], NULL);
+				MU_LOG_TRACE(logger, "Added data to retirement list!");
+				if(hp->retired->size >= max_hazard_pointers){
+					MU_LOG_TRACE(logger, "Retirement list filled, scanning...");
+					scan(hp);
+					MU_LOG_TRACE(logger, "Retirement list filled, help_scanning...");
+					help_scan(hp);
+				}
 			}
-			break;
 		}
 	}
-}
-
-bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp){
-	MU_ARG_CHECK(logger, false, hp);
-	for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
-		hp->owned[i] = NULL;
-	}
-	return true;
-}
-
-bool MU_Hazard_Pointer_release(MU_Hazard_Pointer_t *hp){
-	MU_ARG_CHECK(logger, false, hp);
-	MU_Hazard_Pointer_reset(hp);
-	hp->in_use = false;
 	return true;
 }
 

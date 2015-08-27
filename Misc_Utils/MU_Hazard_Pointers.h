@@ -22,20 +22,17 @@ struct MU_Hazard_Pointer_t{
 	volatile bool in_use;
 	DS_List_t *retired;
 	void *owned[MU_HAZARD_POINTERS_PER_THREAD];
+	unsigned int curr_index;
 	void (*destructor)(void *);
 	struct MU_Hazard_Pointer_t *next;
 };
 
-MU_Hazard_Pointer_t *MU_Hazard_Pointer_acquire(void);
+bool MU_Hazard_Pointer_acquire(void *);
 
 bool MU_Hazard_Pointer_register_destructor(void (*destructor)(void *));
 
-bool MU_Hazard_Pointer_retire(MU_Hazard_Pointer_t *hp, void *data);
+bool MU_Hazard_Pointer_release(void *data, bool retire);
 
-bool MU_Hazard_Pointer_retire_all(MU_Hazard_Pointer_t *hp);
-
-bool MU_Hazard_Pointer_reset(MU_Hazard_Pointer_t *hp);
-
-bool MU_Hazard_Pointer_release(MU_Hazard_Pointer_t *hp);
+bool MU_Hazard_Pointer_release_all(bool retire);
 
 #endif /* endif MU_HAZARD_POINTERS_H */

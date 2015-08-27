@@ -7,7 +7,7 @@
 
 typedef struct {
 	DS_Node_t *head;
-	size_t size;
+	volatile size_t size;
 } DS_Stack_t;
 
 DS_Stack_t *DS_Stack_create(void);
