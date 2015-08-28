@@ -1,39 +1,39 @@
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
 "A task of Medium priority has been added to the task_queue!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
-"Thread #3: received a task!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
-"Thread #1: received a task!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
-"A task of Medium priority has been added to the task_queue!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
 "Thread #4: received a task!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
 "A task of Medium priority has been added to the task_queue!"
-05:53:18 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
 "Thread #2: received a task!"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
+"Thread #1: received a task!"
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:273) TP_Pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+08:01:16 PM [VERBOSE](./Thread_Pool/TP_Pool.c:123) Get_Tasks(): 
+"Thread #3: received a task!"
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
 "Thread #1: finished a task!"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
-"Thread #4: finished a task!"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
 "Thread #3: finished a task!"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
+"Thread #4: finished a task!"
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:125) Get_Tasks(): 
 "Thread #2: finished a task!"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
-"Thread #3: Exited!
-"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
-"Thread #2: Exited!
-"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
-"Thread #1: Exited!
-"
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
 "Thread #4: Exited!
 "
-05:53:38 PM [VERBOSE](./Thread_Pool/TP_Pool.c:333) TP_Pool_destroy(): 
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
+"Thread #2: Exited!
+"
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
+"Thread #1: Exited!
+"
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:133) Get_Tasks(): 
+"Thread #3: Exited!
+"
+08:01:36 PM [VERBOSE](./Thread_Pool/TP_Pool.c:333) TP_Pool_destroy(): 
 "Thread pool has been properly destroyed!
 "

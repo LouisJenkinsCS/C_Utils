@@ -2,11 +2,15 @@
 
 ##Summary
 
-Utilities Package for the C Programming Language, or C_Utils for short, is my attempt at providing a full fledged package of various libraries ranging from thread-safe data structures, to a Thread Pool to even an HTTP library! 
+Utilities Package for the C Programming Language, or C_Utils for short, is my attempt at providing a full fledged package of various libraries ranging from thread-safe (some lockless) data structures, to a Thread Pool, to an HTTP parser, to a simple event loop implementation (and separate Win32 Event implementations for POSIX), etc.
+
+C_Utils is essentially my personal playground, where if I wish to find out how something works internally, I implement and/or reverse-engineer it into being. Yes, it is reinventing the wheel, but when that wheel can be infinite as the universe itself, what's the harm in knowing more about them?
+
+C_Utils may never actually be finished, for as long I have something I wish to learn about at a lower level, I will add and implement it here, however to date I have put in over 500 hours since I started it this summer (2015), and I plan on continuing developing this utilities package.
 
 ##About the Author
 
-I am a Computer Science student that declared late and who hasn't really found his passion for programming until half way through Junior Year. This is my attempt at teaching myself the various needed topics all comptuer science students should know without having to wait too long to learn what should already be known. Please do not be discouraged and think that this will be an awful project, as I am committed to trying my best at completing it as best I can. 
+I a late-but-upcoming Computer Science major who's developed more than a bit of a fascination into the world of computing, data structures, algorithms, and all other wonders modern technology brings. While I am rather late to the game, it doesn't make me any less willing to learn, as I use this utilities package as my personal playground.
 
 ##Notes
 
