@@ -10,11 +10,11 @@ All data structures begin with the namespace 'DS_', and maintain a consistent na
 
 All data structures use the following for dependencies, with any else listed for each data structure. Any with the 'DS_' or 'MU_'namespace are supplied in this package.
 
-* DS_Helpers <- Helper callback and Node declarations
-* MU_Logger <- Logging errors and warnings.
-* MU_Arg_Check <- Log and return on bad parameter arguments.
-* MU_Cond_Locks <- Conditional synchronization and logging of threading errors.
-* Pthreads <- For Read-Write locks used in synchronization.
+* DS_Helpers <= Helper callback and Node declarations
+* MU_Logger <= Logging errors and warnings.
+* MU_Arg_Check <= Log and return on bad parameter arguments.
+* MU_Cond_Locks <= Conditional synchronization and logging of threading errors.
+* Pthreads <= For Read-Write locks used in synchronization.
 
 ##Double Linked List
 
@@ -62,5 +62,5 @@ As this impentation uses malloc to allocate nodes, and malloc does obtain a rath
 
 ###Extra Non-STL Dependencies
 
-* MU_Hazard_Pointers <- Ensures safe deletion of nodes, atomically.
-* GCC and Clang compiler attributes <- For __sync_bool_compare_and_swap(...)
+* MU_Hazard_Pointers <= Ensures safe deletion of nodes, atomically.
+* GCC and Clang compiler attributes <= For __sync_bool_compare_and_swap(...)
