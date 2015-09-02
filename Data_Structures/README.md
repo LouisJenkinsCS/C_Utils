@@ -1,29 +1,66 @@
-# Data_Structures
+# Data Structures
 
-Basic datastructures that are thread safe and reusable.
+##Summary
 
-## Linked_List
+Some simple and straight-forward, but thread-safe implementations of data structures. Some, but not all, are lock-free implementations, or as lock-free as you can get without using a custom memory allocator. Lock-Free implementations utilize my Hazard Pointer implementations in Misc_Utils.
 
-###Summary
+All data structures begin with the namespace 'DS_', and maintain a consistent naming convention of having a one-to-two description name, capitalized, 'DS_List_' or 'DS_Stack', and verb describing it's actions, I.E 'DS_List_create' or 'DS_Map_add', which is in lowercase to contrast with the namespace and descriptor .
 
-A general and generic use data structure; your goto when you need a thread safe and moderate sized and speed container for elements, capable of sorting, iteration and construction and destruction to arrays.
+##General Non-STL Dependencies
 
-Current version 1.0; Documentation found
-[here](http://theif519.github.io/Linked_List_Documentation/)
+All data structures use the following for dependencies, with any else listed for each data structure. Any with the 'DS_' or 'MU_'namespace are supplied in this package.
 
-### Optional Callbacks for Deleting and Comparing two elements
+* DS_Helpers <= Helper callback and Node declarations
+* MU_Logger <= Logging errors and warnings.
+* MU_Arg_Check <= Log and return on bad parameter arguments.
+* MU_Cond_Locks <= Conditional synchronization and logging of threading errors.
+* Pthreads <= For Read-Write locks used in synchronization.
 
-When created, data structures will not require certain callbacks, however of course it strongly recommended you do pass your own. The default for them will be simple, such having a default deletion that just frees the pointer, while a user-defined callback can more thoroughly ensure properly deletion of each element to prevent memory leaks; a default comparator will just subtract the two item's memory address, to determine if they are equal, with the item declared after being the one, in most cases, that will be considered greater. As is obvious, user-defined callbacks are not needed yet will help immensely for operations like sorting and removing and deleting elements inside of the Linked_List.
+##Double Linked List
 
-### Multiple parameter passing
+###Features
 
-For functions that support it, parameters passed to a function will cause the operation to perform different. For instance, if you wish to add an item to the list, by default it is appended to the end of the list. Passing parameters such as FIRST, which prepends it to the beginning of the list, or SORTED | DESCENDING inserts it into the list in a sorted, descending order.
+* Optional Synchronization & Thread Safety.
+* General-Use via Callbacks.
+* Relatively lightweight.
+* Built-in Iterator support.
+* Basic sorting.
 
-### Barebones iteration
+##Hash Map
 
-Features a lightweight iterator built into the Linked_List struct, which allows you to iterate through each and every node in the linked list, appending and prepending, or removing items.
+###Features
 
+* Optional Synchronization & Thread Safety.
+* User-specified amount of buckets to fine-tune performance.
+* Relatively lightweight.
+* String keys, any values
 
-## Priority Blocking Queue
+##Priority Blocking Queue
 
-Current Version 1.0; Documentation found [here](http://theif519.github.io/Data_Structures_Documentation/Priority_Blocking_Queue/)
+###Features
+
+* Synchronization & Thread Safety.
+* Sorted based on comparator used.
+* Relatively lightweight
+* Can be bounded or unbounded.
+* Blocks thread until Ready
+* Blocked threads wake up when shutdown.
+
+##Lock-Free Stack
+
+###Features
+
+* Lock-Free*.
+* Avoids ABA problem with Hazard Pointers.
+* Will not block*.
+* Very lightweight and fast*.
+* Deadlock-free*.
+* Priority-Inversoin free*.
+* Lowers Contention*.
+
+As this impentation uses malloc to allocate nodes, and malloc does obtain a rather fine-grained spinlock on the heap and is very fast, it still serves as a bottleneck. 
+
+###Extra Non-STL Dependencies
+
+* MU_Hazard_Pointers <= Ensures safe deletion of nodes, atomically.
+* GCC and Clang compiler attributes <= For __sync_bool_compare_and_swap(...)
