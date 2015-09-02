@@ -43,7 +43,7 @@ All data structures use the following for dependencies, with any else listed for
 * Sorted based on comparator used.
 * Relatively lightweight
 * Can be bounded or unbounded.
-* Blocks thread until Ready
+* Blocks thread until Ready or Timeout specified.
 * Blocked threads wake up when shutdown.
 
 ##Lock-Free Stack

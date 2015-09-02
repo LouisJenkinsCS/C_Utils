@@ -43,7 +43,7 @@ int main(void){
 	for(; i < num_threads; i++){
 		TP_Pool_add(tp, (i % 2 == 0) ? push_to_stack : pop_from_stack, NULL, TP_NO_RESULT);
 	}
-	TP_Pool_wait(tp, 20);
+	TP_Pool_wait(tp, 300);
 	running = 0;
 	TP_Pool_wait(tp, -1);
 	TP_Pool_destroy(tp);

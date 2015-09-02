@@ -4,12 +4,128 @@
 		"selected_items":
 		[
 			[
-				"source",
-				"source_two"
+				"MU_Haz",
+				"MU_Hazard_Pointer_release"
+			],
+			[
+				"MU_LOG",
+				"MU_LOG_TRACE"
+			],
+			[
+				"retire",
+				"retire"
+			],
+			[
+				"curr",
+				"curr_index"
+			],
+			[
+				"MU_HA",
+				"MU_HAZARD_POINTERS_MAX_THREADS"
+			],
+			[
+				"MU_A",
+				"MU_ARG_CHECK"
+			],
+			[
+				"init",
+				"init_tls_hp"
+			],
+			[
+				"MU_Ha",
+				"MU_Hazard_Pointer_t"
+			],
+			[
+				"MU_Hazard_",
+				"MU_Hazard_Pointer_reset"
+			],
+			[
+				"haza",
+				"hazard_table"
+			],
+			[
+				"hazard",
+				"hazard_pointers"
+			],
+			[
+				"atomic",
+				"atomic_compare_exchange_strong"
+			],
+			[
+				"MU_HAz",
+				"MU_Hazard_Pointer_t"
+			],
+			[
+				"DS_Lis",
+				"DS_List_create"
+			],
+			[
+				"MU_HAZARD_POINTERS_MAX",
+				"MU_HAZARD_POINTERS_MAX_PER_THREAD"
+			],
+			[
+				"MU_HAZARD_POINT",
+				"MU_HAZARD_POINTERS_MAX_THREADS"
+			],
+			[
+				"MU_HAZ",
+				"MU_HAZARD_POINTERS_MAX_THREAD_COUNT"
+			],
+			[
+				"MU_HAZA",
+				"MU_HAZARD_POINTERS_PER_THREAD"
+			],
+			[
+				"MU_HP",
+				"MU_HP_List_t"
+			],
+			[
+				"DS_List",
+				"DS_List_clear"
+			],
+			[
+				"MU_Hazard",
+				"MU_Hazard_Pointer_t"
+			],
+			[
+				"MU_H",
+				"MU_Hazard_Pointer_t"
+			],
+			[
+				"DS_",
+				"DS_delete_cb"
+			],
+			[
+				"MU_",
+				"MU_HAZARD_POINTERS_PER_THREAD"
 			],
 			[
 				"MU_Event",
-				"MU_Event_Loop_add"
+				"MU_Event_create"
+			],
+			[
+				"MU_Event_loop",
+				"MU_Event_Loop_t"
+			],
+			[
+				"MU_Event_Source",
+				"MU_Event_Source_t"
+			],
+			[
+				"dispat",
+				"dispatch_timer"
+			],
+			[
+				"prepa",
+				"prepare_timer"
+			],
+			[
+				"disp",
+				"dispatch_timer"
+			],
+			[
+				"source",
+				"source_two"
 			],
 			[
 				"sour",
@@ -26,14 +142,6 @@
 			[
 				"LInke",
 				"Linked_List_head"
-			],
-			[
-				"MU_Event_loop",
-				"MU_Event_Loop_add"
-			],
-			[
-				"curr",
-				"curr_source"
 			],
 			[
 				"timeout",
@@ -54,10 +162,6 @@
 			[
 				"MU_Event_Sour",
 				"MU_Event_Source_create"
-			],
-			[
-				"MU_",
-				"MU_DEBUG"
 			],
 			[
 				"pr",
@@ -138,10 +242,6 @@
 			[
 				"NU_HTTP_FIEL",
 				"NU_HTTP_HEADER_FIELD_LEN"
-			],
-			[
-				"DS_",
-				"DS_HASH_MAP_KEY_MAX_SIZE"
 			],
 			[
 				"tu",
@@ -274,10 +374,6 @@
 			[
 				"DS_At",
 				"DS_Atomic_Node_create"
-			],
-			[
-				"atomic",
-				"atomic_compare_exchange_strong"
 			],
 			[
 				"atomic_compare",
@@ -418,160 +514,32 @@
 			[
 				"MU_E",
 				"MU_Event_t"
-			],
-			[
-				"MU_even",
-				"MU_Event_t"
-			],
-			[
-				"resume",
-				"resume"
-			],
-			[
-				"NU_Bound",
-				"NU_Bound_Socket_unbind"
-			],
-			[
-				"recv",
-				"recv_flags"
-			],
-			[
-				"MU_Con",
-				"MU_COND_RWLOCK_RDLOCK"
-			],
-			[
-				"send",
-				"send_flags"
-			],
-			[
-				"NU_Respo",
-				"NU_Response_t"
-			],
-			[
-				"NU_Request",
-				"NU_Request_t"
-			],
-			[
-				"request",
-				"request"
-			],
-			[
-				"deli",
-				"delimiter"
-			],
-			[
-				"first",
-				"first_line"
-			],
-			[
-				"val",
-				"value_size"
-			],
-			[
-				"field",
-				"field_size"
-			],
-			[
-				"delim",
-				"delim_size"
-			],
-			[
-				"NU_HEader",
-				"NU_Header_create"
-			],
-			[
-				"NU_Header",
-				"NU_Header_t"
-			],
-			[
-				"NU_He",
-				"NU_Header_t"
-			],
-			[
-				"arr",
-				"arr_size"
-			],
-			[
-				"MU_COND_",
-				"MU_COND_RWLOCK_UNLOCK"
-			],
-			[
-				"conn",
-				"conn_pool_size"
-			],
-			[
-				"MU_A",
-				"MU_ARG_CHECK"
-			],
-			[
-				"BUF",
-				"buffer_size"
-			],
-			[
-				"NU_Server",
-				"NU_Server_File_Downloader"
-			],
-			[
-				"value",
-				"value_retrieved"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "Misc_Utils/MU_Event_Loop.h",
+			"file": "README.md",
 			"settings":
 			{
-				"buffer_size": 1671,
+				"buffer_size": 0,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "Misc_Utils/MU_Events.h",
+			"file": "Data_Structures/DS_Hash_Map.h",
 			"settings":
 			{
-				"buffer_size": 1670,
+				"buffer_size": 0,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "Misc_Utils/MU_Event_Loop.c",
+			"file": "Data_Structures/DS_Stack.c",
 			"settings":
 			{
-				"buffer_size": 4249,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "String_Utils/SU_String.c",
-			"settings":
-			{
-				"buffer_size": 11726,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Net_Utils/NU_HTTP.h",
-			"settings":
-			{
-				"buffer_size": 4379,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Misc_Utils/MU_Flags.h",
-			"settings":
-			{
-				"buffer_size": 539,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Misc_Utils/Tests/MU_Event_Loop_Test.c",
-			"settings":
-			{
-				"buffer_size": 1646,
+				"buffer_size": 0,
 				"line_ending": "Unix"
 			}
 		}
@@ -785,27 +753,55 @@
 	"expanded_folders":
 	[
 		"/C/Users/theif519/Documents/GitHub/C_Utils",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Logs",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs"
 	],
 	"file_history":
 	[
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Linked_List.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Hazard_Pointers.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_Stack_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Tests/MU_Hazard_Pointers_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_Stack_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_List.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Logs/MU_Hazard_Pointers.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Hazard_Pointers.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc/MU_Hazard_Pointer_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc/MU_Event_Loop_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_List.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Logs/DS_List.log",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc/MU_Hazard_Pointers_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_List_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Misc/DS_List_Test.mk",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Event_Loop.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Event_Loop.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/Linked_List_Test.c",
+		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/tmp.c",
+		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/User/SublimeLinter.sublime-settings",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/SU_String.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Tests/MU_Event_Loop_Test.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Flags.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.h",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/SU_String.c",
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Linked_List.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/README.md",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Logs/MU_Event_Loop.log",
 		"/C/cygwin64/usr/include/sys/types.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Tests/NU_Server_Test_File_Downloader.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc/MU_Event_Loop_Test.mk",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/Web_Pages/index.html",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Misc/Web_Pages/menu.html",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_HTTP.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Tests/MU_Event_Loop_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Linked_List.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/TP_Pool.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Event_Loop.c",
 		"/C/WebBanking/web/index.html",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Logs/NU_HTTP.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Logs/NU_Server.log",
@@ -832,7 +828,6 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Helper.c",
 		"/C/Users/theif519/Documents/theif519.html",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Tests/SU_String_Test.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/SU_String.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Logs/SU_String_Test.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Logs/SU_String.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/C_Utils.sublime-project",
@@ -842,14 +837,10 @@
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Arg_Check.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Queue.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Queue.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_Stack.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Misc/TP_Pool_Test.mk",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Events.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Test/TP_Pool_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs/TP_Pool_Events.log",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Flags.h",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Thread_Pool/Logs/TP_Pool_Test.log",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Tests/DS_PBQueue_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/DS_PBQueue.h",
@@ -900,24 +891,7 @@
 		"/C/Users/theif519/AppData/Roaming/Sublime Text 3/Packages/Git/Git.sublime-settings",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map_Test.c",
 		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Allocators.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Allocators.h",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DIa0.502/http.c",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DRa0.099/kore/includes/http.h",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DIa0.256/net.c",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DIa0.956/timer.c",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DIa0.097/worker.c",
-		"/C/Users/theif519/AppData/Local/Temp/Rar$DIa0.922/zlib_dict.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/Ideas.md",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Net_Utils/NU_Server_Test_File_Downloader.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Timer.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Timer.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Atomic.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc_Utils.c",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/Misc_Utils.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/Misc_Utils/MU_Helper.h",
-		"/C/Users/theif519/Documents/GitHub/C_Utils/String_Utils/Code/String_Utils.c"
+		"/C/Users/theif519/Documents/GitHub/C_Utils/Data_Structures/Hash_Map/DS_Hash_Map.h"
 	],
 	"find":
 	{
@@ -935,6 +909,28 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"MU_HP_List_t",
+			"pthread_rwlock_destroy\\(list->manipulating_list\\);",
+			"pthread_rwlock_destroy\\(list->manipulating_iterator\\);",
+			"pthread_rwlock_destroy(list->manipulating_iterator);",
+			"pthread_rwlock_rdlock\\(list->manipulating_iterator\\);",
+			"pthread_rwlock_rdlock\\(list->manipulating_list\\);",
+			"pthread_rwlock_unlock\\(list->manipulating_iterator\\);",
+			"pthread_rwlock_unlock\\(list->manipulating_list\\);",
+			"pthread_rwlock_wrlock\\(list->manipulating_iterator\\);",
+			"pthread_rwlock_wrlock\\(list->manipulating_list\\);",
+			"pthread_rwlock_wrlock(list->manipulating_list\\);",
+			"pthread_rwlock_wrlock(list->manipulating_list);",
+			"pthread_rwlock_wrlock\\(list->manipulating_list\\);",
+			"Linked_List",
+			"Linked_List_delete",
+			"->prev",
+			"prev",
+			"->next",
+			"Linked_List_Compare",
+			"delete_item",
+			"Node_t",
+			"Linked_List_t",
 			"time_t",
 			"_TIME_T_",
 			"stat",
@@ -1040,29 +1036,7 @@
 			"\\\\n",
 			"MU_logger_Log",
 			"assertion",
-			"__LINE__",
-			"MU_ARG_EVAL\\(arg\\)",
-			"!= false\\)",
-			"arg, string_ptr",
-			"_Bool",
-			"strcmp",
-			"DS_Hash_Map_Bucket_t",
-			"=>",
-			"([0-9]+)",
-			"([0-9])+",
-			"([0-9]*)",
-			"conn->type",
-			"NU_SERVER",
-			"NU_Connection_create",
-			", conn \\? NU_Connection_Type_to_string\\(conn->type\\) : \"NULL\"",
-			", conn ? NU_Connection_Type_to_string(conn->type) : \"NULL\"",
-			"\\|\\| conn->type != NU_SERVER",
-			";Connection-Type: %s",
-			"close\\(",
-			"close(",
-			"close",
-			"NU_Bound_Socket_destroy",
-			"set"
+			"__LINE__"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1070,6 +1044,24 @@
 		"regex": true,
 		"replace_history":
 		[
+			"MU_Hazard_Pointer_List_t",
+			"MU_COND_RWLOCK_DESTROY(list->manipulating_list, logger);",
+			"MU_COND_RWLOCK_DESTROY(list->manipulating_iterator, logger);",
+			"MU_COND_RWLOCK_RDLOCK(list->manipulating_iterator, logger);",
+			"MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);",
+			"MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);",
+			"MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);",
+			"MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);",
+			"MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);",
+			"MU_COND_RWLOCK(list->manipulating_list, logger);",
+			"DS_List",
+			"DS_delete_cb",
+			"->_double.prev",
+			"->_double.next",
+			"DS_comparator_cb",
+			"del",
+			"DS_Node_t",
+			"DS_List_t",
 			"status",
 			"path",
 			"method",
@@ -1179,154 +1171,57 @@
 			"\\nTesting:",
 			"Testing: %s",
 			"",
-			"\\\"%s\\\"",
-			"logger",
-			"tp->logger",
-			"logger",
-			"int ",
-			"int",
-			"SU_MODIFY",
-			"SU_IGNORE_CASE",
-			"SU_NONE",
-			"flags",
-			"is_selected(flags"
+			"\\\"%s\\\""
 		],
 		"reverse": false,
 		"show_context": true,
 		"use_buffer2": true,
-		"whole_word": true,
+		"whole_word": false,
 		"wrap": true
 	},
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "Misc_Utils/MU_Event_Loop.h",
+					"file": "README.md",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1671,
+						"buffer_size": 0,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								908,
-								908
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
+							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "Misc_Utils/MU_Events.h",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 1670,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1045,
-								1045
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": -0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "Misc_Utils/MU_Event_Loop.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4249,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2949,
-								2949
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1035.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
-					"file": "String_Utils/SU_String.c",
+					"buffer": 1,
+					"file": "Data_Structures/DS_Hash_Map.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 11726,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								801,
-								801
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 855.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "Net_Utils/NU_HTTP.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4379,
+						"buffer_size": 0,
 						"regions":
 						{
 						},
@@ -1335,64 +1230,6 @@
 							[
 								0,
 								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1620.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "Misc_Utils/MU_Flags.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 539,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "Misc_Utils/Tests/MU_Event_Loop_Test.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1646,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								673,
-								673
 							]
 						],
 						"settings":
@@ -1401,10 +1238,39 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 90.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Data_Structures/DS_Stack.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -1412,7 +1278,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 23.0
+		"height": 22.0
 	},
 	"input":
 	{
@@ -1491,7 +1357,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 175.0,
+	"side_bar_width": 196.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
