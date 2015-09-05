@@ -44,7 +44,6 @@ static int add_between(DS_List_t *list, DS_Node_t *previous_node, DS_Node_t *cur
 	list->size++;
 	return 1;
 }
-#endif
 
 static int add_after(DS_List_t *list, DS_Node_t *current_node, DS_Node_t *new_node){
 	current_node->_double.next->_double.prev = new_node;
@@ -54,6 +53,7 @@ static int add_after(DS_List_t *list, DS_Node_t *current_node, DS_Node_t *new_no
 	list->size++;
 	return 1;
 }
+#endif
 
 static int add_as_only(DS_List_t *list, DS_Node_t *node){
 	list->head = list->tail = node;
@@ -100,7 +100,6 @@ static int add_unsorted(DS_List_t *list, DS_Node_t *node){
 static int remove_only(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 	list->head = NULL;
 	list->tail = NULL;
-	list->current = NULL;
 	if(del) del(node->item);
 	free(node);
 	list->size--;
@@ -110,7 +109,6 @@ static int remove_only(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 static int remove_head(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 	list->head->_double.next->_double.prev = NULL;
 	list->head = list->head->_double.next;
-	if(list->current == node) list->current = list->head;
 	if(del) del(node->item);
 	free(node);
 	list->size--;
@@ -120,7 +118,6 @@ static int remove_head(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 static int remove_tail(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 	list->tail = list->tail->_double.prev;
 	list->tail->_double.next = NULL;
-	if(list->current == node) list->current = list->tail;
 	if(del) del(node->item);
 	free(node);
 	list->size--;
@@ -131,7 +128,6 @@ static int remove_normal(DS_List_t *list, DS_Node_t *node, DS_delete_cb del){
 	node->_double.next->_double.prev = node->_double.prev;
 	node->_double.prev->_double.next = node->_double.next;
 	if(del) del(node->item);
-	if(list->current == node) list->current = node->_double.next;
 	free(node);
 	list->size--;
 	return 1;
@@ -258,6 +254,112 @@ static void for_each_item(DS_List_t *list, void (*callback)(void *item)){
 
 /* End implementations of helper functions. */
 
+/* Implementation of DS_Iterator callbacks */
+
+DS_Node_t *get_next(void *instance, DS_Node_t *curr, void **item_ptr){
+	DS_List_t *list = instance;
+	DS_Node_t *next;
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
+	if(list->size == 0){
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+		*item_ptr = NULL;
+		return NULL;
+	}
+	if(!curr){
+		next = list->head;
+		*item_ptr = next->item;
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+		return next;
+	}
+	/*
+		If the the list is not empty and if the current node passed is not NULL, we must check if it
+		is valid, since the list easily could have changed since the last iterator operation. This involves
+		checking to see if it is found in the list and whether or not the previous or next nodes are valid,
+		O(N). The previous and next nodes are checked because in case it is not valid, we'd rather not have
+		to go back to the beginning, so instead we assign the current to be the next, if not that then the previous.
+	*/
+	bool next_valid = false, prev_valid = false, curr_valid = false;
+	DS_Node_t *node;
+	for(node = list->head; node; node = node->_double.next){
+		if(node == curr){
+			curr_valid = true;
+			break;
+		}
+		if(node == curr->_double.next){
+			next_valid = true;
+			break;
+		}
+		if(node == curr->_double.prev){
+			prev_valid = true;
+		}
+	}
+	if(curr_valid || next_valid){
+		next = curr->_double.next;
+	} else if(prev_valid){
+		next = curr->_double.prev;
+		if(next){
+			next = next->_double.next;
+		}
+	} else {
+		next = list->head;
+	}
+	*item_ptr = next ? next->item : NULL;
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+	return next;
+}
+
+DS_Node_t *get_prev(void *instance, DS_Node_t *curr, void **item_ptr){
+	DS_List_t *list = instance;
+	DS_Node_t *prev;
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
+	if(list->size == 0){
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+		*item_ptr = NULL;
+		return NULL;
+	}
+	if(!curr){
+		prev = list->tail;
+		*item_ptr = prev->item;
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+		return prev;
+	}
+	/*
+		If the the list is not empty and if the current node passed is not NULL, we must check if it
+		is valid, since the list easily could have changed since the last iterator operation. This involves
+		checking to see if it is found in the list and whether or not the previous or next nodes are valid,
+		O(N). The previous and next nodes are checked because in case it is not valid, we'd rather not have
+		to go back to the beginning, so instead we assign the current to be the next, if not that then the previous.
+	*/
+	bool next_valid = false, prev_valid = false, curr_valid = false;
+	DS_Node_t *node;
+	for(node = list->tail; node; node = node->_double.prev){
+		if(node == curr){
+			curr_valid = true;
+			break;
+		}
+		if(node == curr->_double.next){
+			next_valid = true;
+		}
+		if(node == curr->_double.prev){
+			prev_valid = true;
+			break;
+		}
+	}
+	if(curr_valid || prev_valid){
+		prev = curr->_double.prev;
+	} else if(next_valid){
+		prev = curr->_double.next;
+		if(prev){
+			prev = prev->_double.next;
+		}
+	} else {
+		prev = list->head;
+	}
+	*item_ptr = prev ? prev->item : NULL;
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
+	return prev;
+}
+
 /* Linked List Creation and Deletion functions */
 
 DS_List_t *DS_List_create(bool synchronized){
@@ -267,27 +369,18 @@ DS_List_t *DS_List_create(bool synchronized){
 		MU_LOG_ERROR(logger, "Was unable to allocate list, Out of Memory\n");
 		return NULL;
 	}
-	list->head = list->tail = list->current = NULL;
+	list->head = list->tail = NULL;
 	list->size = 0;
 	list->is_sorted = 1;
 	if(synchronized){
-		list->manipulating_list = malloc(sizeof(pthread_rwlock_t));
-		if(!list->manipulating_list){
+		list->rwlock = malloc(sizeof(pthread_rwlock_t));
+		if(!list->rwlock){
 			MU_DEBUG("See Log!!!\n");
 			free(list);
-			MU_LOG_ERROR(logger, "Unable to allocate manipulating_list, Out of Memory!\n");
+			MU_LOG_ERROR(logger, "Unable to allocate rwlock, Out of Memory!\n");
 			return NULL;
 		}
-		list->manipulating_iterator = malloc(sizeof(pthread_rwlock_t));
-		if(!list->manipulating_iterator){
-			MU_DEBUG("See Log!!!\n");
-			free(list->manipulating_list);
-			free(list);
-			MU_LOG_ERROR(logger, "Unable to allocate manipulating_iterator rwlock, Out of Memory!\n");
-			return NULL;
-		}
-		pthread_rwlock_init(list->manipulating_list, NULL);
-		pthread_rwlock_init(list->manipulating_iterator, NULL);
+		pthread_rwlock_init(list->rwlock, NULL);
 	}
 	return list;
 }
@@ -302,19 +395,16 @@ DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compa
 
 bool DS_List_clear(DS_List_t *list, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	delete_all_nodes(list, del);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return true;
 }
 
 bool DS_List_destroy(DS_List_t *list, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, list);
 	DS_List_clear(list, del);
-	MU_COND_RWLOCK_DESTROY(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_DESTROY(list->manipulating_list, logger);
+	MU_COND_RWLOCK_DESTROY(list->rwlock, logger);
 	free(list);
 	return true;
 }
@@ -329,56 +419,46 @@ bool DS_List_add(DS_List_t *list, void *item, DS_comparator_cb compare){
 		return false;
 	}
 	node->item = item;
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	if(!list->size){
 		add_as_only(list, node);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 		return true;
 	}
 	bool result = false;
 	if(compare) result = add_sorted(list, node, compare);
 	else result = add_unsorted(list, node);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return result;
 }
 
 bool DS_List_add_after(DS_List_t *list, void *item){
 	MU_ARG_CHECK(logger, false, list, item);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_iterator, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	DS_Node_t *node = malloc(sizeof(DS_Node_t));
 	node->item = item;
 	if(!list->size){
 		add_as_only(list, node);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 		return 1;
 	}
-	if(list->current == list->tail) add_as_tail(list, node);
-	else add_after(list, list->current, node);
 	list->is_sorted = 0;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return 1;
 }
 
 bool DS_List_add_before(DS_List_t *list, void *item){
 	MU_ARG_CHECK(logger, false, list, item);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_iterator, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	DS_Node_t *node = malloc(sizeof(DS_Node_t));
 	node->item = item;
 	if(!list->size){
 		add_as_only(list, node);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 		return 1;
 	}
-	if(list->current == list->head) add_as_head(list, node);
-	else add_before(list, list->current, node);
 	list->is_sorted = 0;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return 1;
 }
 
@@ -386,112 +466,24 @@ bool DS_List_add_before(DS_List_t *list, void *item){
 
 bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, list, item);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	DS_Node_t *node = item_to_node(list, item);
 	int result = 0;
 	if(node) result = remove_node(list, node, del);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return result; 
 }
 
 void *DS_List_remove_at(DS_List_t *list, unsigned int index, DS_delete_cb del){
 	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	DS_Node_t *temp_node = index_to_node(list, index);
 	void *item = NULL;
 	if(temp_node){
 		item = temp_node->item;
 		remove_node(list, temp_node, del);
 	} else MU_LOG_WARNING(logger, "The node returned from Index_To_Node was NULL!\n");
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	return item;
-}
-
-/* Linked List iterator functions */
-
-void *DS_List_remove_current(DS_List_t *list, DS_delete_cb del){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
-	void *item = list->current->item;
-	remove_node(list, list->current, del);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	return item;
-}
-
-void *DS_List_next(DS_List_t *list){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
-	if(!list->current || !list->current->_double.next) {
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		return NULL;
-	}
-	void *item = (list->current = list->current->_double.next)->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	return item;
-}
-
-void * DS_List_previous(DS_List_t *list){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
-	if(!list->current || !list->current->_double.prev) {
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		return NULL;
-	}
-	void *item = (list->current = list->current->_double.prev)->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	return item;
-}
-
-void * DS_List_tail(DS_List_t *list){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
-	if(!list->tail) {
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		return NULL;
-	}
-	void *item = (list->current = list->tail)->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	return item;
-}
-
-void * DS_List_head(DS_List_t *list){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
-	if(!list->head) {
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		return NULL;
-	}
-	void *item = (list->current = list->head)->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	return item;
-}
-
-void *DS_List_get_current(DS_List_t *list){
-	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_iterator, logger);
-	if(!list->current) {
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-		MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
-		return NULL;
-	}
-	void *item = list->current->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_iterator, logger);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return item;
 }
 
@@ -499,49 +491,49 @@ void *DS_List_get_current(DS_List_t *list){
 
 bool DS_List_for_each(DS_List_t *list, void (*callback)(void *item)){
 	MU_ARG_CHECK(logger, false, list, callback);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	for_each_item(list, callback);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return true;
 }
 
 bool DS_List_sort(DS_List_t *list, DS_comparator_cb compare){
 	MU_ARG_CHECK(logger, false, list, compare);
-	MU_COND_RWLOCK_WRLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	insertion_sort_list(list, compare);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return true;
 }
 
 bool DS_List_contains(DS_List_t *list, void *item){
 	MU_ARG_CHECK(logger, false, list, item);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	DS_Node_t *node = item_to_node(list, item);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return node != NULL;
 }
 
 bool DS_List_print_all(DS_List_t *list, FILE *file, DS_to_string_cb to_string){
 	MU_ARG_CHECK(logger, false, list, file, to_string);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	print_list(list, file, to_string);
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return true;
 }
 
 void *DS_List_get_at(DS_List_t *list, unsigned int index){
 	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	DS_Node_t *node = index_to_node(list, index);
 	void *item = NULL;
 	if(node) item = node->item;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return item;
 }
 
 void **DS_List_to_array(DS_List_t *list, size_t *size){
 	MU_ARG_CHECK(logger, NULL, list);
-	MU_COND_RWLOCK_RDLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	void **array_of_items = malloc(sizeof(void *) * list->size);
 	if(!array_of_items){
 		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
@@ -553,6 +545,23 @@ void **DS_List_to_array(DS_List_t *list, size_t *size){
 		array_of_items[index++] = node->item;
 	}
 	*size = index;
-	MU_COND_RWLOCK_UNLOCK(list->manipulating_list, logger);
+	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return array_of_items;
+}
+
+
+DS_Iterator_t *DS_List_iterator(DS_List_t *list){
+	DS_Iterator_t *it = calloc(1, sizeof(*it));
+	if(!it){
+		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		goto error;
+	}
+	it->ds_handle = list;
+	it->next = get_next;
+	it->prev = get_prev;
+	return it;
+
+	error:
+		free(it);
+		return it;
 }

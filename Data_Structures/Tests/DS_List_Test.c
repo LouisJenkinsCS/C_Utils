@@ -34,16 +34,15 @@ int main(void){
 		*(int *)array[i] = i * (rand() % runs);
 		DS_List_add(list, array[i], NULL);
 	}
+	DS_Iterator_t *it = DS_List_iterator(list);
 	MU_ASSERT(*(int *)DS_List_get_at(list, runs/2) == *(int *)array[runs/2], logger, "Unable to get the right element from the list!");
 	MU_ASSERT(list->size == runs, logger, "List size inaccurate!");
 	MU_LOG_INFO(logger, "Testing retrieval of elements at requested index...\n");
-	DS_List_head(list);
-	for(i = 1; i<runs;i++) MU_ASSERT((*(int *)DS_List_next(list)) == *(int *)array[i], logger, "List iterator at invalid entry!");
+	for(i = 0; i<runs;i++) MU_ASSERT((*(int *)DS_Iterator_next(it)) == *(int *)array[i], logger, "List iterator at invalid entry!");
 	MU_LOG_INFO(logger, "Testing removal of item with the item as the key and iterator.\n");
 	MU_ASSERT(DS_List_remove_item(list, array[runs/2], NULL), logger, "Unable to remove item from the list!");
 	int *item = NULL;
-	DS_List_head(list);
-	while((item = DS_List_next(list))) MU_ASSERT((*item != (*(int *)array[(runs/2)])), logger, "List iterator has outdated elements! \
+	while((item = DS_Iterator_next(it))) MU_ASSERT((*item != (*(int *)array[(runs/2)])), logger, "List iterator has outdated elements! \
 		item in list: %d;item in array: %d", *item, *(int *)array[(runs/2)]);
 	MU_LOG_VERBOSE(logger, "Printing all elements inside of list unsorted!\n");
 	DS_List_print_all(list, logger->file, print_item);
@@ -55,33 +54,34 @@ int main(void){
 	MU_ASSERT(list->size == 0, logger, "List's size was not properly decremented!");
 	MU_LOG_INFO(logger, "Testing the Array-To-DS_List functionality and sorting!\n");
 	DS_List_t *list_two = DS_List_create_from(array, runs, inverse_compare_ints, false);
+	free(it);
+	it = DS_List_iterator(list_two);
 	MU_LOG_INFO(logger, "Printing all elements inside of list_two in descending order!\n");
 	DS_List_print_all(list_two, logger->file, print_item);
-	DS_List_tail(list_two);
 	size_t size = 0;
 	void **sorted_array = DS_List_to_array(list_two, &size);
 	for(i = 1; i > size; i--) {
-		void *item = DS_List_previous(list_two);
+		void *item = DS_Iterator_prev(it);
 		if(item != sorted_array[i]) MU_DEBUG("Iteration: %d: %d != %d\n", i,  *(int *)item, *(int *)array[i]);
 		MU_ASSERT(*(int *)item == *(int *)sorted_array[i], logger, "Array returned is inaccurate to list!");
 	}
 	DS_List_sort(list_two, compare_ints);
 	for(i = 0;i < runs; i += 2) {
-		void *result_one = DS_List_next(list_two);
-		void *result_two = DS_List_next(list_two);
+		void *result_one = DS_Iterator_next(it);
+		void *result_two = DS_Iterator_next(it);
 		if(!result_one || !result_two) break;
-		MU_ASSERT((*(int *)(result_one)) <= (*(int *)(result_two)), logger, "List was improperly sorted!");
+		MU_ASSERT(((*(int *)(result_one)) <= (*(int *)(result_two))), logger, "List was improperly sorted!%d <= %d...", *(int *)result_one, *(int *)result_two);
 	}
 	MU_LOG_VERBOSE(logger, "Printing all elements inside of list_two in ascending order!\n");
 	DS_List_print_all(list_two, logger->file, print_item);
 	MU_LOG_INFO(logger, "Testing adding elements before and after the current elements!\n");
-	DS_List_head(list_two);
-	DS_List_add_after(list_two, NULL);
-	DS_List_add_before(list_two, NULL);
+	//DS_List_add_after(list_two, NULL);
+	//DS_List_add_before(list_two, NULL);
 	MU_ASSERT(!list_two->head->item && !list_two->head->_double.next->_double.next->item, logger, "Was unable to add after or before!");
 	DS_List_print_all(list_two, logger->file, print_item);
 	DS_List_destroy(list, NULL);
 	DS_List_destroy(list_two, free);
+	free(it);
 	free(array);
 	free(sorted_array);
 	MU_LOG_INFO(logger, "All Tests Passed!\n");

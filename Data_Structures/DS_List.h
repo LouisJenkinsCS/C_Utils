@@ -2,6 +2,7 @@
 #define DS_LIST_H
 
 #include <pthread.h>
+#include <DS_Iterator.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <DS_Helpers.h>
@@ -13,16 +14,12 @@ typedef struct {
 	DS_Node_t *head;
 	/// The tail node of the list.
 	DS_Node_t *tail;
-	/// The current node for the iterator.
-	DS_Node_t *current;
 	/// The current size of the linked list.
 	volatile size_t size;
 	/// Determines whether the list is sorted.
 	volatile unsigned char is_sorted;
 	/// Ensures only one thread manipulates the items in the list, but multiple threads can read.
-	pthread_rwlock_t *manipulating_list;
-	/// Ensures that only one thread can move the iterator, but many can read the current value.
-	pthread_rwlock_t *manipulating_iterator;
+	pthread_rwlock_t *rwlock;
 } DS_List_t;
 
 /**
@@ -81,65 +78,7 @@ bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb delete_item);
  */
 void *DS_List_remove_at(DS_List_t *list, unsigned int index, DS_delete_cb delete_item);
 
-/**
- * Advances the Linked List's iterator forward by one if applicable. If the next node
- * is NULL, NULL will be returned instead and the iterator will not be advanced.
- * @param list The list to advance.
- * @return The item at the next node, or NULL if list is NULL or there is no next node in the list.
- */
-void *DS_List_next(DS_List_t *list);
-
-/**
- * Moves the Linked List's iterator back by one if applicable. If the previous node
- * is NULL, NULL will be returned instead and the iterator will not go back.
- * @param list The list to advance.
- * @return The item at the previous node, or NULL if the list is NULL or there is no previous node.
- */
-void * DS_List_previous(DS_List_t *list);
-
-/**
- * Moves the Linked List's iterator to the tail of the list if applicable. If the list is
- * empty, NULL will be returned instead and the iterator will not go back.
- * @param list The list to advance.
- * @return The item at the tail node, or NULL if the list is NULL or is empty.
- */
-void * DS_List_tail(DS_List_t *list);
-
-/**
- * Moves the Linked List's iterator to the head of the list if applicable. If the list is
- * empty, NULL will be returned instead and the iterator will not go back.
- * @param list The list to advance.
- * @return The item at the head node, or NULL if the list is NULL or is empty.
- */
-void * DS_List_head(DS_List_t *list);
-
-/**
- * Remove the current node from the linked list, calling the callback on the node's item if not NULL.
- * @param list The list to remove the current node from.
- * @param delete_item The callback to call on the node's item.
- * @return The item at the current node, or NULL if the list is empty or the list passed is NULL.
- */
-void *DS_List_remove_current(DS_List_t *list, DS_delete_cb delete_item);
-
-/**
- * Adds the requested item after the current node in the list. Note: This flags the
- * list as being unsorted, regardless of whether you take the care to insert it sorted
- * yourself.
- * @param list List to add the item to.
- * @param item Item to be added.
- * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
- */
-bool DS_List_add_after(DS_List_t *list, void *item);
-
-/**
- * Adds the requested item before the current node in the list. Note: This flags the
- * list as being unsorted, regardless of whether you take the care to insert it sorted
- * yourself.
- * @param list List to add the item to.
- * @param item Item to be added.
- * @return 1 on success, 0 if the passed list is NULL or if the list is empty.
- */
-bool DS_List_add_before(DS_List_t *list, void *item);
+DS_Iterator_t *DS_List_iterator(DS_List_t *list);
 
 /**
  * Adds the item to the list, in sorted order if the callback is not NULL, or at the tail if it is.
@@ -184,13 +123,6 @@ bool DS_List_print_all(DS_List_t *list, FILE *file, DS_to_string_cb to_string);
  * @return 1 if it does contain the item, 0 if the list is NULL or it doesn't exist in the list.
  */
 bool DS_List_contains(DS_List_t *list, void *item);
-
-/**
- * Returns the current node's item in the iterator.
- * @param list List to obtain the current element of.
- * @return The current item, or NULL if the list passed is NULL or if the list is empty.
- */
-void *DS_List_get_current(DS_List_t *list);
 
 bool DS_List_clear(DS_List_t *list, DS_delete_cb del);
 
