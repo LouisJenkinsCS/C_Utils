@@ -264,6 +264,37 @@ It's rather simple and elegant (in the creator's biased opinion).
 
 ### Data Structures [<b>In Development</b>]
 
+####Iterator [<b>In Development</b>]
+
+A general-use iterator allowing generic iteration over multiple different data structures which support it's operations. It's very callback heavy, but is filled out via the data structures which create them. 
+
+Each implementation of the iterator have node-validation, as in even though the node may have been removed from the list between uses, it will attempt to correct itself as best it can, at worst starting over at the beginning of the data structure.
+
+Will support generic use, as in, being able to iterate through linked lists, vectors, even hash tables without having to concern over the actual data type. I.E, containing an array of iterators for different data structures, allowing polymorphic operations. 
+
+An optimistic example of it's use when finished can be seen below...
+
+```c
+
+/*
+    Imagine that the below data structures are initialized already, containing strings.
+*/
+DS_List_t *list;
+DS_Vector_t *vec;
+DS_Map_t *map;
+/*
+    Obtain the iterator of each in an array of iterators, like below.
+*/
+DS_Iterator_t it[] = { DS_List_iterator(list), DS_Vector_iterator(vec), DS_Map_iterator(map) };
+for(int i = 0; i < 3; i++){
+    char *str;
+    while(str = DS_Iterator_next(it)) puts(str);
+}
+
+```
+
+As the iterator is still in development, very early in particular, it most likely will be subject to change. Overall, it's as close as it will get to a generic iterator, but useful in certain situations I am sure.
+
 ####Linked List [<b>Stable</b>] Version: 1.1
 
 A generic and general use Linked List utilizing void pointers and callbacks. Sort elements, Iterate through it, and construct and deconstruct them from/to arrays! If you need a dynamic storage of elements that's thread-safe and without a real worry for optimal performance, then this is the best for you.
