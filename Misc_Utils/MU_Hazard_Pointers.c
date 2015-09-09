@@ -47,18 +47,21 @@ __attribute__((destructor)) static void destroy_hazard_table(void){
 	DS_List_t *del_list = DS_List_create(false);
 	for(MU_Hazard_Pointer_t *hp = hazard_table->head; hp; hp = hp->next){
 		free(prev_hp);
+		DS_Iterator_t *it = DS_List_iterator(hp->retired);
 		for(int i = 0; i < MU_HAZARD_POINTERS_PER_THREAD; i++){
 			if(hp->owned[i] && !DS_List_contains(del_list, hp->owned[i])){
 				DS_List_add(del_list, hp->owned[i], NULL);
 			}
 		}
-		for(void *ptr = DS_List_head(del_list); ptr; ptr = DS_List_next(del_list)){
+		void *ptr;
+		while((ptr = DS_Iterator_next(it))){
 			if(!DS_List_contains(del_list, ptr)){
 				DS_List_add(del_list, ptr, NULL);
 			}
 		}
 		prev_hp = hp;
 		DS_List_destroy(hp->retired, NULL);
+		free(it);
 	}
 	free(prev_hp);
 	DS_List_destroy(del_list, hazard_table->destructor);

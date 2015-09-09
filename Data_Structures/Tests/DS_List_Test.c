@@ -35,7 +35,7 @@ int main(void){
 		DS_List_add(list, array[i], NULL);
 	}
 	DS_Iterator_t *it = DS_List_iterator(list);
-	MU_ASSERT(*(int *)DS_List_get_at(list, runs/2) == *(int *)array[runs/2], logger, "Unable to get the right element from the list!");
+	MU_ASSERT(*(int *)DS_List_get(list, runs/2) == *(int *)array[runs/2], logger, "Unable to get the right element from the list!");
 	MU_ASSERT(list->size == runs, logger, "List size inaccurate!");
 	MU_LOG_INFO(logger, "Testing retrieval of elements at requested index...\n");
 	for(i = 0; i<runs;i++) MU_ASSERT((*(int *)DS_Iterator_next(it)) == *(int *)array[i], logger, "List iterator at invalid entry!");
@@ -75,10 +75,11 @@ int main(void){
 	MU_LOG_VERBOSE(logger, "Printing all elements inside of list_two in ascending order!\n");
 	DS_List_print_all(list_two, logger->file, print_item);
 	MU_LOG_INFO(logger, "Testing adding elements before and after the current elements!\n");
-	//DS_List_add_after(list_two, NULL);
-	//DS_List_add_before(list_two, NULL);
-	MU_ASSERT(!list_two->head->item && !list_two->head->_double.next->_double.next->item, logger, "Was unable to add after or before!");
+	DS_Iterator_head(it);
+	DS_Iterator_prepend(it, NULL);
+	DS_Iterator_append(it, NULL);
 	DS_List_print_all(list_two, logger->file, print_item);
+	MU_ASSERT(!list_two->head->item && !list_two->head->_double.next->_double.next->item, logger, "Was unable to add after or before!");
 	DS_List_destroy(list, NULL);
 	DS_List_destroy(list_two, free);
 	free(it);

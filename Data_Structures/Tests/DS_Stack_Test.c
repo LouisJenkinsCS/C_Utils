@@ -1,6 +1,7 @@
 #include <DS_Stack.h>
 #include <MU_Logger.h>
 #include <TP_Pool.h>
+#include <unistd.h>
 
 static const int num_threads = 4;
 
@@ -17,7 +18,7 @@ static void *push_to_stack(void *args){
 		int *i = malloc(sizeof(int));
 		*i = __sync_add_and_fetch(&counter, 1);
 		DS_Stack_push(stack, i);
-		pthread_yield();
+		//pthread_yield();
 	}
 	return NULL;
 }
@@ -26,7 +27,7 @@ static void *pop_from_stack(void *args){
 	while(running){
 		int *i = DS_Stack_pop(stack);
 		if(!i){
-			pthread_yield();
+			//pthread_yield();
 			continue;
 		}
 		MU_DEBUG("Popped Val: %d", *(int *)i);

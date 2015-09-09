@@ -47,7 +47,7 @@ DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compa
  * @param index The index of the element to retrieve.
  * @return The element at the requested index, or NULL if out of bounds or if list is NULL.
  */
-void *DS_List_get_at(DS_List_t *list, unsigned int index);
+void *DS_List_get(DS_List_t *list, unsigned int index);
 
 /**
  * Sort the Linked List relative to the passed comparator. If no comparator is passed,

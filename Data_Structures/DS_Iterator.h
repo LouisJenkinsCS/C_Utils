@@ -27,12 +27,12 @@ typedef struct {
 	void *ds_handle;
 	/// Reference to the current node.
 	DS_Node_t *curr;
-	/// Reference to the data structure's logger.
-	MU_Logger_t *logger;
 	/*
 		Below are callbacks that may be filled out by the data structure that creates
 		an instance of this object.
 	*/
+	DS_Node_t *(*head)(void *, void **);
+	DS_Node_t *(*tail)(void *, void **);
 	DS_Node_t *(*next)(void *, DS_Node_t *, void **);
 	DS_Node_t *(*prev)(void *, DS_Node_t *, void **);
 	DS_Node_t *(*append)(void *, DS_Node_t *, void *, bool *);
@@ -40,6 +40,10 @@ typedef struct {
 	DS_Node_t *(*for_each)(void *, DS_Node_t *, DS_general_cb, bool *);
 	DS_Node_t *(*del)(void *, DS_Node_t *, DS_delete_cb, bool *);
 } DS_Iterator_t;
+
+void *DS_Iterator_head(DS_Iterator_t *it);
+
+void *DS_Iterator_tail(DS_Iterator_t *it);
 
 void *DS_Iterator_next(DS_Iterator_t *it);
 
