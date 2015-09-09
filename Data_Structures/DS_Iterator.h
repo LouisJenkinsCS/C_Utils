@@ -35,8 +35,8 @@ typedef struct {
 	*/
 	DS_Node_t *(*next)(void *, DS_Node_t *, void **);
 	DS_Node_t *(*prev)(void *, DS_Node_t *, void **);
-	DS_Node_t *(*append)(void *, DS_Node_t *, bool *);
-	DS_Node_t *(*prepend)(void *, DS_Node_t *, bool *);
+	DS_Node_t *(*append)(void *, DS_Node_t *, void *, bool *);
+	DS_Node_t *(*prepend)(void *, DS_Node_t *, void *, bool *);
 	DS_Node_t *(*for_each)(void *, DS_Node_t *, DS_general_cb, bool *);
 	DS_Node_t *(*del)(void *, DS_Node_t *, DS_delete_cb, bool *);
 } DS_Iterator_t;
@@ -45,9 +45,9 @@ void *DS_Iterator_next(DS_Iterator_t *it);
 
 void *DS_Iterator_prev(DS_Iterator_t *it);
 
-bool DS_Iterator_append(DS_Iterator_t *it);
+bool DS_Iterator_append(DS_Iterator_t *it, void *item);
 
-bool DS_Iterator_prepend(DS_Iterator_t *it);
+bool DS_Iterator_prepend(DS_Iterator_t *it, void *item);
 
 bool DS_Iterator_for_each(DS_Iterator_t *it, DS_general_cb cb);
 

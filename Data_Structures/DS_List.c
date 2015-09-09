@@ -256,7 +256,7 @@ static void for_each_item(DS_List_t *list, void (*callback)(void *item)){
 
 /* Implementation of DS_Iterator callbacks */
 
-DS_Node_t *get_next(void *instance, DS_Node_t *curr, void **item_ptr){
+static DS_Node_t *next(void *instance, DS_Node_t *curr, void **item_ptr){
 	DS_List_t *list = instance;
 	DS_Node_t *next;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
@@ -308,7 +308,7 @@ DS_Node_t *get_next(void *instance, DS_Node_t *curr, void **item_ptr){
 	return next;
 }
 
-DS_Node_t *get_prev(void *instance, DS_Node_t *curr, void **item_ptr){
+static DS_Node_t *prev(void *instance, DS_Node_t *curr, void **item_ptr){
 	DS_List_t *list = instance;
 	DS_Node_t *prev;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
@@ -358,6 +358,33 @@ DS_Node_t *get_prev(void *instance, DS_Node_t *curr, void **item_ptr){
 	*item_ptr = prev ? prev->item : NULL;
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return prev;
+}
+
+static DS_Node_t *append(void *instance, DS_Node_t *curr, void *item, bool *result){
+	DS_List_t *list = instance;
+	DS_Node_t *node = malloc(sizeof(*node));
+	if(!node){
+		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		*result = false;
+		return curr;
+	}
+	node->item = item;
+	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
+	if(list->size == 0){
+		add_as_only(list, node);
+		*result = true;
+		return node; 
+	}
+	// If current is NULL, we append it to the end.
+	if(!curr){
+		add_as_tail(list, node);
+		*result = true;
+		return node;
+	}
+	DS_Node_t *tmp_node;
+	for(tmp_node = list->head; tmp_node; tmp_node = tmp_node->_double.next){
+		// TODO
+	}
 }
 
 /* Linked List Creation and Deletion functions */
@@ -557,11 +584,11 @@ DS_Iterator_t *DS_List_iterator(DS_List_t *list){
 		goto error;
 	}
 	it->ds_handle = list;
-	it->next = get_next;
-	it->prev = get_prev;
+	it->next = next;
+	it->prev = prev;
 	return it;
 
 	error:
 		free(it);
-		return it;
+		return NULL;
 }

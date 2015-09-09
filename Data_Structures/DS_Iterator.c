@@ -15,17 +15,17 @@ void *DS_Iterator_prev(DS_Iterator_t *it){
 	return item;
 }
 
-bool DS_Iterator_append(DS_Iterator_t *it){
+bool DS_Iterator_append(DS_Iterator_t *it, void *item){
 	if(!it || !it->append) return false;
 	bool result;
-	it->curr = it->append(it->ds_handle, it->curr, &result);
+	it->curr = it->append(it->ds_handle, it->curr, item, &result);
 	return result;
 }
 
-bool DS_Iterator_prepend(DS_Iterator_t *it){
+bool DS_Iterator_prepend(DS_Iterator_t *it, void *item){
 	if(!it || !it->prepend) return false;
 	bool result;
-	it->curr = it->prepend(it->ds_handle, it->curr, &result);
+	it->curr = it->prepend(it->ds_handle, it->curr, item, &result);
 	return result;
 }
 
