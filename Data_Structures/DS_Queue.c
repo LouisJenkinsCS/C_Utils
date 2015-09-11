@@ -10,75 +10,117 @@ __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
 
-static DS_Atomic_Node_t *DS_Atomic_Node_create(void *item){
-	DS_Atomic_Node_t *node = calloc(1, sizeof(DS_Atomic_Node_t));
-	if(!node){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
-	node->ptr = calloc(1, sizeof(DS_Atomic_Pointer_t));
-	if(!node->ptr){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		free(node);
-		return NULL;
-	}
-	node->ptr->next = ATOMIC_VAR_INIT(NULL);
-	node->ptr->id = ATOMIC_VAR_INIT(0);
-	return node;
-}
-
 DS_Queue_t *DS_Queue_create(void){
 	DS_Queue_t *queue = calloc(1, sizeof(DS_Queue_t));
 	if(!queue){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
-	DS_Atomic_Node_t *node = DS_Atomic_Node_create(NULL);
-	queue->head = ATOMIC_VAR_INIT(NULL);
-	queue->tail = ATOMIC_VAR_INIT(NULL);
-	atomic_store(queue->head, *node);
-	queue->tail = queue->head;
+	// Our dummy node, the queue will always contain one element.
+	DS_Node_t *node = DS_Node_create(NULL, logger);
+	if(!node){
+		MU_LOG_ERROR(logger, "DS_Node_create: 'Was unable to create a node!'");
+		goto error;
+	}
 	return queue;
 
 	error:
+		if(queue){
+			free(queue);
+		}
 		return NULL;
 }
 
 bool DS_Queue_enqueue(DS_Queue_t *queue, void *data){
 	MU_ARG_CHECK(logger, false, queue);
-	DS_Atomic_Node_t *node = DS_Atomic_Node_create(data);
+	DS_Node_t *node = DS_Node_create(data, logger);
 	if(!node){
-		MU_LOG_ERROR(logger, "DS_Atomic_Node_create: 'Was unable to create an atomic node!'");
+		MU_LOG_ERROR(logger, "DS_Node_create: 'Was unable to create a node!'");
 		return false;
 	}
-	DS_Atomic_Node_t tail;
-	bool enqueued = false;
-	do {
-		/// Get tail from queue, atomically.
-		tail = queue->head;
-		/// Increment the id to prevent aba problem on change
-		atomic_fetch_add(&tail.ptr->id, 1);
-		/// If the tail is the last node, set node equal to tail.
-		enqueued = atomic_compare_exchange_weak(tail.ptr->next, NULL, *node);
-		/// If somehow, the tail of the queue isn't the last, then something went wrong
-		if(!enqueued){
-			/// So we set the new tail as the next one as a way of self-correcting.
-			atomic_compare_exchange_weak(queue->tail, &tail, *tail.ptr->next);
+	DS_Node_t *tail;
+	DS_Node_t *next;
+	while(true){
+		tail = queue->tail;
+		MU_Hazard_Pointer_acquire(0, tail);
+		// Sanity check.
+		if(tail != queue->tail){
+			pthread_yield();
+			continue;
 		}
-	} while(!enqueued);
-	atomic_compare_exchange_strong(queue->tail, &tail, *node);
+		next = tail->_single.next;
+		// Sanity check.
+		if(tail != queue->tail){
+			pthread_yield();
+			continue;
+		}
+		// Note that there should be no next node, as this is the tail.
+		if(next != NULL){
+			// If there is one, we fix it here.
+			__sync_bool_compare_and_swap(&(queue->tail), tail, next);
+			pthread_yield();
+			continue;
+		}
+		// Append the node to the tail.
+		if(__sync_bool_compare_and_swap(&(tail->_single.next), NULL, node)) break;
+		pthread_yield();
+	}
+	// In case another thread had already CAS the tail forward, we conditionally do so here.
+	__sync_bool_compare_and_swap(&(queue->tail), tail, node);
+	MU_Hazard_Pointer_release(tail, false);
 	return true;
 }
 
-void *DS_Queue_dequeue(DS_Queue_t *queue, void *data){
-	DS_Atomic_Node_t head;
-	do {
-		head = atomic_load(queue->head);
-	} while()
+void *DS_Queue_dequeue(DS_Queue_t *queue){
+	MU_ARG_CHECK(logger, NULL, queue);
+	DS_Node_t *head, *tail, *next;
+	void *item;
+	while(true){
+		head = queue->head;
+		MU_Hazard_Pointer_acquire(0, head);
+		// Sanity check.
+		if(head != queue->head){
+			pthread_yield();
+			continue;
+		}
+		tail = queue->tail;
+		next = head->_single.next;
+		MU_Hazard_Pointer_acquire(1, next);
+		// Sanity check.
+		if(head != queue->head){
+			pthread_yield();
+			continue;
+		}
+		// Is Empty.
+		if(next == NULL) return NULL;
+		// If Head and Tail are the same, yet is not empty, then it is outdated.
+		if(head == tail){
+			//Fix it!
+			__sync_bool_compare_and_swap(&(queue->tail), tail, next);
+			pthread_yield();
+			continue;
+		}
+		// Note that it takes the next node's item, not the current node, which serves as the dummy.
+		item = next->item;
+		if(__sync_bool_compare_and_swap(&(queue->head), head, next)) break;
+		pthread_yield();
+	}
+	// We make sure to retire the head (or old head) popped from the queue, but not the next node (or new head).
+	MU_Hazard_Pointer_release(head, true);
+	MU_Hazard_Pointer_release(next, false);
+	return item;
 }
 
-void *DS_Queue_dequeue(DS_Queue_t *queue);
-
-size_t DS_Queue_size(DS_Queue_t *queue);
-
-bool DS_Queue_destroy(DS_Queue_t *queue);
+bool DS_Queue_destroy(DS_Queue_t *queue, DS_delete_cb del){
+	MU_ARG_CHECK(logger, false, queue);
+	MU_Hazard_Pointer_release_all(false);
+	DS_Node_t *prev_node = NULL, *node;
+	for(node = queue->head; node; node = node->next){
+		free(prev_node);
+		if(del) del(node->item);
+		prev_node = node;
+	}
+	free(prev_node);
+	free(queue);
+	return true;
+}

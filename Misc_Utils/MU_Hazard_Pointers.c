@@ -155,8 +155,8 @@ static void init_tls_hp(void){
 	MU_LOG_TRACE(logger, "Was successful in adding hazard pointer to hazard table!");
 }
 
-bool MU_Hazard_Pointer_acquire(void *data){
-	MU_ARG_CHECK(logger, false, data);
+bool MU_Hazard_Pointer_acquire(unsigned int index, void *data){
+	MU_ARG_CHECK(logger, false, data, index <= MU_HAZARD_POINTERS_PER_THREAD);
 	// Get the hazard pointer from thread-local storage if it is allocated.
 	MU_Hazard_Pointer_t *hp = pthread_getspecific(tls);
 	// If it hasn't been allocated, then we allocate it here.
@@ -169,9 +169,7 @@ bool MU_Hazard_Pointer_acquire(void *data){
 			return false;
 		}
 	}
-	// Start over if we already exceeded maximum, to overwrite oldest reference first.
-	if(hp->curr_index >= MU_HAZARD_POINTERS_PER_THREAD) hp->curr_index = 0;
-	hp->owned[hp->curr_index++] = data;
+	hp->owned[index] = data;
 	MU_LOG_TRACE(logger, "Acquired pointer to data at index %d!", hp->curr_index - 1);
 	return true;
 }

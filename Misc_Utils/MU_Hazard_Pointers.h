@@ -22,12 +22,11 @@ struct MU_Hazard_Pointer_t{
 	volatile bool in_use;
 	DS_List_t *retired;
 	void *owned[MU_HAZARD_POINTERS_PER_THREAD];
-	unsigned int curr_index;
 	void (*destructor)(void *);
 	struct MU_Hazard_Pointer_t *next;
 };
 
-bool MU_Hazard_Pointer_acquire(void *);
+bool MU_Hazard_Pointer_acquire(unsigned int index, void *ptr);
 
 bool MU_Hazard_Pointer_register_destructor(void (*destructor)(void *));
 
