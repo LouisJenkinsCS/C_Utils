@@ -58,16 +58,16 @@ bool DS_Queue_enqueue(DS_Queue_t *queue, void *data){
 		// Note that there should be no next node, as this is the tail.
 		if(next != NULL){
 			// If there is one, we fix it here.
-			__sync_bool_compare_and_swap(&(queue->tail), tail, next);
+			__sync_bool_compare_and_swap(&queue->tail, tail, next);
 			pthread_yield();
 			continue;
 		}
 		// Append the node to the tail.
-		if(__sync_bool_compare_and_swap(&(tail->_single.next), NULL, node)) break;
+		if(__sync_bool_compare_and_swap(&tail->_single.next, NULL, node)) break;
 		pthread_yield();
 	}
 	// In case another thread had already CAS the tail forward, we conditionally do so here.
-	__sync_bool_compare_and_swap(&(queue->tail), tail, node);
+	__sync_bool_compare_and_swap(&queue->tail, tail, node);
 	MU_Hazard_Pointer_release(tail, false);
 	return true;
 }
@@ -97,13 +97,13 @@ void *DS_Queue_dequeue(DS_Queue_t *queue){
 		// If Head and Tail are the same, yet is not empty, then it is outdated.
 		if(head == tail){
 			//Fix it!
-			__sync_bool_compare_and_swap(&(queue->tail), tail, next);
+			__sync_bool_compare_and_swap(&queue->tail, tail, next);
 			pthread_yield();
 			continue;
 		}
 		// Note that it takes the next node's item, not the current node, which serves as the dummy.
 		item = next->item;
-		if(__sync_bool_compare_and_swap(&(queue->head), head, next)) break;
+		if(__sync_bool_compare_and_swap(&queue->head, head, next)) break;
 		pthread_yield();
 	}
 	// We make sure to retire the head (or old head) popped from the queue, but not the next node (or new head).
