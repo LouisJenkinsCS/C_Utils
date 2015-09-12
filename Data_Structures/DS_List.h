@@ -78,6 +78,14 @@ bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb delete_item);
  */
 void *DS_List_remove_at(DS_List_t *list, unsigned int index, DS_delete_cb delete_item);
 
+/**
+ * Creates and initializes an iterator for the linked list. The following operations supported are below:
+ * Next, Prev, Append, Prepend, Head, Tail.
+ *
+ * The list also features a node-correction algorithm, which if the current node has already been removed from the list, it will
+ * attempt to start the next or previous node instead of the current. 
+ *
+ */
 DS_Iterator_t *DS_List_iterator(DS_List_t *list);
 
 /**

@@ -170,7 +170,7 @@ bool MU_Hazard_Pointer_acquire(unsigned int index, void *data){
 		}
 	}
 	hp->owned[index] = data;
-	MU_LOG_TRACE(logger, "Acquired pointer to data at index %d!", hp->curr_index - 1);
+	MU_LOG_TRACE(logger, "Acquired pointer to data at index %d!", index);
 	return true;
 }
 

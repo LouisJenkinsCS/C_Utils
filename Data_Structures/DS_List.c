@@ -251,13 +251,13 @@ static const int curr_valid = 1 << 0;
 static const int prev_valid = 1 << 1;
 static const int next_valid = 1 << 2;
 
-static unsigned int is_valid(DS_List_t *list, DS_Node_t *node){
+static unsigned int is_valid(DS_List_t *list, struct Position_Hint *pos){
 	unsigned int retval = 0;
 	DS_Node_t *tmp;
 	for(tmp = list->head; tmp; tmp = tmp->_double.next){
-		if(tmp == node) MU_FLAG_SET(retval, curr_valid);
-		else if(tmp == node->_double.prev) MU_FLAG_SET(retval, prev_valid);
-		else if(tmp == node->_double.next){
+		if(tmp == pos->curr) MU_FLAG_SET(retval, curr_valid);
+		else if(tmp == pos->prev) MU_FLAG_SET(retval, prev_valid);
+		else if(tmp == pos->next){
 			MU_FLAG_SET(retval, next_valid);
 			break;
 		}
@@ -265,180 +265,182 @@ static unsigned int is_valid(DS_List_t *list, DS_Node_t *node){
 	return retval;
 }
 
-static DS_Node_t *head(void *instance, void **item_ptr){
+static inline void *get_item(DS_Node_t *node){
+	return node ? node->item : NULL;
+}
+
+static void update_pos(struct Position_Hint *pos, DS_Node_t *node){
+	pos->curr = node;
+	pos->next = node ? node->_double.next : NULL;
+	pos->prev = node ? node->_double.prev : NULL;
+}
+
+static void *head(void *instance, struct Position_Hint *pos){
 	DS_List_t *list = instance;
 	DS_Node_t *head;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	head = list->head;
-	*item_ptr = head->item;
+	update_pos(pos, head);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-	return head;
+	return get_item(head);
 }
 
-static DS_Node_t *tail(void *instance, void **item_ptr){
+static void *tail(void *instance, struct Position_Hint *pos){
 	DS_List_t *list = instance;
 	DS_Node_t *tail;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	tail = list->tail;
-	*item_ptr = tail->item;
+	update_pos(pos, tail);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-	return tail;
+	return get_item(tail);
 }
 
-static DS_Node_t *next(void *instance, DS_Node_t *curr, void **item_ptr){
+static void *next(void *instance, struct Position_Hint *pos){
 	DS_List_t *list = instance;
 	DS_Node_t *next;
+	void *item;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	if(list->size == 0){
+		update_pos(pos, NULL);
 		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-		*item_ptr = NULL;
 		return NULL;
 	}
-	if(!curr){
+	if(!pos->curr){
 		next = list->head;
-		*item_ptr = next->item;
+		update_pos(pos, next);
+		item = get_item(next);
 		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-		return next;
+		return item;
 	}
-	/*
-		If the the list is not empty and if the current node passed is not NULL, we must check if it
-		is valid, since the list easily could have changed since the last iterator operation. This involves
-		checking to see if it is found in the list and whether or not the previous or next nodes are valid,
-		O(N). The previous and next nodes are checked because in case it is not valid, we'd rather not have
-		to go back to the beginning.
-	*/
-	unsigned int are_valid = is_valid(list, curr);
-	if(MU_FLAG_GET(are_valid, curr_valid) || MU_FLAG_GET(are_valid, next_valid)){
-		next = curr->_double.next;
+	unsigned int are_valid = is_valid(list, pos);
+	if(MU_FLAG_GET(are_valid, curr_valid)){
+		next = pos->curr->_double.next;
+	} else if(MU_FLAG_GET(are_valid, next_valid)){
+		next = pos->next;
 	} else if(MU_FLAG_GET(are_valid, prev_valid)){
-		next = curr->_double.prev;
+		next = pos->prev;
 		if(next){
 			next = next->_double.next;
-		}
+		} else next = list->head;
 	} else {
 		next = list->head;
 	}
-	*item_ptr = next ? next->item : NULL;
+	update_pos(pos, next);
+	item = get_item(next);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-	return next;
+	return item;
 }
 
-static DS_Node_t *prev(void *instance, DS_Node_t *curr, void **item_ptr){
+static void *prev(void *instance, struct Position_Hint *pos){
 	DS_List_t *list = instance;
 	DS_Node_t *prev;
+	void *item;
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	if(list->size == 0){
+		update_pos(pos, NULL);
 		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-		*item_ptr = NULL;
 		return NULL;
 	}
-	if(!curr){
+	if(!pos->curr){
 		prev = list->tail;
-		*item_ptr = prev->item;
+		update_pos(pos, prev);
+		item = get_item(prev);
 		MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-		return prev;
+		return item;
 	}
-	/*
-		If the the list is not empty and if the current node passed is not NULL, we must check if it
-		is valid, since the list easily could have changed since the last iterator operation. This involves
-		checking to see if it is found in the list and whether or not the previous or next nodes are valid,
-		O(N). The previous and next nodes are checked because in case it is not valid, we'd rather not have
-		to go back to the beginning, so instead we assign the current to be the next, if not that then the previous.
-	*/
-	unsigned int are_valid = is_valid(list, curr);
-	if(MU_FLAG_GET(are_valid, curr_valid) || MU_FLAG_GET(are_valid, prev_valid)){
-		prev = curr->_double.prev;
+	unsigned int are_valid = is_valid(list, pos);
+	if(MU_FLAG_GET(are_valid, curr_valid)){
+		prev = pos->curr->_double.prev;
+	} else if(MU_FLAG_GET(are_valid, prev_valid)){
+		prev = pos->prev;
 	} else if(MU_FLAG_GET(are_valid, next_valid)){
-		prev = curr->_double.next;
+		prev = pos->next;
 		if(prev){
-			prev = prev->_double.next;
-		}
+			prev = prev->_double.prev;
+		} else prev = list->tail;
 	} else {
-		prev = list->head;
+		prev = list->tail;
 	}
-	*item_ptr = prev ? prev->item : NULL;
+	update_pos(pos, prev);
+	item = get_item(prev);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
 	return prev;
 }
 
-static DS_Node_t *append(void *instance, DS_Node_t *curr, void *item, bool *result){
+static bool append(void *instance, struct Position_Hint *pos, void *item){
 	DS_List_t *list = instance;
 	DS_Node_t *node = malloc(sizeof(*node));
 	if(!node){
 		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		*result = false;
-		return curr;
+		return false;
 	}
 	node->item = item;
 	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	if(list->size == 0){
 		add_as_only(list, node);
-		*result = true;
-		return node; 
+		update_pos(pos, node);
+		return true;
 	}
 	// If current is NULL, we append it to the end.
-	if(!curr){
+	if(!pos->curr){
 		add_as_tail(list, node);
-		*result = true;
-		return node;
+		update_pos(pos, node);
+		return true;
 	}
-	unsigned int are_valid = is_valid(list, curr);
+	unsigned int are_valid = is_valid(list, pos);
 	if(MU_FLAG_GET(are_valid, curr_valid)){
-		// Next is always valid if current is, as it would have been updated.
-		if(curr->_double.next) add_after(list, curr, node);
+		if(pos->curr->_double.next) add_after(list, pos->curr, node);
 		else add_as_tail(list, node);
 	} else if(MU_FLAG_GET(are_valid, next_valid)){
-		if(curr->_double.next->_double.next) add_after(list, curr->_double.next, node);
+		if(pos->next->_double.next) add_after(list, pos->next, node);
 		else add_as_tail(list, node);
 	} else if(MU_FLAG_GET(are_valid, prev_valid)){
-		if(curr->_double.prev->_double.next) add_after(list, curr->_double.prev, node);
+		if(pos->prev->_double.next) add_after(list, pos->prev, node);
 		else add_as_tail(list, node);
 	} else {
 		add_as_tail(list, node);
 	}
-	*result = true;
+	update_pos(pos, node);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-	return node;
+	return true;
 }
 
-static DS_Node_t *prepend(void *instance, DS_Node_t *curr, void *item, bool *result){
+static bool prepend(void *instance, struct Position_Hint *pos, void *item){
 	DS_List_t *list = instance;
 	DS_Node_t *node = malloc(sizeof(*node));
 	if(!node){
 		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		*result = false;
-		return curr;
+		return false;
 	}
 	node->item = item;
 	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	if(list->size == 0){
 		add_as_only(list, node);
-		*result = true;
-		return node; 
+		update_pos(pos, node);
+		return true; 
 	}
-	// If current is NULL, we append it to the end.
-	if(!curr){
+	// If current is NULL, we prepend to the beginning.
+	if(!pos->curr){
 		add_as_tail(list, node);
-		*result = true;
-		return node;
+		update_pos(pos, node);
+		return true;
 	}
-	unsigned int are_valid = is_valid(list, curr);
+	unsigned int are_valid = is_valid(list, pos);
 	if(MU_FLAG_GET(are_valid, curr_valid)){
-		// Next is always valid if current is, as it would have been updated.
-		if(curr->_double.prev) add_before(list, curr, node);
+		if(pos->curr->_double.prev) add_before(list, pos->curr, node);
 		else add_as_head(list, node);
 	} else if(MU_FLAG_GET(are_valid, next_valid)){
-		if(curr->_double.next->_double.prev) add_before(list, curr->_double.next, node);
+		if(pos->next->_double.prev) add_before(list, pos->next, node);
 		else add_as_head(list, node);
 	} else if(MU_FLAG_GET(are_valid, prev_valid)){
-		if(curr->_double.prev->_double.prev) add_before(list, curr->_double.prev, node);
+		if(pos->prev->_double.prev) add_before(list, pos->prev, node);
 		else add_as_head(list, node);
 	} else {
 		add_as_head(list, node);
 	}
-	*result = true;
+	update_pos(pos, node);
 	MU_COND_RWLOCK_UNLOCK(list->rwlock, logger);
-	return node;
+	return true;
 }
 
 /* Linked List Creation and Deletion functions */

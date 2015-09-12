@@ -7,8 +7,8 @@
 #include <stdatomic.h>
 
 typedef struct {
-	DS_Atomic_Node_t *head;
-	DS_Atomic_Node_t *tail;
+	DS_Node_t *head;
+	DS_Node_t *tail;
 	volatile size_t size;
 } DS_Queue_t;
 
@@ -18,8 +18,6 @@ bool DS_Queue_enqueue(DS_Queue_t *queue, void *data);
 
 void *DS_Queue_dequeue(DS_Queue_t *queue);
 
-size_t DS_Queue_size(DS_Queue_t *queue);
-
-bool DS_Queue_destroy(DS_Queue_t *queue);
+bool DS_Queue_destroy(DS_Queue_t *queue, DS_delete_cb del);
 
 #endif /* endif DS_QUEUE_H */

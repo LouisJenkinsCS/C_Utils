@@ -22,23 +22,31 @@
 	takes an obvious, with no need to mention, deletion callback, in which case is it's 4th, the 3rd parameter
 	is a pointer to the desired storage to store the result of the transaction. 
 */
+
+/// Struct used to help the data structure hint at it's current position.
+struct Position_Hint {
+	DS_Node_t *curr;
+	DS_Node_t *next;
+	DS_Node_t *prev;
+};
+
 typedef struct {
 	/// Handle for the data structure being iterated over.
 	void *ds_handle;
-	/// Reference to the current node.
-	DS_Node_t *curr;
+	/// The relative position
+	struct Position_Hint pos;
 	/*
 		Below are callbacks that may be filled out by the data structure that creates
 		an instance of this object.
 	*/
-	DS_Node_t *(*head)(void *, void **);
-	DS_Node_t *(*tail)(void *, void **);
-	DS_Node_t *(*next)(void *, DS_Node_t *, void **);
-	DS_Node_t *(*prev)(void *, DS_Node_t *, void **);
-	DS_Node_t *(*append)(void *, DS_Node_t *, void *, bool *);
-	DS_Node_t *(*prepend)(void *, DS_Node_t *, void *, bool *);
-	DS_Node_t *(*for_each)(void *, DS_Node_t *, DS_general_cb, bool *);
-	DS_Node_t *(*del)(void *, DS_Node_t *, DS_delete_cb, bool *);
+	void *(*head)(void *, struct Position_Hint *);
+	void *(*tail)(void *, struct Position_Hint *);
+	void *(*next)(void *, struct Position_Hint *);
+	void *(*prev)(void *, struct Position_Hint *);
+	bool (*append)(void *, struct Position_Hint *, void *);
+	bool (*prepend)(void *, struct Position_Hint *, void *);
+	bool (*for_each)(void *, struct Position_Hint *, DS_general_cb);
+	bool (*del)(void *, struct Position_Hint *, DS_delete_cb);
 } DS_Iterator_t;
 
 void *DS_Iterator_head(DS_Iterator_t *it);

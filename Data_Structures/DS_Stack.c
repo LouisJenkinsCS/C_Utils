@@ -13,16 +13,6 @@ __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
 
-static DS_Node_t *DS_Node_create(void *item){
-	DS_Node_t *node = calloc(1, sizeof(*node));
-	if(!node){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
-	node->item = item;
-	return node;
-}
-
 DS_Stack_t *DS_Stack_create(void){
 	DS_Stack_t *stack = calloc(1, sizeof(DS_Stack_t));
 	if(!stack){
@@ -34,7 +24,11 @@ DS_Stack_t *DS_Stack_create(void){
 
 bool DS_Stack_push(DS_Stack_t *stack, void *item){
 	MU_ARG_CHECK(logger, false, stack, item);
-	DS_Node_t *node = DS_Node_create(item);
+	DS_Node_t *node = DS_Node_create(item, logger);
+	if(!node){
+		MU_LOG_ERROR(logger, "DS_Node_create: 'Was unable to create a node!'");
+		return false;
+	}
 	DS_Node_t *head;
 	while(true){
 		head = stack->head;

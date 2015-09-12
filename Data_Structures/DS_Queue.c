@@ -22,6 +22,7 @@ DS_Queue_t *DS_Queue_create(void){
 		MU_LOG_ERROR(logger, "DS_Node_create: 'Was unable to create a node!'");
 		goto error;
 	}
+	queue->head = queue->tail = node;
 	return queue;
 
 	error:
@@ -115,7 +116,7 @@ bool DS_Queue_destroy(DS_Queue_t *queue, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, queue);
 	MU_Hazard_Pointer_release_all(false);
 	DS_Node_t *prev_node = NULL, *node;
-	for(node = queue->head; node; node = node->next){
+	for(node = queue->head; node; node = node->_single.next){
 		free(prev_node);
 		if(del) del(node->item);
 		prev_node = node;
