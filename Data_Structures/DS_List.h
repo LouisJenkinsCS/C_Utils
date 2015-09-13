@@ -83,7 +83,17 @@ void *DS_List_remove_at(DS_List_t *list, unsigned int index, DS_delete_cb delete
  * Next, Prev, Append, Prepend, Head, Tail.
  *
  * The list also features a node-correction algorithm, which if the current node has already been removed from the list, it will
- * attempt to start the next or previous node instead of the current. 
+ * attempt to start at the next or previous node instead of the starting at the beginning if possible. The iterator must be freed
+ * no longer in use, and the iterator does not get updated if the list instance it belongs to gets freed, so use with caution.
+ *
+ * All iterator functions use the list's internal read-write lock, so it is not a lock-less operation, but it will not block for a 
+ * prolonged period of time. Hence, due to the usage of a read-write lock, it allows concurrent threads to iterate over the list so long
+ * as they do not attempt to append or prepend to the list. 
+ *
+ * Finally, this iterator is barebones and is a work-in-progress, so use with caution
+ *
+ * @param list Instance of the list.
+ * @return A new instance of an iterator, or NULL if list is NULL or if there were problems allocating memory for one. 
  *
  */
 DS_Iterator_t *DS_List_iterator(DS_List_t *list);
