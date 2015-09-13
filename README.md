@@ -297,7 +297,33 @@ As the iterator is still in development, very early in particular, it most likel
 
 ####Linked List [<b>Stable</b>] Version: 1.1
 
-A generic and general use Linked List utilizing void pointers and callbacks. Sort elements, Iterate through it, and construct and deconstruct them from/to arrays! If you need a dynamic storage of elements that's thread-safe and without a real worry for optimal performance, then this is the best for you.
+A simple, yet robust double linked list implementation. It is thread-safe, and with the use of read-write locks, allows for very efficient read-often-write-rarely uses, but it's also good for general usage as well. 
+
+It features a way to sort the list through the use of comparators, a for-each callback that can be called on all items in the list, a print-all function to print everything in a neat, formatted way, and an implementation for DS_Iterator. 
+
+It's uses are very simple, as can be shown in the example below...
+
+```c
+
+int comparator(void *item_one, void *item_two);
+
+const bool synchronized = true;
+void *item, *item_two;
+
+DS_List_t *list = DS_List_create(synchronized);
+// Assume item was already allocated and points to a valid piece of memory.
+DS_List_add(list, item, NULL);
+// We added the item to the list, unsorted. The third argument is a callback to add in sorted order.
+DS_List_add(list, item_two, comparator);
+// The list is "Smart" enough to keep track of if an unsorted item was added, and will sort the list for you.
+DS_List_get(list, 0);
+DS_List_remove(list, 1);
+DS_List_destroy(list, free);
+
+```
+
+Very simple and easy.
+
 
 Documentation for version 1.0 available [here](http://theif519.github.io/Linked_List_Documentation/).
 
@@ -345,7 +371,7 @@ Very Outdated: Documentation for version 1.0 available [here](http://theif519.gi
 
 ####Lockless Stack [<b>Unstable</b>]
 
-The lockless stack utilizes MU_Hazard_Pointers to avoid the ABA problem and allow safe deallocation of nodes after they are popped off the stack. The stack is guaranteed not to lock, hence all threads are constantly making progress, with the obligatory 250 microseconds of sleep to avoid thrashing the CPU. 
+The lockless stack utilizes MU_Hazard_Pointers to avoid the ABA problem and allow safe deallocation of nodes after they are popped off the stack. The stack is guaranteed not to lock, hence all threads are constantly making progres, and will yield if they fail on atomic compare and swaps to lower contention. 
 
 Overall, it's a simple, yet powerful thread-safe, lockless data structure.
 
@@ -354,11 +380,29 @@ Overall, it's a simple, yet powerful thread-safe, lockless data structure.
 DS_Stack_t *stack = DS_Stack_create();
 DS_Stack_push(stack, "Hello World");
 DS_Stack_pop(stack);
-DS_Stack_destroy(stack);
+DS_Stack_destroy(stack, free);
 
 ```
 
 That's all there is to it.
+
+####Lockless Queue [<b>Unstable</b>]
+
+The lockless queue utilitizes hazard pointers to solve the ABA problem, is fast and minimal, and guaranteed to never block or deadlock. Like the stack, it will yield if it fails on a compare and swap to lower overall contention
+
+Also like the stack, it is a very simple, yet powerful thread-safe, lockless data structure.
+
+```c
+
+DS_Queue_t *queue = DS_Queue_create();
+DS_Queue_enqueue(queue, "Hello World");
+DS_Queue_dequeue(queue);
+DS_Queue_destroy(queue, free);
+
+```
+
+That's all there is to it.
+
 
 ####Ring Buffer [<b>Unimplemented</b>]
 
