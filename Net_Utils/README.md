@@ -1,5 +1,29 @@
-## Net_Utils
+# Net_Utils
 
-### Summary
+## Summary
 
-Basic networking. Basically, creating sockets, basic server-client basic structs, send and receiving information over the network. I might also try to attempt serialization, or at the very least send string-representation of objects (might have to work in unison with File and String Utils).
+Implements some rather simple yet powerful tools and abstractions for networking. As of yet, they include a useful BSD abstraction which encapsulates and maintains itself behind the scenes, so you only have to worry about what you want to send/receive, not how you send/receive it. Then to simplify it's use even more, there is an even more useful yet efficient manager of connections. Lastly, there also is an minimal HTTP parser.
+
+## General Non-STL dependencies
+
+Almost all packages use the following dependencies, available in other libraries in this very package.
+
+* NU_Helpers <= For header files.
+* MU_Logger <= For logging.
+* MU_Cond_Locks <= For optional synchronization.
+* Pthreads <= For locks.
+* sys/* & netdb <= For networking, POSIX specific.
+
+## Connection
+
+### Features
+
+* BSD Socket Abstraction.
+* Send/Receive data and files to a connected end-point.
+* R/W thread-safe access.
+* Verbose Logging.
+
+## Server
+
+### Features
+
