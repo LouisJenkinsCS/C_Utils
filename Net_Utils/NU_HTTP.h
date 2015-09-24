@@ -75,8 +75,16 @@ typedef struct {
 
 // TODO: Make Field Values case-insensitive!
 
+/**
+ * Creates a NU_Response_t instance.
+ * @return NU_Response_t instance.
+ */
 NU_Response_t *NU_Response_create(void);
 
+/**
+ * Creates a NU_Request_t instance.
+ * @return NU_Response_t instance.
+ */
 NU_Request_t *NU_Request_create(void);
 
 /*
@@ -86,11 +94,12 @@ NU_Request_t *NU_Request_create(void);
     TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
 */
 /**
- * 
- * @param res
- * @param header
- * @param header_size
- * @return 
+ * Appends and parses the header to the response. The header_size must intially contain the actual size of
+ * the header, and will return the offset of which it stopped reading as well as the offset pointer.
+ * @param res Instance of response.
+ * @param header Header to parse and append.
+ * @param header_size Used to obtain size of header, and return the size of the header.
+ * @return What could not be read, meaning the beginning of the null terminator on success, otherwise start of character could not parse.
  */
 char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
 
