@@ -27,3 +27,26 @@ Almost all packages use the following dependencies, available in other libraries
 
 ### Features
 
+* BSD Socket Abstraction
+* Manage and create new Connections
+* Manage and bind sockets to ports.
+* Synchronized thread-safe access.
+* Verbose logging.
+
+## Client
+
+### Features
+
+* BSD Socket Abstraction
+* Manage and create new Connections
+* Synchronized thread-safe access.
+* Verbose logging.
+
+## HTTP
+
+### Features
+
+* Simple HTTP parsing
+    - Mapped
+    - Response and Request
+* Generate HTTP headers
