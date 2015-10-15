@@ -106,117 +106,108 @@ size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, long long i
 NU_Connection_t *NU_Connection_reuse(NU_Connection_t **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
 
 /**
- * 
- * @param receivers
- * @param r_size
- * @param senders
- * @param s_size
- * @param timeout
- * @param logger
- * @return 
+ * A wrapper function for the select statement which will work with this abstraction. It takes the pointer to an array of connections to receive,
+ * a pointer to the receiver's original size, a pointer an array of connections to send, and a pointer to the sender's original size. It then blocks
+ * until timeout or until at least one of the connections's endpoints can receive/send data. It returns how many connections are ready, and the arrays
+ * are filled to represent which are ready, similar to how select() can take a file descriptor set and return what is ready, with the pointer their respective
+ * sizes being filled out appropriately. Either receivers or senders can be NULL, but not both.
+ * @param receivers Pointer to an array of receivers, can be NULL if senders is declared. This array is replaced with what is available, NULL if none.
+ * @param r_size Pointer to the size of the receiver array, and is used to return the size of the array of ready receivers.
+ * @param senders Pointer to an array of senders, can be NULL if receivers is declared. This array is replaced with what is available, NULL if none.
+ * @param s_size Pointer to the size of the sender's array, and is used to return the size of the array of ready senders.
+ * @param timeout Maximum timeout to block for, infinite if -1.
+ * @param logger Logger to log any messages to if declared.
+ * @return Amount of ready receivers/senders.
  */
 int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, long long int timeout, MU_Logger_t *logger);
 
 /**
- * 
- * @param conn
- * @return 
+ * Obtains the socket file descriptor.
+ * @param conn Instance of connection.
+ * @return Socket file descriptor of the connection.
  */
 int NU_Connection_get_sockfd(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @param sockfd
- * @return 
+ * Sets the socket file descriptor for an instance of Connection.
+ * @param conn Instance of connection.
+ * @param sockfd Socket file descriptor.
+ * @return true if successfull, NULL if not.
  */
 bool NU_Connection_set_sockfd(NU_Connection_t *conn, int sockfd);
 
 /**
- * 
- * @param conn
- * @param ip_addr
- * @return 
+ * Obtains the IP Address.
+ * @param conn Instance of connection.
+ * @return IP Address of connection.
  */
 const char *NU_Connection_get_ip_addr(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @param port
- * @return 
+ * Sets the IP Address for an instance of Connection.
+ * @param conn Instance of connection.
+ * @param ip_addr IP Address.
+ * @return True on success, False on error.
  */
 bool NU_Connection_set_ip_addr(NU_Connection_t *conn, const char *ip_addr);
 
 /**
- * 
- * @param conn
- * @param logger
- * @return 
+ * Obtains the port.
+ * @param conn Instance of connection.
+ * @return Port number.
  */
 unsigned int NU_Connection_get_port(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @return 
+ * Set the port.
+ * @param conn Instance of connection.
+ * @return True on success, false on error.
  */
 bool NU_Connection_set_port(NU_Connection_t *conn, unsigned int port);
 
 /**
- * 
- * @param conn
- * @param sockfd
- * @param port
- * @param ip_addr
- * @param logger
- * @return 
+ * Obtains logger used.
+ * @param conn Instance of connection.
+ * @return Logger used by connection.
  */
 MU_Logger_t *NU_Connection_get_logger(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @return 
+ * Sets the logger used.
+ * @param conn Instance of connection.
+ * @return True on success, false on error.
  */
 bool NU_Connection_set_logger(NU_Connection_t *conn, MU_Logger_t *logger);
 
 /**
- * 
- * @param conn
- * @return 
- */
-bool NU_Connection_is_valid(NU_Connection_t *conn);
-
-/**
- * 
- * @param conn
- * @return 
+ * Determines if the connection is currently in use.
+ * @param conn Instance of connection.
+ * @return Whether or not it is in use.
  */
 bool NU_Connection_in_use(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @param sockfd
- * @param port
- * @param ip_addr
- * @param logger
- * @return 
+ * Initializes a connection object with it's parameters.
+ * @param conn Instance of connection.
+ * @param sockfd Socket File Descriptor.
+ * @param port Port number.
+ * @param ip_addr IP Address.
+ * @param logger Logger.
+ * @return True if successful, false on error.
  */
 bool NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
 
 /**
- * 
- * @param conn
- * @return 
+ * Disconnects the connection from it's endpoint.
+ * @param conn Instance of connection.
+ * @return True if successful, false on error.
  */
 bool NU_Connection_disconnect(NU_Connection_t *conn);
 
 /**
- * 
- * @param conn
- * @return 
+ * Destroys the connection, disconnecting it if it is currently connected.
+ * @param conn Instance of connection.
+ * @return True on success, false on error.
  */
 bool NU_Connection_destroy(NU_Connection_t *conn);
 

@@ -401,14 +401,6 @@ bool NU_Connection_init(NU_Connection_t *conn, int sockfd, unsigned int port, co
 	return true;
 }
 
-bool NU_Connection_is_valid(NU_Connection_t *conn){
-	MU_ARG_CHECK(conn->logger, false, conn);
-	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
-	bool result = conn->in_use;
-	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
-	return result;
-}
-
 bool NU_Connection_in_use(NU_Connection_t *conn){
 	MU_ARG_CHECK(conn->logger, false, conn);
 	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
