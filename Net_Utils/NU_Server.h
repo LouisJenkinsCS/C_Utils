@@ -2,7 +2,6 @@
 #define NET_UTILS_SERVER_H
 
 #include <NU_Connection.h>
-#include <NU_Helper.h>
 
 /**
  * @brief Wraps a bound socket on a given port.
@@ -23,23 +22,13 @@ typedef struct NU_Bound_Socket_t{
    volatile int sockfd;
    /// Port the socket is bound to.
    unsigned int port;
-   /// RWLock to ensure thread safety.
-   pthread_rwlock_t *lock;
    /// Flag to determine if it is bound.
    volatile bool is_bound;
-   /// Logger associated with socket, for when it has it's own file.
-   MU_Logger_t *logger;
 } NU_Bound_Socket_t;
 
-// TODO: Put NU_Bound_Socket_t inside of it's own file, NU_Bound_Socket
-
 /**
- * @brief Wraps a server's created, bound and listening socket as well keeping track of connected connections.
- * 
- * This type is reusable, in the sense that not only can you bind more than one socket, but also that it's
- * bound sockets are reusable, as well as it's connections. This type allows the user to create a robust server
- * which allows it to easily keep track of more than one bound socket, and connections connected, as well as 
- * the total data sent and received from/to this server. 
+ * A manager for bound sockets and connections, recycles and re-uses them when accepting
+ * and binding new connection/sockets. 
  */
 typedef struct {
    /// List of bound sockets owned by this server; I.E How many bound ports.
@@ -50,40 +39,85 @@ typedef struct {
    volatile size_t amount_of_connections;
    /// Size of the list of bound sockets to a port.
    volatile size_t amount_of_sockets;
-   /// RWLock associated with server for type safety.
-   pthread_rwlock_t *lock;
-   /// Whether or not to initialize locks on everything.
-   bool is_threaded;
+   /// Lock used for synchronization and thread safety.
+   pthread_mutex_t *lock;
+   /// Whether or not to synchronize access.
+   bool synchronized;
 } NU_Server_t;
 
-// TODO: Change rwlock to a mutex!
+/**
+ * 
+ * @param connection_pool_size
+ * @param bsock_pool_size
+ * @param synchronized
+ * @return 
+ */
+NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool synchronized);
 
-/* Create a fully initialized server that is unconnected. The socket used is
-   bound to the passed port, but no connections are being accepted on creation. */
-NU_Server_t *NU_Server_create(size_t connection_pool_size, size_t bsock_pool_size, bool init_locks);
-
-/* Bind the server to a port. Can be used multiple times, meaning the server can be bound to more
-   than one port. The amount specified will be the amount to listen for. */
+/**
+ * 
+ * @param server
+ * @param queue_size
+ * @param port
+ * @param ip_addr
+ * @return 
+ */
 NU_Bound_Socket_t *NU_Server_bind(NU_Server_t *server, size_t queue_size, unsigned int port, const char *ip_addr);
 
-/* Will unbind the server from the port specified in socket. Will free the socket! */
+/**
+ * 
+ * @param server
+ * @param socket
+ * @return 
+ */
 bool NU_Server_unbind(NU_Server_t *server, NU_Bound_Socket_t *socket);
 
-/* Accept new connections until the timeout ellapses, up to the given amount. The returned
-   connections should not be freed, and it is also managed by the server. */
-NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, unsigned int timeout);
+/**
+ * 
+ * @param server
+ * @param socket
+ * @param timeout
+ * @return 
+ */
+NU_Connection_t *NU_Server_accept(NU_Server_t *server, NU_Bound_Socket_t *socket, long long int timeout);
 
-/* The server will no longer be accepting current connections, but will continue dealing with it's
-   current connections until the time specified ellapses, upon which it will close all connections. */
+/**
+ * 
+ * @param server
+ * @param timeout
+ * @return 
+ */
+NU_Connection_t *NU_Server_accept_any(NU_Server_t *server, long long int timeout);
+
+/**
+ * 
+ * @param server
+ * @return 
+ */
 bool NU_Server_shutdown(NU_Server_t *server);
 
-/* Disconnect the server from the client. */
+/**
+ * 
+ * @param server
+ * @param conn
+ * @return 
+ */
 bool NU_Server_disconnect(NU_Server_t *server, NU_Connection_t *conn);
 
-/* Allows the user to log to server's logfile. */
+/**
+ * 
+ * @param server
+ * @param message
+ * @param ...
+ * @return 
+ */
 bool NU_Server_log(NU_Server_t *server, const char *message, ...);
 
-/* The server will immediately close all connections, free up all resources, and destroy itself. */
+/**
+ * 
+ * @param server
+ * @return 
+ */
 bool NU_Server_destroy(NU_Server_t *server);
 
 #endif /* endif NET_UTILS_SERVER_H */

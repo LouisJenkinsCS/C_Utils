@@ -139,10 +139,10 @@ bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *cus
 	char buffer[log_buf_size + 1];
 	format_string(MU_Logger_Format_get(logger, level), buffer, log_buf_size, &info, args);
 	fprintf(logger->file, "%s", buffer);
+	fflush(logger->file);
 	if(level == MU_ASSERTION){
 		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
-	fflush(logger->file);
 	return true;
 }
 
@@ -154,6 +154,7 @@ const char *MU_Logger_Level_to_string(MU_Logger_Level_e level){
 		case MU_EVENT: return "EVENT";
 		case MU_INFO: return "INFO";
 		case MU_VERBOSE: return "VERBOSE";
+		case MU_TRACE: return "TRACE";
 		default: return NULL;
 	}
 }
@@ -170,6 +171,7 @@ const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level){
 		case MU_CUSTOM: real_format = format.custom_f; break;
 		case MU_INFO: real_format = format.info_f; break;
 		case MU_VERBOSE: real_format = format.verbose_f; break;
+		case MU_TRACE: real_format = format.trace_f;
 		default: real_format = NULL;
 	}
 	if(!real_format){
@@ -185,6 +187,7 @@ bool MU_Logger_destroy(MU_Logger_t *logger){
 	if(!logger) return false;
 	if(logger->file) fclose(logger->file);
 	free(logger->format.all_f);
+	free(logger->format.trace_f);
 	free(logger->format.verbose_f);
 	free(logger->format.info_f);
 	free(logger->format.custom_f);

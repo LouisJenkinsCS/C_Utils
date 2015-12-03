@@ -26,13 +26,4 @@
 #include <netdb.h>
 #include <errno.h>
 
-
-size_t NU_send_all(int sockfd, const void *buf, size_t buf_size, unsigned int timeout, int flags, MU_Logger_t *logger);
-
-size_t NU_timed_receive(int sockfd, void *buf, size_t buf_size, unsigned int timeout, int flags, MU_Logger_t *logger);
-
-int NU_timed_accept(int sockfd, char *ip_addr, unsigned int timeout, MU_Logger_t *logger);
-
-bool NU_is_selected(int flags, int mask);
-
 #endif /* END NET_UTILS_HELPER_H */

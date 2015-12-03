@@ -3,27 +3,14 @@
 #include <stdatomic.h>
 
 /*
- * PBQueue is a minimal priority blocking queue, which will insert elements sorted
- * in ascending order based on priority. The priority is determined by the comparator passed to it.
- * It should be noted that this can be doubled as a normal blocking queue by having
- * a comparator which just returns 0, like such.
- * 
- * int comparator(void *item_one, void *item_two){
- *      return 0;
- * }
- * 
- * Since the priority blocking queue will detect whether it should be at the tail of the queue,
- * doing so would insert it at the end with O(1) insertion. It should also be noted that
- * if an item is not the lowest priority, the insertion is O(n).
- * 
- * Alternatively, this can be used a regular blocking queue by calling the Timed_Enqueue
- * and Timed_Dequeue with 0 seconds, causing it to timeout immediately if the queue is
- * full/empty (respectively). A combination of the two could turn it into a normal
- * queue with it's own quirks.
- * 
- * Lastly, this Priority Blocking Queue can either be a bounded or unbounded queue
- * depending on which constructor used to create it.
- */
+	PBQueue is a minimal priority blocking queue which features not only a way to 
+	create a bounded or unbounded queue, but also be used as a normal blocking queue
+	if no comparator callback is used, or even as a normal queue if a timeout of 0 is 
+	used each time. 
+
+	The Priority Blocking Queue will wake up all threads blocking before destroying itself,
+	to prevent permanent deadlocks.
+*/
 
 typedef struct {
 	/// A pointer to the head node.
@@ -49,42 +36,55 @@ typedef struct {
 } DS_PBQueue_t;
 
 /**
- * Returns an initialized bounded queue of max size max_elements.
- * @param max_elements The maximum size of the bounded queue.
- * @param comparator Callback used to compare elements. Cannot be NULL!
- * @return A bounded priority blocking queue.
+ * Create a new instance of the priority blocking queue, with the option of having an unbounded or
+ * bounded queue (if max_elements == 0). The comparator used is defined during creation and cannot be changed
+ * later.
+ *
+ * If compare is left NULL, it will operate as a normal blocking queue. 
+ * @param max_elements Maximum elements if bounded, unbounded if left at 0.
+ * @param compare Comparator callback sort the queue.
+ * @return A bounded or unbounded priority blocking queue, or NULL if failure in allocation.
  */
 DS_PBQueue_t *DS_PBQueue_create(size_t max_elements, DS_comparator_cb compare);
 
 /**
- * Will attempt to add an element to the queue. If it is bounded, it will block
- * until it is no longer full. Note: It is recommended you use the Timed_Enqueue
- * if your queue is bounded, due to the fact that it will block indefinitely until
- * an element is removed.
- * @param queue The priority queue to add an element to.
- * @param item The item to add to the priority queue.
- * @return 1 if successful.
+ * Enqueue an item to the queue, waiting until timeout if the queue is bounded and full.
+ * @param queue Instance of the queue.
+ * @param item The item to enqueue.
+ * @param timeout Maximum timeout to wait until completion.
+ * @return true if successful, false if queue is NULL, or timeout ellapses before succeeding.
  */
 bool DS_PBQueue_enqueue(DS_PBQueue_t *queue, void *item, long long int timeout);
 
 /**
- * Attempts to obtain an item from the priority queue, blocking until one becomes available.
- * It should be noted that Timed_Dequeue is recommended for general, non-specific use,
- * as this will cause the thread to block indefinitely until it can obtain an element.
- * @param queue Priority blocking queue to obtain an element from.
- * @return The head item of the priority blocking queue.
+ * Dequeue an item from the queue, waiting until timeout if the queue is bounded and full.
+ * @param queue Instance of the queue.
+ * @param timeout Maximum timeout to wait until completion.
+ * @return The item dequeued, or NULL, if the queue is NULL or is empty.
  */
 void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
 
 /**
- * Returns the current size of the queue. Note: Just because the queue's size is
- * returned, does not mean that by the time you act on the queue size, it will be the
- * same if other threads are manipulating the queue.
- * @param queue Priority blocking queue to obtain an element from.
- * @return The size of the queue.
+ * Clears the queue of all items, calling the del deletion callback on any items
+ * if specified. 
+ * @param queue Instance of the queue.
+ * @param del Deletion callback to be called on each item if specified.
+ * @return true if successful, or false if queue is NULL.
  */
 bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del);
 
+/**
+ * Returns the size of the queue.
+ * @param queue Instance of the queue.
+ * @return The size of the queue, or 0 if empty or queue is NULL.
+ */
 size_t DS_PBQueue_size(DS_PBQueue_t *queue);
 
+/**
+ * Destroys the instance of the queue, waking up all threads waiting for to enqueue/dequeue.
+ * If the del deletion callback is specified, it is called on each item in the list.
+ * @param queue Instance of the queue.
+ * @param del Deletion callback to be called on each item if specified.
+ * @return true if successful, false if queue is NULL.
+ */
 bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del);

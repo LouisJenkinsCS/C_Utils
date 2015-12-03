@@ -1,6 +1,75 @@
 #include <NU_Connection.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <netdb.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <MU_Cond_Locks.h>
+#include <MU_Arg_Check.h>
+#include <MU_Retry.h>
 
 static const int send_buf_size = 8 * 1024;
+
+static const int send_flags = MSG_NOSIGNAL;
+
+static size_t timed_receive(int sockfd, void *buffer, size_t buf_size, long long int timeout, int flags, MU_Logger_t *logger){
+   long long int received;
+   struct timeval tv;
+   fd_set can_receive;
+   tv.tv_sec = timeout;
+   tv.tv_usec = 0;
+   FD_ZERO(&can_receive);
+   FD_SET(sockfd, &can_receive);
+   MU_TEMP_FAILURE_RETRY(received, select(sockfd + 1, &can_receive, NULL, NULL, timeout < 0 ? NULL : &tv));
+   if(received <= 0){
+      if(!received) MU_LOG_INFO(logger, "select: 'Timed out!'");
+      else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
+      return 0;
+   }
+   MU_TEMP_FAILURE_RETRY(received, recv(sockfd, buffer, buf_size, flags));
+   if(received <= 0){
+      if(!received) MU_LOG_INFO(logger, "recv: 'Disconnected from the stream!'");
+      else MU_LOG_ERROR(logger, "recv: '%s'", strerror(errno));
+      return 0;
+   }
+   return received;
+}
+
+static size_t send_all(int sockfd, const void *buffer, size_t buf_size, long long int timeout, int flags, MU_Logger_t *logger){
+   size_t total_sent = 0, data_left = buf_size;
+   long long int sent;
+   struct timeval tv;
+   fd_set can_send, can_send_copy;
+   tv.tv_sec = timeout;
+   tv.tv_usec = 0;
+   FD_ZERO(&can_send);
+   FD_SET(sockfd, &can_send);
+   while(buf_size > total_sent){
+      can_send_copy = can_send;
+      // Restart timeout.
+      tv.tv_sec = timeout;
+      MU_TEMP_FAILURE_RETRY(sent, select(sockfd+1, NULL, &can_send_copy, NULL, timeout < 0 ? NULL : &tv));
+      if(sent <= 0){
+         if(!sent) MU_LOG_INFO(logger, "select: 'Timed out!'");
+         else MU_LOG_ERROR(logger, "select: '%s'", strerror(errno));
+         break;
+      }
+      MU_TEMP_FAILURE_RETRY(sent, send(sockfd, buffer + total_sent, data_left, flags | send_flags));
+      if(sent <= 0){
+         if(!sent) MU_LOG_INFO(logger, "send: 'Disconnected from the stream'");
+         else MU_LOG_ERROR(logger, "send: '%s'", strerror(errno));
+         break;
+      }
+      total_sent += sent;
+      data_left -= sent;
+   }
+   return total_sent;
+}
 
 // Returns the max sockfd size.
 static int add_valid_connections_to_fd_set(NU_Connection_t **connections, size_t size, fd_set *set){
@@ -50,25 +119,25 @@ NU_Connection_t *NU_Connection_create(bool init_locks, MU_Logger_t *logger){
 }
 
 // Implement
-size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, unsigned int timeout, int flags){
+size_t NU_Connection_send(NU_Connection_t *conn, const void *buffer, size_t buf_size, long long int timeout, int flags){
 	MU_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
 	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
-	size_t total_sent = NU_send_all(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
+	size_t total_sent = send_all(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
 	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return total_sent;
 }
 
 // Implement
-size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, unsigned int timeout, int flags){
+size_t NU_Connection_receive(NU_Connection_t *conn, void *buffer, size_t buf_size, long long int timeout, int flags){
 	MU_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
 	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
-	size_t amount_received = NU_timed_receive(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
+	size_t amount_received = timed_receive(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
 	MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 	return amount_received;
 }
 
 // Implement
-size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags){
+size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, long long int timeout, int flags){
 	MU_ARG_CHECK(conn->logger, 0, conn, file);
 	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	struct stat file_stats;	
@@ -86,7 +155,7 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int t
 	size_t buf_read, total_sent = 0;
 	MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, send_buf_size, file));
 	while(buf_read > 0){
-		if(NU_send_all(conn->sockfd, buf, buf_read, timeout, flags, conn->logger) != buf_read){
+		if(send_all(conn->sockfd, buf, buf_read, timeout, flags, conn->logger) != buf_read){
 			MU_LOG_WARNING(conn->logger, "NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
 			MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 			return total_sent;
@@ -103,7 +172,7 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, unsigned int t
 }
 
 // Implement
-size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned int timeout, int flags){
+size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, long long int timeout, int flags){
 	MU_ARG_CHECK(conn->logger, 0, conn, file);
 	MU_COND_RWLOCK_RDLOCK(conn->lock, conn->logger);
 	struct stat file_stats;	
@@ -119,7 +188,7 @@ size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned in
 	size_t buf_size = file_stats.st_blksize;
 	char buf[buf_size];
 	size_t received, total_received = 0;
-	while((received = NU_timed_receive(conn->sockfd, buf, buf_size, timeout, flags, conn->logger)) > 0){
+	while((received = timed_receive(conn->sockfd, buf, buf_size, timeout, flags, conn->logger)) > 0){
 		size_t written;
 		MU_TEMP_FAILURE_RETRY(written, fwrite(buf, 1, received, file));
 		if(written != received){
@@ -132,7 +201,7 @@ size_t NU_Connection_receive_file(NU_Connection_t *conn, FILE *file, unsigned in
 	return total_received;
 }
 
-int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, unsigned int timeout, MU_Logger_t *logger){
+int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connection_t ***senders, size_t *s_size, long long int timeout, MU_Logger_t *logger){
 	NU_Connection_t **send_connections = NULL;
 	NU_Connection_t **recv_connections = NULL;
 	/* 
@@ -172,7 +241,7 @@ int NU_Connection_select(NU_Connection_t ***receivers, size_t *r_size, NU_Connec
 		goto error;
 	}
 	size_t are_ready;
-	MU_TEMP_FAILURE_RETRY(are_ready, select(max_fd + 1, &receive_set, &send_set, NULL, &tv));
+	MU_TEMP_FAILURE_RETRY(are_ready, select(max_fd + 1, &receive_set, &send_set, NULL, timeout < 0 ? NULL : &tv));
 	if(are_ready <= 0){
 		if(!are_ready) MU_LOG_INFO(logger, "select: 'Timed out!'");
 		else MU_LOG_WARNING(logger, "select: '%s'", strerror(errno));

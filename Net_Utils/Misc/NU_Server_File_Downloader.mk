@@ -3,11 +3,11 @@ PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
 CFLAGS=-g -D_GNU_SOURCE -Wall
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=MU_Logger.c MU_Arg_Check.c NU_Server.c NU_Connection.c NU_Helper.c NU_Server_Test_File_Downloader.c
+SOURCES=MU_Logger.c MU_Arg_Check.c NU_Server.c NU_Connection.c NU_Server_Test_File_Downloader.c TP_Pool.c MU_Events.c DS_PBQueue.c NU_HTTP.c DS_Hash_Map.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=NU_Server_File_Downloader
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./Misc_Utils/ ./Net_Utils/ ./Net_Utils/Tests
+VPATH=./Misc_Utils/ ./Net_Utils/ ./Net_Utils/Tests ./Thread_Pool/ ./Data_Structures/
 
 all: $(TARGET)
 

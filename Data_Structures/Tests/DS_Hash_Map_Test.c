@@ -30,6 +30,7 @@ int main(void){
 		"PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120"
 	};
 	int i = 0;
+	MU_DEBUG("DS_HASH_MAP_KEY_SIZE: %d", DS_HASH_MAP_KEY_SIZE);
 	MU_LOG_VERBOSE(logger, "Logging all Key-Value pairs!");
 	char *all_pairs, *old_str;
 	asprintf(&all_pairs, "{ \n");

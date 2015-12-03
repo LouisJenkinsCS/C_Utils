@@ -4,8 +4,34 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
+#include <MU_Arg_Check.h>
 #include <MU_Flags.h>
+#include <MU_Logger.h>
 #include <TP_Pool.h>
+
+typedef enum {
+	/// Lowest possible priority
+	TP_LOWEST,
+	/// Low priority, above Lowest.
+	TP_LOW,
+	/// Medium priority, considered the "average".
+	TP_MEDIUM,
+	/// High priority, or "above average".
+	TP_HIGH,
+	/// Highest priority, or "imminent"
+	TP_HIGHEST
+} TP_Priority_e;
+
+typedef struct {
+	/// Task to be executed.
+	TP_Callback callback;
+	/// Arguments to be passed to the task.
+	void *args;
+	/// Result from the Task.
+	TP_Result_t *result;
+	/// Priority of task.
+	TP_Priority_e priority;
+} TP_Task_t;
 
 static const char *pause_event_name = "Resume";
 static const char *finished_event_name = "Finished";
@@ -179,7 +205,7 @@ TP_Pool_t *TP_Pool_create(size_t pool_size){
 			goto error;
 		}
 		worker->thread_id = i+1;
-		int create_error = pthread_create(worker->thread, NULL, Get_Tasks, tp);
+		int create_error = pthread_create(worker->thread, &attr, Get_Tasks, tp);
 		if(create_error){
 			MU_LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
 			goto error;
@@ -300,6 +326,7 @@ bool TP_Pool_destroy(TP_Pool_t *tp){
 	// Finally, any threads waiting on the thread pool to finish will wake up.
 	MU_Event_destroy(tp->finished, 0);
 	int i = 0;
+	while(atomic_load(&tp->active_threads)) pthread_yield();
 	for(; i < old_thread_count; i++) Destroy_Worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
 	free(tp);

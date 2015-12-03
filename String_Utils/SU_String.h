@@ -1,19 +1,18 @@
 /*
  * @Author: Louis Jenkins
- * @Version: 1.2
+ * @Version: 2.0
  * 
- * SU_String is a string library based off of Java's own String library, except
- * the library works on String over a string object (or struct). It is a lightweight,
- * relatively speedy library which relies upon the libc and glibc. 
+ * A basic, yet very powerful and conventional string manipulations library.
+ * Supports ASCII strings only, and some functions support the use of non NULL-terminated functions.
+ *
+ * From simple string reversal or splitting and joining a string based on a delimiter, or even dynamic concatenation of strings,
+ * is all included in this library. This library fixes and improves upon the standard libc and glibc library
+ * by adding functionality that is sorely missing, in an efficient manner.
+ *
+ * There is also a convenience typedef for cstrings, String, which abstracts the need to use pointers.
+ * Lastly, there is a convenience macro that can be used to handle memory management of non-constant strings, 
+ * TEMP, which utilitizes the GCC or Clang's compiler attributes.
  * 
- * SU_String also features passing flags with the '|' operator, for example,
- * SU_IGNORE_CASE|SU_LAST does exactly as it says, ignore case for string comparison,
- * and return the last string that matches the criteria. For default behavior, you
- * pass SU_NONE flag instead. 
- * 
- * Some functions require passing the address of the string (&) for possible modification
- * of the original string, as SU_String never modifies the string passed, by default,
- * so it is safe to use string literals unless passing SU_MODIFY flag.
  */
 
 #ifndef SU_String_H
@@ -25,8 +24,8 @@
 typedef char *String;
 
 /**
- * Uses GCC attributes to cleanup strings after leaving the scope of the function.
- * Used as a "feature", it's available without SU_String, and requires GCC, but
+ * Uses compiler attributes to cleanup strings after leaving the scope of the function.
+ * Used as a "feature", it's available without SU_String, and requires GCC and Clang, but
  * it is a nice enough feature. To use it, declare a string like so:
  * 
  * String string TEMP = "Example String";
@@ -36,81 +35,90 @@ typedef char *String;
  */
 #define TEMP __attribute__ ((__cleanup__(SU_String_destroy)))
 
-#include <stdlib.h> /* Can't malloc without it */
-#include <string.h> /* Standard libc library. */
-#include <stdio.h> /* ??? */
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include <stdbool.h>
-#include <stdarg.h> /* For variadic function concat_all */
-#include <assert.h> /* Asserts NULL parameters */
-#include <ctype.h> /* To trim strings and check isspace(...). */
+#include <stdarg.h>
+#include <assert.h>
+#include <ctype.h> 
 #include <MU_Logger.h>
 #include <MU_Arg_Check.h>
 #include <MU_Flags.h>
 
 /**
- * Searches for the substring inside of the passed string. The string need not be
- * null terminated if len is passed. 
- * @param str The string to search.
- * @param substr The substring to search for in the passed string.
- * @param len The length of the string and amount of the string to search, strlen is used if len is 0.
- * @param flagss SU_IGNORE_CASE
- * @return true if found, false if not found.
+ * Scans the string for the passed substring up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. String can be READ-ONLY.
+ * @param str String to search.
+ * @param substr Substring to find. Must be NULL-terminated.
+ * @param len How much of the string to search. If 0, strlen is used.
+ * @param ignore_case If true, case insensitive, else case sensitive.
+ * @return true if it contains the substr, or false if it doesn't or if str or substr is NULL.
  */
 bool SU_String_contains(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * Returns a lowercase of the string passed. If SU_MODIFY is passed, it will modify
- * the original string, freeing it. String does not need to be null terminated if length
- * is passed.
- * @param string_ptr Pointer to the String to be manipulated.
- * @param len Length of the string and amount to convert to lowercase, strlen is used if len is 0.
- * @param flags SU_MODIFY
- * @return Lowercase string.
+ * Converts a string to lowercase, up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. The string must NOT be READ-ONLY, as it modifies the string passed.
+ * @param str String to lower.
+ * @param len Amount of string to lower. If 0, strlen is used.
+ * @return The beginning of str, or NULL if str is NULL.
  */
 String SU_String_lower(String str, size_t len);
 
 /**
- * Creates a copy of the string and converts it to uppercase. If SU_MODIFY is passed, it
- * will modify the original string, freeing it. String does not need to be null terminated,
- * if length is passed.
- * @param string_ptr Pointer to the String to be manipulated.
- * @param len Length of the string and amount to convert to uppercase, strlen is used if len is 0.
- * @param flags SU_MODIFY
- * @return Uppercase string.
+ * Converts the string to uppercase, up to the passed length. If 0
+ * is passed, strlen is used to determine the string's length, hence a non NULL-terminated
+ * string can be safely used if len is not 0. The string must NOT be READ-ONLY, as it modifies
+ * the string passed.
+ * @param str String to upper.
+ * @param len Amount of string to upper. If 0, strlen is used.
+ * @return The beginning of str, or NULL if str is NULL.
  */
 String SU_String_upper(String str, size_t len);
 
 /**
- * Returns the character at the given index, and if it is out of bounds, it will return
- * the NULL terminator character, '\0', instead. String must be null terminated!
- * @param string String to retrieve character from.
- * @param index Index of the char.
- * @return The character at the index of the string, or NULL terminator upon overflow.
+ * Obtains the character at the given index, with bounds checking. The string MUST be
+ * NULL-terminated, but CAN be READ-ONLY. If the index is out of bounds of the string, it will return the NULL-terminator '\0'.
+ * @param str The string.
+ * @param index The index, if out of bounds it defaults to the index of the NULL-terminator.
+ * @return The character at the index, or '\0' if it is out of bounds or if str is NULL.
  */
 char SU_String_char_at(const String str, unsigned int index);
 
 /**
- * Checks to see if two strings are equal. It will compare up to the length passed if declared, otherwise strlen is used.
+ * Compares two string to see if they are equal, up to len. If len is 0, strlen is used to determine the string's length,
+ * hence theoretically a non NULL-terminated string can be safely used, if and only if the length does not exceed the valid bounds of
+ * both strings.
  * @param string_one First string to compare.
  * @param string_two Second string to compare.
- * @param len The length to compare up to, if len is 0 then strlen will be used.
- * @param flags SU_IGNORE_CASE
- * @return true if equal, false if not.
+ * @param len The amount to compare up to, if 0 strlen of the first string is used.
+ * @param ignore_case If true, comparison is case insensitive.
+ * @return true if they are equal, false if they are not or if either string_one or string_two are NULL.
  */
 bool SU_String_equal(const String string_one, const String string_two, size_t len, bool ignore_case);
 
 /**
- * Splits a string into an array of strings based on delimiter passed. size should be non-NULL,
- * I.E (&size), and is used to record the new size of the array returned. If len is passed, it will
- * only split up to the passed length, otherwise it is assumed the string is NULL terminated and strlen is used.
- * @param string String to be split.
- * @param len The length to split up to, if len is 0, then strlen is used.
- * @param delimiter Delimiter to look for when splitting.
- * @param size Records size of the string array.
- * @return The array of strings, plus sets size to record the size of the array.
+ * Splits the given string into many strings according to the delimiter. The pointer to a size_t variable is
+ * used to return additional information, I.E the size of the array. If len is 0, strlen is used to determine
+ * the length of the string to split up to, hence a non NULL-terminated string may safely be used.
+ * @param str The string
+ * @param delimiter Delimiter to split by.
+ * @param len The length of the string.
+ * @param size Used to return the size of the array of strings.
+ * @return An array of strings with updated to indicate it's size, or NULL if either str or delimiter are NULL or if the delimiter could not be found.
  */
 String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
 
+/**
+ * Concatenates all strings passed, with the delimiter inserted in between each string, into one string.
+ * The result is placed inside str_storage_ptr. Each string MUST be NULL-terminated.
+ * @param str_storage_ptr Pointer to a string to hold the result.
+ * @param delim Delimiter to insert between each string.
+ * @param ... List of strings to be concatenated.
+ */
 #define SU_STRING_CONCAT_ALL(str_storage_ptr, delim, ...) do { \
 	const int tok_len = 2; \
 	int arg_size = (sizeof((String[]){__VA_ARGS__})/sizeof(String)); \
@@ -140,103 +148,110 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
 } while(0)
 
 /**
- * Reverses the given string. A non-NULL terminated string may be used if len is specified.
-. * @param string Pointer to the String to be operated on.
- * @param len Length of the string to reverse, strlen is used if len is 0.
- * @param flags SU_MODIFY
- * @return The reversed string.
+ * Reverses the string up to the passed length. If len is 0, strlen is used. If len is specified, 
+ * the string does not need to be NULL-terminated. String must NOT be READ-ONLY.
+ * @param str The string.
+ * @param len Length of the string to reverse up to. If len is 0, strlen is used to determine string length.
+ * @return The start of the reversed string.
  */
 String SU_String_reverse(String str, size_t len);
 
 /**
- * Joins an array of strings together into one with the delimiter prepended to each string after the first.
- * All strings must be null terminated. 
- * @param array_of_strings The array of strings to be joined.
- * @param delimiter Delimiter to be prepended to each string after the first
- * @param size The size of the array
- * @return The new string that was joined.
+ * Joins the array of strings together, with the passed delimiter in between, into
+ * one string. All strings in arr must be NULL-terminated. 
+ * @param arr Array of strings.
+ * @param delimiter Delimiter to insert between each string.
+ * @param size Size of the array of strings.
+ * @return The combined string.
  */
 String SU_String_join(const String arr[], const String delimiter, size_t size);
 
 /**
- * Replaces all of one character in a string with another character. A non-NULL terminated string
- * may be passed if len is specified.
- * @param string Pointer to the The string the characters are to be replaced
- * @param old_char The characters to be found
- * @param new_char The characters that will replace the old_char
- * @param len Length of the string to search. If len is 0, strlen is used.
- * @param flags SU_IGNORE_CASE | SU_MODIFY
- * @return The new string with replaced characters.
+ * Scans the string for old_char and replaces it with new_chat, up to the passed length. 
+ * If len is 0, strlen is used to determine string length. str does not need to be NULL-terminated
+ * but it does have to be READ-ONLY.
+ * @param str The string
+ * @param old_char Old character to search for.
+ * @param new_char New character to replace old_char with.
+ * @param len Length to read up to. Strlen is used if len is 0.
+ * @param ignore_case Case insensitive comparison is used if true.
+ * @return The beginning of str, NULL if str is NULL.
  */
 String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case);
 
 /**
- * Checks to see if a string starts with a substring
- * @param string he string to check.
- * @param find The substring to check for.
- * @param flags SU_IGNORE_CASE
- * @return 1 if true, 0 if false.
+ * Determines if the string passed starts with find. Both must be NULL-terminated.
+ * @param str The string
+ * @param find String to find
+ * @param ignore_case Case insensitive if true.
+ * @return  true if it does, false if it does not or if str or find are NULL.
  */
 bool SU_String_starts_with(const String str, const String find, bool ignore_case);
 
 /**
- * Checks to see if a string ends with a substring.
- * @param string The string to check.
- * @param find The substring to check for.
- * @param flags SU_IGNORE_CASE
- * @return  1 if true, 0 if false.
+ * Determines if the string passed ends with find. Both must be NULL-terminated.
+ * @param str The string
+ * @param find String to find
+ * @param ignore_case Case insensitive if true.
+ * @return  true if it does, false if it does not or if str or find are NULL.
  */
 bool SU_String_ends_with(const String str, const String find, bool ignore_case);
 
 /**
- * Returns a substring of the string.
- * @param string_ptr Pointer to the String to get a substring of.
- * @param offset The beginning index.
- * @param end The end index. If end is 0, strlen is used.
- * @param flags SU_NONE | SU_MODIFY
- * @return The substring of the string.
+ * Creates a substring at the given offset up to end. str need not be NULL-terminated,
+ * but offset and end must be within it's bounds.
+ * @param str The string
+ * @param offset Offset to start at
+ * @param end The end of the string.
+ * @return The substring or NULL if str is NULL.
  */
 String SU_String_substring(const String str, unsigned int offset, unsigned int end);
 
 /**
- * Trims the string of all leading and trailing spaces.
- * @param string Pointer to the String to be trimmed.
- * @param flags SU_NONE | SU_MODIFY
- * @return Trimmed string.
+ * Trims the string of leading and trailing white spaces. If len is 0, strlen is used
+ * to determine the string length. The string pointed to by string_ptr does not need to be
+ * NULL-terminated nor READ-ONLY.
+ * @param string_ptr Pointer to a string to store the result, as well as the original string.
+ * @param len Length fo the string to trim up to.
+ * @return The new string.
  */
 String SU_String_trim(String *string_ptr, size_t len);
 
 /**
- * Finds the index of the first or the last index of a given substring.
- * @param string String to be searched for
- * @param substring Substring to be searched for.
- * @param flags SU_NONE | SU_IGNORE_CASE | SU_LAST
- * @return Index of the starting position of the found substring.
+ * Obtains the beginning index of the substr in str if it exists, up to len. If len is 0, strlen is used
+ * to determine the string length. The string does not need to be NULL-terminated if length is specified.
+ * @param str The string.
+ * @param substr The substring to search for.
+ * @param len The length of the string to search up to.
+ * @param ignore_case if true, search is case insensitive.
+ * @return The index at the beginning of the substr.
  */
 int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * Counts occurrences that the delimiter (or substring) occurs in a string.
- * @param string String to search
- * @param delimiter Delimiter or Substring to search for
- * @param flags SU_NONE | SU_IGNORE_CASE
- * @return Amount of times the delimiter appears in your string, or 0 if NULL string passed
+ * Counts the occurences of the substr in the given str up to len (strlen if len == 0).
+ * @param str The string
+ * @param substr Substring to count.
+ * @param len The length of the string to read up to. strlen used if len == 0.
+ * @param ignore_case Search is case insensitive if true.
+ * @return The occurences of the substr in str.
  */
 unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case);
 
 /**
- * Returns a substring from between a start and end substring or delimiter in a string.
- * @param string String to be searched.
- * @param start The first substring or delimiter to search for
- * @param end The last substring or delimiter to search for.
- * @param flags SU_NONE | SU_IGNORE_CASE
- * @return The substring of what is between start and end, or NULL if NULL string is passed.
+ * Returns the substring between start and end in str, up to len (strlen if len == 0).
+ * @param str The string.
+ * @param start The first substr to find.
+ * @param end The second substr to find.
+ * @param len Length of string to search up to.
+ * @param ignore_case Search is case insensitive if true.
+ * @return The substring between start and end.
  */
 String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case);
 
 /**
- * Callback function for GCC attribute cleanup. Called when the string leaves the scope of the function.
- * @param string String to be freed.
+ * Destroys the passed string, used by compiler attribute.
+ * @param string_ptr Pointer to the string being destroyed.
  */
 void SU_String_destroy(String *string_ptr);
 

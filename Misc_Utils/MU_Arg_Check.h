@@ -14,6 +14,12 @@
 
 #define MU_ARG_TO_STRING(arg)("" #arg "")
 
+/**
+ * @param logger
+ * @param retval
+ * @param ...
+ * @return 
+ */
 #define MU_ARG_CHECK(logger, retval, ...) do { \
 	int num_args = MU_ARG_COUNT(__VA_ARGS__); \
 	if(num_args < 0 || num_args > MU_ARG_MAX) break; \

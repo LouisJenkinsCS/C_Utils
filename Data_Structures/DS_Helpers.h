@@ -25,6 +25,8 @@ typedef struct DS_Node_t {
 	void *item;
 } DS_Node_t;
 
+DS_Node_t *DS_Node_create(void *item, MU_Logger_t *logger);
+
 typedef void (*DS_general_cb)(void *);
 
 typedef int (*DS_comparator_cb)(const void *, const void *);
