@@ -143,12 +143,21 @@ typedef struct {
 #define MU_LOGGER_STRINGIFY(x) MU_LOGGER_STRINGIFY_THIS(x)
 #define MU_LOGGER_STRINGIFY_THIS(x) #x
 
+#define MU_LOGGER_AUTO_CREATE(logger, filename, mode, level) \
+__attribute__((constructor)) static void init_ ##logger (void){ \
+	logger = MU_Logger_create(filename, mode, level); \
+} \
+\
+__attribute__((destructor)) static void destroy_ ##logger (void){ \
+	MU_Logger_destroy(logger); \
+} \
+
 /**
- * 
- * @param filename
- * @param mode
- * @param level
- * @return 
+ * Creates a new logger with the given file name and mode, and only log beyond level.
+ * @param filename Name of the file.
+ * @param mode Mode of the file.
+ * @param level Level to log up to, I.E MU_INFO logs only INFO and above.
+ * @return Logger, or null if allocation error.
  */
 MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_Level_e level);
 
@@ -162,14 +171,14 @@ MU_Logger_t *MU_Logger_create(const char *filename, const char *mode, MU_Logger_
 const char *MU_Logger_Format_get(MU_Logger_t *logger, MU_Logger_Level_e level);
 
 /**
- * 
- * @param level
- * @return 
+ * Returns stringification of log level.
+ * @param level Log level.
+ * @return Stringified log level.
  */
 const char *MU_Logger_Level_to_string(MU_Logger_Level_e level);
 
 /**
- * 
+ * This should NEVER be called outside of the implementation for this logger. Instead, use the macros above.
  * @param logger
  * @param level
  * @param custom_level
@@ -184,14 +193,14 @@ const char *MU_Logger_Level_to_string(MU_Logger_Level_e level);
 bool MU_Logger_log(MU_Logger_t *logger, MU_Logger_Level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
 
 /**
- * 
+ * Destroys the logger.
  * @param logger
  * @return 
  */
 bool MU_Logger_destroy(MU_Logger_t *logger);
 
 /**
- * 
+ * Gets the current timestamp.
  * @return 
  */
 char *MU_get_timestamp(void);

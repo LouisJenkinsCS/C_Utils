@@ -20,7 +20,7 @@ All data structures use the following for dependencies, with any else listed for
 
 ###Features
 
-* Optional Synchronization & Thread Safety.
+* Optional safe concurrent access & thread safety.
 * General-Use via Callbacks.
 * Relatively lightweight.
 * Built-in Iterator support.
@@ -50,15 +50,34 @@ All data structures use the following for dependencies, with any else listed for
 
 ###Features
 
-* Lock-Free*.
-* Avoids ABA problem with Hazard Pointers.
-* Will not block*.
-* Very lightweight and fast*.
-* Deadlock-free*.
-* Priority-Inversoin free*.
-* Lowers Contention*.
+* Lock-Free.
+* Avoids ABA problem
+    - Hazard Pointers
+* Will not block.
+* Very lightweight and fast.
+* Deadlock and Priority Inversion free
+* Lowered Contention.
 
-As this impentation uses malloc to allocate nodes, and malloc does obtain a rather fine-grained spinlock on the heap and is very fast, it still serves as a bottleneck. 
+##Lock-Free Queue
+
+###Features
+
+* Lock-Free
+* Avoids ABA problem
+    - Hazard Pointers
+* Will not block
+* Very lightweight and fast
+* Deadlock and Priority Inversion free
+* Lowered Contention
+
+##Iterator
+
+###Features
+
+* General-use iterator
+* Type-Agnostic
+    - Traverse different kinds of data structures with support.
+* Easy to use.
 
 ###Extra Non-STL Dependencies
 

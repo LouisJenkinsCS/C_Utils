@@ -10,13 +10,7 @@ static MU_Logger_t *logger = NULL;
 
 #define MU_LOG_SERVER(message, ...) MU_LOG_CUSTOM(logger, "SERVER", message, ##__VA_ARGS__)
 
-__attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Net_Utils/Logs/NU_Server.log", "w", MU_ALL);
-}
-
-__attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_destroy(logger);
-}
+MU_LOGGER_AUTO_CREATE(logger, "./Net_Utils/Logs/NU_Server.log", "w", MU_ALL);
 
 /* Server-specific helper functions */
 
@@ -59,7 +53,7 @@ static bool bsock_setup(NU_Bound_Socket_t *bsock, size_t queue_size, unsigned in
 	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
 		MU_LOG_ERROR(logger, "setsockopt: '%s'", strerror(errno));
 		goto error;
-	}	
+	}
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(port);
 	my_addr.sin_addr.s_addr = ip_addr ? inet_addr(ip_addr) : INADDR_ANY;

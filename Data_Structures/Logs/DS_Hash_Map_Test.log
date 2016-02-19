@@ -1,6 +1,6 @@
-02:56:09 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:34) main(): 
+02:32:36 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:34) main(): 
 "Logging all Key-Value pairs!"
-02:56:09 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:45) main(): 
+02:32:36 PM [VERBOSE](./Data_Structures/Tests/DS_Hash_Map_Test.c:45) main(): 
 "{ 
 Host: net.tutsplus.com,
 User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko,
@@ -9,23 +9,23 @@ Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/,
 Accept-Language: en-us,en;q=0.5,
 Keep-Alive: 300,
 }"
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:47) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:47) main(): 
 "Creating Hash Map..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:50) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:50) main(): 
 "Adding all key-value pairs to hash map..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:55) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:55) main(): 
 "Printing all Key-Value pairs from hash map!"
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:63) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:63) main(): 
 "Retrieivng all values from keys from hash map..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:70) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:70) main(): 
 "Removing Key-Value pair ("Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/")..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:72) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:72) main(): 
 "Testing for removal of Key-Value pair..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:75) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:75) main(): 
 "Testing for adding duplicate key..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:78) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:78) main(): 
 "Testing retrieval of key by value..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:80) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:80) main(): 
 "Destroy Hash Map..."
-02:56:09 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:82) main(): 
+02:32:36 PM [INFO](./Data_Structures/Tests/DS_Hash_Map_Test.c:82) main(): 
 "Success!"
