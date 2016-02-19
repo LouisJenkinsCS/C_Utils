@@ -671,6 +671,37 @@ Invalid Arguments=> { msg: TRUE; val > 0 && val < 100: TRUE; test: TRUE; test &&
 
 It's very simple yet very easy to do in each function. If you have more than 8 arguments you can do more than one MU_ARG_CHECK as there are amount of arguments / 8.
 
+####Scoped Locks [<b>In Development</b>] Version: .5
+
+An implementation of a C++-like scope_lock. The premise is that locks should be managed on it's own, and is finally made possible using GCC and Clang's compiler attributes, __cleanup__. The locks supported so far are pthread_mutex_t, pthread_spinlock_t, and sem_t. It will lock when entering the scope, and unlock when leaving (or in the case of sem_t, it will increment the count, and then decrement). This abstracts the need for the need to lock/unlock the lock, as well as generifying the type of lock used as well, as the allocation is done using C11 generics.
+
+It is very simple as easy to use, and can even be described to as elegant. An optimistic example can be seen below...
+
+```c
+
+// Already setup and allocated.
+pthread_mutex_t *lock;
+// Create a scoped lock instance of the given mutex.
+MU_Scoped_Lock_t *s_lock = MU_SCOPED_LOCK_FROM(lock);
+// Demonstrates Scoped Lock
+MU_SCOPED_LOCK(s_lock){
+    do_something();
+    do_something_else();
+    if(is_something){
+        // Note, we return without needing to unlock.
+        return;
+    }
+    finally_do_something();
+}
+// As well as single line scoped locks
+MU_SCOPED_LOCK(s_lock) some_short_operation();
+
+```
+
+That's it, and now the need to lock is abstracted completely. Note as well that we can replace pthread_mutex_t with a pthread_spinlock_t and it would work the exact same, because everything else is managed in the background.
+
+####Smart Pointers [<b>Unimplemented</b>]
+
 ####Conditional Locks [<b>Stable</b>] Version: 1.0
 
 Features auto-logging locking macros for mutexes and rwlocks. It simply checks if the lock if NULL before attempting to lock, as attempting to lock a NULL pthread_*_t argument will cause a segmentation fault. Also should note that if something goes wrong, I.E on EDEADLK, it will log the precise location of said errors.
