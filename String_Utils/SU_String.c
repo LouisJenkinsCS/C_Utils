@@ -2,13 +2,7 @@
 
 static MU_Logger_t *logger = NULL;
 
-__attribute__((constructor)) static void init_logger(void){
-    logger = MU_Logger_create("./String_Utils/Logs/SU_String.log", "w", MU_ALL);
-}
-
-__attribute__((destructor)) static void destroy_logger(void){
-    MU_Logger_destroy(logger);
-}
+MU_LOGGER_AUTO_CREATE(logger, "./String_Utils/Logs/SU_String.log", "w", MU_ALL);
 
 /*
     String_Utils is not called SU_String, conforming to the naming convention of all of my other files, plus had a VERY much needed update.

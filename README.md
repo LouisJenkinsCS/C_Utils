@@ -436,15 +436,19 @@ Overall, it's simple and intuitive to use.
 
 ####Logger [<b>Stable</b>] Version: 1.4
 
-A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. 
+A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Also supports the usage of GCC & Clang compiler attributes to automatically manage the lifetime of the logger. This means that a logger can be initialized before any other operation occurs, even before main(), hence making it perfectly safe to use with almost no effort to setup. This can be accomplished by using the MU_LOGGER_AUTO_CREATE macro.
 
-Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
+Formatting Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
 
 Which is the current default, would look like such...
 
 ```c
 
-MU_Logger_t *logger = MU_Logger_create("Test_File.txt", "w", MU_INFO);
+// Is static hence no linkage issues will arise.
+static MU_Logger_t *logger; 
+MU_LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", MU_INFO);
+
+// Later, when you need to log inside of some function.
 MU_LOG_INFO(logger, "Hello World!");
 
 ```

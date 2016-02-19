@@ -5,31 +5,23 @@
 * Simple macros for simple bitwise manipulations. The flag passed should be an unsigned or signed integer.
 */
 
-/**
- * @param mask
- * @param flag
- * @return
+/*
+	Returns if flag is set in bitmask.
  */
 #define MU_FLAG_GET(mask, flag) (mask & flag) 
 
-/**
- * @param mask
- * @param flag
- * @return
+/*
+	Sets the flag inside of the bitmask.
  */
 #define MU_FLAG_SET(mask, flag) (mask |= flag)
 
-/**
- * @param mask
- * @param flag
- * @return
+/*
+	Clears the flag from the bitmask
  */
 #define MU_FLAG_CLEAR(mask, flag) (mask &= (~flag))
 
-/**
- * @param mask
- * @param flag
- * @return
+/*
+	Toggles the flag inside of the bitmask.
  */
 #define MU_FLAG_TOGGLE(mask, flag) (mask ^= flag)
 

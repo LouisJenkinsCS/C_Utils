@@ -1,28 +1,16 @@
-11:09:44 AM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
+04:04:28 PM [ERROR](./Net_Utils/NU_Server.c:62) bsock_setup(): 
+"bind: 'Cannot assign requested address'"
+04:04:28 PM [WARNING](./Net_Utils/NU_Server.c:100) bsock_reuse(): 
+"bsock_setup: 'Was unable to setup bound socket!'"
+04:04:28 PM [ERROR](./Net_Utils/NU_Server.c:62) bsock_setup(): 
+"bind: 'Cannot assign requested address'"
+04:04:28 PM [INFO](./Net_Utils/NU_Server.c:259) NU_Server_bind(): 
 "Bound a socket to 192.168.1.112 on port 10000!"
-11:09:44 AM [INFO](./Net_Utils/NU_Server.c:244) NU_Server_bind(): 
+04:04:28 PM [ERROR](./Net_Utils/NU_Server.c:62) bsock_setup(): 
+"bind: 'Cannot assign requested address'"
+04:04:28 PM [WARNING](./Net_Utils/NU_Server.c:100) bsock_reuse(): 
+"bsock_setup: 'Was unable to setup bound socket!'"
+04:04:28 PM [ERROR](./Net_Utils/NU_Server.c:62) bsock_setup(): 
+"bind: 'Cannot assign requested address'"
+04:04:28 PM [INFO](./Net_Utils/NU_Server.c:259) NU_Server_bind(): 
 "Bound a socket to 192.168.1.112 on port 80!"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.214 connected to port 80"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.215 connected to port 80"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.214 on port 80!"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.215 on port 80!"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.217 connected to port 80"
-11:09:49 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.217 on port 80!"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.227 connected to port 80"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.227 on port 80!"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.228 connected to port 80"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.228 on port 80!"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:310) NU_Server_accept(): 
-"2.0.223.229 connected to port 80"
-11:09:58 AM [INFO](./Net_Utils/NU_Server.c:412) NU_Server_disconnect(): 
-"Disconnected from 2.0.223.229 on port 80!"

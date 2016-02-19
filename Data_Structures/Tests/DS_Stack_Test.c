@@ -2,6 +2,7 @@
 #include <MU_Logger.h>
 #include <TP_Pool.h>
 #include <unistd.h>
+#include <math.h>
 
 static const int num_threads = 4;
 
@@ -11,6 +12,8 @@ static MU_Logger_t *logger = NULL;
 
 volatile unsigned long long counter = 0;
 
+volatile unsigned long pops = 0, pushes = 0;
+
 volatile bool running = true;
 
 static void *push_to_stack(void *args){
@@ -18,6 +21,7 @@ static void *push_to_stack(void *args){
 		unsigned long long *i = malloc(sizeof(int));
 		*i = __sync_add_and_fetch(&counter, 1);
 		DS_Stack_push(stack, i);
+		pushes++;
 	}
 	return NULL;
 }
@@ -27,6 +31,7 @@ static void *pop_from_stack(void *args){
 		unsigned long long *i = DS_Stack_pop(stack);
 		if(!i) continue;
 		free(i);
+		pops++;
 	}
 	return NULL;
 }
@@ -39,12 +44,13 @@ int main(void){
 	for(; i < num_threads; i++){
 		TP_Pool_add(tp, (i % 2 == 0) ? push_to_stack : pop_from_stack, NULL, TP_NO_RESULT);
 	}
-	TP_Pool_wait(tp, 300);
+	TP_Pool_wait(tp, 15);
 	running = 0;
 	TP_Pool_wait(tp, -1);
 	TP_Pool_destroy(tp);
 	MU_DEBUG("Max Val: %llu", counter);
 	MU_Logger_destroy(logger);
 	DS_Stack_destroy(stack, free);
+	MU_DEBUG("%lu Pops to %lu Pushes, Hence %lu bytes of extra data!", pops, pushes, (pushes - pops) * (sizeof(DS_Node_t) + sizeof(int)));
 	return 0;
 }

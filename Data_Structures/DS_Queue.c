@@ -2,13 +2,7 @@
 
 static MU_Logger_t *logger = NULL;
 
-__attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Data_Structures/Logs/DS_Queue.log", "w", MU_ALL);
-}
-
-__attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_destroy(logger);
-}
+MU_LOGGER_AUTO_CREATE(logger, "./Data_Structures/Logs/DS_Queue.log", "w", MU_ALL);
 
 DS_Queue_t *DS_Queue_create(void){
 	DS_Queue_t *queue = calloc(1, sizeof(DS_Queue_t));

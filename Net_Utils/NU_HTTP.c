@@ -6,13 +6,7 @@ static const int bucket_size = 31;
 
 static MU_Logger_t *logger = NULL;
 
-__attribute__((constructor)) static void init_logger(void){
-	logger = MU_Logger_create("./Net_Utils/Logs/NU_HTTP.log", "w", MU_ALL);
-}
-
-__attribute__((destructor)) static void destroy_logger(void){
-	MU_Logger_destroy(logger);
-}
+MU_LOGGER_AUTO_CREATE(logger, "./Net_Utils/Logs/NU_HTTP.log", "w", MU_ALL);
 
 static const char *NU_HTTP_Status_Codes[] = {
 	[100] = "100 Continue",
