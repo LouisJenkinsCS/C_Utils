@@ -6,7 +6,6 @@
 static MU_Logger_t *logger = NULL;
 static MU_Logger_t *event_logger = NULL;
 
-<<<<<<< HEAD
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Misc_Utils/Logs/MU_Event_Loop.log", "w", MU_ALL);
 	event_logger = MU_Logger_create("./Misc_Utils/Logs/MU_Event_Loop_Events.log", "w", MU_ALL);
@@ -16,11 +15,6 @@ __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 	MU_Logger_destroy(event_logger);
 }
-=======
-MU_LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/MU_Event_Loop.log", "w", MU_ALL);
-
-MU_LOGGER_AUTO_CREATE(event_logger, "./Misc_Utils/Logs/MU_Event_Loop_Events.log", "w", MU_ALL);
->>>>>>> development
 
 
 static const int event_finished = 1 << 0;

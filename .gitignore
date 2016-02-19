@@ -41,8 +41,3 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-
-# Any .o files and .exe and .exe.stackdump files.
-*.o
-*.exe
-*.exe.stackdump

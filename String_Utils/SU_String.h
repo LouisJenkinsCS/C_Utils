@@ -44,10 +44,7 @@ typedef char *String;
 #include <ctype.h> 
 #include <MU_Logger.h>
 #include <MU_Arg_Check.h>
-<<<<<<< HEAD
 #include <MU_Flags.h>
-=======
->>>>>>> development
 
 /**
  * Scans the string for the passed substring up to the passed length. If 0

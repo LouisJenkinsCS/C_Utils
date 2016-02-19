@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <MU_Hazard_Pointers.h>
 
-<<<<<<< HEAD
 static MU_Logger_t *logger = NULL;
 
 __attribute__((constructor)) static void init_logger(void){
@@ -13,13 +12,6 @@ __attribute__((constructor)) static void init_logger(void){
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
-=======
-#define DS_STACK_BACK_OFF pthread_yield()
-
-static MU_Logger_t *logger = NULL;
-
-MU_LOGGER_AUTO_CREATE(logger, "./Data_Structures/Logs/DS_Stack.log", "w", MU_ALL);
->>>>>>> development
 
 DS_Stack_t *DS_Stack_create(void){
 	DS_Stack_t *stack = calloc(1, sizeof(DS_Stack_t));
@@ -43,20 +35,12 @@ bool DS_Stack_push(DS_Stack_t *stack, void *item){
 		if(head) MU_Hazard_Pointer_acquire(0, head);
 		// Ensures head isn't freed before it was tagged by hazard pointer.
 		if(head != stack->head){
-<<<<<<< HEAD
 			pthread_yield();
-=======
-			DS_STACK_BACK_OFF;
->>>>>>> development
 			continue;
 		}
 		node->_single.next = head;
 		if(__sync_bool_compare_and_swap(&stack->head, head, node)) break;
-<<<<<<< HEAD
 		pthread_yield();
-=======
-		DS_STACK_BACK_OFF;
->>>>>>> development
 	}
 	if(head) MU_Hazard_Pointer_release(head, false);
 	__sync_fetch_and_add(&stack->size, 1);
@@ -71,19 +55,11 @@ void *DS_Stack_pop(DS_Stack_t *stack){
 		if(!head) return NULL;
 		MU_Hazard_Pointer_acquire(0, head);
 		if(head != stack->head){
-<<<<<<< HEAD
 			pthread_yield();
 			continue;
 		}
 		if(__sync_bool_compare_and_swap(&stack->head, head, stack->head->_single.next)) break;
 		pthread_yield();
-=======
-			DS_STACK_BACK_OFF;
-			continue;
-		}
-		if(__sync_bool_compare_and_swap(&stack->head, head, stack->head->_single.next)) break;
-		DS_STACK_BACK_OFF;
->>>>>>> development
 	}
 	void *data = head->item;
 	MU_Hazard_Pointer_release(head, true);
