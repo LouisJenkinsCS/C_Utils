@@ -40,44 +40,84 @@ typedef struct {
 } MU_Event_t;
 
 /**
+<<<<<<< HEAD
  * 
  * @param event_name
  * @param logger
  * @param flags
  * @return 
+=======
+ * Creates a new event with the passed name, registers it's logger, and any other interal flags passed.
+ * @param event_name Name of this event, which shows up in logger.
+ * @param logger Logger to log to.
+ * @param flags Internal flags.
+ * @return Configured event.
+>>>>>>> development
  */
 MU_Event_t *MU_Event_create(const char *event_name, MU_Logger_t *logger, unsigned int flags);
 
 /**
+<<<<<<< HEAD
  * 
  * @param event
  * @param thread_id
  * @return 
+=======
+ * Resets the event flag to false, meaning it will no longer act as if it had been signaled.
+ * @param event Event.
+ * @param thread_id Debugging information.
+ * @return True or false if event is null.
+>>>>>>> development
  */
 bool MU_Event_reset(MU_Event_t *event, unsigned int thread_id);
 
 /**
+<<<<<<< HEAD
  * 
  * @param event
  * @param timeout
  * @param thread_id
  * @return 
+=======
+ * Waits on the event unless it is already signaled up to the defined timeout, or indefinite
+ * if timeout is < 0.
+ * @param event Event.
+ * @param timeout Timeout.
+ * @param thread_id Debugging Information.
+ * @return True if event is not null.
+>>>>>>> development
  */
 bool MU_Event_wait(MU_Event_t *event, long long int timeout, unsigned int thread_id);
 
 /**
+<<<<<<< HEAD
  * 
  * @param event
  * @param thread_id
  * @return 
+=======
+ * Signals to any threads waiting on the event to wake up, and will remain signaled unless
+ * AUTO_RESET flag has been passed. 
+ * @param event Event.
+ * @param thread_id Debugging Information.
+ * @return True if event !null.
+>>>>>>> development
  */
 bool MU_Event_signal(MU_Event_t *event, unsigned int thread_id);
 
 /**
+<<<<<<< HEAD
  * 
  * @param event
  * @param thread_id
  * @return 
+=======
+ * Destroys the event, first waking up any threads waiting on this event, and allowing
+ * them to gracefully exit.
+ * @param event Event.
+ * @param thread_id Debugging information.
+ * @return If event !null.
+>>>>>>> development
  */
 bool MU_Event_destroy(MU_Event_t *event, unsigned int thread_id);
 

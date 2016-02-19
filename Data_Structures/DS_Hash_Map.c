@@ -2,6 +2,7 @@
 
 static MU_Logger_t *logger = NULL;
 
+<<<<<<< HEAD
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Data_Structures/Logs/DS_Hash_Map.log", "w", MU_ALL);
 }
@@ -9,6 +10,9 @@ __attribute__((constructor)) static void init_logger(void){
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
+=======
+MU_LOGGER_AUTO_CREATE(logger, "./Data_Structures/Logs/DS_Hash_Map.log", "w", MU_ALL);
+>>>>>>> development
 
 /// Very simple and straight forward hash function. Bob Jenkin's hash.
 static uint32_t hash_key(const char *key){

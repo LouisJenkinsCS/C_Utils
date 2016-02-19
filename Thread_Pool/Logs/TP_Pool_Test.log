@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 02:08:56 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:52) main(): 
 "Pausing thread pool to add all tasks..."
 02:08:56 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:54) main(): 
@@ -9,5 +10,18 @@
 02:09:02 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:65) main(): 
 "Injecting a high priority task..."
 02:09:11 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:72) main(): 
+=======
+04:08:04 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:52) main(): 
+"Pausing thread pool to add all tasks..."
+04:08:04 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:54) main(): 
+"Thread  Pool Paused to add tasks..."
+04:08:04 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:60) main(): 
+"All tasks added!Starting..."
+04:08:09 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:62) main(): 
+"Pausing for 5 seconds..."
+04:08:09 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:65) main(): 
+"Injecting a high priority task..."
+04:08:24 PM [INFO](./Thread_Pool/Test/TP_Pool_Test.c:72) main(): 
+>>>>>>> development
 "Total iterations 100000; Should be 100000; True
 "

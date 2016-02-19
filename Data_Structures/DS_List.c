@@ -7,6 +7,7 @@
 /// Static logger for all linked lists do use.
 static MU_Logger_t *logger = NULL;
 
+<<<<<<< HEAD
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Data_Structures/Logs/DS_List.log", "w", MU_ALL);
 }
@@ -14,6 +15,10 @@ __attribute__((constructor)) static void init_logger(void){
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
+=======
+MU_LOGGER_AUTO_CREATE(logger, "./Data_Structures/Logs/DS_List.log", "w", MU_ALL);
+
+>>>>>>> development
 /* Begin implementations of helper functions. */
 
 /* Helper functions used for adding nodes to the list. */

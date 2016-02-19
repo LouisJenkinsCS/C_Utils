@@ -436,15 +436,29 @@ Overall, it's simple and intuitive to use.
 
 ####Logger [<b>Stable</b>] Version: 1.4
 
+<<<<<<< HEAD
 A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. 
 
 Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
+=======
+A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Also supports the usage of GCC & Clang compiler attributes to automatically manage the lifetime of the logger. This means that a logger can be initialized before any other operation occurs, even before main(), hence making it perfectly safe to use with almost no effort to setup. This can be accomplished by using the MU_LOGGER_AUTO_CREATE macro.
+
+Formatting Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
+>>>>>>> development
 
 Which is the current default, would look like such...
 
 ```c
 
+<<<<<<< HEAD
 MU_Logger_t *logger = MU_Logger_create("Test_File.txt", "w", MU_INFO);
+=======
+// Is static hence no linkage issues will arise.
+static MU_Logger_t *logger; 
+MU_LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", MU_INFO);
+
+// Later, when you need to log inside of some function.
+>>>>>>> development
 MU_LOG_INFO(logger, "Hello World!");
 
 ```
@@ -667,6 +681,40 @@ Invalid Arguments=> { msg: TRUE; val > 0 && val < 100: TRUE; test: TRUE; test &&
 
 It's very simple yet very easy to do in each function. If you have more than 8 arguments you can do more than one MU_ARG_CHECK as there are amount of arguments / 8.
 
+<<<<<<< HEAD
+=======
+####Scoped Locks [<b>In Development</b>] Version: .5
+
+An implementation of a C++-like scope_lock. The premise is that locks should be managed on it's own, and is finally made possible using GCC and Clang's compiler attributes, __cleanup__. The locks supported so far are pthread_mutex_t, pthread_spinlock_t, and sem_t. It will lock when entering the scope, and unlock when leaving (or in the case of sem_t, it will increment the count, and then decrement). This abstracts the need for the need to lock/unlock the lock, as well as generifying the type of lock used as well, as the allocation is done using C11 generics.
+
+It is very simple as easy to use, and can even be described to as elegant. An optimistic example can be seen below...
+
+```c
+
+// Already setup and allocated.
+pthread_mutex_t *lock;
+// Create a scoped lock instance of the given mutex.
+MU_Scoped_Lock_t *s_lock = MU_SCOPED_LOCK_FROM(lock);
+// Demonstrates Scoped Lock
+MU_SCOPED_LOCK(s_lock){
+    do_something();
+    do_something_else();
+    if(is_something){
+        // Note, we return without needing to unlock.
+        return;
+    }
+    finally_do_something();
+}
+// As well as single line scoped locks
+MU_SCOPED_LOCK(s_lock) some_short_operation();
+
+```
+
+That's it, and now the need to lock is abstracted completely. Note as well that we can replace pthread_mutex_t with a pthread_spinlock_t and it would work the exact same, because everything else is managed in the background.
+
+####Smart Pointers [<b>Unimplemented</b>]
+
+>>>>>>> development
 ####Conditional Locks [<b>Stable</b>] Version: 1.0
 
 Features auto-logging locking macros for mutexes and rwlocks. It simply checks if the lock if NULL before attempting to lock, as attempting to lock a NULL pthread_*_t argument will cause a segmentation fault. Also should note that if something goes wrong, I.E on EDEADLK, it will log the precise location of said errors.

@@ -4,6 +4,7 @@
 
 static MU_Logger_t *logger = NULL;
 
+<<<<<<< HEAD
 __attribute__((constructor)) static void init_logger(void){
 	logger = MU_Logger_create("./Net_Utils/Logs/NU_Client.log", "w", MU_ALL);
 }
@@ -11,6 +12,9 @@ __attribute__((constructor)) static void init_logger(void){
 __attribute__((destructor)) static void destroy_logger(void){
 	MU_Logger_destroy(logger);
 }
+=======
+MU_LOGGER_AUTO_CREATE(logger, "./Net_Utils/Logs/NU_Client.log", "w", MU_ALL);
+>>>>>>> development
 
 static int get_connection_socket(const char *host, unsigned int port, long long int timeout){
 	struct addrinfo hints, *results, *current;
