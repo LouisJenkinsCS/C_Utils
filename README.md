@@ -24,19 +24,31 @@ I a late-but-upcoming Computer Science major who's developed more than a bit of 
 
 [<b>Finished</b>] means that in all likely hood, I'll no longer work on it unless a bug presents itself.
 
-##Libraries available
+##Artificial Namespace patterns
 
-### Thread Pool [<b>In Development</b>]
+All files contain structs and functions which follow a guideline to significantly reduce collisions during compilation. All of them begin the abbrieviated package name, an uppercase for the first word in each, followed by an underscore (I.E: String Utils -> SU_). All structs and functions follow this, but with structs, they also end with an underscore followed by a t (I.E: TU_Event_t).
 
-####Static Pool [<b>Stable</b>] Version: 1.2
+These may be unwieldy for some, and to placate this potential issue, each header file defines aliases for it's functions and types stripped without the namespaces (I.E: TU_Pool_add -> Pool_add; TU_Pool_t -> Pool_t);
 
-TP_Pool is a thread pool with it's own priority queue for tasks. As implied by the use of a priority queue, tasks may be submitted via 6 different priorities, Lowest, Low, Medium, High and Highest. High Priority tasks would jump ahead of tasks of Low priority, intuitively. 
+There also is a POSIX C-standard-like aliases (I.E MU_Event_wait -> event_wait; MU_Event_t -> event_t). Note that these have the most likely chance to cause collisions.
+
+This way it allows the user to determine just how much they care about potential collision and how much they want the code to conform to the rest of their code base.
+
+##Libraries Packages
+
+###Threading Utilities
+
+Provides utilities, abstractions and tools which help automate/manage multithreading,
+
+#### Thread Pool [<b>Stable</b>] Version: 1.3
+
+TU_Pool is a thread pool with it's own priority queue for tasks. As implied by the use of a priority queue, tasks may be submitted via 6 different priorities, Lowest, Low, Medium, High and Highest. High Priority tasks would jump ahead of tasks of Low priority, intuitively. 
 
 The static thread pool maintains a steady amount of threads, never growing or shrinking in size, however unused threads will block, hence it will not waste resources waiting for a new task to be submitted. 
 
 Each task can return an asynchronous result, which, based on my implementation of events, you may wait (or poll) for when the task finishes. So, to reiterate, a task, by default, returns a result which can be waited on.
 
-When submitting tasks, it comes with it's own default priority and will return a TP_Result_t result to wait on, but by passing certain flags, like TP_HIGH_PRIORITY | TP_NO_RESULT you may flag tasks specifically.
+When submitting tasks, it comes with it's own default priority and will return a TU_Result_t result to wait on, but by passing certain flags, like TU_HIGH_PRIORITY | TU_NO_RESULT you may flag tasks specifically.
 
 Finally you can pause the thread pool, meaning, that currently running tasks finish up, but it will not run any more until after either a timeout elapses or the call to resume is made.
 
@@ -75,9 +87,203 @@ Very simple to use, very powerful as all thread pools are. By passing bit flags,
 
 Very Outdated: Documentation for version 1.1 available [here](http://theif519.github.io/Thread_Pool_Documentation/).
 
-####Dynamic Pool [<b>Unimplemented</b>]
+####Scoped Locks [<b>In Development</b>] Version: .5
 
-### String Utils [<b>Stable</b>] Version: 2.0
+An implementation of a C++-like scope_lock. The premise is that locks should be managed on it's own, and is finally made possible using GCC and Clang's compiler attributes, __cleanup__. The locks supported so far are pthread_mutex_t, pthread_spinlock_t, and sem_t. It will lock when entering the scope, and unlock when leaving (or in the case of sem_t, it will increment the count, and then decrement). This abstracts the need for the need to lock/unlock the lock, as well as generifying the type of lock used as well, as the allocation is done using C11 generics.
+
+It is very simple as easy to use, and can even be described to as elegant. An optimistic example can be seen below...
+
+```c
+
+// Already setup and allocated.
+pthread_mutex_t *lock;
+// Create a scoped lock instance of the given mutex.
+TU_Scoped_Lock_t *s_lock = TU_SCOPED_LOCK_FROM(lock);
+// Demonstrates Scoped Lock
+TU_SCOPED_LOCK(s_lock){
+    do_something();
+    do_something_else();
+    if(is_something){
+        // Note, we return without needing to unlock.
+        return;
+    }
+    finally_do_something();
+}
+// As well as single line scoped locks
+TU_SCOPED_LOCK(s_lock) some_short_operation();
+
+```
+
+That's it, and now the need to lock is abstracted completely. Note as well that we can replace pthread_mutex_t with a pthread_spinlock_t and it would work the exact same, because everything else is managed in the background.
+
+####Conditional Locks [<b>Stable</b>] Version: 1.0
+
+Features auto-logging locking macros for mutexes and rwlocks. It simply checks if the lock if NULL before attempting to lock, as attempting to lock a NULL pthread_*_t argument will cause a segmentation fault. Also should note that if something goes wrong, I.E on EDEADLK, it will log the precise location of said errors.
+
+Examples of it's use are below...
+
+```c
+
+/// Assume this gets initialized before being called.
+pthread_rwlock_t *lock;
+/// Etc.
+TU_COND_RWLOCK_RDLOCK(lock, logger);
+/// Later, maybe in some other thread...
+TU_COND_RWLOCK_WRLOCK(lock, logger);
+
+```
+
+Now imagine you have a data structure that uses rwlocks, or even mutexes. Now, the overhead of a mutex, no matter how optimized they are, is still unneeded on single threaded applications for said data structure. Hence, if lock is NULL it will result in a NOP, and do nothing. The compiler may even optimize away the check entirely and act like it's not there, who knows. The point being that it allows for more flexible data structures which can't be made lockless.
+
+####Events [<b>Stable</b>] Version: 1.1
+
+An implementation of Win32 Events. As of yet, it allows you to wait on an event, which is equivalent to waiting on a condition variable, signaled by other threads. 
+
+TU_Events allows you to wait on events, and supports flags which allow you to set the default state, whether or not to signal the event after a timeout, and whether or not to auto-reset the event after a thread exits the event, or after the last waiting thread leaves. 
+
+TU_Events is an abstraction on top of a pthread_mutex, pthread_cond variable, and other flags. MU_Events are entirely thread safe and efficient, and also entirely flexible, coming with it's own MU_Logger support. You can also name events and pass the thread identifier to allow debugging said events easier.
+
+An example of it's usage can be seen below...
+
+```c
+
+/// Logger for events. Assume it gets initialized and setup before calling events.
+MU_Logger_t *event_logger;
+/*
+    The event object used for signaling and waiting on events.
+    This event is named "Test Event" and logs to the event logger,
+    inituitively. It is signaled by default, hence those calling to wait on it
+    will return immediately. The first thread to leave this event
+    successfully, will reset the event to non-signaled state.
+*/
+TU_Event_t *event = MU_Event_create("Test Event", event_logger, TU_EVENT_SIGNALED_BY_DEFAULT | TU_EVENT_AUTO_RESET);
+/// We now to want wait on this event. Thread identifier can be anything, but lets just use pthread_self.
+TU_Event_wait(event, -1, (unsigned int) pthread_self());
+/// Now some other thread signals this...
+TU_Event_signal(event, (unsigned int) pthread_self());
+/* 
+    Now, we're done with said event. Destroy it. Note that if any threads are 
+    waiting on it, they are woken up and can gracefully exit.
+*/
+TU_Event_destroy(event, (unsigned int) pthread_self());
+
+```
+
+Once again, simple and easy to use. The thread_id is to help with debugging, as it is unfortunately impossible to get an actual workable number to work with for a thread, but it's irrelevant in the example. Assigning your own thread_id to any given thread you spawn makes debugging easier. Alternatively, you can just past 0 if you don't care. 
+
+####Event Loop [<b>Unstable</b>] Version 0.5
+
+TU_Event_Loop, is a simple, minimal event loop, which allows you to add event sources, and have them be polled on at regular intervals. The Event Loop also has support for timed or timer events, upon which the dispatch callback will be called when it's timeout ellapses.
+
+The Event Loop is rather simple and bare bones for now, polling once every 10ms, hence the amount of precision is very high, yet somewhat expensive, however not too much so, but does not scale well when idle and does better when it has a lot of tasks to do/poll for.
+
+The Event Loop takes a prepare callback (to prepare any such data to be passed to an event when ready), a check callback (to check if the event is ready), a dispatch callback (to notify any threads waiting on the event), and finally a finalize callback (to destroy the user data when it is finished).
+
+An example of it's completed state (optimistically) will look somewhat akin to this...
+
+```c
+
+void *prepare_event(void *data){
+    return malloc(sizeof(struct some_event_t));
+}
+
+bool check_event(void *data){
+    if(do_something_with(data)) return true;
+    return false;
+}
+
+bool dispatch_event(void *data){
+    notify_thread_waiting_on(data);
+    return true;
+}
+
+bool finalize_event(void *data){
+    free(data);
+    return true;
+}
+
+bool print_something(void *data){
+    printf("Something!\n");
+    return true;
+}
+
+/*
+    The below is an example of how to use the event loop.
+    It creates a simple event with it's appropriate callbacks,
+    then sets it's timeout to 0, meaning it is polled on once every
+    10ms. Next is a timed_event, which is will print "Something!" once
+    every 10 seconds.
+*/
+int main(void){
+    TU_Event_Source_t *event = TU_Event_Source_create(prepare_event, check_event, dispatch_event, finalize_event, 0);
+    TU_Event_Source_t *timed_event = TU_Event_Source_create(NULL, NULL, print_something, NULL, 10);
+    TU_Event_Loop_t *loop = TU_Event_Loop_create();
+    TU_Event_Loop_add(loop, event);
+    TU_Event_Loop_add(loop, timed_event);
+    TU_Event_Loop_run(loop);
+    return 0;
+}
+
+```
+
+It's very simple, and as always, easy to use. Right now it's not entirely stable, but I'm working on fixing bugs and adding appropriate features.
+
+###Memory Management Utilities
+
+Memory Management Utilities provide useful tools and abstractions which will help automate, or at the very least, improve quality-of-life for a C programmers, which can be helpful to an amateur or a professional. All of the below are thread safe.
+
+####Hazard Pointers [<b>Unstable</b>]
+
+Provides a flexible and easy to use implementation of hazard pointers, described in the research paper by Maged M. Michael, [here](http://www.research.ibm.com/people/m/michael/ieeetpds-2004.pdf).
+
+The implementation is still in development and needing of testing, however I have an optimistic outlook on how it will look. Basically, you will "acquire" data via it's pointer and "release" it when you are finished. You must make sure to release the reference once finished with it, through the API calls MU_Hazard_Pointer_acquire() and MU_Hazard_Pointer_release and MU_Hazard_Pointer_release_all.
+
+Another notable feature is that you do not need to keep your own reference to the hazard pointer itself, as it's allocated as thread-local storage and allocated on first use. Lastly, any remaining data not freed before the program ends, will be destroyed when the library is unlinked (I.E program termination).
+
+An optimistic example of it's finished API looks like this...
+
+```c
+
+/*
+    For an example, lets assume the structure of a basic
+    lock-free stack.
+*/
+Stack_t *stack;
+/*
+    Lets emulate a simple pop lockless procedure.
+*/
+Node_t *head, *next;
+while(true){
+    head = stack->head;
+    if(!head) return NULL;
+    MMU_Hazard_Pointer_acquire(head);
+    if(head != stack->head){
+        MMU_Hazard_Pointer_release(head);
+        usleep(250);
+        continue;
+    }
+    next = head->next;
+    if(__sync_bool_compare_and_swap(&stack->head, head, next)) break;
+    MMU_Hazard_Pointer_release(head);
+    usleep(250);
+}
+void *data = head->item;
+// true = retire data, set to be deleted later, false = just remove reference
+MMU_Hazard_Pointer_release(head, true);
+
+```
+
+That's it. The above is a snippet of the lockfree stack I created using it. Note that each time you, must release reference to the pointer, and usleep is used to lower overall contention to prevent threashing of the CPU.
+
+Overall, it's rather simple.
+
+####Reference Counting Memory Allocator [<b>Unimplemented</b>]
+
+####Object Pool [<b>Unimplemented</b>]
+
+###String Utilities
+
+Supplies basic string manipulations that are intuitive and easy to use.
 
 ####String Manipulations [<b>Stable</b>] Version: 2.0
 
@@ -142,9 +348,17 @@ OUTDATED: Documentation for version 1.2 available [here](http://theif519.github.
 
 ####Regular Expressions [<b>Unimplemented</b>]
 
-### File Utils [<b>Unimplemented</b>]
+###I/O Utilities
 
-### Networking Utils [<b>In Development</b>]
+Brings useful abstractions when dealing with streams through file descriptors. Buffering (I.E line-by-line), to asynchronous reading/writing without needing to worry if it is a FILE or socket file descriptor.
+
+####File Buffering [<b>Unimplemented</b>]
+
+####Asyncronous Streams [<b>Unimplemented</b>]
+
+###Networking Utilities
+
+Provides basic networking utilities which allow a developer with almost no experience with sockets to manage connections, send/receive data, etc. Also features two managers and recycling pools for connections, allowing for efficient use.
 
 ####Connection [<b>Stable</b>] Version: 1.0
 
@@ -262,9 +476,9 @@ char *response = NU_Response_to_string(res);
 
 It's rather simple and elegant (in the creator's biased opinion).
 
-### Data Structures [<b>In Development</b>]
+###Data Structures
 
-####Iterator [<b>In Development</b>]
+####Iterator [<b>In Development</b>] Version: 0.5
 
 A general-use iterator allowing generic iteration over multiple different data structures which support it's operations. It's very callback heavy, but is filled out via the data structures which create them. 
 
@@ -295,7 +509,7 @@ for(int i = 0; i < 3; i++){
 
 As the iterator is still in development, very early in particular, it most likely will be subject to change. Overall, it's as close as it will get to a generic iterator, but useful in certain situations I am sure.
 
-####Linked List [<b>Stable</b>] Version: 1.1
+####Linked List [<b>Stable</b>] Version: 1.2
 
 A simple, yet robust double linked list implementation. It is thread-safe, and with the use of read-write locks, allows for very efficient read-often-write-rarely uses, but it's also good for general usage as well. 
 
@@ -327,7 +541,7 @@ Very simple and easy.
 
 Documentation for version 1.0 available [here](http://theif519.github.io/Linked_List_Documentation/).
 
-####Priority Blocking Queue [<b>Stable</b>]
+####Priority Blocking Queue [<b>Stable</b>] Version: 1.3
 
 The Priority Blocking Queue, or DS_PBQueue, is a simple, synchronized queue that sorts elements based on the comparator passed, if there is one. If there isn't one, then it acts a normal queue, making it flexible. 
 
@@ -403,10 +617,9 @@ DS_Queue_destroy(queue, free);
 
 That's all there is to it.
 
-
 ####Ring Buffer [<b>Unimplemented</b>]
 
-####Hash Map [<b>In Development</b>]
+####Hash Map [<b>Stable</b>] Version: 1.0
 
 A basic, synchronized hash map implementation. It's thread-safe, but not lockless, yet it fulfills it's purpose. It takes string keys, but it's value can be anything. 
 
@@ -432,7 +645,7 @@ Overall, it's simple and intuitive to use.
 
 ####Deque [<b>Unimplemented</b>]
 
-### Misc Utils [<b>Stable</b>]
+###Misc. Utilities
 
 ####Logger [<b>Stable</b>] Version: 1.4
 
@@ -465,145 +678,6 @@ In the future, there will be more log formats being accepted, as well as config 
 ####Timer [<b>Unstable</b>] Version: 1.0
 
 A basic timer utility, allowing you to start and stop a timer and get a string representation of the total time.
-
-####Events [<b>Stable</b>] Version: 1.1
-
-An implementation of Win32 Events. As of yet, it allows you to wait on an event, which is equivalent to waiting on a condition variable, signaled by other threads. 
-
-MU_Events allows you to wait on events, and supports flags which allow you to set the default state, whether or not to signal the event after a timeout, and whether or not to auto-reset the event after a thread exits the event, or after the last waiting thread leaves. 
-
-MU_Events is an abstraction on top of a pthread_mutex, pthread_cond variable, and other flags. MU_Events are entirely thread safe and efficient, and also entirely flexible, coming with it's own MU_Logger support. You can also name events and pass the thread identifier to allow debugging said events easier.
-
-An example of it's usage can be seen below...
-
-```c
-
-/// Logger for events. Assume it gets initialized and setup before calling events.
-MU_Logger_t *event_logger;
-/*
-    The event object used for signaling and waiting on events.
-    This event is named "Test Event" and logs to the event logger,
-    inituitively. It is signaled by default, hence those calling to wait on it
-    will return immediately. The first thread to leave this event
-    successfully, will reset the event to non-signaled state.
-*/
-MU_Event_t *event = MU_Event_create("Test Event", event_logger, MU_EVENT_SIGNALED_BY_DEFAULT | MU_EVENT_AUTO_RESET);
-/// We now to want wait on this event. Thread identifier can be anything, but lets just use pthread_self.
-MU_Event_wait(event, -1, (unsigned int) pthread_self());
-/// Now some other thread signals this...
-MU_Event_signal(event, (unsigned int) pthread_self());
-/* 
-    Now, we're done with said event. Destroy it. Note that if any threads are 
-    waiting on it, they are woken up and can gracefully exit.
-*/
-MU_Event_destroy(event, (unsigned int) pthread_self());
-
-```
-
-Once again, simple and easy to use. The thread_id is to help with debugging, as it is unfortunately impossible to get an actual workable number to work with for a thread, but it's irrelevant in the example. Assigning your own thread_id to any given thread you spawn makes debugging easier. Alternatively, you can just past 0 if you don't care. 
-
-####Event Loop [<b>Unstable</b>] Version 0.5
-
-MU_Event_Loop, is a simple, minimal event loop, which allows you to add event sources, and have them be polled on at regular intervals. The Event Loop also has support for timed or timer events, upon which the dispatch callback will be called when it's timeout ellapses.
-
-The Event Loop is rather simple and bare bones for now, polling once every 10ms, hence the amount of precision is very high, yet somewhat expensive, however not too much so, but does not scale well when idle and does better when it has a lot of tasks to do/poll for.
-
-The Event Loop takes a prepare callback (to prepare any such data to be passed to an event when ready), a check callback (to check if the event is ready), a dispatch callback (to notify any threads waiting on the event), and finally a finalize callback (to destroy the user data when it is finished).
-
-An example of it's completed state (optimistically) will look somewhat akin to this...
-
-```c
-
-void *prepare_event(void *data){
-    return malloc(sizeof(struct some_event_t));
-}
-
-bool check_event(void *data){
-    if(do_something_with(data)) return true;
-    return false;
-}
-
-bool dispatch_event(void *data){
-    notify_thread_waiting_on(data);
-    return true;
-}
-
-bool finalize_event(void *data){
-    free(data);
-    return true;
-}
-
-bool print_something(void *data){
-    printf("Something!\n");
-    return true;
-}
-
-/*
-    The below is an example of how to use the event loop.
-    It creates a simple event with it's appropriate callbacks,
-    then sets it's timeout to 0, meaning it is polled on once every
-    10ms. Next is a timed_event, which is will print "Something!" once
-    every 10 seconds.
-*/
-int main(void){
-    MU_Event_Source_t *event = MU_Event_Source_create(prepare_event, check_event, dispatch_event, finalize_event, 0);
-    MU_Event_Source_t *timed_event = MU_Event_Source_create(NULL, NULL, print_something, NULL, 10);
-    MU_Event_Loop_t *loop = NU_Event_Loop_create();
-    MU_Event_Loop_add(loop, event);
-    MU_Event_Loop_add(loop, timed_event);
-    MU_Event_Loop_run(loop);
-    return 0;
-}
-
-```
-
-It's very simple, and as always, easy to use. Right now it's not entirely stable, but I'm working on fixing bugs and adding appropriate features.
-
-####Hazard Pointers [<b>Unstable</b>]
-
-Provides a flexible and easy to use implementation of hazard pointers, described in the research paper by Maged M. Michael, [here](http://www.research.ibm.com/people/m/michael/ieeetpds-2004.pdf).
-
-The implementation is still in development and needing of testing, however I have an optimistic outlook on how it will look. Basically, you will "acquire" data via it's pointer and "release" it when you are finished. You must make sure to release the reference once finished with it, through the API calls MU_Hazard_Pointer_acquire() and MU_Hazard_Pointer_release and MU_Hazard_Pointer_release_all.
-
-Another notable feature is that you do not need to keep your own reference to the hazard pointer itself, as it's allocated as thread-local storage and allocated on first use. Lastly, any remaining data not freed before the program ends, will be destroyed when the library is unlinked (I.E program termination).
-
-An optimistic example of it's finished API looks like this...
-
-```c
-
-/*
-    For an example, lets assume the structure of a basic
-    lock-free stack.
-*/
-Stack_t *stack;
-/*
-    Lets emulate a simple pop lockless procedure.
-*/
-Node_t *head, *next;
-while(true){
-    head = stack->head;
-    if(!head) return NULL;
-    MU_Hazard_Pointer_acquire(head);
-    if(head != stack->head){
-        MU_Hazard_Pointer_release(head);
-        usleep(250);
-        continue;
-    }
-    next = head->next;
-    if(__sync_bool_compare_and_swap(&stack->head, head, next)) break;
-    MU_Hazard_Pointer_release(head);
-    usleep(250);
-}
-void *data = head->item;
-// true = retire data, set to be deleted later, false = just remove reference
-MU_Hazard_Pointer_release(head, true);
-
-```
-
-That's it. The above is a snippet of the lockfree stack I created using it. Note that each time you, must release reference to the pointer, and usleep is used to lower overall contention to prevent threashing of the CPU.
-
-Overall, it's rather simple.
-
 
 ####Flags [<b>Stable</b>] Version: 1.0
 
@@ -670,56 +744,6 @@ If any of the conditions fail, it will output the following. For this example, a
 Invalid Arguments=> { msg: TRUE; val > 0 && val < 100: TRUE; test: TRUE; test && test->is_valid: FALSE }
 
 It's very simple yet very easy to do in each function. If you have more than 8 arguments you can do more than one MU_ARG_CHECK as there are amount of arguments / 8.
-
-####Scoped Locks [<b>In Development</b>] Version: .5
-
-An implementation of a C++-like scope_lock. The premise is that locks should be managed on it's own, and is finally made possible using GCC and Clang's compiler attributes, __cleanup__. The locks supported so far are pthread_mutex_t, pthread_spinlock_t, and sem_t. It will lock when entering the scope, and unlock when leaving (or in the case of sem_t, it will increment the count, and then decrement). This abstracts the need for the need to lock/unlock the lock, as well as generifying the type of lock used as well, as the allocation is done using C11 generics.
-
-It is very simple as easy to use, and can even be described to as elegant. An optimistic example can be seen below...
-
-```c
-
-// Already setup and allocated.
-pthread_mutex_t *lock;
-// Create a scoped lock instance of the given mutex.
-MU_Scoped_Lock_t *s_lock = MU_SCOPED_LOCK_FROM(lock);
-// Demonstrates Scoped Lock
-MU_SCOPED_LOCK(s_lock){
-    do_something();
-    do_something_else();
-    if(is_something){
-        // Note, we return without needing to unlock.
-        return;
-    }
-    finally_do_something();
-}
-// As well as single line scoped locks
-MU_SCOPED_LOCK(s_lock) some_short_operation();
-
-```
-
-That's it, and now the need to lock is abstracted completely. Note as well that we can replace pthread_mutex_t with a pthread_spinlock_t and it would work the exact same, because everything else is managed in the background.
-
-####Smart Pointers [<b>Unimplemented</b>]
-
-####Conditional Locks [<b>Stable</b>] Version: 1.0
-
-Features auto-logging locking macros for mutexes and rwlocks. It simply checks if the lock if NULL before attempting to lock, as attempting to lock a NULL pthread_*_t argument will cause a segmentation fault. Also should note that if something goes wrong, I.E on EDEADLK, it will log the precise location of said errors.
-
-Examples of it's use are below...
-
-```c
-
-/// Assume this gets initialized before being called.
-pthread_rwlock_t *lock;
-/// Etc.
-MU_COND_RWLOCK_RDLOCK(lock, logger);
-/// Later, maybe in some other thread...
-MU_COND_RWLOCK_WRLOCK(lock, logger);
-
-```
-
-Now imagine you have a data structure that uses rwlocks, or even mutexes. Now, the overhead of a mutex, no matter how optimized they are, is still unneeded on single threaded applications for said data structure. Hence, if lock is NULL it will result in a NOP, and do nothing. The compiler may even optimize away the check entirely and act like it's not there, who knows. The point being that it allows for more flexible data structures which can't be made lockless.
 
 ####Portable TEMP_FAILURE_RETRY [<b>Stable</b>] Version: 1.0
 
