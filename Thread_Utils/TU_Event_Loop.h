@@ -1,15 +1,27 @@
-#ifndef MU_EVENT_LOOP_H
-#define MU_EVENT_LOOP_H
+#ifndef TU_EVENT_LOOP_H
+#define TU_EVENT_LOOP_H
 
 #include <stdbool.h>
 #include <sys/time.h>
 #include <DS_List.h>
-#include <MU_Events.h>
+#include <TU_Events.h>
 
-typedef void *(*MU_Event_Prepare)();
-typedef bool (*MU_Event_Check)(void *);
-typedef bool (*MU_Event_Dispatch)(void *);
-typedef bool (*MU_Event_Finalize)(void *);
+#ifdef C_UTILS_USE_POSIX_STD
+#define event_loop_t TU_Event_Loop_t
+#define event_source_t TU_Event_Source_t
+#define event_loop_create(...) TU_Event_Loop_create(__VA_ARGS__)
+#define event_source_create(...) TU_Event_Source_create(__VA_ARGS__)
+#define event_loop_add(...) TU_Event_Loop_add(__VA_ARGS__)
+#define event_loop_run(...) TU_Event_Loop_run(__VA_ARGS__)
+#define event_loop_stop(...) TU_Event_Loop_stop(__VA_ARGS__)
+#define event_source_destroy(...) TU_Event_Source_destroy(__VA_ARGS__)
+#define event_loop_destroy(...) TU_Event_Loop_destroy(__VA_ARGS__)
+#endif
+
+typedef void *(*TU_Event_Prepare)();
+typedef bool (*TU_Event_Check)(void *);
+typedef bool (*TU_Event_Dispatch)(void *);
+typedef bool (*TU_Event_Finalize)(void *);
 
 typedef struct {
 	/// Maintains list of sources to check.
@@ -17,33 +29,33 @@ typedef struct {
 	/// Keep-Alive flag
 	_Atomic bool keep_alive;
 	/// The event to wait on for it to finish.
-	MU_Event_t *finished;
-} MU_Event_Loop_t;
+	TU_Event_t *finished;
+} TU_Event_Loop_t;
 
 /*
-	void*::MU_Event_Prepare(Void); Prepares the event.
-	bool::MU_Event_Check(Void*); Checks if event is ready. 
-	bool::MU_Event_Dispatch(Void*); Dispatches the event.
-	bool::MU_Event_Finalize(Void*); Destroys the data if it is finished.
+	void*::TU_Event_Prepare(Void); Prepares the event.
+	bool::TU_Event_Check(Void*); Checks if event is ready. 
+	bool::TU_Event_Dispatch(Void*); Dispatches the event.
+	bool::TU_Event_Finalize(Void*); Destroys the data if it is finished.
 */
 typedef struct {
 	/// Data returned from an event.
 	void *data;
 	/// Callback used to prepare the data passed to it.
-	MU_Event_Prepare prepare;
+	TU_Event_Prepare prepare;
 	/// Callback used to check if event is ready.
-	MU_Event_Check check;
+	TU_Event_Check check;
 	/// Callback used to dispatch said event.
-	MU_Event_Dispatch dispatch;
+	TU_Event_Dispatch dispatch;
 	/// Callback used whenever the main loop finishes.
-	MU_Event_Finalize finalize;
+	TU_Event_Finalize finalize;
 	/// Internal flags used to help maintain information about the event source.
 	unsigned int flags;
 	/// The timeval used to record the absolute time of the next timeout.
 	struct timeval next_timeout;
 	/// The timeout the timeval will be set to after triggering.
 	unsigned int timeout;
-} MU_Event_Source_t;
+} TU_Event_Source_t;
 
 /**
  * Creates an event source, which is an event to be polled on and executed when their conditions are
@@ -58,20 +70,20 @@ typedef struct {
  * @param timeout If not 0, then it will only be checked and dispatched based on this.
  * @return Configured event source.
  */
-MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Check check_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout);
+TU_Event_Source_t *TU_Event_Source_create(TU_Event_Prepare prepare_cb, TU_Event_Check check_cb, TU_Event_Dispatch dispatch_cb, TU_Event_Finalize finalize_cb, unsigned long long int timeout);
 
 /**
  * Destroys the event source.
  * @param source Source.
  * @return True if successful, false if source is null.
  */
-bool MU_Event_Source_destroy(MU_Event_Source_t *source);
+bool TU_Event_Source_destroy(TU_Event_Source_t *source);
 
 /**
  * Creates an event loop, with no sources. It will initialize it's data.
  * @return Event loop.
  */
-MU_Event_Loop_t *MU_Event_Loop_create(void);
+TU_Event_Loop_t *TU_Event_Loop_create(void);
 
 /**
  * Addsa source to the loop.
@@ -79,7 +91,7 @@ MU_Event_Loop_t *MU_Event_Loop_create(void);
  * @param source Source.
  * @return True if successful, false is loop or source is null.
  */
-bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source);
+bool TU_Event_Loop_add(TU_Event_Loop_t *loop, TU_Event_Source_t *source);
 
 /**
  * Runs the event loop, polling on it every 10ms. Warning, this should be run on a separate
@@ -87,14 +99,14 @@ bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source);
  * @param loop Loops.
  * @return True if successful, false is loop is already running or loop is null.
  */
-bool MU_Event_Loop_run(MU_Event_Loop_t *loop);
+bool TU_Event_Loop_run(TU_Event_Loop_t *loop);
 
 /**
  * Stops the loop. The current iteration is completed before exiting.
  * @param loop Loops.
  * @return True if successful, false is loop is not running or is null.
  */
-bool MU_Event_Loop_stop(MU_Event_Loop_t *loop);
+bool TU_Event_Loop_stop(TU_Event_Loop_t *loop);
 
 /**
  * Stops and then Destroys the event loop, as well as freeing all sources if free_sources is true.
@@ -102,6 +114,6 @@ bool MU_Event_Loop_stop(MU_Event_Loop_t *loop);
  * @param free_sources To free all sources or not.
  * @return True if successful, false if loop is null or unable to free all sources.
  */
-bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources);
+bool TU_Event_Loop_destroy(TU_Event_Loop_t *loop, bool free_sources);
 
-#endif /* endif MU_EVENT_LOOP_H */
+#endif /* endif TU_EVENT_LOOP_H */

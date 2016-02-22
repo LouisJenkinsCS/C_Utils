@@ -5,6 +5,12 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define ARG_COUNT(...) MU_ARG_COUNT(__VA_ARGS__)
+#define ARG_CHECK(...) MU_ARG_CHECK(__VA_ARGS__)
+#define ARG_TO_STRING(...) MU_ARG_TO_STRING(__VA_ARGS__)
+#endif
+
 #define MU_ARG_MAX 8
 
 /// Genius implementation someone else made to find the amount of variadic functions.

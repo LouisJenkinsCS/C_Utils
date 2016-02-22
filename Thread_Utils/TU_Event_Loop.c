@@ -1,14 +1,14 @@
-#include <MU_Event_Loop.h>
-#include <MU_Flags.h>
-#include <MU_Arg_Check.h>
+#include <TU_Event_Loop.h>
+#include <TU_Flags.h>
+#include <TU_Arg_Check.h>
 #include <unistd.h>
 
 static MU_Logger_t *logger = NULL;
 static MU_Logger_t *event_logger = NULL;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/MU_Event_Loop.log", "w", MU_ALL);
+MU_LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/TU_Event_Loop.log", "w", TU_ALL);
 
-MU_LOGGER_AUTO_CREATE(event_logger, "./Misc_Utils/Logs/MU_Event_Loop_Events.log", "w", MU_ALL);
+MU_LOGGER_AUTO_CREATE(event_logger, "./Misc_Utils/Logs/TU_Event_Loop_Events.log", "w", TU_ALL);
 
 
 static const int event_finished = 1 << 0;
@@ -21,7 +21,7 @@ static const int event_prepared = 1 << 1;
 	C) If any events are finished and should be removed from the list.
 */
 static void event_loop_main(void *args){
-	MU_Event_Source_t *source = args;
+	TU_Event_Source_t *source = args;
 	if(MU_FLAG_GET(source->flags, event_finished)) return;
 	if(source->prepare && !MU_FLAG_GET(source->flags, event_prepared)){
 		source->data = source->prepare();
@@ -49,9 +49,9 @@ static void event_loop_main(void *args){
 	}
 }
 
-MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_Check check_cb, MU_Event_Dispatch dispatch_cb, MU_Event_Finalize finalize_cb, unsigned long long int timeout){
+TU_Event_Source_t *TU_Event_Source_create(TU_Event_Prepare prepare_cb, TU_Event_Check check_cb, TU_Event_Dispatch dispatch_cb, TU_Event_Finalize finalize_cb, unsigned long long int timeout){
 	MU_ARG_CHECK(logger, NULL, dispatch_cb);
-	MU_Event_Source_t *source = calloc(1, sizeof(MU_Event_Source_t));
+	TU_Event_Source_t *source = calloc(1, sizeof(TU_Event_Source_t));
 	if(!source){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
@@ -73,14 +73,14 @@ MU_Event_Source_t *MU_Event_Source_create(MU_Event_Prepare prepare_cb, MU_Event_
 		return NULL;
 }
 
-bool MU_Event_Source_destroy(MU_Event_Source_t *source){
+bool TU_Event_Source_destroy(TU_Event_Source_t *source){
 	MU_ARG_CHECK(logger, false, source);
 	free(source);
 	return true;
 }
 
-MU_Event_Loop_t *MU_Event_Loop_create(void){
-	MU_Event_Loop_t *loop = calloc(1, sizeof(MU_Event_Loop_t));
+TU_Event_Loop_t *TU_Event_Loop_create(void){
+	TU_Event_Loop_t *loop = calloc(1, sizeof(TU_Event_Loop_t));
 	if(!loop){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
@@ -90,9 +90,9 @@ MU_Event_Loop_t *MU_Event_Loop_create(void){
 		MU_LOG_ERROR(logger, "Linked_List_create: 'Was unable to create Linked List!");
 		goto error;
 	}
-	loop->finished = MU_Event_create("Finished", event_logger, 0);
+	loop->finished = TU_Event_create("Finished", event_logger, 0);
 	if(!loop->finished){
-		MU_LOG_ERROR(logger, "MU_Event_create: 'Was unable to create Finished event!");
+		MU_LOG_ERROR(logger, "TU_Event_create: 'Was unable to create Finished event!");
 		goto error;
 	}
 	loop->keep_alive = ATOMIC_VAR_INIT(false);
@@ -106,32 +106,32 @@ MU_Event_Loop_t *MU_Event_Loop_create(void){
 		return NULL;
 }
 
-bool MU_Event_Loop_add(MU_Event_Loop_t *loop, MU_Event_Source_t *source){
+bool TU_Event_Loop_add(TU_Event_Loop_t *loop, TU_Event_Source_t *source){
 	MU_ARG_CHECK(logger, false, loop, source);
 	return DS_List_add(loop->sources, source, NULL);
 }
 
-bool MU_Event_Loop_run(MU_Event_Loop_t *loop){
+bool TU_Event_Loop_run(TU_Event_Loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
 		DS_List_for_each(loop->sources, event_loop_main);
 		usleep(10000);
 	}
-	MU_Event_signal(loop->finished, 0);
+	TU_Event_signal(loop->finished, 0);
 	return true;
 }
 
-bool MU_Event_Loop_stop(MU_Event_Loop_t *loop){
+bool TU_Event_Loop_stop(TU_Event_Loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, false);
 	return true;
 }
 
-bool MU_Event_Loop_destroy(MU_Event_Loop_t *loop, bool free_sources){
+bool TU_Event_Loop_destroy(TU_Event_Loop_t *loop, bool free_sources){
 	MU_ARG_CHECK(logger, false, loop);
-	MU_Event_Loop_stop(loop);
-	MU_Event_wait(loop->finished, -1, 0);
+	TU_Event_Loop_stop(loop);
+	TU_Event_wait(loop->finished, -1, 0);
 	DS_List_destroy(loop->sources, free_sources ? free : NULL);
 	free(loop);
 	return true;

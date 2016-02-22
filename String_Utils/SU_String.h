@@ -18,6 +18,26 @@
 #ifndef SU_String_H
 #define	SU_String_H
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define String string_t
+#define string_contains(...) SU_String_contains(__VA_ARGS__)
+#define string_lower(...) SU_String_lower(__VA_ARGS__)
+#define string_upper(...) SU_String_upper(__VA_ARGS__)
+#define string_char_at(...) SU_String_char_at(__VA_ARGS__)
+#define string_equal(...) SU_String_equal(__VA_ARGS__)
+#define string_split(...) SU_String_split(__VA_ARGS__)
+#define string_reverse(...) SU_String_reverse(__VA_ARGS__)
+#define string_join(...) SU_String_join(__VA_ARGS__)
+#define string_replace(...) SU_String_replace(__VA_ARGS__)
+#define string_substring(...) SU_String_substring(__VA_ARGS__)
+#define string_trim(...) SU_String_trim(__VA_ARGS__)
+#define string_count(...) SU_String_count(__VA_ARGS__)
+#define string_between(...) SU_String_between(__VA_ARGS__)
+#define string_starts_with(...) SU_String_starts_with(__VA_ARGS__)
+#define string_ends_with(...) SU_String_ends_with(__VA_ARGS__)
+#define string_index_of(...) SU_String_index_of(__VA_ARGS__)
+#endif
+
 /**
 * Convenience typedef of char *.
 */
@@ -41,7 +61,7 @@ typedef char *String;
 #include <stdbool.h>
 #include <stdarg.h>
 #include <assert.h>
-#include <ctype.h> 
+#include <ctype.h>
 #include <MU_Logger.h>
 #include <MU_Arg_Check.h>
 

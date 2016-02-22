@@ -4,6 +4,16 @@
 #include <NU_Helper.h>
 #include <NU_Connection.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define client_t NU_Client_t
+#define client_create(...) NU_Client_create(__VA_ARGS__)
+#define client_connect(...) NU_Client_connect(__VA_ARGS__)
+#define client_disconnect(...) NU_Client_disconnect(__VA_ARGS__)
+#define client_log(...) NU_Client_log(__VA_ARGS__)
+#define client_shutdown(...) NU_Client_shutdown(__VA_ARGS__)
+#define client_destroy(...) NU_Client_destroy(__VA_ARGS__)
+#endif
+
 /*
 	NU_Connection_t is a simple manager for NU_Connection_t instances, creating and managing a pool for you
 	to recycle for efficiency, with optional synchronized access for thread-safety. It allows you to do the

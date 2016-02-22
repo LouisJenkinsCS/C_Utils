@@ -3,6 +3,20 @@
 
 #include <NU_Connection.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define server_t NU_Server_t
+#define server_create(...) NU_Server_create(__VA_ARGS__)
+#define server_bind(...) NU_Server_bind(__VA_ARGS__)
+#define server_unbind(...) NU_Server_unbind(__VA_ARGS__)
+#define server_accept(...) NU_Server_accept(__VA_ARGS__)
+#define server_shutdown(...) NU_Server_shutdown(__VA_ARGS__)
+#define server_disconnect(...) NU_Server_disconnect(__VA_ARGS__)
+#define server_log(...) NU_Server_log(__VA_ARGS__)
+#define server_accept(...) NU_Server_accept(__VA_ARGS__)
+#define server_accept_any(...) NU_Server_accept_any(__VA_ARGS__)
+#define server_destroy(...) NU_Server_destroy(__VA_ARGS__)
+#endif
+
 /*
    NU_Server_t is a simple manager of NU_Connection_t instances and NU_Bound_Socket_t instances in an
    efficient manner, with optional synchronized access for thread-safety. The NU_Bound_Socket_t is

@@ -1,6 +1,25 @@
 #ifndef NET_UTILS_HTTP_H
 #define NET_UTILS_HTTP_H
 
+#ifdef C_UTILS_USE_STD_POSIX
+#define response_t NU_Response_t
+#define request_t NU_Request_t
+#define request_create(...) NU_Request_create(__VA_ARGS__)
+#define response_create(...) NU_Response_create(__VA_ARGS__)
+#define request_clear(...) NU_Request_clear(__VA_ARGS__)
+#define response_clear(...) NU_Response_clear(__VA_ARGS__)
+#define request_set_field(...) NU_Request_set_field(__VA_ARGS__)
+#define response_set_field(...) NU_Response_set_field(__VA_ARGS__)
+#define request_get_field(...) NU_Request_get_field(__VA_ARGS__)
+#define response_get_field(...) NU_Response_get_field(__VA_ARGS__)
+#define request_append(...)
+#define response_append(...)
+#define request_to_string(...) NU_Request_to_string(__VA_ARGS__)
+#define response_to_string(...) NU_Response_to_string(__VA_ARGS__)
+#define REQUEST_WRITE(...) NU_REQUEST_WRITE(__VA_ARGS__)
+#define RESPONSE_WRITE(...) NU_RESPONSE_WRITE(__VA_ARGS__)
+#endif
+
 #ifdef NU_HTTP_FILE_PATH_MAX_LEN
 #define NU_HTTP_FILE_PATH_LEN NU_HTTP_FILE_PATH_MAX_LEN
 #else
@@ -101,7 +120,7 @@ NU_Request_t *NU_Request_create(void);
  * @param header_size Used to obtain size of header, and return the size of the header.
  * @return What could not be read, meaning the beginning of the null terminator on success, otherwise start of character could not parse.
  */
-char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size);
+char *NU_Response_append(NU_Response_t *res, const char *header, size_t *header_size);
 
 /**
  * Appends and parses the header to the request. The header_size must intially contain the actual size of
@@ -111,7 +130,7 @@ char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *
  * @param header_size Used to obtain size of header, and return the size of the header.
  * @return What could not be read, meaning the beginning of the null terminator on success, otherwise start of character could not parse.
  */
-char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size);
+char *NU_Request_append(NU_Request_t *req, const char *header, size_t *header_size);
 
 /**
  * Clears the header of mapped values.

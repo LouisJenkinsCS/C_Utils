@@ -266,7 +266,7 @@ NU_Request_t *NU_Request_create(void){
     header_size will be the size of what is left (I.E what is invalid or not part of the header). Response should be cleared before passing it!
     TODO: Unit Test this with a purposely invalid header, and with an incomplete header, and without a header.
 */
-char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *header_size){
+char *NU_Response_append(NU_Response_t *res, const char *header, size_t *header_size){
 	char header_cpy[*header_size + 1];
 	snprintf(header_cpy, *header_size + 1, "%s", header);
 	size_t header_read = parse_http_response(res, header_cpy);
@@ -275,7 +275,7 @@ char *NU_Response_append_header(NU_Response_t *res, const char *header, size_t *
 	return (char *)header + header_read;
 }
 
-char *NU_Request_append_header(NU_Request_t *req, const char *header, size_t *header_size){
+char *NU_Request_append(NU_Request_t *req, const char *header, size_t *header_size){
 	char header_cpy[*header_size + 1];
 	snprintf(header_cpy, *header_size + 1, "%s", header);
 	size_t header_read = parse_http_request(req, header_cpy);
