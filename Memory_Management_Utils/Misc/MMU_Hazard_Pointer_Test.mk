@@ -3,11 +3,11 @@ PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
 CFLAGS=-g -D_GNU_SOURCE -Wall -std=c11
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=DS_List.c MU_Logger.c MU_Arg_Check.c MU_Hazard_Pointers.c MU_Hazard_Pointers_Test.c
+SOURCES=DS_List.c MU_Logger.c MU_Arg_Check.c MMU_Hazard_Pointers.c MMU_Hazard_Pointers_Test.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=MU_Hazard_Pointer_Test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./Misc_Utils/ ./Misc_Utils/Tests ./Data_Structures/
+VPATH=./Memory_Management_Utils/ ./Memory_Management_Utils/Tests ./Data_Structures/
 
 all: $(TARGET)
 

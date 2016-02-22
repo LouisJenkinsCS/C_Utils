@@ -56,6 +56,15 @@ typedef void *(*TP_Callback)(void *args);
 #ifdef C_UTILS_USE_POSIX_STD
 #define pool_t TU_Pool_t
 #define result_t TU_Result_t
+#define pool_create(...) TU_Pool_create(__VA_ARGS__)
+#define pool_add(...) TU_Pool_add(__VA_ARGS__)
+#define pool_clear(...) TU_Pool_clear(__VA_ARGS__)
+#define pool_pause(...) TU_Pool_pause(__VA_ARGS__)
+#define pool_resume(...) TU_Pool_resume(__VA_ARGS__)
+#define pool_wait(...) TU_Pool_wait(__VA_ARGS__)
+#define pool_destroy(...) TU_Pool_destroy(__VA_ARGS__)
+#define result_get(...) TU_Result_get(__VA_ARGS__)
+#define result_destroy(...) TU_Result_destroy(__VA_ARGS__)
 #endif
 
 typedef struct {

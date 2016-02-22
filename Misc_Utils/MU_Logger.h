@@ -11,6 +11,8 @@
 #include <assert.h>
 
 #ifdef C_UTILS_USE_POSIX_STD
+#define DEBUG(...) MU_DEBUG(__VA_ARGS__)
+#define ASSERT(...) MU_ASSERT(__VA_ARGS__)
 #define LOG_TRACE(...) MU_LOG_TRACE(__VA_ARGS__)
 #define LOG_VERBOSE(...) MU_LOG_VERBOSE(__VA_ARGS__)
 #define LOG_INFO(...) MU_LOG_INFO(__VA_ARGS__)

@@ -19,7 +19,7 @@ static void *thread_func(void *lock){
 	return NULL;
 }
 
-LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/MU_Scoped_Lock_Test.log", "w", MU_ALL);
+LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/MU_Scoped_Lock_Test.log", "w", MU_ALL);
 
 int main(void){
 	pthread_spinlock_t lock;

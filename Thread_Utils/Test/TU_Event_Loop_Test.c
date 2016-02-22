@@ -1,8 +1,9 @@
-#include <MU_Event_Loop.h>
+#define C_UTILS_USE_POSIX_STD
+#include <TU_Event_Loop.h>
 
 static const int max_events = 10;
 
-static MU_Event_Loop_t *loop = NULL;
+static event_loop_t *loop = NULL;
 
 void *prepare_iterator(){
 	int *i = malloc(sizeof(int));
@@ -47,18 +48,18 @@ bool dispatch_timer(void *args){
 bool finalize_iterator(void *args){
 	int *i = args;
 	free(i);
-	MU_Event_Loop_stop(loop);
+	event_loop_stop(loop);
 	return true;
 }
 
 int main(void){
 	int i = 0;
-	loop = MU_Event_Loop_create();
+	loop = event_loop_create();
 	MU_Event_Source_t *events[max_events];
 	for(; i < max_events; i++){
-		events[i] = MU_Event_Source_create(prepare_timer, NULL, dispatch_timer, NULL, (i + 1) * 1000);
-		MU_Event_Loop_add(loop, events[i]);
+		events[i] = event_source_create(prepare_timer, NULL, dispatch_timer, NULL, (i + 1) * 1000);
+		event_loop_add(loop, events[i]);
 	}
-	MU_Event_Loop_run(loop);
+	event_loop_run(loop);
 	return 0;
 }

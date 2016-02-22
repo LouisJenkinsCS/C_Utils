@@ -6,9 +6,9 @@
 static MU_Logger_t *logger = NULL;
 static MU_Logger_t *event_logger = NULL;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/TU_Event_Loop.log", "w", TU_ALL);
+MU_LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/TU_Event_Loop.log", "w", TU_ALL);
 
-MU_LOGGER_AUTO_CREATE(event_logger, "./Misc_Utils/Logs/TU_Event_Loop_Events.log", "w", TU_ALL);
+MU_LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/TU_Event_Loop_Events.log", "w", TU_ALL);
 
 
 static const int event_finished = 1 << 0;

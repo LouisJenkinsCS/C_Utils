@@ -16,7 +16,7 @@ static MU_Logger_t *logger = NULL;
 
 static const int max_hazard_pointers = MMU_HAZARD_POINTERS_MAX_THREADS * MMU_HAZARD_POINTERS_PER_THREAD;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Misc_Utils/Logs/MMU_Hazards.log", "w", MU_INFO);
+MU_LOGGER_AUTO_CREATE(logger, "./Memory_Management_Utils/Logs/MMU_Hazards.log", "w", MU_INFO);
 
 __attribute__((constructor)) static void init_hazard_table(void){
 	hazard_table = calloc(1, sizeof(*hazard_table));
