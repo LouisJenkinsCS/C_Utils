@@ -1,8 +1,8 @@
-#Concurrency Utilities for the C Programming Language\
+#Threading Utilities for the C Programming Language
 
 ##Summary
 
-Concurrency Utilities, or Concurrency_Utils, is a package filled with robust, well-tested libraries to make concurrent programming easier for you, the developer. This package will feature, when completed, thread-safe data structures, a thread pool to abstract the need to use threads, and more.
+Threading Utilities provides and offers tools, utilities, and abstractions to improve quality-of-life and automate portions of multithreaded code.
 
 ##Current Projects
 
