@@ -13,29 +13,6 @@
 #include <MU_Arg_Check.h>
 #include <MU_Retry.h>
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define connection_t NU_Connection_t
-#define connection_init(...) NU_Connection_init(__VA_ARGS__)
-#define connection_create(...) NU_Connection_create(__VA_ARGS__)
-#define connection_send(...) NU_Connection_send(__VA_ARGS__)
-#define connection_send_file(...) NU_Connection_send_file(__VA_ARGS__)
-#define connection_receive(...) NU_Connection_receive(__VA_ARGS__)
-#define connection_receive_file(...) NU_Connection_receive_file(__VA_ARGS__)
-#define connection_select(...) NU_Connection_select(__VA_ARGS__)
-#define connection_disconnect(...) NU_Connection_disconnect(__VA_ARGS__)
-#define connection_reuse(...) NU_Connection_reuse(__VA_ARGS__)
-#define connection_set_sockfd(...) connection_set_sockfd(__VA_ARGS__)
-#define connection_get_sockfd(...) NU_Connection_get_sockfd(__VA_ARGS__)
-#define connection_set_port(...) NU_Connection_set_port(__VA_ARGS__)
-#define connection_get_port(...) NU_Connection_get_port(__VA_ARGS__)
-#define connection_set_logger(...) NU_Connection_set_logger(__VA_ARGS__)
-#define connection_get_logger(...) NU_Connection_get_logger(__VA_ARGS__)
-#define connection_set_ip_addr(...) NU_Connection_set_ip_addr(__VA_ARGS__)
-#define connection_get_ip_addr(...) NU_Connection_get_ip_addr(__VA_ARGS__)
-#define connection_in_use(...) NU_Connection_in_use(__VA_ARGS__)
-#define connection_destroy(...) NU_Connection_destroy(__VA_ARGS__)
-#endif
-
 static const int send_buf_size = 8 * 1024;
 
 static const int send_flags = MSG_NOSIGNAL;
