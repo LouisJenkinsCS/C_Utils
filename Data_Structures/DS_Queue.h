@@ -6,6 +6,14 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define queue_t DS_Queue_t
+#define queue_create(...) DS_Queue_create(__VA_ARGS__)
+#define queue_enqueue(...) DS_Queue_enqueue(__VA_ARGS__)
+#define queue_dequeue(...) DS_Queue_dequeue(__VA_ARGS__)
+#define queue_destroy(...) DS_Queue_destroy(__VA_ARGS__)
+#endif
+
 /*
 	DS_Queue is a lock-free, fast and minimal queue built on top of
 	Maged M. Michael's Hazard Pointer implementation that solves the ABA

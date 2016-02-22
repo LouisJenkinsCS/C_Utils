@@ -7,6 +7,24 @@
 #include <stdio.h>
 #include <DS_Helpers.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define list_t DS_List_t
+#define list_create(...) DS_List_clear(__VA_ARGS__)
+#define list_get(...) DS_List_get(__VA_ARGS__)
+#define list_sort(...) DS_List_sort(__VA_ARGS__)
+#define list_iterator(...) DS_List_iterator(__VA_ARGS__)
+#define list_add(...) DS_List_add(__VA_ARGS__)
+#define list_contains(...) DS_List_contains(__VA_ARGS__)
+#define list_clear(...) DS_List_clear(__VA_ARGS__)
+#define list_destroy(...) DS_List_destroy(__VA_ARGS__)
+#define list_from(...) DS_List_from(__VA_ARGS__)
+#define list_remove(...) DS_List_remove(__VA_ARGS__)
+#define list_remove_at(...) DS_List_remove_at(__VA_ARGS__)
+#define list_as_array(...) DS_List_as_array(__VA_ARGS__)
+#define list_for_each(...) DS_List_for_each(__VA_ARGS__)
+#define list_print(...) DS_List_print(__VA_ARGS__)
+#endif
+
 /* End DS_List_t function pointers and callbacks. */
 
 typedef struct {
@@ -38,7 +56,7 @@ DS_List_t *DS_List_create(bool synchronized);
  * @param compare Used to add sorted, if not NULL, otherwise added unsorted.
  * @return An initialized DS_List with all elements, or NULL if out of memory error.
  */
-DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compare, bool synchronized);
+DS_List_t *DS_List_from(void **array, size_t size, DS_comparator_cb compare, bool synchronized);
 
 /**
  * Retrieves the element at the requested index if in bounds. If it is out of bounds,
@@ -66,7 +84,7 @@ bool DS_List_sort(DS_List_t *list, DS_comparator_cb compare);
  * @param delete_item Callback used to free the item.
  * @return 1 on success, 0 if list is NULL, or if the item is not found in the list.
  */
-bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb delete_item);
+bool DS_List_remove(DS_List_t *list, void *item, DS_delete_cb delete_item);
 
 /**
  * Removes the item at the given index if it is in bounds. If delete_item is NULL, 
@@ -114,7 +132,7 @@ bool DS_List_add(DS_List_t *list, void *item, DS_comparator_cb compare);
  * @param array_size Used to return the size of the array.
  * @return Array of items, or NULL if list or array_size is NULL.
  */
-void **DS_List_to_array(DS_List_t *list, size_t *array_size);
+void **DS_List_as_array(DS_List_t *list, size_t *array_size);
 
 /**
  * Calls the passed callback on all items in the linked list.
@@ -132,7 +150,7 @@ bool DS_List_for_each(DS_List_t *list, DS_general_cb callback);
  * @param file The file to print to, I.E stdio or an actual FILE.
  * @param to_string Callback to obtain a string representation of each item in the list.
  */
-bool DS_List_print_all(DS_List_t *list, FILE *file, DS_to_string_cb to_string);
+bool DS_List_print(DS_List_t *list, FILE *file, DS_to_string_cb to_string);
 
 /**
  * Returns whether or not the list contains the given item.

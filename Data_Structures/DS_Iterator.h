@@ -5,6 +5,18 @@
 #include <DS_Helpers.h>
 #include <MU_Logger.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define iterator_t DS_Iterator_t
+#define iterator_head(...) DS_Iterator_head(__VA_ARGS__)
+#define iterator_tail(...) DS_Iterator_tail(__VA_ARGS__)
+#define iterator_next(...) DS_Iterator_next(__VA_ARGS__)
+#define iterator_prev(...) DS_Iterator_prev(__VA_ARGS__)
+#define iterator_append(...) DS_Iterator_append(__VA_ARGS__)
+#define iterator_prepend(...) DS_Iterator_prepend(__VA_ARGS__)
+#define iterator_remove(...) DS_Iterator_remove(__VA_ARGS__)
+#define iterator_for_each(...) DS_Iterator_for_each(__VA_ARGS__)
+#endif
+
 /*
 	The below structure is an early prototype on my own implementation of a generic iterator.
 	By using an anonymous/opaque handle, it allows me to generalize it's use, as well as 

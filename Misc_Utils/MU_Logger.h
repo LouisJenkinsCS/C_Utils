@@ -10,6 +10,21 @@
 #include <time.h>
 #include <assert.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define LOG_TRACE(...) MU_LOG_TRACE(__VA_ARGS__)
+#define LOG_VERBOSE(...) MU_LOG_VERBOSE(__VA_ARGS__)
+#define LOG_INFO(...) MU_LOG_INFO(__VA_ARGS__)
+#define LOG_CUSTOM(...) MU_LOG_CUSTOM(__VA_ARGS__)
+#define LOG_EVENT(...) MU_LOG_EVENT(__VA_ARGS__)
+#define LOG_WARNING(...) MU_LOG_WARNING(__VA_ARGS__)
+#define LOG_ERROR(...) MU_LOG_ERROR(__VA_ARGS__)
+#define LOG_ASSERT(...) MU_LOG_ASSERT(__VA_ARGS__)
+#define LOGGER_AUTO_CREATE(...) MU_LOGGER_AUTO_CREATE(__VA_ARGS__)
+#define logger_t MU_Logger_t
+#define logger_create(...) MU_Logger_create(__VA_ARGS__)
+#define logger_destroy(...) MU_Logger_destroy(__VA_ARGS__)
+#endif
+
 /**
  * A simple logging utility that supports various log levels, accurate logging of
  * location it is called, time and date and even supports custom logging format.

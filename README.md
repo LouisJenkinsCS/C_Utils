@@ -28,13 +28,13 @@ I a late-but-upcoming Computer Science major who's developed more than a bit of 
 
 All files contain structs and functions which follow a guideline to significantly reduce collisions during compilation. All of them begin the abbrieviated package name, an uppercase for the first word in each, followed by an underscore (I.E: String Utils -> SU_). All structs and functions follow this, but with structs, they also end with an underscore followed by a t (I.E: TU_Event_t).
 
-These may be unwieldy for some, and to placate this potential issue, each header file defines aliases for it's functions and types stripped without the namespaces (I.E: TU_Pool_add -> Pool_add; TU_Pool_t -> Pool_t);
-
-There also is a POSIX C-standard-like aliases (I.E MU_Event_wait -> event_wait; MU_Event_t -> event_t). Note that these have the most likely chance to cause collisions.
+These may be unwieldy for some, and to placate this potential issue, each header file defines aliases for it's functions and types stripped without the namespaces and is POSIX compliant, (I.E MU_Event_wait -> event_wait; MU_Event_t -> event_t). Note that these have the most likely chance to cause collisions. This can be done by defining C_UTILS_USE_POSIX_STD before the includes of a package.
 
 This way it allows the user to determine just how much they care about potential collision and how much they want the code to conform to the rest of their code base.
 
 ##Libraries Packages
+
+Library Packages below have numerous tools and utilities for use. Sometimes, you may want to use all of them, and therefore, there will be a header for each which includes all other headers. Hence, if you want all data structures, then you may be able to include <C_Utils_Data_Structures.h>
 
 ###Threading Utilities
 

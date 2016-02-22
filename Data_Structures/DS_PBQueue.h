@@ -2,6 +2,16 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define pbqueue_t DS_PBQueue_t
+#define pbqueue_create(...) DS_PBQueue_create(__VA_ARGS__)
+#define pbqueue_enqueue(...) DS_PBQueue_enqueue(__VA_ARGS__)
+#define pbqueue_dequeue(...) DS_PBQueue_dequeue(__VA_ARGS__)
+#define pbqueue_clear(...) DS_PBQueue_clear(__VA_ARGS__)
+#define pbqueue_size(...) DS_PBQueue_size(__VA_ARGS__)
+#define pbqueue_destroy(...) DS_PBQueue_destroy(__VA_ARGS__)
+#endif
+
 /*
 	PBQueue is a minimal priority blocking queue which features not only a way to 
 	create a bounded or unbounded queue, but also be used as a normal blocking queue

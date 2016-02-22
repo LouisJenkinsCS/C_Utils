@@ -11,6 +11,12 @@
 #include <errno.h>
 #include <MU_Logger.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define SCOPED_LOCK(...) MU_SCOPED_LOCK(__VA_ARGS__)
+#define SCOPED_LOCK_FROM(...) MU_SCOPED_LOCK_FROM(__VA_ARGS__)
+#define scoped_lock_t MU_Scoped_Lock_t
+#endif
+
 typedef struct scoped_lock
 {
    // The instance of lock.

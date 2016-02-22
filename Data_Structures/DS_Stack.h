@@ -5,6 +5,14 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
+#ifdef C_UTILS_USE_POSIX_STD
+#define stack_t DS_Stack_t
+#define stack_create(...) DS_Stack_create(__VA_ARGS__)
+#define stack_push(...) DS_Stack_push(__VA_ARGS__)
+#define stack_pop(...) DS_Stack_pop(__VA_ARGS__)
+#define stack_destroy(...) DS_Stack_destroy(__VA_ARGS__)
+#endif
+
 /*
 	A lock-free implementation of a stack. It is guaranteed to be wait-free, and supports basic
 	stack manipulations.

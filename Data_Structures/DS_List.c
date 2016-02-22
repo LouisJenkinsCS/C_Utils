@@ -463,7 +463,7 @@ DS_List_t *DS_List_create(bool synchronized){
 	return list;
 }
 
-DS_List_t *DS_List_create_from(void **array, size_t size, DS_comparator_cb compare, bool synchronized){
+DS_List_t *DS_List_from(void **array, size_t size, DS_comparator_cb compare, bool synchronized){
 	MU_ARG_CHECK(logger, NULL, array);
 	DS_List_t *list = DS_List_create(synchronized);
 	int i = 0;
@@ -512,7 +512,7 @@ bool DS_List_add(DS_List_t *list, void *item, DS_comparator_cb compare){
 
 /* Linked List removal functions */
 
-bool DS_List_remove_item(DS_List_t *list, void *item, DS_delete_cb del){
+bool DS_List_remove(DS_List_t *list, void *item, DS_delete_cb del){
 	MU_ARG_CHECK(logger, false, list, item);
 	MU_COND_RWLOCK_WRLOCK(list->rwlock, logger);
 	DS_Node_t *node = item_to_node(list, item);
@@ -561,7 +561,7 @@ bool DS_List_contains(DS_List_t *list, void *item){
 	return node != NULL;
 }
 
-bool DS_List_print_all(DS_List_t *list, FILE *file, DS_to_string_cb to_string){
+bool DS_List_print(DS_List_t *list, FILE *file, DS_to_string_cb to_string){
 	MU_ARG_CHECK(logger, false, list, file, to_string);
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	print_list(list, file, to_string);
@@ -579,7 +579,7 @@ void *DS_List_get(DS_List_t *list, unsigned int index){
 	return item;
 }
 
-void **DS_List_to_array(DS_List_t *list, size_t *size){
+void **DS_List_as_array(DS_List_t *list, size_t *size){
 	MU_ARG_CHECK(logger, NULL, list);
 	MU_COND_RWLOCK_RDLOCK(list->rwlock, logger);
 	void **array_of_items = malloc(sizeof(void *) * list->size);
