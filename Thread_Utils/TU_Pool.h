@@ -30,28 +30,7 @@
  * - You MUST free the TU_Result_t object when finished.
  */
 
-/// The default behavior for a function.
-#define TU_NONE 1 << 0
-/// Will not return a Result upon submitting a task.
-#define TU_NO_RESULT 1 << 1
-/// Flags the task as lowest priority.
-#define TU_LOWEST_PRIORITY 1 << 2
-/// Flags the task as low priority.
-#define TU_LOW_PRIORITY 1 << 3
-/// Flags the task as high priority.
-#define TU_HIGH_PRIORITY 1 << 4
-/// Flags the task as highest priority.
-#define TU_HIGHEST_PRIORITY 1 << 5
-
-typedef void *(*TP_Callback)(void *args);
-
-#include <DS_PBQueue.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include <stdatomic.h>
-#include <errno.h>
-#include <TU_Events.h>
 
 #ifdef C_UTILS_USE_POSIX_STD
 #define pool_t TU_Pool_t
@@ -67,40 +46,24 @@ typedef void *(*TP_Callback)(void *args);
 #define result_destroy(...) TU_Result_destroy(__VA_ARGS__)
 #endif
 
-typedef struct {
-	/// Determines if result is ready.
-	TU_Event_t *is_ready;
-	/// The returned item from the task.
-	void *retval;
-} TU_Result_t;
+/// The default behavior for a function.
+#define TU_NONE 1 << 0
+/// Will not return a Result upon submitting a task.
+#define TU_NO_RESULT 1 << 1
+/// Flags the task as lowest priority.
+#define TU_LOWEST_PRIORITY 1 << 2
+/// Flags the task as low priority.
+#define TU_LOW_PRIORITY 1 << 3
+/// Flags the task as high priority.
+#define TU_HIGH_PRIORITY 1 << 4
+/// Flags the task as highest priority.
+#define TU_HIGHEST_PRIORITY 1 << 5
 
-typedef struct {
-	/// The worker thread that does the work.
-	pthread_t *thread;
-	/// The worker thread id.
-	unsigned int thread_id;
-} TU_Worker_t;
+typedef void *(*TU_Callback)(void *);
 
-typedef struct {
-	/// Array of threads.
-	TU_Worker_t **worker_threads;
-	/// The queue with all jobs assigned to it.
-	DS_PBQueue_t *queue;
-	/// Amount of threads currently created, A.K.A Max amount.
-	_Atomic size_t thread_count;
-	/// Amount of threads currently active.
-	_Atomic size_t active_threads;
-	/// Flag to keep all threads alive.
-	volatile bool keep_alive;
-	/// Used for timed pauses.
-	volatile unsigned int seconds_to_pause;
-	/// Used to signal an error occured during initialization
-	volatile bool init_error;
-	/// Event for pause/resume.
-	TU_Event_t *resume;
-	/// Event for if the thread pool is finished at the moment.
-	TU_Event_t *finished;
-} TU_Pool_t;
+typedef struct c_utils_result TU_Result_t;
+
+typedef struct c_utils_thread_pool TU_Pool_t;
 
 /**
  * Returns a newly allocated thread pool with pool_size worker threads.
@@ -119,7 +82,7 @@ TU_Pool_t *TU_Pool_create(size_t pool_size);
  * | TP_HIGHEST_PRIORITY | TP_NO_RESULT.
  * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
-TU_Result_t *TU_Pool_add(TU_Pool_t *tp, TP_Callback callback, void *args, int flags);
+TU_Result_t *TU_Pool_add(TU_Pool_t *tp, TU_Callback callback, void *args, int flags);
 
 /**
  * Destroys the Result from a task.
