@@ -140,7 +140,7 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 	return buf_index;
 }
 
-static const char *c_utils_log_format_get(struct c_utils_logger_t *logger, enum c_utils_log_level_e level){
+static const char *get_log_format(struct c_utils_logger_t *logger, enum c_utils_log_level_e level){
 	if(!logger) return NULL;
 	struct c_utils_log_format_t format = logger->format;
 	char *real_format = NULL;
@@ -165,7 +165,7 @@ static const char *c_utils_log_format_get(struct c_utils_logger_t *logger, enum 
 }
 
 /// Initialize logger.
-c_utils_logger_t *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level){
+struct c_utils_logger_t *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level){
 	c_utils_logger_t *logger = calloc(1, sizeof(c_utils_logger_t));
 	if(!logger){
 		MU_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
@@ -196,10 +196,10 @@ bool c_utils_logger_log(struct c_utils_logger_t *logger, enum c_utils_log_level_
 	struct c_utils_log_format_info_t info = { .msg = msg, .log_level = custom_level ? custom_level : log_level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
 	const int log_buf_size = buffer_size * 2;
 	char buffer[log_buf_size + 1];
-	format_string(c_utils_log_format_get(logger, level), buffer, log_buf_size, &info, args);
+	format_string(get_log_format(logger, level), buffer, log_buf_size, &info, args);
 	fprintf(logger->file, "%s", buffer);
 	fflush(logger->file);
-	if(level == MU_ASSERTION){
+	if(level == LOG_LEVEL_ASSERTION){
 		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
 	return true;
