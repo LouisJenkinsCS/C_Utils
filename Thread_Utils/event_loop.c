@@ -1,14 +1,48 @@
-#include <TU_Event_Loop.h>
+#include <event_loop.h>
 #include <TU_Flags.h>
 #include <TU_Arg_Check.h>
 #include <unistd.h>
 
+struct c_utils_event_loop_t {
+	/// Maintains list of sources to check.
+	DS_List_t *sources;
+	/// Keep-Alive flag
+	_Atomic bool keep_alive;
+	/// The event to wait on for it to finish.
+	TU_Event_t *finished;
+};
+
+/*
+	void*::c_utils_event_prepare(Void); Prepares the event.
+	bool::c_utils_event_check(Void*); Checks if event is ready. 
+	bool::c_utils_event_dispatch(Void*); Dispatches the event.
+	bool::c_utils_event_finalize(Void*); Destroys the data if it is finished.
+*/
+struct c_utils_event_source_t {
+	/// Data returned from an event.
+	void *data;
+	/// Callback used to prepare the data passed to it.
+	c_utils_event_prepare prepare;
+	/// Callback used to check if event is ready.
+	c_utils_event_check check;
+	/// Callback used to dispatch said event.
+	c_utils_event_dispatch dispatch;
+	/// Callback used whenever the main loop finishes.
+	c_utils_event_finalize finalize;
+	/// Internal flags used to help maintain information about the event source.
+	unsigned int flags;
+	/// The timeval used to record the absolute time of the next timeout.
+	struct timeval next_timeout;
+	/// The timeout the timeval will be set to after triggering.
+	unsigned int timeout;
+};
+
 static MU_Logger_t *logger = NULL;
 static MU_Logger_t *event_logger = NULL;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/TU_Event_Loop.log", "w", TU_ALL);
+MU_LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/event_loop.log", "w", TU_ALL);
 
-MU_LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/TU_Event_Loop_Events.log", "w", TU_ALL);
+MU_LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/event_loop_events.log", "w", TU_ALL);
 
 
 static const int event_finished = 1 << 0;
@@ -21,7 +55,7 @@ static const int event_prepared = 1 << 1;
 	C) If any events are finished and should be removed from the list.
 */
 static void event_loop_main(void *args){
-	TU_Event_Source_t *source = args;
+	struct c_utils_event_source_t *source = args;
 	if(MU_FLAG_GET(source->flags, event_finished)) return;
 	if(source->prepare && !MU_FLAG_GET(source->flags, event_prepared)){
 		source->data = source->prepare();
@@ -49,9 +83,9 @@ static void event_loop_main(void *args){
 	}
 }
 
-TU_Event_Source_t *TU_Event_Source_create(TU_Event_Prepare prepare_cb, TU_Event_Check check_cb, TU_Event_Dispatch dispatch_cb, TU_Event_Finalize finalize_cb, unsigned long long int timeout){
+struct c_utils_event_source_t *c_utils_event_source_create(c_utils_event_prepare prepare_cb, c_utils_event_check check_cb, c_utils_event_dispatch dispatch_cb, c_utils_event_finalize finalize_cb, unsigned long long int timeout){
 	MU_ARG_CHECK(logger, NULL, dispatch_cb);
-	TU_Event_Source_t *source = calloc(1, sizeof(TU_Event_Source_t));
+	struct c_utils_event_source_t *source = calloc(1, sizeof(struct c_utils_event_source_t));
 	if(!source){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
@@ -73,26 +107,27 @@ TU_Event_Source_t *TU_Event_Source_create(TU_Event_Prepare prepare_cb, TU_Event_
 		return NULL;
 }
 
-bool TU_Event_Source_destroy(TU_Event_Source_t *source){
+bool c_utils_event_source_destroy(struct c_utils_event_source_t *source){
 	MU_ARG_CHECK(logger, false, source);
 	free(source);
 	return true;
 }
 
-TU_Event_Loop_t *TU_Event_Loop_create(void){
-	TU_Event_Loop_t *loop = calloc(1, sizeof(TU_Event_Loop_t));
+struct c_utils_event_loop_t *c_utils_event_loop_create(void){
+	struct c_utils_event_loop_t *loop = calloc(1, sizeof(struct c_utils_event_loop_t));
 	if(!loop){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
+	// Synchronized list.
 	loop->sources = DS_List_create(true);
 	if(!loop->sources){
-		MU_LOG_ERROR(logger, "Linked_List_create: 'Was unable to create Linked List!");
+		MU_LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
 		goto error;
 	}
 	loop->finished = TU_Event_create("Finished", event_logger, 0);
 	if(!loop->finished){
-		MU_LOG_ERROR(logger, "TU_Event_create: 'Was unable to create Finished event!");
+		MU_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
 		goto error;
 	}
 	loop->keep_alive = ATOMIC_VAR_INIT(false);
@@ -106,12 +141,12 @@ TU_Event_Loop_t *TU_Event_Loop_create(void){
 		return NULL;
 }
 
-bool TU_Event_Loop_add(TU_Event_Loop_t *loop, TU_Event_Source_t *source){
+bool c_utils_event_loop_add(struct c_utils_event_loop_t *loop, struct c_utils_event_source_t *source){
 	MU_ARG_CHECK(logger, false, loop, source);
 	return DS_List_add(loop->sources, source, NULL);
 }
 
-bool TU_Event_Loop_run(TU_Event_Loop_t *loop){
+bool c_utils_event_loop_run(struct c_utils_event_loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
@@ -122,15 +157,15 @@ bool TU_Event_Loop_run(TU_Event_Loop_t *loop){
 	return true;
 }
 
-bool TU_Event_Loop_stop(TU_Event_Loop_t *loop){
+bool c_utils_event_loop_stop(struct c_utils_event_loop_t *loop){
 	MU_ARG_CHECK(logger, false, loop);
 	atomic_store(&loop->keep_alive, false);
 	return true;
 }
 
-bool TU_Event_Loop_destroy(TU_Event_Loop_t *loop, bool free_sources){
+bool c_utils_event_loop_destroy(struct c_utils_event_loop_t *loop, bool free_sources){
 	MU_ARG_CHECK(logger, false, loop);
-	TU_Event_Loop_stop(loop);
+	c_utils_event_loop_stop(loop);
 	TU_Event_wait(loop->finished, -1, 0);
 	DS_List_destroy(loop->sources, free_sources ? free : NULL);
 	free(loop);

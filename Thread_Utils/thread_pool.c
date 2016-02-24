@@ -10,11 +10,11 @@
 #include <MU_Arg_Check.h>
 #include <MU_Flags.h>
 #include <MU_Logger.h>
-#include <TU_Pool.h>
+#include <thread_pool.h>
 #include <DS_PBQueue.h>
 
 
-enum c_utils_priority {
+enum c_utils_priority_e {
 	/// Lowest possible c_utils_priority
 	LOWEST,
 	/// Low c_utils_priority, above Lowest.
@@ -27,7 +27,7 @@ enum c_utils_priority {
 	HIGHEST
 };
 
-struct c_utils_thread_worker {
+struct c_utils_thread_worker_t {
 	/// The worker thread that does the work.
 	pthread_t *thread;
 	/// The worker thread id.
@@ -36,7 +36,7 @@ struct c_utils_thread_worker {
 
 struct c_utils_thread_pool {
 	/// Array of threads.
-	struct c_utils_thread_worker **worker_threads;
+	struct c_utils_thread_worker_t **worker_threads;
 	/// The queue with all jobs assigned to it.
 	DS_PBQueue_t *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
@@ -55,14 +55,14 @@ struct c_utils_thread_pool {
 	TU_Event_t *finished;
 };
 
-struct c_utils_result {
+struct c_utils_result_t {
 	/// Determines if c_utils_result is ready.
 	TU_Event_t *is_ready;
 	/// The returned item from the task.
 	void *retval;
 };
 
-struct c_utils_thread_task {
+struct c_utils_thread_task_t {
 	/// Task to be executed.
 	TU_Callback callback;
 	/// Arguments to be passed to the task.
@@ -197,9 +197,9 @@ static int compare_task_priority(void *task_one, void *task_two){
 
 /* End Static, Private functions. */
 
-TU_Pool_t *TU_Pool_create(size_t pool_size){
+struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size){
 	size_t workers_allocated = 0;
-	TU_Pool_t *tp = calloc(1, sizeof(TU_Pool_t));
+	struct c_utils_thread_pool_t *tp = calloc(1, sizeof(struct c_utils_thread_pool_t));
 	if(!tp){
 		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
@@ -227,7 +227,7 @@ TU_Pool_t *TU_Pool_create(size_t pool_size){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	size_t i = 0;
 	for(;i < pool_size; i++){
-		struct c_utils_thread_worker *worker = calloc(1, sizeof(struct c_utils_thread_worker));
+		struct c_utils_thread_worker_t *worker = calloc(1, sizeof(struct c_utils_thread_worker_t));
 		if(!worker){
 			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
@@ -259,7 +259,7 @@ TU_Pool_t *TU_Pool_create(size_t pool_size){
 			if(tp->worker_threads){
 				size_t i = 0;
 				for(; i < workers_allocated; i++){
-					struct c_utils_thread_worker *worker = tp->worker_threads[i];
+					struct c_utils_thread_worker_t *worker = tp->worker_threads[i];
 					free(worker->thread);
 					free(worker);
 				}
@@ -273,10 +273,10 @@ TU_Pool_t *TU_Pool_create(size_t pool_size){
 		return NULL;
 }
 
-TU_Result_t *TU_Pool_add(TU_Pool_t *tp, TU_Callback callback, void *args, int flags){
+struct c_utils_result_t *c_utils_thread_pool_add(struct c_utils_thread_pool_t *tp, c_utils_task task, void *args, int flags){
 	MU_ARG_CHECK(logger, NULL, tp, callback);
-	TU_Result_t *result = NULL;
-	struct c_utils_thread_task *task = NULL;
+	struct c_utils_result_t *result = NULL;
+	struct c_utils_thread_task_t *thread_task = NULL;
 	if(!MU_FLAG_GET(flags, TU_NO_RESULT)){
 		result = calloc(1, sizeof(TU_Result_t));
 		if(!result){
@@ -289,22 +289,22 @@ TU_Result_t *TU_Pool_add(TU_Pool_t *tp, TU_Callback callback, void *args, int fl
 			goto error;
 		}
 	}
-	task = calloc(1, sizeof(struct c_utils_thread_task));
+	thread_task = calloc(1, sizeof(struct c_utils_thread_task_t));
 	if(!task){
 		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 		goto error;
 	}
-	task->callback = callback;
+	thread_task->task = task;
 	task->args = args;
-	set_priority(task, flags);
-	task->result = result;
+	set_priority(thread_task, flags);
+	thread_task->result = result;
 	TU_Event_reset(tp->finished, 0);
-	bool enqueued = DS_PBQueue_enqueue(tp->queue, task, -1);
+	bool enqueued = DS_PBQueue_enqueue(tp->queue, thread_task, -1);
 	if(!enqueued){
-		MU_LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue task!'");
+		MU_LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
 		goto error;
 	}
-	MU_LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!", get_priority(task));
+	MU_LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!", get_priority(thread_task));
 	return result;
 
 	error:
@@ -314,40 +314,40 @@ TU_Result_t *TU_Pool_add(TU_Pool_t *tp, TU_Callback callback, void *args, int fl
 			}
 			free(result);
 		}
-		if(task){
-			free(task);
+		if(thread_task){
+			free(thread_task);
 		}
 		return NULL;
 }
 
-bool TU_Pool_clear(TU_Pool_t *tp){
+bool c_utils_thread_pool_clear(struct c_utils_thread_pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	MU_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
 	return DS_PBQueue_clear(tp->queue, (void *)destroy_task);
 }
 
-/// Will destroy the result and set it's reference to NULL.
-bool TU_Result_destroy(TU_Result_t *result){
+/// Will destroy the result and associated event.
+bool c_utils_result_destroy(struct c_utils_result_t *result){
 	MU_ARG_CHECK(logger, NULL, result);
 	TU_Event_destroy(result->is_ready, 0);
 	free(result);
 	return true;
 }
 /// Will block until result is ready. 
-void *TU_Result_get(TU_Result_t *result, long long int timeout){
+void *c_utils_result_get(struct c_utils_result_t *result, long long int timeout){
 	MU_ARG_CHECK(logger, NULL, result);
 	bool is_ready = TU_Event_wait(result->is_ready, timeout, 0);
 	return is_ready ? result->retval : NULL;
 }
 
 /// Will block until all tasks are finished.
-bool TU_Pool_wait(TU_Pool_t *tp, long long int timeout){
+bool c_utils_thread_pool_wait(struct c_utils_thread_pool_t *tp, long long int timeout){
 	MU_ARG_CHECK(logger, false, tp);
 	bool is_finished = TU_Event_wait(tp->finished, timeout, 0);
 	return is_finished;
 }
 
-bool TU_Pool_destroy(TU_Pool_t *tp){
+bool c_utils_thread_pool_destroy(struct c_utils_thread_pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	tp->keep_alive = false;
 	size_t old_thread_count = tp->thread_count;
@@ -368,14 +368,14 @@ bool TU_Pool_destroy(TU_Pool_t *tp){
 	return true;
 }
 
-bool TU_Pool_pause(TU_Pool_t *tp, long long int timeout){
+bool c_utils_thread_pool_pause(struct c_utils_thread_pool_t *tp, long long int timeout){
 	MU_ARG_CHECK(logger, false, tp);
 	tp->seconds_to_pause = timeout;
 	bool event_reset = TU_Event_reset(tp->resume, 0);
 	return event_reset;
 }
 
-bool TU_Pool_resume(TU_Pool_t *tp){
+bool c_utils_thread_pool_resume(struct c_utils_thread_pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
 	return TU_Event_signal(tp->resume, 0);
 }

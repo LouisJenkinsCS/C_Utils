@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <MU_Logger.h>
 
-struct scoped_lock
+struct c_utils_scoped_lock
 {
    // The instance of lock.
    void *lock;

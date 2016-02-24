@@ -1,19 +1,8 @@
 #include <MU_Logger.h>
 #include <pthread.h>
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define COND_MUTEX_INIT(...) TU_COND_MUTEX_INIT(__VA_ARGS__)
-#define COND_MUTEX_LOCK(...) TU_COND_MUTEX_LOCK(__VA_ARGS__)
-#define COND_MUTEX_UNLOCK(...) TU_COND_MUTEX_UNLOCK(__VA_ARGS__)
-#define COND_MUTEX_DESTROY(...) TU_COND_MUTEX_DESTROY(__VA_ARGS__)
-#define COND_RWLOCK_INIT(...) TU_COND_RWLOCK_INIT(__VA_ARGS__)
-#define COND_RWLOCK_WRLOCK(...) TU_COND_RWLOCK_WRLOCK(__VA_ARGS__)
-#define COND_RWLOCK_RDLOCK(...) TU_COND_RWLOCK_RDLOCK(__VA_ARGS__)
-#define COND_RWLOCK_DESTROY(...) TU_COND_RWLOCK_DESTROY(__VA_ARGS__)
-#endif
-
 /*
-* TU_Cond_Locks is a wrapper library for the pthread library, or POSIX threads,
+* Cond_Locks is a wrapper library for the pthread library, or POSIX threads,
 * which allow you to conditionally operate on a lock; meaning, you can safely pass uninitialized (NULL) locks safely
 * without a segmentation fault or any other such complications, as well as have any errors logged for you if you pass
 * a logger to it. For example, lets say you have a very simple program, say a data structure, and you want to allow the user
@@ -41,7 +30,7 @@
  * @param logger The logger used to log any errors.
  * @return 0 on success, a negative number resembling it's error code on failure.
  */
-#define TU_COND_RWLOCK_INIT(lock, attr, storage, logger) do { \
+#define COND_RWLOCK_INIT(lock, attr, storage, logger) do { \
 	if(lock){ \
 	    int errcode = pthread_rwlock_init(lock, attr); \
 	    if(errcode){ \
@@ -51,7 +40,7 @@
    	} \
 } while(0) 
 
-#define TU_COND_RWLOCK_WRLOCK(lock, logger) do { \
+#define COND_RWLOCK_WRLOCK(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_rwlock_wrlock(lock); \
       if(errcode){ \
@@ -60,7 +49,7 @@
    } \
 } while(0)
 
-#define TU_COND_RWLOCK_RDLOCK(lock, logger) do { \
+#define COND_RWLOCK_RDLOCK(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_rwlock_rdlock(lock); \
       if(errcode){ \
@@ -69,7 +58,7 @@
    } \
 } while(0)
 
-#define TU_COND_RWLOCK_UNLOCK(lock, logger) do { \
+#define COND_RWLOCK_UNLOCK(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_rwlock_unlock(lock); \
       if(errcode){ \
@@ -78,7 +67,7 @@
    } \
 } while(0)
 
-#define TU_COND_RWLOCK_DESTROY(lock, logger) do { \
+#define COND_RWLOCK_DESTROY(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_rwlock_destroy(lock); \
       if(errcode){ \
@@ -88,7 +77,7 @@
    } \
 } while(0)
 
-#define TU_COND_MUTEX_INIT(lock, attr, storage, logger) do { \
+#define COND_MUTEX_INIT(lock, attr, storage, logger) do { \
 	if(lock){ \
       int errcode = pthread_mutex_init(lock, attr); \
       if(errcode){ \
@@ -98,7 +87,7 @@
    } \
 } while(0)
 
-#define TU_COND_MUTEX_LOCK(lock, logger) do { \
+#define COND_MUTEX_LOCK(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_mutex_lock(lock); \
       if(errcode){ \
@@ -107,7 +96,7 @@
    } \
 } while(0)
 
-#define TU_COND_MUTEX_UNLOCK(lock, logger) do { \
+#define COND_MUTEX_UNLOCK(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_mutex_unlock(lock); \
       if(errcode){ \
@@ -116,7 +105,7 @@
    } \
 } while(0)
 
-#define TU_COND_MUTEX_DESTROY(lock, logger) do { \
+#define COND_MUTEX_DESTROY(lock, logger) do { \
 	if(lock){ \
       int errcode = pthread_mutex_destroy(lock); \
       if(errcode){ \

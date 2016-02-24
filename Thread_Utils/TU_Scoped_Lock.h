@@ -14,7 +14,7 @@
 #define scoped_lock_spinlock(...) MU_Scoped_Lock_spinlock(__VA_ARGS__)
 #endif
 
-typedef struct _scoped_lock MU_Scoped_Lock_t;
+typedef struct c_utils_scoped_lock MU_Scoped_Lock_t;
 
 
 MU_Scoped_Lock_t *MU_Scoped_Lock_mutex(pthread_mutex_t *lock);
