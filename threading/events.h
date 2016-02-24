@@ -1,7 +1,7 @@
 #ifndef TU_EVENTS_H
 #define TU_EVENTS_H
 
-#include <MU_Logger.h>
+#include <logger.h>
 #include <MU_Flags.h>
 #include <pthread.h>
 #include <stdint.h>

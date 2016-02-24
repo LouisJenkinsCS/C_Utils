@@ -1,6 +1,7 @@
 #include <event_loop.h>
 #include <TU_Flags.h>
 #include <TU_Arg_Check.h>
+#include <logger.h>
 #include <unistd.h>
 
 struct c_utils_event_loop_t {
@@ -37,12 +38,12 @@ struct c_utils_event_source_t {
 	unsigned int timeout;
 };
 
-static MU_Logger_t *logger = NULL;
-static MU_Logger_t *event_logger = NULL;
+static struct c_utils_logger_t *logger = NULL;
+static struct c_utils_logger_t *event_logger = NULL;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/event_loop.log", "w", TU_ALL);
+LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/event_loop.log", "w", TU_ALL);
 
-MU_LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/event_loop_events.log", "w", TU_ALL);
+LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/event_loop_events.log", "w", TU_ALL);
 
 
 static const int event_finished = 1 << 0;
@@ -87,7 +88,7 @@ struct c_utils_event_source_t *c_utils_event_source_create(c_utils_event_prepare
 	MU_ARG_CHECK(logger, NULL, dispatch_cb);
 	struct c_utils_event_source_t *source = calloc(1, sizeof(struct c_utils_event_source_t));
 	if(!source){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
 	source->prepare = prepare_cb;
@@ -116,18 +117,18 @@ bool c_utils_event_source_destroy(struct c_utils_event_source_t *source){
 struct c_utils_event_loop_t *c_utils_event_loop_create(void){
 	struct c_utils_event_loop_t *loop = calloc(1, sizeof(struct c_utils_event_loop_t));
 	if(!loop){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
 	// Synchronized list.
 	loop->sources = DS_List_create(true);
 	if(!loop->sources){
-		MU_LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
+		LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
 		goto error;
 	}
 	loop->finished = TU_Event_create("Finished", event_logger, 0);
 	if(!loop->finished){
-		MU_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
+		LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
 		goto error;
 	}
 	loop->keep_alive = ATOMIC_VAR_INIT(false);

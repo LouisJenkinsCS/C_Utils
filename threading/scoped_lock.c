@@ -1,4 +1,4 @@
-#include <TU_Scoped_Lock.h>
+#include <scoped_lock.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>
-#include <MU_Logger.h>
+#include <logger.h>
 
 struct c_utils_scoped_lock
 {
@@ -63,7 +63,7 @@ static void *_release_scoped_lock_mutex(MU_Scoped_Lock_t *s_lock){
 }
 
 
-MU_Scoped_Lock_t *MU_Scoped_Lock_mutex(pthread_mutex_t *lock){
+c_utils_scoped_lock_t *c_utils_scoped_lock_mutex(pthread_mutex_t *lock){
    MU_Scoped_Lock_t *s_lock = calloc(1, sizeof(MU_Scoped_Lock_t));
    if(!s_lock){
       MU_DEBUG("Calloc: \"%s\"", strerror(errno));
@@ -102,7 +102,7 @@ static void *_release_scoped_lock_spinlock(MU_Scoped_Lock_t *s_lock){
    return s_lock;
 }
 
-MU_Scoped_Lock_t *MU_Scoped_Lock_spinlock(pthread_spinlock_t *lock){
+c_utils_scoped_lock_t *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock){
    MU_Scoped_Lock_t *s_lock = calloc(1, sizeof(MU_Scoped_Lock_t));
    if(!s_lock){
       MU_DEBUG("Calloc: \"%s\"", strerror(errno));

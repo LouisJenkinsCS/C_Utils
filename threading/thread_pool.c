@@ -6,25 +6,25 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdatomic.h>
-#include <TU_Events.h>
+#include <events.h>
 #include <MU_Arg_Check.h>
 #include <MU_Flags.h>
-#include <MU_Logger.h>
+#include <logger.h>
 #include <thread_pool.h>
 #include <DS_PBQueue.h>
 
 
 enum c_utils_priority_e {
 	/// Lowest possible c_utils_priority
-	LOWEST,
+	PRIORITY_LOWEST,
 	/// Low c_utils_priority, above Lowest.
-	LOW,
+	PRIORITY_LOW,
 	/// Medium c_utils_priority, considered the "average".
-	MEDIUM,
+	PRIORITY_MEDIUM,
 	/// High c_utils_priority, or "above average".
-	HIGH,
+	PRIORITY_HIGH,
 	/// Highest c_utils_priority, or "imminent"
-	HIGHEST
+	PRIORITY_HIGHEST
 };
 
 struct c_utils_thread_worker_t {
@@ -77,12 +77,12 @@ static const char *pause_event_name = "Resume";
 static const char *finished_event_name = "Finished";
 static const char *result_event_name = "Result Ready";
 
-static MU_Logger_t *logger = NULL;
-static MU_Logger_t *event_logger = NULL;
+static struct c_utils_logger_t *logger = NULL;
+static struct c_utils_logger_t *event_logger = NULL;
 
-MU_LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/TU_Pool.log", "w", MU_ALL);
+LOGGER_AUTO_CREATE(logger, "./Thread_Utils/Logs/TU_Pool.log", "w", LOG_LEVEL_ALL);
 
-MU_LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/TU_Pool_Events.log", "w", MU_ALL);
+LOGGER_AUTO_CREATE(event_logger, "./Thread_Utils/Logs/TU_Pool_Events.log", "w", LOG_LEVEL_ALL);
 
 /* Begin Static, Private functions */
 
@@ -112,7 +112,7 @@ static struct c_utils_thread_worker *get_self(struct c_utils_thread_pool *tp){
 			return tp->worker_threads[i];
 		}
 	}
-	MU_LOG_ERROR(logger, "A worker thread could not be identified from pthread_self!");
+	LOG_ERROR(logger, "A worker thread could not be identified from pthread_self!");
 	return NULL;
 }
 
@@ -154,9 +154,9 @@ static void *get_tasks(void *args){
 			break;
 		}
 		atomic_fetch_add(&tp->active_threads, 1);
-		MU_LOG_VERBOSE(logger, "Thread #%d: received a task!", self->thread_id);
+		LOG_VERBOSE(logger, "Thread #%d: received a task!", self->thread_id);
 		process_task(task, self->thread_id);
-		MU_LOG_VERBOSE(logger, "Thread #%d: finished a task!", self->thread_id);
+		LOG_VERBOSE(logger, "Thread #%d: finished a task!", self->thread_id);
 		atomic_fetch_sub(&tp->active_threads, 1);
 		// Close as we are going to get testing if the queue is fully empty. 
 		if(DS_PBQueue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0){
@@ -164,28 +164,28 @@ static void *get_tasks(void *args){
 		}
 	}
 	atomic_fetch_sub(&tp->thread_count, 1);
-	MU_LOG_VERBOSE(logger, "Thread #%d: Exited!\n", self->thread_id);
+	LOG_VERBOSE(logger, "Thread #%d: Exited!\n", self->thread_id);
 	return NULL;
 }
 
 /// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.
 static void set_priority(c_utils_thread_task *task, int flags){
-	if(MU_FLAG_GET(flags, TU_LOWEST_PRIORITY)) task->priority = LOWEST;
-	else if(MU_FLAG_GET(flags, TU_LOW_PRIORITY)) task->priority = LOW;
-	else if(MU_FLAG_GET(flags, TU_HIGH_PRIORITY)) task->priority = HIGH;
-	else if(MU_FLAG_GET(flags, TU_HIGHEST_PRIORITY)) task->priority = HIGHEST;
-	else task->priority = MEDIUM;
+	if(MU_FLAG_GET(flags, LOWEST_PRIORITY)) task->priority = PRIORITY_LOWEST;
+	else if(MU_FLAG_GET(flags, LOW_PRIORITY)) task->priority = PRIORITY_LOW;
+	else if(MU_FLAG_GET(flags, HIGH_PRIORITY)) task->priority = PRIORITY_HIGH;
+	else if(MU_FLAG_GET(flags, HIGHEST_PRIORITY)) task->priority = PRIORITY_HIGHEST;
+	else task->priority = PRIORITY_MEDIUM;
 
 }
 
 static char *get_priority(c_utils_thread_task *task){
-	if(task->priority == LOWEST) return "Lowest";
-	else if(task->priority == LOW) return "Low";
-	else if(task->priority == MEDIUM) return "Medium";
-	else if(task->priority == HIGH) return "High";
-	else if(task->priority == HIGHEST) return "Highest";
+	if(task->priority == PRIORITY_LOWEST) return "Lowest";
+	else if(task->priority == PRIORITY_LOW) return "Low";
+	else if(task->priority == PRIORITY_MEDIUM) return "Medium";
+	else if(task->priority == PRIORITY_HIGH) return "High";
+	else if(task->priority == PRIORITY_HIGHEST) return "Highest";
 	else {
-		MU_LOG_ERROR(logger, "Was unable to retrieve the priority of the task!\n");
+		LOG_ERROR(logger, "Was unable to retrieve the priority of the task!\n");
 		return NULL;
 	}
 }
@@ -201,7 +201,7 @@ struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size){
 	size_t workers_allocated = 0;
 	struct c_utils_thread_pool_t *tp = calloc(1, sizeof(struct c_utils_thread_pool_t));
 	if(!tp){
-		MU_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
 	tp->thread_count = ATOMIC_VAR_INIT(0);
@@ -209,17 +209,17 @@ struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size){
 	tp->queue = DS_PBQueue_create(0, (void *)compare_task_priority);
 	tp->resume = TU_Event_create(pause_event_name, event_logger, MU_EVENT_SIGNALED_BY_DEFAULT | MU_EVENT_SIGNAL_ON_TIMEOUT);
 	if(!tp->resume){
-		MU_LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", pause_event_name);
+		LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", pause_event_name);
 		goto error;
 	}
 	tp->finished = TU_Event_create(finished_event_name, event_logger, 0);
 	if(!tp->finished){
-		MU_LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", finished_event_name);
+		LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", finished_event_name);
 		goto error;
 	}
 	tp->worker_threads = malloc(sizeof(pthread_t *) * pool_size);
 	if(!tp->worker_threads){
-		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 		goto error;
 	}
 	pthread_attr_t attr;
@@ -229,19 +229,19 @@ struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size){
 	for(;i < pool_size; i++){
 		struct c_utils_thread_worker_t *worker = calloc(1, sizeof(struct c_utils_thread_worker_t));
 		if(!worker){
-			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
 		workers_allocated++;
 		worker->thread = malloc(sizeof(pthread_t));
 		if(!worker->thread){
-			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
 		worker->thread_id = i+1;
 		int create_error = pthread_create(worker->thread, &attr, get_tasks, tp);
 		if(create_error){
-			MU_LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
+			LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
 			goto error;
 		}
 		tp->worker_threads[i] = worker;
@@ -280,18 +280,18 @@ struct c_utils_result_t *c_utils_thread_pool_add(struct c_utils_thread_pool_t *t
 	if(!MU_FLAG_GET(flags, TU_NO_RESULT)){
 		result = calloc(1, sizeof(TU_Result_t));
 		if(!result){
-			MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+			LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
 		result->is_ready = TU_Event_create(result_event_name, event_logger, 0);
 		if(!result->is_ready){
-			MU_LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", result_event_name);
+			LOG_ERROR(logger, "TU_Event_create: 'Was unable to create event: %s!'", result_event_name);
 			goto error;
 		}
 	}
 	thread_task = calloc(1, sizeof(struct c_utils_thread_task_t));
 	if(!task){
-		MU_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 		goto error;
 	}
 	thread_task->task = task;
@@ -301,10 +301,10 @@ struct c_utils_result_t *c_utils_thread_pool_add(struct c_utils_thread_pool_t *t
 	TU_Event_reset(tp->finished, 0);
 	bool enqueued = DS_PBQueue_enqueue(tp->queue, thread_task, -1);
 	if(!enqueued){
-		MU_LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
+		LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
 		goto error;
 	}
-	MU_LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!", get_priority(thread_task));
+	LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!", get_priority(thread_task));
 	return result;
 
 	error:
@@ -322,7 +322,7 @@ struct c_utils_result_t *c_utils_thread_pool_add(struct c_utils_thread_pool_t *t
 
 bool c_utils_thread_pool_clear(struct c_utils_thread_pool_t *tp){
 	MU_ARG_CHECK(logger, false, tp);
-	MU_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
+	LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
 	return DS_PBQueue_clear(tp->queue, (void *)destroy_task);
 }
 
@@ -364,7 +364,7 @@ bool c_utils_thread_pool_destroy(struct c_utils_thread_pool_t *tp){
 	for(; i < old_thread_count; i++) destroy_worker(tp->worker_threads[i]);
 	free(tp->worker_threads);
 	free(tp);
-	MU_LOG_VERBOSE(logger, "Thread pool has been properly destroyed!\n");
+	LOG_VERBOSE(logger, "Thread pool has been properly destroyed!\n");
 	return true;
 }
 
