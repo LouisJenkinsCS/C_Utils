@@ -17,19 +17,21 @@ static struct c_utils_logger *logger = NULL;
 LOGGER_AUTO_CREATE(logger, "./networking/logs/client.log", "w", LOG_LEVLE_ALL);
 
 static int get_connection_socket(const char *host, unsigned int port, long long int timeout){
-	struct addrinfo hints, *results, *current;
 	fd_set connect_set;
 	struct timeval tv;
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
-	int retval, sockfd = 0, iteration = 0;
-	char *port_str;
-
-	asprintf(&port_str, "%u", port);
-	memset(&hints, 0, sizeof(hints));
 	
+	char *port_str;
+	asprintf(&port_str, "%u", port);
+
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	
+	int retval;
+	struct addrinfo *results;
 	if((retval = getaddrinfo(host, port_str, &hints, &results))){
 		LOG_WARNING(logger, "getaddrinfo: '%s'", gai_strerror(retval));
 		free(port_str);
@@ -38,6 +40,8 @@ static int get_connection_socket(const char *host, unsigned int port, long long 
 	free(port_str);
 	
 	// Loop through all potential results to find a valid connection.
+	int sockfd = 0, iteration = 0;
+	struct addrinfo *current;
 	for(current = results; current; current = current->ai_next){
 		C_UTILS_TEMP_FAILURE_RETRY(sockfd, socket(current->ai_family, current->ai_socktype, current->ai_protocol));
 	    if(sockfd == -1){
