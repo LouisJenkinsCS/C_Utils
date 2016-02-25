@@ -15,55 +15,49 @@
  * 
  */
 
-#ifndef SU_String_H
-#define	SU_String_H
+#ifndef C_UTILS_STRING_H
+#define	C_UTILS_STRING_H
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define String string_t
-#define string_contains(...) SU_String_contains(__VA_ARGS__)
-#define string_lower(...) SU_String_lower(__VA_ARGS__)
-#define string_upper(...) SU_String_upper(__VA_ARGS__)
-#define string_char_at(...) SU_String_char_at(__VA_ARGS__)
-#define string_equal(...) SU_String_equal(__VA_ARGS__)
-#define string_split(...) SU_String_split(__VA_ARGS__)
-#define string_reverse(...) SU_String_reverse(__VA_ARGS__)
-#define string_join(...) SU_String_join(__VA_ARGS__)
-#define string_replace(...) SU_String_replace(__VA_ARGS__)
-#define string_substring(...) SU_String_substring(__VA_ARGS__)
-#define string_trim(...) SU_String_trim(__VA_ARGS__)
-#define string_count(...) SU_String_count(__VA_ARGS__)
-#define string_between(...) SU_String_between(__VA_ARGS__)
-#define string_starts_with(...) SU_String_starts_with(__VA_ARGS__)
-#define string_ends_with(...) SU_String_ends_with(__VA_ARGS__)
-#define string_index_of(...) SU_String_index_of(__VA_ARGS__)
+#ifdef NO_C_UTILS_PREFIX
+#define string_contains(...) c_utils_string_contains(__VA_ARGS__)
+#define string_lower(...) c_utils_string_lower(__VA_ARGS__)
+#define string_upper(...) c_utils_string_upper(__VA_ARGS__)
+#define string_char_at(...) c_utils_string_char_at(__VA_ARGS__)
+#define string_equal(...) c_utils_string_equal(__VA_ARGS__)
+#define string_split(...) c_utils_string_split(__VA_ARGS__)
+#define string_reverse(...) c_utils_string_reverse(__VA_ARGS__)
+#define string_join(...) c_utils_string_join(__VA_ARGS__)
+#define string_replace(...) c_utils_string_replace(__VA_ARGS__)
+#define string_substring(...) c_utils_string_substring(__VA_ARGS__)
+#define string_trim(...) c_utils_string_trim(__VA_ARGS__)
+#define string_count(...) c_utils_string_count(__VA_ARGS__)
+#define string_between(...) c_utils_string_between(__VA_ARGS__)
+#define string_starts_with(...) c_utils_string_starts_with(__VA_ARGS__)
+#define string_ends_with(...) c_utils_string_ends_with(__VA_ARGS__)
+#define string_index_of(...) c_utils_string_index_of(__VA_ARGS__)
 #endif
 
 /**
 * Convenience typedef of char *.
 */
-typedef char *String;
+typedef char *string_t;
 
 /**
  * Uses compiler attributes to cleanup strings after leaving the scope of the function.
- * Used as a "feature", it's available without SU_String, and requires GCC and Clang, but
+ * Used as a "feature", it's available without this library, and requires GCC and Clang, but
  * it is a nice enough feature. To use it, declare a string like so:
  * 
- * String string TEMP = "Example String";
+ * char *string TEMP = "Example String";
  * 
  * When the scope of the variable is left, it will call the cleanup function,
- * SU_String_Destroy, and handle everything for you.
+ * c_utils_string_destroy, and handle everything for you.
  */
-#define TEMP __attribute__ ((__cleanup__(SU_String_destroy)))
+#define TEMP __attribute__ ((__cleanup__(c_utils_string_destroy)))
 
-#include <stdlib.h>
+
 #include <string.h>
-#include <stdio.h>
 #include <stdbool.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <ctype.h>
-#include <MU_Logger.h>
-#include <MU_Arg_Check.h>
+
 
 /**
  * Scans the string for the passed substring up to the passed length. If 0
@@ -75,7 +69,7 @@ typedef char *String;
  * @param ignore_case If true, case insensitive, else case sensitive.
  * @return true if it contains the substr, or false if it doesn't or if str or substr is NULL.
  */
-bool SU_String_contains(const String str, const String substr, size_t len, bool ignore_case);
+bool c_utils_string_contains(const char *str, const char *substr, size_t len, bool ignore_case);
 
 /**
  * Converts a string to lowercase, up to the passed length. If 0
@@ -85,7 +79,7 @@ bool SU_String_contains(const String str, const String substr, size_t len, bool 
  * @param len Amount of string to lower. If 0, strlen is used.
  * @return The beginning of str, or NULL if str is NULL.
  */
-String SU_String_lower(String str, size_t len);
+char *c_utils_string_lower(char *str, size_t len);
 
 /**
  * Converts the string to uppercase, up to the passed length. If 0
@@ -96,7 +90,7 @@ String SU_String_lower(String str, size_t len);
  * @param len Amount of string to upper. If 0, strlen is used.
  * @return The beginning of str, or NULL if str is NULL.
  */
-String SU_String_upper(String str, size_t len);
+char *c_utils_string_upper(char *str, size_t len);
 
 /**
  * Obtains the character at the given index, with bounds checking. The string MUST be
@@ -105,7 +99,7 @@ String SU_String_upper(String str, size_t len);
  * @param index The index, if out of bounds it defaults to the index of the NULL-terminator.
  * @return The character at the index, or '\0' if it is out of bounds or if str is NULL.
  */
-char SU_String_char_at(const String str, unsigned int index);
+char c_utils_string_char_at(const char *str, unsigned int index);
 
 /**
  * Compares two string to see if they are equal, up to len. If len is 0, strlen is used to determine the string's length,
@@ -117,7 +111,7 @@ char SU_String_char_at(const String str, unsigned int index);
  * @param ignore_case If true, comparison is case insensitive.
  * @return true if they are equal, false if they are not or if either string_one or string_two are NULL.
  */
-bool SU_String_equal(const String string_one, const String string_two, size_t len, bool ignore_case);
+bool c_utils_string_equal(const char *string_one, const char *string_two, size_t len, bool ignore_case);
 
 /**
  * Splits the given string into many strings according to the delimiter. The pointer to a size_t variable is
@@ -129,7 +123,7 @@ bool SU_String_equal(const String string_one, const String string_two, size_t le
  * @param size Used to return the size of the array of strings.
  * @return An array of strings with updated to indicate it's size, or NULL if either str or delimiter are NULL or if the delimiter could not be found.
  */
-String *SU_String_split(const String str, const String delimiter, size_t len, size_t *size);
+char **c_utils_string_split(const char *str, const char *delimiter, size_t len, size_t *size);
 
 /**
  * Concatenates all strings passed, with the delimiter inserted in between each string, into one string.
@@ -173,7 +167,7 @@ String *SU_String_split(const String str, const String delimiter, size_t len, si
  * @param len Length of the string to reverse up to. If len is 0, strlen is used to determine string length.
  * @return The start of the reversed string.
  */
-String SU_String_reverse(String str, size_t len);
+char *c_utils_string_reverse(char *str, size_t len);
 
 /**
  * Joins the array of strings together, with the passed delimiter in between, into
@@ -183,7 +177,7 @@ String SU_String_reverse(String str, size_t len);
  * @param size Size of the array of strings.
  * @return The combined string.
  */
-String SU_String_join(const String arr[], const String delimiter, size_t size);
+char *c_utils_string_join(const char *arr[], const char *delimiter, size_t size);
 
 /**
  * Scans the string for old_char and replaces it with new_chat, up to the passed length. 
@@ -196,7 +190,7 @@ String SU_String_join(const String arr[], const String delimiter, size_t size);
  * @param ignore_case Case insensitive comparison is used if true.
  * @return The beginning of str, NULL if str is NULL.
  */
-String SU_String_replace(String str, char old_char, char new_char, size_t len, bool ignore_case);
+char *c_utils_string_replace(char *str, char old_char, char new_char, size_t len, bool ignore_case);
 
 /**
  * Determines if the string passed starts with find. Both must be NULL-terminated.
@@ -205,7 +199,7 @@ String SU_String_replace(String str, char old_char, char new_char, size_t len, b
  * @param ignore_case Case insensitive if true.
  * @return  true if it does, false if it does not or if str or find are NULL.
  */
-bool SU_String_starts_with(const String str, const String find, bool ignore_case);
+bool c_utils_string_starts_with(const char *str, const char *find, bool ignore_case);
 
 /**
  * Determines if the string passed ends with find. Both must be NULL-terminated.
@@ -214,7 +208,7 @@ bool SU_String_starts_with(const String str, const String find, bool ignore_case
  * @param ignore_case Case insensitive if true.
  * @return  true if it does, false if it does not or if str or find are NULL.
  */
-bool SU_String_ends_with(const String str, const String find, bool ignore_case);
+bool c_utils_string_ends_with(const char *str, const char *find, bool ignore_case);
 
 /**
  * Creates a substring at the given offset up to end. str need not be NULL-terminated,
@@ -224,7 +218,7 @@ bool SU_String_ends_with(const String str, const String find, bool ignore_case);
  * @param end The end of the string.
  * @return The substring or NULL if str is NULL.
  */
-String SU_String_substring(const String str, unsigned int offset, unsigned int end);
+char *c_utils_string_substring(const char *str, unsigned int offset, unsigned int end);
 
 /**
  * Trims the string of leading and trailing white spaces. If len is 0, strlen is used
@@ -234,7 +228,7 @@ String SU_String_substring(const String str, unsigned int offset, unsigned int e
  * @param len Length fo the string to trim up to.
  * @return The new string.
  */
-String SU_String_trim(String *string_ptr, size_t len);
+char *c_utils_string_trim(char **string_ptr, size_t len);
 
 /**
  * Obtains the beginning index of the substr in str if it exists, up to len. If len is 0, strlen is used
@@ -245,7 +239,7 @@ String SU_String_trim(String *string_ptr, size_t len);
  * @param ignore_case if true, search is case insensitive.
  * @return The index at the beginning of the substr.
  */
-int SU_String_index_of(const String str, const String substr, size_t len, bool ignore_case);
+int c_utils_string_index_of(const char *str, const char *substr, size_t len, bool ignore_case);
 
 /**
  * Counts the occurences of the substr in the given str up to len (strlen if len == 0).
@@ -255,7 +249,7 @@ int SU_String_index_of(const String str, const String substr, size_t len, bool i
  * @param ignore_case Search is case insensitive if true.
  * @return The occurences of the substr in str.
  */
-unsigned int SU_String_count(const String str, const String substr, size_t len, bool ignore_case);
+unsigned int c_utils_string_count(const char *str, const char *substr, size_t len, bool ignore_case);
 
 /**
  * Returns the substring between start and end in str, up to len (strlen if len == 0).
@@ -266,13 +260,13 @@ unsigned int SU_String_count(const String str, const String substr, size_t len, 
  * @param ignore_case Search is case insensitive if true.
  * @return The substring between start and end.
  */
-String SU_String_between(const String str, const String start, const String end, size_t len, bool ignore_case);
+char *c_utils_string_between(const char *str, const char *start, const char *end, size_t len, bool ignore_case);
 
 /**
  * Destroys the passed string, used by compiler attribute.
  * @param string_ptr Pointer to the string being destroyed.
  */
-void SU_String_destroy(String *string_ptr);
+void c_utils_string_destroy(char **string_ptr);
 
-#endif	/* SU_String_H */
+#endif	/* C_UTILS_STRING_H */
 

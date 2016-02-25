@@ -156,7 +156,7 @@ size_t NU_Connection_send_file(NU_Connection_t *conn, FILE *file, long long int 
 	MU_TEMP_FAILURE_RETRY(buf_read, fread(buf, 1, send_buf_size, file));
 	while(buf_read > 0){
 		if(send_all(conn->sockfd, buf, buf_read, timeout, flags, conn->logger) != buf_read){
-			MU_LOG_WARNING(conn->logger, "NU_Connection_send_file->NU_send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
+			MU_LOG_WARNING(conn->logger, "NU_Connection_send_file->send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
 			MU_COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 			return total_sent;
 		}

@@ -9,7 +9,7 @@
  * @param storage Stores result.
  * @param function Name of syscall
  */
-#define MU_TEMP_FAILURE_RETRY(storage, function) while(errno = 0, (storage = function),  errno == EINTR); 
+#define C_UTILS_TEMP_FAILURE_RETRY(storage, function) while(errno = 0, (storage = function),  errno == EINTR); 
 
 
 #endif /* endif MU_RETRY_H */

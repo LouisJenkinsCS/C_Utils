@@ -1,6 +1,6 @@
-#include "MU_Logger.h"
+#include "io/logger.h"
 
-struct c_utils_log_format_t{
+struct c_utils_log_format{
 	char *all_f;
 	char *trace_f;
 	char *verbose_f;
@@ -13,16 +13,16 @@ struct c_utils_log_format_t{
 	char *default_f;
 };
 
-struct c_utils_logger_t {
+struct c_utils_logger {
 	/// The log file to write to.
 	FILE *file;
 	/// The formatter for log strings.
-	struct c_utils_log_format_t format;
+	struct c_utils_log_format format;
 	/// The level determining what messages will be printed.
 	enum c_utils_log_level_e level;
 };
 
-struct c_utils_log_format_t {
+struct c_utils_log_format {
 	const char *msg;
 	const char *file_name;
 	const char *line_number;
@@ -36,34 +36,34 @@ static const int buffer_size = 1024;
 
 static const int num_of_tokens = 7;
 
-static const char *get_function_name(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_function_name(struct c_utils_log_format_info *info, va_list args){
 	return info->function_name;
 }
 
-static const char *get_line_number(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_line_number(struct c_utils_log_format_info *info, va_list args){
 	return info->line_number;
 }
 
-static const char *get_log_level(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_log_level(struct c_utils_log_format_info *info, va_list args){
 	return info->log_level;
 }
 
-static const char *get_file_name(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_file_name(struct c_utils_log_format_info *info, va_list args){
 	return info->file_name;
 }
 
-static const char *get_message(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_message(struct c_utils_log_format_info *info, va_list args){
 	char *str = malloc(1024+1);
 	vsnprintf(str, 1024, info->msg, args);
 	info->should_free = 1;
 	return str;
 }
 
-static const char *get_condition(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_condition(struct c_utils_log_format_info *info, va_list args){
 	return info->cond_str;
 }
 
-static const char *get_timestamp(struct c_utils_log_format_info_t *info, va_list args){
+static const char *get_timestamp(struct c_utils_log_format_info *info, va_list args){
 	info->should_free = 1;
 	const int buffer_size = 80;
 	time_t t = time(NULL);
@@ -79,7 +79,7 @@ static const char *get_timestamp(struct c_utils_log_format_info_t *info, va_list
 */
 struct {
 	const char *token;
-	const char *(*callback)(c_utils_log_format_info_t *info, va_list);
+	const char *(*callback)(c_utils_log_format_info *info, va_list);
 } static format_tokens[] = {
 	{ "%fnc", get_function_name }, { "%fle", get_file_name }, 
 	{ "%lno", get_line_number }, { "%lvl", get_log_level },
@@ -87,7 +87,7 @@ struct {
 	{ "%tsm", get_timestamp }
 };
 
-static const char *parse_token(const char *token, struct c_utils_log_format_info_t *info, va_list args){
+static const char *parse_token(const char *token, struct c_utils_log_format_info *info, va_list args){
 	int i = 0;
 	for(; i < num_of_tokens; i++){
 		if(strcmp(token, format_tokens[i].token) == 0){
@@ -110,7 +110,7 @@ static const char *log_level_to_string(enum c_utils_log_level_e level){
 	}
 }
 
-static int format_string(const char *format, char *buffer, int buf_size, struct c_utils_log_format_info_t *info, va_list args){
+static int format_string(const char *format, char *buffer, int buf_size, struct c_utils_log_format_info *info, va_list args){
 	int buf_index = 0, left = buf_size;
 	const int token_size = 4;
 	/// Since max size of each format is 3, I can just read 2 to 3 characters to determine whether or not it passes a check.
@@ -140,9 +140,9 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 	return buf_index;
 }
 
-static const char *get_log_format(struct c_utils_logger_t *logger, enum c_utils_log_level_e level){
+static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_log_level_e level){
 	if(!logger) return NULL;
-	struct c_utils_log_format_t format = logger->format;
+	struct c_utils_log_format format = logger->format;
 	char *real_format = NULL;
 	switch(level){
 		case LOG_LEVEL_ASSERTION: real_format = format.assertion_f; break;
@@ -165,8 +165,8 @@ static const char *get_log_format(struct c_utils_logger_t *logger, enum c_utils_
 }
 
 /// Initialize logger.
-struct c_utils_logger_t *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level){
-	c_utils_logger_t *logger = calloc(1, sizeof(c_utils_logger_t));
+struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level){
+	c_utils_logger *logger = calloc(1, sizeof(c_utils_logger_t));
 	if(!logger){
 		MU_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
 		goto error;
@@ -189,11 +189,11 @@ struct c_utils_logger_t *c_utils_logger_create(const char *filename, const char 
 		return NULL;
 }
 
-bool c_utils_logger_log(struct c_utils_logger_t *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...){
+bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...){
 	if(!logger || !logger->file || logger->level > level) return false;
 	va_list args;
 	va_start(args, function_name);
-	struct c_utils_log_format_info_t info = { .msg = msg, .log_level = custom_level ? custom_level : log_level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
+	struct c_utils_log_format_info info = { .msg = msg, .log_level = custom_level ? custom_level : log_level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
 	const int log_buf_size = buffer_size * 2;
 	char buffer[log_buf_size + 1];
 	format_string(get_log_format(logger, level), buffer, log_buf_size, &info, args);
@@ -206,7 +206,7 @@ bool c_utils_logger_log(struct c_utils_logger_t *logger, enum c_utils_log_level_
 }
 
 
-bool c_utils_logger_destroy(struct c_utils_logger_t *logger){
+bool c_utils_logger_destroy(struct c_utils_logger *logger){
 	if(!logger) return false;
 	if(logger->file) fclose(logger->file);
 	free(logger->format.all_f);

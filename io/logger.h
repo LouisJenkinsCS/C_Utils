@@ -10,7 +10,7 @@
 #include <time.h>
 #include <assert.h>
 
-struct c_utils_logger_t;
+struct c_utils_logger;
 
 enum c_utils_log_level_e {
 	/// Display all log levels.
@@ -36,7 +36,7 @@ enum c_utils_log_level_e {
 };
 
 #ifdef NO_C_UTILS_PREFIX
-typedef struct c_utils_logger_t logger_t;
+typedef struct c_utils_logger logger_t;
 #define logger_create(...) c_utils_logger_create(__VA_ARGS__)
 #define logger_destroy(...) c_utils_logger_destroy(__VA_ARGS__)
 #endif
@@ -126,7 +126,7 @@ __attribute__((destructor)) static void destroy_ ##logger (void){ \
  * @param level Level to log up to, I.E MU_INFO logs only INFO and above.
  * @return Logger, or null if allocation error.
  */
-struct c_utils_logger_t *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level);
+struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level);
 
 /**
  * This should NEVER be called outside of the implementation for this logger. Instead, use the macros above.
@@ -141,13 +141,13 @@ struct c_utils_logger_t *c_utils_logger_create(const char *filename, const char 
  * @param ...
  * @return 
  */
-bool c_utils_logger_log(struct c_utils_logger_t *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
+bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
 
 /**
  * Destroys the logger.
  * @param logger
  * @return 
  */
-bool c_utils_logger_destroy(struct c_utils_logger_t *logger);
+bool c_utils_logger_destroy(struct c_utils_logger *logger);
 
 #endif

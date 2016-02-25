@@ -25,22 +25,22 @@
  * finetune whether you want to block indefinitely or poll.
  * 
  * The default behavior for the thread pool is the following...
- * - A c_utils_result_t object is returned
+ * - A c_utils_result object is returned
  * - The task is added with a normal/medium priority
- * - You MUST free the c_utils_result_t object when finished.
+ * - You MUST free the c_utils_result object when finished.
  */
 
 #include <stdbool.h>
 
 typedef void *(*c_utils_task)(void *);
 
-struct c_utils_result_t;
+struct c_utils_result;
 
-struct c_utils_thread_pool_t;
+struct c_utils_thread_pool;
 
 #ifdef NO_C_UTILS_PREFIX
-typedef struct c_utils_thread_pool_t thread_pool_t;
-typedef struct c_utils_result_t result_t;
+typedef struct c_utils_thread_pool thread_pool_t;
+typedef struct c_utils_result result_t;
 #define thread_pool_create(...) c_utils_thread_pool_create(__VA_ARGS__)
 #define thread_pool_add(...) c_utils_thread_pool_add(__VA_ARGS__)
 #define thread_pool_clear(...) c_utils_thread_pool_clear(__VA_ARGS__)
@@ -52,8 +52,6 @@ typedef struct c_utils_result_t result_t;
 #define result_destroy(...) c_utils_result_destroy(__VA_ARGS__)
 #endif
 
-/// The default behavior for a function.
-const int NONE = 1 << 0;
 /// Will not return a Result upon submitting a task.
 const int NO_RESULT = 1 << 1;
 /// Flags the task as lowest priority.
@@ -70,7 +68,7 @@ const int HIGHEST_PRIORITY = 1 << 5;
  * @param pool_size Number of worker threads, minimum of 1.
  * @return The thread pool instance, or NULL on allocation error or initialization error.
  */
-struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size);
+struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size);
 
 /**
  * Adds a task to the thread pool. While it requires a void *(*callback)(void *args)
@@ -82,27 +80,27 @@ struct c_utils_thread_pool_t *c_utils_thread_pool_create(size_t pool_size);
  * | TP_HIGHEST_PRIORITY | TP_NO_RESULT.
  * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
  */
-struct c_utils_result_t *c_utils_thread_pool_add(struct c_utils_thread_pool_t *tp, c_utils_task task, void *args, int flags);
+struct c_utils_result *c_utils_thread_pool_add(struct c_utils_thread_pool *tp, c_utils_task task, void *args, int flags);
 
 /**
  * Destroys the Result from a task.
  * @param result Result to be destroyed.
  * @return true on success, false if not.
  */
-bool c_utils_result_destroy(struct c_utils_result_t *result);
+bool c_utils_result_destroy(struct c_utils_result *result);
 
 /**
 * Clears the thread pool of all tasks.
 * @param tp Thread Pool instance.
 * @return true if successful, false if not.
 */
-bool c_utils_thread_pool_clear(struct c_utils_thread_pool_t *tp);
+bool c_utils_thread_pool_clear(struct c_utils_thread_pool *tp);
 
 /**
  * Destroys the current thread pool, waiting for the current tasks to be finished.
  * @return 1 on success.
  */
-bool c_utils_thread_pool_destroy(struct c_utils_thread_pool_t *tp);
+bool c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp);
 
 /**
  * Obtain the result from the task, blocking until it is ready or until the time 
@@ -111,7 +109,7 @@ bool c_utils_thread_pool_destroy(struct c_utils_thread_pool_t *tp);
  * @param timeout Maximum amount of time to block for if result isn't ready.
  * @return The item stored inside the result, or NULL if timeout or thread pool is shutdown.
  */
-void *c_utils_result_get(struct c_utils_result_t *result, long long int timeout);
+void *c_utils_result_get(struct c_utils_result *result, long long int timeout);
 
 /**
  * Block until all tasks are finished or timeout ellapses.
@@ -119,7 +117,7 @@ void *c_utils_result_get(struct c_utils_result_t *result, long long int timeout)
  * @param timeout The max amount of time to block for, infinite if -1.
  * @return true if the thread pool is finished, false if not.
  */
-bool c_utils_thread_pool_wait(struct c_utils_thread_pool_t *tp, long long int timeout);
+bool c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int timeout);
 
 /**
  * Pause the thread pool, and prevent worker threads from working. It does not stop threads from executing
@@ -128,13 +126,13 @@ bool c_utils_thread_pool_wait(struct c_utils_thread_pool_t *tp, long long int ti
  * @param timeout The max amount of time to block for, infinite if -1.
  * @return true if paused, false if not.
  */
-bool c_utils_thread_pool_pause(struct c_utils_thread_pool_t *tp, long long int timeout);
+bool c_utils_thread_pool_pause(struct c_utils_thread_pool *tp, long long int timeout);
 
 /**
  * Resume all worker threads that are paused.
  * @param tp Thread pool instance.
  * @return true on success, false if not.
  */
-bool c_utils_thread_pool_resume(struct c_utils_thread_pool_t *tp);
+bool c_utils_thread_pool_resume(struct c_utils_thread_pool *tp);
 
 #endif /* END THREAD_POOL_H */

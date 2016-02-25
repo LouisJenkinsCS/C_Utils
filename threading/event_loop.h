@@ -2,16 +2,13 @@
 #define TU_EVENT_LOOP_H
 
 #include <stdbool.h>
-#include <sys/time.h>
-#include <DS_List.h>
-#include <TU_Events.h>
 
-struct c_utils_event_loop_t;
-struct c_utils_event_source_t;
+struct c_utils_event_loop;
+struct c_utils_event_source;
 
 #ifdef NO_C_UTILS_PREFIX
-typedef struct c_utils_event_loop_t event_loop_t;
-typedef struct c_utils_event_source_t event_source_t;
+typedef struct c_utils_event_loop event_loop_t;
+typedef struct c_utils_event_source event_source_t;
 #define event_loop_create(...) c_utils_event_loop_create(__VA_ARGS__)
 #define event_source_create(...) c_utils_event_source_create(__VA_ARGS__)
 #define event_loop_add(...) c_utils_event_loop_add(__VA_ARGS__)
@@ -39,20 +36,20 @@ typedef bool (*c_utils_event_finalize)(void *);
  * @param timeout If not 0, then it will only be checked and dispatched based on this.
  * @return Configured event source.
  */
-struct c_utils_event_source_t *c_utils_event_source_create(c_utils_event_prepare prepare_cb, c_utils_event_check check_cb, c_utils_event_dispatch dispatch_cb, c_utils_event_finalize finalize_cb, unsigned long long int timeout);
+struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare prepare_cb, c_utils_event_check check_cb, c_utils_event_dispatch dispatch_cb, c_utils_event_finalize finalize_cb, unsigned long long int timeout);
 
 /**
  * Destroys the event source.
  * @param source Source.
  * @return True if successful, false if source is null.
  */
-bool c_utils_event_source_destroy(struct c_utils_event_source_t *source);
+bool c_utils_event_source_destroy(struct c_utils_event_source *source);
 
 /**
  * Creates an event loop, with no sources. It will initialize it's data.
  * @return Event loop.
  */
-struct c_utils_event_loop_t *TU_Event_Loop_create(void);
+struct c_utils_event_loop *TU_Event_Loop_create(void);
 
 /**
  * Addsa source to the loop.
@@ -60,7 +57,7 @@ struct c_utils_event_loop_t *TU_Event_Loop_create(void);
  * @param source Source.
  * @return True if successful, false is loop or source is null.
  */
-bool c_utils_event_loop_add(struct c_utils_event_loop_t *loop, struct c_utils_event_source_t *source);
+bool c_utils_event_loop_add(struct c_utils_event_loop *loop, struct c_utils_event_source *source);
 
 /**
  * Runs the event loop, polling on it every 10ms. Warning, this should be run on a separate
@@ -68,14 +65,14 @@ bool c_utils_event_loop_add(struct c_utils_event_loop_t *loop, struct c_utils_ev
  * @param loop Loops.
  * @return True if successful, false is loop is already running or loop is null.
  */
-bool c_utils_event_loop_run(struct c_utils_event_loop_t *loop);
+bool c_utils_event_loop_run(struct c_utils_event_loop *loop);
 
 /**
  * Stops the loop. The current iteration is completed before exiting.
  * @param loop Loops.
  * @return True if successful, false is loop is not running or is null.
  */
-bool c_utils_event_loop_stop(struct c_utils_event_loop_t *loop);
+bool c_utils_event_loop_stop(struct c_utils_event_loop *loop);
 
 /**
  * Stops and then Destroys the event loop, as well as freeing all sources if free_sources is true.
@@ -83,6 +80,6 @@ bool c_utils_event_loop_stop(struct c_utils_event_loop_t *loop);
  * @param free_sources To free all sources or not.
  * @return True if successful, false if loop is null or unable to free all sources.
  */
-bool c_utils_event_loop_destroy(struct c_utils_event_loop_t *loop, bool free_sources);
+bool c_utils_event_loop_destroy(struct c_utils_event_loop *loop, bool free_sources);
 
 #endif /* endif TU_EVENT_LOOP_H */
