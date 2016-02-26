@@ -48,7 +48,6 @@ static struct c_utils_logger_t *logger = NULL;
 static struct c_utils_logger_t *event_logger = NULL;
 
 LOGGER_AUTO_CREATE(logger, "./threading/logs/event_loop.log", "w", LOG_LEVEL_ALL);
-
 LOGGER_AUTO_CREATE(event_logger, "./threading/logs/event_loop_events.log", "w", LOG_LEVEL_ALL);
 
 
@@ -63,15 +62,19 @@ static const int event_prepared = 1 << 1;
 */
 static void event_loop_main(void *args){
 	struct c_utils_event_source *source = args;
+
 	if(FLAG_GET(source->flags, event_finished)) return;
+	
 	if(source->prepare && !FLAG_GET(source->flags, event_prepared)){
 		source->data = source->prepare();
 		FLAG_SET(source->flags, event_prepared);
 	}
+	
 	bool do_event = true;
 	if(source->timeout){
 		struct timeval curr_time;
 		gettimeofday(&curr_time, NULL);
+		
 		if(timercmp(&source->next_timeout, &curr_time, <)){
 			if(!timerisset(&source->next_timeout)) do_event = false;
 			size_t seconds = source->timeout / 1000;
@@ -92,11 +95,13 @@ static void event_loop_main(void *args){
 
 struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare prepare_cb, c_utils_event_check check_cb, c_utils_event_dispatch dispatch_cb, c_utils_event_finalize finalize_cb, unsigned long long int timeout){
 	ARG_CHECK(logger, NULL, dispatch_cb);
+
 	struct c_utils_event_source *source = calloc(1, sizeof(struct c_utils_event_source));
 	if(!source){
 		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
+	
 	source->prepare = prepare_cb;
 	source->check = check_cb;
 	source->dispatch = dispatch_cb;
@@ -105,6 +110,7 @@ struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare p
 		timerclear(&source->next_timeout);
 		source->timeout = timeout;
 	}
+	
 	return source;
 
 	error:
@@ -116,6 +122,7 @@ struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare p
 
 bool c_utils_event_source_destroy(struct c_utils_event_source *source){
 	ARG_CHECK(logger, false, source);
+	
 	free(source);
 	return true;
 }
@@ -126,17 +133,20 @@ struct c_utils_event_loop *c_utils_event_loop_create(void){
 		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
+	
 	// Synchronized list.
 	loop->sources = c_utils_list_create(true);
 	if(!loop->sources){
 		LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
 		goto error;
 	}
+	
 	loop->finished = c_utils_event_create("Finished", event_logger, 0);
 	if(!loop->finished){
 		LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
 		goto error;
 	}
+	
 	loop->keep_alive = ATOMIC_VAR_INIT(false);
 	return loop;
 
@@ -150,30 +160,36 @@ struct c_utils_event_loop *c_utils_event_loop_create(void){
 
 bool c_utils_event_loop_add(struct c_utils_event_loop *loop, struct c_utils_event_source *source){
 	ARG_CHECK(logger, false, loop, source);
+	
 	return c_utils_list_add(loop->sources, source, NULL);
 }
 
 bool c_utils_event_loop_run(struct c_utils_event_loop *loop){
 	ARG_CHECK(logger, false, loop);
+	
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
 		c_utils_list_for_each(loop->sources, event_loop_main);
 		usleep(10000);
 	}
+	
 	c_utils_event_signal(loop->finished, 0);
 	return true;
 }
 
 bool c_utils_event_loop_stop(struct c_utils_event_loop *loop){
 	ARG_CHECK(logger, false, loop);
+	
 	atomic_store(&loop->keep_alive, false);
 	return true;
 }
 
 bool c_utils_event_loop_destroy(struct c_utils_event_loop *loop, bool free_sources){
 	ARG_CHECK(logger, false, loop);
+	
 	c_utils_event_loop_stop(loop);
 	c_utils_event_wait(loop->finished, -1, 0);
+	
 	c_utils_list_destroy(loop->sources, free_sources ? free : NULL);
 	free(loop);
 	return true;

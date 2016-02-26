@@ -69,7 +69,9 @@ static const char *get_timestamp(struct c_utils_log_format_info *info, va_list a
 	time_t t = time(NULL);
 	struct tm *current_time = localtime(&t);
 	char *time_and_date = malloc(buffer_size);
+
 	strftime(time_and_date, buffer_size, "%I:%M:%S %p", current_time);
+	
 	return time_and_date;
 }
 
@@ -81,9 +83,12 @@ struct {
 	const char *token;
 	const char *(*callback)(c_utils_log_format_info *info, va_list);
 } static format_tokens[] = {
-	{ "%fnc", get_function_name }, { "%fle", get_file_name }, 
-	{ "%lno", get_line_number }, { "%lvl", get_log_level },
-	{ "%msg", get_message }, { "%cnd", get_condition },
+	{ "%fnc", get_function_name }, 
+	{ "%fle", get_file_name }, 
+	{ "%lno", get_line_number }, 
+	{ "%lvl", get_log_level },
+	{ "%msg", get_message }, 
+	{ "%cnd", get_condition },
 	{ "%tsm", get_timestamp }
 };
 
@@ -94,6 +99,7 @@ static const char *parse_token(const char *token, struct c_utils_log_format_info
 			return format_tokens[i].callback(info, args);
 		}
 	}
+
 	return NULL;
 }
 
@@ -115,21 +121,27 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 	const int token_size = 4;
 	/// Since max size of each format is 3, I can just read 2 to 3 characters to determine whether or not it passes a check.
 	char token[token_size + 1];
+	
 	char ch;
 	while((ch = *format++))
 	{
 		if(!left) break;
+		
 		info->should_free = 0;
+		
 		if(ch == '%'){
 			sprintf(token, "%%%.*s",  token_size - 1, format);
 			const char *tok_str = parse_token(token, info, args);
+			
 			if(tok_str){
 				int should_copy = strlen(tok_str) > left ? left : strlen(tok_str);
 				strncpy(buffer + buf_index, tok_str, left);
 				format += token_size - 1;
 				buf_index += should_copy;
 				left -= should_copy;
+				
 				if(info->should_free) free((char *)tok_str);
+				
 				continue;
 			}
 		}
@@ -137,13 +149,16 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 		left--;
 	}
 	buffer[buf_index] = '\0';
+	
 	return buf_index;
 }
 
 static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_log_level_e level){
 	if(!logger) return NULL;
+	
 	struct c_utils_log_format format = logger->format;
 	char *real_format = NULL;
+	
 	switch(level){
 		case LOG_LEVEL_ASSERTION: real_format = format.assertion_f; break;
 		case LOG_LEVEL_ERROR: real_format = format.error_f; break;
@@ -155,12 +170,14 @@ static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_lo
 		case LOG_LEVEL_TRACE: real_format = format.trace_f;
 		default: real_format = NULL;
 	}
+	
 	if(!real_format){
 		real_format = format.all_f;
 		if(!real_format){
 			real_format = format.default_f;
 		}
 	}
+	
 	return real_format;
 }
 
@@ -171,15 +188,18 @@ struct c_utils_logger *c_utils_logger_create(const char *filename, const char *m
 		MU_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
+	
 	logger->file = fopen(filename, mode);
 	if(!logger->file) {
 		MU_DEBUG("c_utils_logger_create->fopen: \"%s\"\n", strerror(errno));
 		goto error;
 	}
+	
 	logger->level = level;
 	logger->format.assertion_f = strdup("%tsm [%lvl](%fle:%lno) %fnc(): \nCondition: \"%cnd\"\nMessage: \"%msg\"\n");
 	logger->format.event_f = strdup("%tsm [%lvl] %cnd: \"%msg\"\n");
 	logger->format.default_f = "%tsm [%lvl](%fle:%lno) %fnc(): \n\"%msg\"\n";
+	
 	return logger;
 
 	error:
@@ -191,17 +211,24 @@ struct c_utils_logger *c_utils_logger_create(const char *filename, const char *m
 
 bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...){
 	if(!logger || !logger->file || logger->level > level) return false;
+	
 	va_list args;
 	va_start(args, function_name);
-	struct c_utils_log_format_info info = { .msg = msg, .log_level = custom_level ? custom_level : log_level_to_string(level), .file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
+	
+	struct c_utils_log_format_info info = { .msg = msg, .log_level = custom_level ? custom_level : log_level_to_string(level), 
+		.file_name = file_name, .line_number = line_number, .function_name = function_name, .cond_str = cond };
+	
 	const int log_buf_size = buffer_size * 2;
 	char buffer[log_buf_size + 1];
 	format_string(get_log_format(logger, level), buffer, log_buf_size, &info, args);
+
 	fprintf(logger->file, "%s", buffer);
 	fflush(logger->file);
+
 	if(level == LOG_LEVEL_ASSERTION){
 		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
+
 	return true;
 }
 
@@ -209,6 +236,7 @@ bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e 
 bool c_utils_logger_destroy(struct c_utils_logger *logger){
 	if(!logger) return false;
 	if(logger->file) fclose(logger->file);
+
 	free(logger->format.all_f);
 	free(logger->format.trace_f);
 	free(logger->format.verbose_f);
@@ -218,6 +246,8 @@ bool c_utils_logger_destroy(struct c_utils_logger *logger){
 	free(logger->format.warning_f);
 	free(logger->format.error_f);
 	free(logger->format.assertion_f);
+
 	free(logger);
+	
 	return true;
 }

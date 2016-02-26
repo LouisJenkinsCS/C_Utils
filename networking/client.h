@@ -38,7 +38,7 @@ typedef struct c_utils_client client_t;
  * @param synchronized If true, all access will be synchronized and thread-safe.
  * @return A fully initialized instance of c_utils_client, or NULL on memory error.
  */
-struct c_utils_client *NU_Client_create(size_t initial_size, bool synchronized);
+struct c_utils_client *c_utils_client_create(size_t initial_size, bool synchronized);
 
 /**
  * Creates (or recylces) a connection to the host and port end-point, and will block until either
@@ -49,7 +49,7 @@ struct c_utils_client *NU_Client_create(size_t initial_size, bool synchronized);
  * @param timeout Maximum amount of time to attempt to connect. If -1, indefinitely.
  * @return A connected c_utils_connection end-point, or NULL if error or timeout ellapses.
  */
-struct c_utils_connection *NU_Client_connect(struct c_utils_client *client, const char *host, unsigned int port, long long int timeout);
+struct c_utils_connection *c_utils_client_connect(struct c_utils_client *client, const char *host, unsigned int port, long long int timeout);
 
 /**
  * Disconnects the connection and marks as free to recycle in the c_utils_connection pool.
@@ -57,7 +57,7 @@ struct c_utils_connection *NU_Client_connect(struct c_utils_client *client, cons
  * @param connection Instance of a c_utils_connection returned from this instance of c_utils_client to disconnect.
  * @return true on success, false on error.
  */
-bool NU_Client_disconnect(struct c_utils_client *client, struct c_utils_connection *connection);
+bool c_utils_client_disconnect(struct c_utils_client *client, struct c_utils_connection *connection);
 
 /**
  * Logs the passed message to the client's log-file.
@@ -66,20 +66,20 @@ bool NU_Client_disconnect(struct c_utils_client *client, struct c_utils_connecti
  * @param ... Variadic Arguments to pass to the message format.
  * @return true on success, false on error.
  */
-bool NU_Client_log(struct c_utils_client *client, const char *message, ...);
+bool c_utils_client_log(struct c_utils_client *client, const char *message, ...);
 
 /**
  * Shutdown all connections in the c_utils_client instance.
  * @param client Instance of c_utils_client.
  * @return true on success, false on error.
  */
-bool NU_Client_shutdown(struct c_utils_client *client);
+bool c_utils_client_shutdown(struct c_utils_client *client);
 
 /**
  * Shutdown and destroy all connections in the c_utils_client instance.
  * @param client Instance of c_utils_client.
  * @return true on success, false on error.
  */
-bool NU_Client_destroy(struct c_utils_client *client);
+bool c_utils_client_destroy(struct c_utils_client *client);
 
 #endif /* endif NET_UTILS_CLIENT_H */

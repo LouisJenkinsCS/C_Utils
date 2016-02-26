@@ -9,7 +9,8 @@
 #include <errno.h>
 #include "io/logger.h"
 
-#define C_UTILS_LOG_LOCK(lock, level, format, ...) c_utils_logger_log(lock->logger, level, "LOCK", format, NULL, lock->info.file, lock->info.line, lock->info.function, ##__VA_ARGS__)
+#define C_UTILS_LOG_LOCK(lock, level, format, ...) \
+   c_utils_logger_log(lock->logger, level, "LOCK", format, NULL, lock->info.file, lock->info.line, lock->info.function, ##__VA_ARGS__)
 
 struct c_utils_scoped_lock
 {
@@ -56,6 +57,7 @@ static void *_destroy_scoped_lock_mutex(struct c_utils_scoped_lock *s_lock){
    if(errcode){
       LOG_ERROR(s_lock->logger, "pthread_mutex_destroy: \"%s\"", strerror(errcode));
    }
+
    free(s_lock->lock);
    return s_lock;
 }
@@ -67,15 +69,18 @@ static void *_acquire_scoped_lock_mutex(struct c_utils_scoped_lock *s_lock){
    } else {
       C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_TRACE, "Obtained lock...");
    }
+
    return s_lock;
 }
 
 static void *_release_scoped_lock_mutex(struct c_utils_scoped_lock *s_lock){
    C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_TRACE, "Releasing lock...");
+
    int errcode = pthread_mutex_unlock(s_lock->lock);
    if(errcode){
       C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_ERROR, "pthread_mutex_unlock: \"%s\"", strerror(errcode));
    }
+
    return s_lock;
 }
 
@@ -90,6 +95,7 @@ c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_u
       LOG_ASSERT(logger, "calloc: \"%s\"", strerror(errno));
       return NULL;
    }
+
    if(!lock){
       LOG_INFO(logger, "Passed lock was NULL, all locking operations set to a NO-OP!");
       s_lock->dispose = s_lock->acquire0 = s_lock->acquire1 = s_lock->release = scoped_lock_no_op;
@@ -101,6 +107,7 @@ c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_u
       s_lock->release = _release_scoped_lock_mutex;
    }
    s_lock->logger = logger;
+
    return s_lock;
 }
 
@@ -115,7 +122,9 @@ static void *_destroy_scoped_lock_spinlock(struct c_utils_scoped_lock *s_lock){
    if(errcode){
       C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_ERROR, "pthread_spin_destroy: \"%s\"", strerror(errcode));
    }
+
    free(s_lock->lock);
+
    return s_lock;
 }
 
@@ -126,15 +135,18 @@ static void *_acquire_scoped_lock_spinlock(struct c_utils_scoped_lock *s_lock){
    } else {
       C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_TRACE, "Obtained lock...");
    }
+
    return s_lock;
 }
 
 static void *_release_scoped_lock_spinlock(struct c_utils_scoped_lock *s_lock){
    C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_TRACE, "Releasing lock...");
+
    int errcode = pthread_spin_unlock(s_lock->lock);
    if(errcode){
       C_UTILS_LOG_LOCK(s_lock, LOG_LEVEL_ERROR, "pthread_spin_unlock: \"%s\"", strerror(errcode));
    }
+
    return s_lock;
 }
 
@@ -144,6 +156,7 @@ c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, stru
       LOG_ASSERT(logger, "calloc: \"%s\"", strerror(errno));
       return NULL;
    }
+
    if(!lock){
       LOG_INFO(logger, "Passed lock was NULL, all locking operations set to a NO-OP!");
       s_lock->dispose = s_lock->acquire0 = s_lock->acquire1 = s_lock->release = scoped_lock_no_op;
@@ -155,5 +168,6 @@ c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, stru
       s_lock->release = _release_scoped_lock_mutex;
    }
    s_lock->logger = logger;
+
    return s_lock;
 }
