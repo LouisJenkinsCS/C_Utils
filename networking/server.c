@@ -542,7 +542,7 @@ bool c_utils_server_destroy(struct c_utils_server *server){
 		return false;
 	}
 
-	SCOPED_LOCK(server->lock, logger) {
+	SCOPED_LOCK(server->lock) {
 		size_t i = 0;
 		for(;i < server->amount_of_connections; i++){
 			int successful = c_utils_connection_destroy(server->connections[i]);
@@ -559,7 +559,7 @@ bool c_utils_server_destroy(struct c_utils_server *server){
 		}
 	}
 
-	COND_MUTEX_DESTROY(server->lock, logger);
+	c_utils_scoped_lock_destroy(server->lock);
 	free(server->connections);
 	free(server->sockets);
 	free(server);
