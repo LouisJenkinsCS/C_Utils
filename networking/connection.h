@@ -1,12 +1,12 @@
 #ifndef NU_CONNECTION_H
 #define NU_CONNECTION_H
 
-#include <MU_Logger.h>
 #include <stdint.h>
 #include <stdatomic.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <arpa/inet.h>
+#include "io/logger.h"
 
 struct c_utils_connection;
 
@@ -55,7 +55,7 @@ typedef struct c_utils_connection_t {
    /// A reusable buffer for each connection.
    volatile bool in_use;
    /// Logger associated with each connection.
-   MU_Logger_t *logger;
+   struct c_utils_logger *logger;
 } c_utils_connection_t;
 
 /**
@@ -64,7 +64,7 @@ typedef struct c_utils_connection_t {
  * @param logger The logger to log any information to if not left NULL.
  * @return A new instance of c_utils_connection, not connected.
  */
-struct c_utils_connection *c_utils_connection_create(bool init_locks, MU_Logger_t *logger);
+struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_utils_logger *logger);
 
 /**
  * If the conn is connected, it will attempt to send the contents in buffer up to buf_size
@@ -128,7 +128,8 @@ size_t c_utils_connection_receive_file(struct c_utils_connection *conn, FILE *fi
  * @param logger The new logger to log any and all errors to.
  * @return An unused connection fully initialized if possible, null on error or if there is no available to instance to reuse.
  */
-struct c_utils_connection *c_utils_connection_reuse(struct c_utils_connection **connections, size_t size, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
+struct c_utils_connection *c_utils_connection_reuse(struct c_utils_connection **connections, size_t size, int sockfd,
+   unsigned int port, const char *ip_addr, struct c_utils_logger *logger);
 
 /**
  * A wrapper function for the select statement which will work with this abstraction. It takes the pointer to an array of connections to receive,
@@ -144,7 +145,8 @@ struct c_utils_connection *c_utils_connection_reuse(struct c_utils_connection **
  * @param logger Logger to log any messages to if declared.
  * @return Amount of ready receivers/senders.
  */
-int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_size, struct c_utils_connection ***senders, size_t *s_size, long long int timeout, MU_Logger_t *logger);
+int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_size, struct c_utils_connection ***senders, size_t *s_size,
+   long long int timeout, struct c_utils_logger *logger);
 
 /**
  * Obtains the socket file descriptor.
@@ -195,14 +197,14 @@ bool c_utils_connection_set_port(struct c_utils_connection *conn, unsigned int p
  * @param conn Instance of connection.
  * @return Logger used by connection.
  */
-MU_Logger_t *c_utils_connection_get_logger(struct c_utils_connection *conn);
+struct c_utils_logger *c_utils_connection_get_logger(struct c_utils_connection *conn);
 
 /**
  * Sets the logger used.
  * @param conn Instance of connection.
  * @return True on success, false on error.
  */
-bool c_utils_connection_set_logger(struct c_utils_connection *conn, MU_Logger_t *logger);
+bool c_utils_connection_set_logger(struct c_utils_connection *conn, struct c_utils_logger *logger);
 
 /**
  * Determines if the connection is currently in use.
@@ -220,7 +222,7 @@ bool c_utils_connection_in_use(struct c_utils_connection *conn);
  * @param logger Logger.
  * @return True if successful, false on error.
  */
-bool c_utils_connection_init(struct c_utils_connection *conn, int sockfd, unsigned int port, const char *ip_addr, MU_Logger_t *logger);
+bool c_utils_connection_init(struct c_utils_connection *conn, int sockfd, unsigned int port, const char *ip_addr, struct c_utils_logger *logger);
 
 /**
  * Disconnects the connection from it's endpoint.

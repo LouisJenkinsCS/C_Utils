@@ -85,7 +85,7 @@ static void *_release_scoped_lock_mutex(struct c_utils_scoped_lock *s_lock){
 }
 
 static void *scoped_lock_no_op(struct c_utils_scoped_lock *s_lock){
-   return NULL;
+   return NULL + 1;
 }
 
 

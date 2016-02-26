@@ -37,7 +37,7 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
    lock->info.line = __LINE__; \
    lock->info.file = __FILE__; \
    lock->info.function = __FUNCTION__; \
-   for(c_utils_scoped_lock *tmp_lock SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
+   for(struct c_utils_scoped_lock *tmp_lock SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
 
 #define SCOPED_LOCK0(lock) _SCOPED_LOCK(lock, 0)
 

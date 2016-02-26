@@ -14,7 +14,7 @@ struct c_utils_client {
 
 static struct c_utils_logger *logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./networking/logs/client.log", "w", LOG_LEVLE_ALL);
+LOGGER_AUTO_CREATE(logger, "./networking/logs/client.log", "w", LOG_LEVEL_ALL);
 
 static int get_connection_socket(const char *host, unsigned int port, long long int timeout){
 	fd_set connect_set;
@@ -84,24 +84,27 @@ struct c_utils_client *c_utils_client_create(size_t connection_pool_size, bool i
 		goto error;
 	}
 	
+	bool mutex_init = false;
 	pthread_mutex_t *lock = NULL;
+
 	if(init_locks){
 		lock = malloc(sizeof(pthread_mutex_t));
 		if(!lock){
 			LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
-		int failure = pthread_mutex_init(client->lock, NULL);
+		int failure = pthread_mutex_init(lock, NULL);
 		if(failure){
 			LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(failure));
 			goto error;
 		}
+		
+		mutex_init = true;
 		client->synchronized = true;
 	}
 	
 	client->lock = SCOPED_LOCK_FROM(lock, logger);
 	if(!client->lock){
-		free(lock);
 		LOG_ASSERT(logger, "SCOPED_LOCK_FROM: 'Unable to create scoped lock from mutex!'");
 		goto error;
 	}
@@ -140,6 +143,11 @@ struct c_utils_client *c_utils_client_create(size_t connection_pool_size, bool i
 		}
 		if(client->lock){
 			c_utils_scoped_lock_destroy(client->lock);
+		} else if (lock) {
+			if(mutex_init) {
+				pthread_mutex_destroy(lock);
+			}
+			free(lock);
 		}
 		if(client){
 			free(client);
