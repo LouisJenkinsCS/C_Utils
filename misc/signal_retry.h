@@ -1,5 +1,5 @@
-#ifndef MU_RETRY_H
-#define MU_RETRY_H
+#ifndef C_UTILS_RETRY_H
+#define C_UTILS_RETRY_H
 
 #include <errno.h>
 
@@ -12,4 +12,4 @@
 #define C_UTILS_TEMP_FAILURE_RETRY(storage, function) while(errno = 0, (storage = function),  errno == EINTR); 
 
 
-#endif /* endif MU_RETRY_H */
+#endif /* endif C_UTILS_RETRY_H */

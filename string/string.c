@@ -10,7 +10,7 @@
 
 static struct c_utils_logger *logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./string/logs/string.log", "w", LOG_LEVEL_ALL);
+LOGGER_AUTO_CREATE(logger, "./string/logs/string.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 
 char c_utils_string_char_at(const char *str, unsigned int index){
@@ -80,7 +80,7 @@ char **c_utils_string_split(const char *str, const char *delimiter, size_t len, 
     snprintf(str_copy, str_len, "%s", str);
     char **split_strings = malloc(sizeof(char *));
     if(!split_strings){
-        LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
         goto error;
     }
     char *saveptr;
@@ -92,12 +92,12 @@ char **c_utils_string_split(const char *str, const char *delimiter, size_t len, 
     do {
         char **tmp = realloc(split_strings, (sizeof(char *) * (num_strings + 1)));
         if(!tmp){
-            LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+            C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
             goto error;
         }
         split_strings = tmp;
         if(!(split_strings[num_strings] = malloc(strlen(curr_string) + 1))){
-            LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+            C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
             goto error;
         }
         sprintf(split_strings[num_strings++], "%s", curr_string);
@@ -147,7 +147,7 @@ char *c_utils_string_join(const char *arr[], const char *delimiter, size_t size)
     size_t buf_size = BUFSIZ;
     char *buf = calloc(1, buf_size + 1);
     if(!buf){
-        LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
         goto error;
     }
     size_t allocated = 0, size_left = buf_size, i = 0;
@@ -162,7 +162,7 @@ char *c_utils_string_join(const char *arr[], const char *delimiter, size_t size)
             buf_size *= 2;
             char *tmp = realloc(buf, buf_size + 1);
             if(!tmp){
-                LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+                C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
                 goto error;
             }
             buf = tmp;
@@ -180,7 +180,7 @@ char *c_utils_string_join(const char *arr[], const char *delimiter, size_t size)
     // Shrink the buffer size to the actual string size.
     char *tmp = realloc(buf, strlen(buf) + 1);
     if(!tmp){
-        LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
         goto error;
     }
     return buf;
@@ -212,7 +212,7 @@ char *c_utils_string_trim(char **str_ptr, size_t len){
     size_t str_len = len ? len : strlen(str);
     char *buf = malloc(str_len + 1); 
     if(!buf){
-        LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
         goto error;
     }
     size_t i = 0, j = str_len - 1;
@@ -230,7 +230,7 @@ char *c_utils_string_trim(char **str_ptr, size_t len){
     // Now we shrink it to the new size.
     char *tmp = realloc(buf, strlen(buf) + 1);
     if(!tmp){
-        LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
         goto error;
     }
     *str_ptr = (buf = tmp);
@@ -252,14 +252,14 @@ char *c_utils_string_substring(const char *str, unsigned int offset, unsigned in
     size_t buf_size = (new_end - offset) + 1;
     char *buf = malloc(buf_size + 1);
     if(!buf){
-        LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
         goto error;
     }
     snprintf(buf, buf_size, "%s", str + offset);
     // In case a null terminator was found, it will shrink the buffer to actual size.
     char *tmp = realloc(buf, strlen(buf) + 1);
     if(!tmp){
-        LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
         goto error;
     }
     buf = tmp;
@@ -330,7 +330,7 @@ char *c_utils_string_between(const char *str, const char *start, const char *end
     size_t new_len = end_offset - start_offset;
     char *substr = malloc(new_len + 1);
     if(!substr){
-        LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+        C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
         return NULL;
     }
     snprintf(substr, new_len, "%s", str + start_offset);

@@ -47,8 +47,8 @@ struct c_utils_event_source {
 static struct c_utils_logger_t *logger = NULL;
 static struct c_utils_logger_t *event_logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./threading/logs/event_loop.log", "w", LOG_LEVEL_ALL);
-LOGGER_AUTO_CREATE(event_logger, "./threading/logs/event_loop_events.log", "w", LOG_LEVEL_ALL);
+LOGGER_AUTO_CREATE(logger, "./threading/logs/event_loop.log", "w", C_UTILS_LOG_LEVEL_ALL);
+LOGGER_AUTO_CREATE(event_logger, "./threading/logs/event_loop_events.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 
 static const int event_finished = 1 << 0;
@@ -94,11 +94,11 @@ static void event_loop_main(void *args){
 }
 
 struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare prepare_cb, c_utils_event_check check_cb, c_utils_event_dispatch dispatch_cb, c_utils_event_finalize finalize_cb, unsigned long long int timeout){
-	ARG_CHECK(logger, NULL, dispatch_cb);
+	C_UTILS_ARG_CHECK(logger, NULL, dispatch_cb);
 
 	struct c_utils_event_source *source = calloc(1, sizeof(struct c_utils_event_source));
 	if(!source){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
 	
@@ -121,7 +121,7 @@ struct c_utils_event_source *c_utils_event_source_create(c_utils_event_prepare p
 }
 
 bool c_utils_event_source_destroy(struct c_utils_event_source *source){
-	ARG_CHECK(logger, false, source);
+	C_UTILS_ARG_CHECK(logger, false, source);
 	
 	free(source);
 	return true;
@@ -130,20 +130,20 @@ bool c_utils_event_source_destroy(struct c_utils_event_source *source){
 struct c_utils_event_loop *c_utils_event_loop_create(void){
 	struct c_utils_event_loop *loop = calloc(1, sizeof(struct c_utils_event_loop));
 	if(!loop){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
 	
 	// Synchronized list.
 	loop->sources = c_utils_list_create(true);
 	if(!loop->sources){
-		LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
+		C_UTILS_LOG_ERROR(logger, "c_utils_list_create: 'Was unable to create list of sources!");
 		goto error;
 	}
 	
 	loop->finished = c_utils_event_create("Finished", event_logger, 0);
 	if(!loop->finished){
-		LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
+		C_UTILS_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create \"Finished\" event!");
 		goto error;
 	}
 	
@@ -159,13 +159,13 @@ struct c_utils_event_loop *c_utils_event_loop_create(void){
 }
 
 bool c_utils_event_loop_add(struct c_utils_event_loop *loop, struct c_utils_event_source *source){
-	ARG_CHECK(logger, false, loop, source);
+	C_UTILS_ARG_CHECK(logger, false, loop, source);
 	
 	return c_utils_list_add(loop->sources, source, NULL);
 }
 
 bool c_utils_event_loop_run(struct c_utils_event_loop *loop){
-	ARG_CHECK(logger, false, loop);
+	C_UTILS_ARG_CHECK(logger, false, loop);
 	
 	atomic_store(&loop->keep_alive, true);
 	while(atomic_load(&loop->keep_alive)){
@@ -178,14 +178,14 @@ bool c_utils_event_loop_run(struct c_utils_event_loop *loop){
 }
 
 bool c_utils_event_loop_stop(struct c_utils_event_loop *loop){
-	ARG_CHECK(logger, false, loop);
+	C_UTILS_ARG_CHECK(logger, false, loop);
 	
 	atomic_store(&loop->keep_alive, false);
 	return true;
 }
 
 bool c_utils_event_loop_destroy(struct c_utils_event_loop *loop, bool free_sources){
-	ARG_CHECK(logger, false, loop);
+	C_UTILS_ARG_CHECK(logger, false, loop);
 	
 	c_utils_event_loop_stop(loop);
 	c_utils_event_wait(loop->finished, -1, 0);

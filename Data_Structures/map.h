@@ -1,46 +1,33 @@
 #include <DS_Helpers.h>
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define hash_map_t DS_Hash_Map_t
-#define hash_map_create(...) DS_Hash_Map_create(__VA_ARGS__)
-#define hash_map_add(...) DS_Hash_Map_add(__VA_ARGS__)
-#define hash_map_get(...) DS_Hash_Map_get(__VA_ARGS__)
-#define hash_map_remove(...) DS_Hash_Map_remove(__VA_ARGS__)
-#define hash_map_contains(...) DS_Hash_Map_contains(__VA_ARGS__)
-#define hash_map_clear(...) DS_Hash_Map_clear(__VA_ARGS__)
-#define hash_map_size(...) DS_Hash_Map_size(__VA_ARGS__)
-#define hash_map_destroy(...) DS_Hash_Map_destroy(__VA_ARGS__)
-#define hash_map_key_value_to_string(...) DS_Hash_Map_key_value_to_string(__VA_ARGS__)
-#define hash_map_for_each(...) DS_Hash_Map_for_each(__VA_ARGS__)
+struct c_utils_map;
+
+#ifdef NO_C_UTILS_PREFIX
+/*
+	Typedefs
+*/
+typedef struct c_utils_map map_t;
+
+/*
+	Functions
+*/
+#define map_create(...) c_utils_map_create(__VA_ARGS__)
+#define map_add(...) c_utils_map_add(__VA_ARGS__)
+#define map_get(...) c_utils_map_get(__VA_ARGS__)
+#define map_remove(...) c_utils_map_remove(__VA_ARGS__)
+#define map_contains(...) c_utils_map_contains(__VA_ARGS__)
+#define map_clear(...) c_utils_map_clear(__VA_ARGS__)
+#define map_size(...) c_utils_map_size(__VA_ARGS__)
+#define map_destroy(...) c_utils_map_destroy(__VA_ARGS__)
+#define map_key_value_to_string(...) c_utils_map_key_value_to_string(__VA_ARGS__)
+#define map_for_each(...) c_utils_map_for_each(__VA_ARGS__)
 #endif
 
-#ifdef DS_HASH_MAP_KEY_MAX_SIZE
-#define DS_HASH_MAP_KEY_SIZE DS_HASH_MAP_KEY_MAX_SIZE
+#ifdef C_UTILS_HASH_MAP_KEY_MAX_SIZE
+#define C_UTILS_HASH_MAP_KEY_SIZE C_UTILS_HASH_MAP_KEY_MAX_SIZE
 #else
-#define DS_HASH_MAP_KEY_SIZE 128
+#define C_UTILS_HASH_MAP_KEY_SIZE 128
 #endif
-
-typedef struct DS_Bucket_t {
-	/// The key associated with each bucket.
-	char key[DS_HASH_MAP_KEY_SIZE + 1];
-	/// The value associated with each key.
-	void *value;
-	/// Determines whether or not the bucket is in use, to allow for "caching".
-	volatile unsigned char in_use;
-	/// In case of collision, it will chain to the next. There is no limit.
-	struct DS_Bucket_t *next;
-} DS_Bucket_t;
-
-typedef struct {
-	/// Array of all bucket head nodes.
-	DS_Bucket_t **buckets;
-	/// The size of the hash map.
-	size_t size;
-	/// Maximum amount of buckets.
-	size_t amount_of_buckets;
-	/// RWLock to enforce thread-safety.
-	pthread_rwlock_t *lock;
-} DS_Hash_Map_t;
 
 /**
  * Creates a hash map with the initial amount of buckets. The hash map does not resize, so care should
@@ -50,7 +37,7 @@ typedef struct {
  * @param init_locks Synchronized?
  * @return Map instance, or NULL if amount_of_buckets is 0, or an allocation error occurs.
  */
-DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_locks);
+struct c_utils_map *c_utils_map_create(size_t amount_of_buckets, unsigned char init_locks);
 
 /**
  * Adds the item with the given key to the hash map as a new key-value pair.
@@ -59,7 +46,7 @@ DS_Hash_Map_t *DS_Hash_Map_create(size_t amount_of_buckets, unsigned char init_l
  * @param value Value.
  * @return True if successful, false is allocation error, key, map, or value is NULL
  */
-bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
+bool c_utils_map_add(struct c_utils_map *map, char *key, void *value);
 
 /**
  * Obtains the item from the map through it's key. 
@@ -67,7 +54,7 @@ bool DS_Hash_Map_add(DS_Hash_Map_t *map, char *key, void *value);
  * @param key Key
  * @return Item found, or NULL if not found.
  */
-void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
+void *c_utils_map_get(struct c_utils_map *map, const char *key);
 
 /**
  * Removes the item from the map, optionally deleting it by invoking del on it if not null.
@@ -76,7 +63,7 @@ void *DS_Hash_Map_get(DS_Hash_Map_t *map, const char *key);
  * @param del Deletion callback.
  * @return The item removed, NULL if deleted or not present.
  */
-void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
+void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delete_db del);
 
 /**
  * Checks if the hash map contains the given item, using the comparator to check. If the comparator, cmp,
@@ -86,7 +73,7 @@ void *DS_Hash_Map_remove(DS_Hash_Map_t *map, const char *key, DS_delete_cb del);
  * @param cmp Comparator.
  * @return The key which is associated with it, or null if not found.
  */
-const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_comparator_cb cmp);
+const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_utils_comparator_cb cmp);
 
 /**
  * Calls the to_string callback on each item in the map, obtaining it's stringified representation. Then, it will
@@ -101,7 +88,7 @@ const char *DS_Hash_Map_contains(DS_Hash_Map_t *map, const void *value, DS_compa
  * @param to_string Callback to turn each value into a string.
  * @return An array of strings for each key-value pair, with it's size returned through size.
  */
-char **DS_Hash_Map_key_value_to_string(DS_Hash_Map_t *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, DS_to_string_cb to_string);
+char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, c_utils_to_string to_string);
 
 /**
  * Calls cb on each item in the list.
@@ -109,7 +96,7 @@ char **DS_Hash_Map_key_value_to_string(DS_Hash_Map_t *map, const char *key_prefi
  * @param cb Callback
  * @return True if map and cb are not null.
  */
-bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
+bool c_utils_map_for_each(struct c_utils_map *map, c_utils_general_cb cb);
 
 /**
  * Clears the hash map of all items, calling del on each if declared.
@@ -117,14 +104,14 @@ bool DS_Hasp_Map_for_each(DS_Hash_Map_t *map, DS_general_cb cb);
  * @param del Deletion callback.
  * @return True if map is not null.
  */
-bool DS_Hash_Map_clear(DS_Hash_Map_t *map, DS_delete_cb del);
+bool c_utils_map_clear(struct c_utils_map *map, c_utils_delete_cb del);
 
 /**
  * Returns the amount of items contained in this Hash Map
  * @param map Instance
  * @return Number of items.
  */
-size_t DS_Hash_Map_size(DS_Hash_Map_t *map);
+size_t c_utils_map_size(struct c_utils_map *map);
 
 /**
  * Destroys the hash map, optionally calling the passed deletion callback on
@@ -133,4 +120,4 @@ size_t DS_Hash_Map_size(DS_Hash_Map_t *map);
  * @param del Deletion callback, called on each item.
  * @return True if map is not null.
  */
-bool DS_Hash_Map_destroy(DS_Hash_Map_t *map, DS_delete_cb del);
+bool c_utils_map_destroy(struct c_utils_map *map, c_utils_delete_cb del);

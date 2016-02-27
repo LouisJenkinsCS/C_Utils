@@ -6,7 +6,7 @@ static const int bucket_size = 31;
 
 static struct c_utils_logger *logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./networking/logs/http.log", "w", LOG_LEVEL_ALL);
+LOGGER_AUTO_CREATE(logger, "./networking/logs/http.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 static const char *C_UTILS_HTTP_Status_Codes[] = {
 	[100] = "100 Continue",
@@ -61,7 +61,7 @@ static const char *C_UTILS_HTTP_Status_Codes[] = {
 };
 
 static void parse_http_field(struct c_utils_map *mapped_fields, const char *line){
-	LOG_TRACE(logger, "%s", line);
+	C_UTILS_LOG_TRACE(logger, "%s", line);
 
 	const char *delimiter = ": ";
 	const int delim_size = strlen(delimiter);
@@ -69,7 +69,7 @@ static void parse_http_field(struct c_utils_map *mapped_fields, const char *line
 
 	char *offset_str = strstr(line, delimiter);
 	if(!offset_str){
-		LOG_WARNING(logger, "No delimiter offset for line: '%s'!", line);
+		C_UTILS_LOG_WARNING(logger, "No delimiter offset for line: '%s'!", line);
 		return;
 	}
 
@@ -80,7 +80,7 @@ static void parse_http_field(struct c_utils_map *mapped_fields, const char *line
 	*/
 	int field_len = offset_str - line;
 	offset_str += delim_size;
-	LOG_TRACE(logger, "Field: '%.*s'\nValue: '%s'", field_len, line, offset_str);
+	C_UTILS_LOG_TRACE(logger, "Field: '%.*s'\nValue: '%s'", field_len, line, offset_str);
 	
 	/*
 		We read up to a maximum of the configured max header field and value lengths respectively,
@@ -91,12 +91,12 @@ static void parse_http_field(struct c_utils_map *mapped_fields, const char *line
 
 	bool was_added = c_utils_map_add(mapped_fields, field, strdup(value));
 	if(!was_added){
-		LOG_WARNING(logger, "c_utils_map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
+		C_UTILS_LOG_WARNING(logger, "c_utils_map_add: 'Was unable to add key-value pair ('%s': '%s')!'");
 	}
 }
 
 static void parse_http_method(struct c_utils_request *req, const char *line){
-	LOG_TRACE(logger, "%s", line);
+	C_UTILS_LOG_TRACE(logger, "%s", line);
 
 	if(strncmp(line, "GET", 3) == 0){
 		req->method = C_UTILS_HTTP_GET;
@@ -111,12 +111,12 @@ static void parse_http_method(struct c_utils_request *req, const char *line){
 	} else if(strncmp(line, "CONNECT", 7) == 0){
 		req->method = C_UTILS_HTTP_CONNECT;
 	} else {
-		LOG_WARNING(logger, "Bad HTTP method!'%s'", line);
+		C_UTILS_LOG_WARNING(logger, "Bad HTTP method!'%s'", line);
 	}
 }
 
 static void parse_http_path(struct c_utils_request *req, const char *line){
-	LOG_TRACE(logger, "%s", line);
+	C_UTILS_LOG_TRACE(logger, "%s", line);
 
 	if(strlen(line) == 1){
 		req->path = strdup("/index.html");
@@ -127,11 +127,11 @@ static void parse_http_path(struct c_utils_request *req, const char *line){
 }
 
 static void parse_http_status(struct c_utils_response *res, const char *line){
-	LOG_TRACE(logger, "%s", line);
+	C_UTILS_LOG_TRACE(logger, "%s", line);
 
 	int status = strtol(line, NULL, 10);
 	if(!status){
-		LOG_WARNING(logger, "Bad HTTP status!");
+		C_UTILS_LOG_WARNING(logger, "Bad HTTP status!");
 		return;
 	}
 
@@ -139,7 +139,7 @@ static void parse_http_status(struct c_utils_response *res, const char *line){
 }
 
 static void parse_http_version(C_UTILS_HTTP_Version_e *version, const char *line){
-	LOG_TRACE(logger, "%s", line);
+	C_UTILS_LOG_TRACE(logger, "%s", line);
 	
 	const int protocol_len = 8;
 	if(strncasecmp(line, "HTTP/1.1", protocol_len) == 0){
@@ -149,7 +149,7 @@ static void parse_http_version(C_UTILS_HTTP_Version_e *version, const char *line
 	} else if(strncasecmp(line, "HTTP/1.X", protocol_len) == 0){
 		*version = C_UTILS_HTTP_VER_1_X;
 	} else {
-		LOG_WARNING(logger, "Bad HTTP version!");
+		C_UTILS_LOG_WARNING(logger, "Bad HTTP version!");
 		*version = C_UTILS_HTTP_NO_VER;
 	}
 }
@@ -176,7 +176,7 @@ static char *http_version_to_string(enum c_utils_http_version version){
 }
 
 static size_t parse_http_response(struct c_utils_response *header, char *header_str){
-	LOG_TRACE(logger, "Header: \n%s", header_str);
+	C_UTILS_LOG_TRACE(logger, "Header: \n%s", header_str);
 	
 	size_t header_size = 0;
 	char *first_line;
@@ -184,7 +184,7 @@ static size_t parse_http_response(struct c_utils_response *header, char *header_
 	
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
-		LOG_WARNING(logger, "No header field found!");
+		C_UTILS_LOG_WARNING(logger, "No header field found!");
 		return 0;
 	}
 	
@@ -195,7 +195,7 @@ static size_t parse_http_response(struct c_utils_response *header, char *header_
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
-			LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
+			C_UTILS_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
 			return 0;
 		}
 		
@@ -204,7 +204,7 @@ static size_t parse_http_response(struct c_utils_response *header, char *header_
 		} else if (isdigit((unsigned char)*line)){
 			parse_http_status(header, line);
 		} else {
-			LOG_WARNING(logger, "Invalid header format!'%s'", line);
+			C_UTILS_LOG_WARNING(logger, "Invalid header format!'%s'", line);
 		}
 	} while((line = strtok_r(NULL, " ", &first_line)));
 	
@@ -219,7 +219,7 @@ static size_t parse_http_response(struct c_utils_response *header, char *header_
 }
 
 static size_t parse_http_request(struct c_utils_request *req, char *header_str){
-	LOG_TRACE(logger, "Header: \n%s", header_str);
+	C_UTILS_LOG_TRACE(logger, "Header: \n%s", header_str);
 	
 	size_t header_size = 0;
 	char *first_line;
@@ -227,7 +227,7 @@ static size_t parse_http_request(struct c_utils_request *req, char *header_str){
 	
 	char *line = strtok_r(header_str, "\r\n", &rest_of_lines);
 	if(!line){
-		LOG_WARNING(logger, "No header field found!'%s'", line);
+		C_UTILS_LOG_WARNING(logger, "No header field found!'%s'", line);
 		return 0;
 	}
 	
@@ -238,7 +238,7 @@ static size_t parse_http_request(struct c_utils_request *req, char *header_str){
 	line = strtok_r(line, " ", &first_line);
 	do {
 		if(!line){
-			LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
+			C_UTILS_LOG_WARNING(logger, "Invalid first line of header!'%s'", line);
 			return 0;
 		}
 		
@@ -262,14 +262,14 @@ static size_t parse_http_request(struct c_utils_request *req, char *header_str){
 struct c_utils_response *c_utils_response_create(void){
 	struct c_utils_response *res = calloc(1, sizeof(struct c_utils_response));
 	if(!res){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
 	
 	// Synchronized Map
 	res->header = c_utils_map_create(bucket_size, true);
 	if(!res->header){
-		LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
+		C_UTILS_LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
 		free(res);
 		return NULL;
 	}
@@ -280,14 +280,14 @@ struct c_utils_response *c_utils_response_create(void){
 struct c_utils_request *c_utils_request_create(void){
 	struct c_utils_request *req = calloc(1, sizeof(struct c_utils_request));
 	if(!req){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
 	
 	// Synchronized Map
 	req->header = c_utils_map_create(bucket_size, true);
 	if(!req->header){
-		LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
+		C_UTILS_LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
 		free(req);
 		return NULL;
 	}
@@ -306,8 +306,9 @@ char *c_utils_response_append(struct c_utils_response *res, const char *header, 
 
 	snprintf(header_cpy, *header_size + 1, "%s", header);
 	size_t header_read = parse_http_response(res, header_cpy);
-	LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
+	C_UTILS_LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
 	*header_size -= header_read;
+
 	return (char *)header + header_read;
 }
 
@@ -316,8 +317,9 @@ char *c_utils_request_append(struct c_utils_request *req, const char *header, si
 	
 	snprintf(header_cpy, *header_size + 1, "%s", header);
 	size_t header_read = parse_http_request(req, header_cpy);
-	LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
+	C_UTILS_LOG_TRACE(logger, "Read %zu of %zu bytes of header; New header size = %zu!", header_read, *header_size, *header_size - header_read);
 	*header_size -= header_read;
+	
 	return (char *)header + header_read;
 }
 
@@ -325,11 +327,11 @@ char *c_utils_request_append(struct c_utils_request *req, const char *header, si
     Clears the response header of all fields and attributes.
 */
 bool c_utils_response_clear(struct c_utils_response *res){
-	ARG_CHECK(logger, false, res);
+	C_UTILS_ARG_CHECK(logger, false, res);
 	
 	bool header_cleared = c_utils_map_clear(res->header, free);
 	if(!header_cleared){
-		LOG_ERROR(logger, "c_utils_map_clear: 'Was unable to clear hash map!'");
+		C_UTILS_LOG_ERROR(logger, "c_utils_map_clear: 'Was unable to clear hash map!'");
 		return false;
 	}
 	
@@ -341,11 +343,11 @@ bool c_utils_response_clear(struct c_utils_response *res){
 }
 
 bool c_utils_request_clear(struct c_utils_request *req){
-	ARG_CHECK(logger, false, req);
+	C_UTILS_ARG_CHECK(logger, false, req);
 	
 	bool header_cleared = c_utils_map_clear(req->header, free);
 	if(!header_cleared){
-		LOG_ERROR(logger, "c_utils_map_clear: 'Was unable to clear hash map!'");
+		C_UTILS_LOG_ERROR(logger, "c_utils_map_clear: 'Was unable to clear hash map!'");
 		return false;
 	}
 	
@@ -362,11 +364,11 @@ bool c_utils_request_clear(struct c_utils_request *req){
     Returns the null-terminated string of the header.
 */
 char *c_utils_response_to_string(struct c_utils_response *res){
-	ARG_CHECK(logger, NULL, res);
+	C_UTILS_ARG_CHECK(logger, NULL, res);
 
 	char *buf = calloc(1, C_UTILS_HTTP_HEADER_LEN + 1);
 	if(!buf){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
 
@@ -374,13 +376,13 @@ char *c_utils_response_to_string(struct c_utils_response *res){
 	
 	const char *status = (res->status > 509) ? NULL : C_UTILS_HTTP_Status_Codes[res->status];
 	if(!status){
-		LOG_INFO(logger, "Invalid HTTP Status!");
+		C_UTILS_LOG_INFO(logger, "Invalid HTTP Status!");
 		goto error;
 	}
 
 	char *version = http_version_to_string(res->version);
 	if(!version){
-		LOG_INFO(logger, "Invalid HTTP Version!");
+		C_UTILS_LOG_INFO(logger, "Invalid HTTP Version!");
 		goto error;
 	}
 
@@ -402,7 +404,7 @@ char *c_utils_response_to_string(struct c_utils_response *res){
 
 	char *tmp_buf = realloc(buf, strlen(buf) + 1);
 	if(!tmp_buf){
-		LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
 		return buf;
 	}
 	return tmp_buf;
@@ -415,11 +417,11 @@ char *c_utils_response_to_string(struct c_utils_response *res){
 }
 
 char *c_utils_request_to_string(struct c_utils_request *req){
-	ARG_CHECK(logger, NULL, req);
+	C_UTILS_ARG_CHECK(logger, NULL, req);
 
 	char *buf = calloc(1, C_UTILS_HTTP_HEADER_LEN + 1);
 	if(!buf){
-		LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
 	
@@ -427,18 +429,18 @@ char *c_utils_request_to_string(struct c_utils_request *req){
 	
 	char *method = http_method_to_string(req->method);
 	if(!method){
-		LOG_INFO(logger, "Invalid HTTP Method!");
+		C_UTILS_LOG_INFO(logger, "Invalid HTTP Method!");
 		goto error;
 	}
 	
 	if(!*(req->path)){
-		LOG_INFO(logger, "Invalid File Path!");
+		C_UTILS_LOG_INFO(logger, "Invalid File Path!");
 		goto error;
 	}
 
 	char *version = http_version_to_string(req->version);
 	if(!version){
-		LOG_INFO(logger, "Invalid HTTP Version!");
+		C_UTILS_LOG_INFO(logger, "Invalid HTTP Version!");
 		goto error;
 	}
 	
@@ -460,7 +462,7 @@ char *c_utils_request_to_string(struct c_utils_request *req){
 	
 	char *tmp_buf = realloc(buf, strlen(buf) + 1);
 	if(!tmp_buf){
-		LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
 		return buf;
 	}
 	return tmp_buf;
@@ -473,7 +475,7 @@ char *c_utils_request_to_string(struct c_utils_request *req){
 }
 
 bool c_utils_response_set_field(struct c_utils_response *res, char *field, char *values){
-	ARG_CHECK(logger, false, res, field, values);
+	C_UTILS_ARG_CHECK(logger, false, res, field, values);
 
 	c_utils_map_remove(res->header, field, free);
 	c_utils_map_add(res->header, field, values);
@@ -481,7 +483,7 @@ bool c_utils_response_set_field(struct c_utils_response *res, char *field, char 
 }
 
 bool c_utils_request_set_field(struct c_utils_request *req, char *field, char *values){
-	ARG_CHECK(logger, false, req, field, values);
+	C_UTILS_ARG_CHECK(logger, false, req, field, values);
 
 	c_utils_map_remove(req->header, field, free);
 	c_utils_map_add(req->header, field, values);
@@ -489,28 +491,28 @@ bool c_utils_request_set_field(struct c_utils_request *req, char *field, char *v
 }
 
 bool c_utils_response_remove_field(struct c_utils_response *res, const char *field){
-	ARG_CHECK(logger, false, res, field);
+	C_UTILS_ARG_CHECK(logger, false, res, field);
 
 	c_utils_map_remove(res->header, field, free);
 	return true;
 }
 
 bool c_utils_request_remove_field(struct c_utils_request *req, const char *field){
-	ARG_CHECK(logger, false, req, field);
+	C_UTILS_ARG_CHECK(logger, false, req, field);
 
 	c_utils_map_remove(req->header, field, free);
 	return true;
 }
 
 char *c_utils_response_get_field(struct c_utils_response *res, const char *field){
-	ARG_CHECK(logger, false, res, field);
+	C_UTILS_ARG_CHECK(logger, false, res, field);
 
 	char *value = c_utils_map_get(res->header, field);
 	return value;
 }
 
 char *c_utils_request_get_field(struct c_utils_request *req, const char *field){
-	ARG_CHECK(logger, false, req, field);
+	C_UTILS_ARG_CHECK(logger, false, req, field);
 
 	char *value = c_utils_map_get(req->header, field);
 	return value;
