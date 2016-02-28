@@ -4,7 +4,7 @@
 #include <NU_Client.h>
 #include <unistd.h>
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 static NU_Client_t *client = NULL;
 static const unsigned int timeout = 60;
 static const size_t buffer_size = 1024;
@@ -12,7 +12,7 @@ static const unsigned int port_num = 10000;
 static const bool is_threaded = true;
 static const unsigned int conn_pool_size = 1;
 
-static const char *assert_get_info(NU_Connection_t *server, const char *inquiry){
+static const char *assert_get_info(NU_Connection_t *server, const char *inquiry) {
   size_t bytes_sent = NU_Client_send(client, server, (const char *)inquiry, strlen(inquiry), timeout);
   MU_ASSERT(bytes_sent, logger, "Was unable to send information to server!\n");
   char *response = calloc(1, buffer_size + 1);
@@ -21,7 +21,7 @@ static const char *assert_get_info(NU_Connection_t *server, const char *inquiry)
   return response;
 }
 
-static void send_file(NU_Connection_t *server){
+static void send_file(NU_Connection_t *server) {
   char *filepath;
   char *filename = "";
   asprintf(&filepath, "%s/%s/%s", getenv("HOME"), "Pictures", filename);
@@ -38,7 +38,7 @@ static void send_file(NU_Connection_t *server){
   MU_ASSERT(sent, logger, "Was unable to send file to server!\n");
 }
 
-int main(void){
+int main(void) {
   size_t bytes_sent;
   char *client_inquiry;
   logger = MU_Logger_create("NU_Client_Test_File_Downloader.log", "w", MU_ALL);

@@ -8,7 +8,7 @@ static const int num_threads = 4;
 
 static DS_Stack_t *stack = NULL;
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 
 volatile unsigned long long counter = 0;
 
@@ -16,8 +16,8 @@ volatile unsigned long pops = 0, pushes = 0;
 
 volatile bool running = true;
 
-static void *push_to_stack(void *args){
-	while(running){
+static void *push_to_stack(void *args) {
+	while (running) {
 		unsigned long long *i = malloc(sizeof(int));
 		*i = __sync_add_and_fetch(&counter, 1);
 		DS_Stack_push(stack, i);
@@ -26,22 +26,22 @@ static void *push_to_stack(void *args){
 	return NULL;
 }
 
-static void *pop_from_stack(void *args){
-	while(running){
+static void *pop_from_stack(void *args) {
+	while (running) {
 		unsigned long long *i = DS_Stack_pop(stack);
-		if(!i) continue;
+		if (!i) continue;
 		free(i);
 		pops++;
 	}
 	return NULL;
 }
 
-int main(void){
+int main(void) {
 	logger = MU_Logger_create("./Data_Structures/Logs/DS_Stack_Test.log", "w", MU_ALL);
 	stack = DS_Stack_create();
 	TP_Pool_t *tp = TP_Pool_create(num_threads);
 	int i = 0;
-	for(; i < num_threads; i++){
+	for (; i < num_threads; i++) {
 		TP_Pool_add(tp, (i % 2 == 0) ? push_to_stack : pop_from_stack, NULL, TP_NO_RESULT);
 	}
 	TP_Pool_wait(tp, 15);

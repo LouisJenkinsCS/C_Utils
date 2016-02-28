@@ -4,7 +4,7 @@
 
 Some simple and straight-forward, but thread-safe implementations of data structures. Some, but not all, are lock-free implementations, or as lock-free as you can get without using a custom memory allocator. Lock-Free implementations utilize my Hazard Pointer implementations in Misc_Utils.
 
-All data structures begin with the namespace 'DS_', and maintain a consistent naming convention of having a one-to-two description name, capitalized, 'DS_List_' or 'DS_Stack', and verb describing it's actions, I.E 'DS_List_create' or 'DS_Map_add', which is in lowercase to contrast with the namespace and descriptor .
+All data structures begin with the namespace 'DS_', and maintain a consistent naming convention of having a one-to-two description name, capitalized, 'c_utils_list_' or 'DS_Stack', and verb describing it's actions, I.E 'c_utils_list_create' or 'DS_Map_add', which is in lowercase to contrast with the namespace and descriptor .
 
 ##General Non-STL Dependencies
 

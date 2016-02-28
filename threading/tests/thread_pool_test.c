@@ -18,16 +18,16 @@ struct c_utils_test_thread_task{
 	size_t amount;
 };
 
-static struct c_utils_test_thread_task *create_task(unsigned int thread_id, size_t amount){
+static struct c_utils_test_thread_task *create_task(unsigned int thread_id, size_t amount) {
 	struct c_utils_test_thread_task *task = malloc(sizeof(struct c_utils_test_thread_task));
 	task->task_id = thread_id;
 	task->amount = amount;
 	return task;
 }
 
-static void *print_hello(struct c_utils_test_thread_task *task){
+static void *print_hello(struct c_utils_test_thread_task *task) {
 	int i = 0;
-	for(; i<task->amount; i++) {
+	for (; i<task->amount; i++) {
 		atomic_fetch_add(&iterations, 1);
 		DEBUG("Task %d; Iteration %d;\n", task->task_id, i+1);
 		pthread_yield();
@@ -36,17 +36,17 @@ static void *print_hello(struct c_utils_test_thread_task *task){
 	return NULL;
 }
 
-static int *high_priority_print(char *message){
+static int *high_priority_print(char *message) {
 	int *retval = malloc(sizeof(int));
 	int i = 0;
-	for(; i < 5; i++){
+	for (; i < 5; i++) {
 		DEBUG("%s\n", message);
 	}
 	*retval = 5;
 	return retval;
 }
 
-int main(void){
+int main(void) {
 	tp = thread_pool_create(pool_size);
 	const unsigned int num_tasks = 10000;
 	const int runs = 10;
@@ -54,7 +54,7 @@ int main(void){
 	LOG_INFO(logger, "Pausing thread pool to add all tasks...");
 	thread_pool_pause(tp, -1);
 	LOG_INFO(logger, "Thread  Pool Paused to add tasks...");
-	for(;i<num_tasks ;i++){
+	for (;i<num_tasks ;i++) {
 		struct c_utils_test_thread_task *task = create_task(i+1, runs);
 		thread_pool_add(tp, (void *)print_hello, task, NO_RESULT);
 	}

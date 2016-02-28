@@ -7,7 +7,7 @@
 #include <TP_Pool.h>
 #include <unistd.h>
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 static NU_Server_t *server = NULL;
 static TP_Pool_t *tp = NULL;
 static const unsigned int timeout = 60;

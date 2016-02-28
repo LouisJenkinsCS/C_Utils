@@ -7,7 +7,7 @@
 #include <NU_Server.h>
 #include <unistd.h>
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 static NU_Server_t *server = NULL;
 static const unsigned int timeout = 60;
 static const size_t buffer_size = 1024;
@@ -16,7 +16,7 @@ static const unsigned int queue_max = 1;
 static const unsigned int max_sockets = 1;
 static const unsigned char is_threaded = 1;
 
-int main(void){
+int main(void) {
   logger = MU_Logger_create("NU_HTTP_Header_Test.log", "w", MU_ALL);
   server = NU_Server_create(queue_max, max_sockets, is_threaded);
   MU_ASSERT(server, logger, "Was unable to create server!");

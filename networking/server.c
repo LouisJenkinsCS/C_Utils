@@ -38,7 +38,7 @@ LOGGER_AUTO_CREATE(logger, "./networking/logs/server.log", "w", C_UTILS_LOG_LEVE
 
 /* Server-specific helper functions */
 
-static int timed_accept(int sockfd, char *ip_addr, long long int timeout){
+static int timed_accept(int sockfd, char *ip_addr, long long int timeout) {
    int accepted = 0;
    fd_set can_accept;
    struct timeval tv;
@@ -49,8 +49,8 @@ static int timed_accept(int sockfd, char *ip_addr, long long int timeout){
    FD_SET(sockfd, &can_accept);
 
    C_UTILS_TEMP_FAILURE_RETRY(accepted, select(sockfd + 1, &can_accept, NULL, NULL, timeout < 0 ? NULL : &tv));
-   if(accepted <= 0){
-      if(!accepted) C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out!'");
+   if (accepted <= 0) {
+      if (!accepted) C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out!'");
       else C_UTILS_LOG_ERROR(logger, "select: '%s'", strerror(errno));
       return -1;
    }
@@ -58,31 +58,31 @@ static int timed_accept(int sockfd, char *ip_addr, long long int timeout){
    struct sockaddr_in addr;
    socklen_t size = sizeof(struct sockaddr_in);
    C_UTILS_TEMP_FAILURE_RETRY(accepted, accept(sockfd, (struct sockaddr *)&addr, &size));
-   if(accepted == -1){
+   if (accepted == -1) {
       C_UTILS_LOG_ERROR(logger, "accept: '%s'", strerror(errno));
       return -1;
    }
 
-   if(ip_addr){
-      if(!inet_ntop(AF_INET, &addr, ip_addr , INET_ADDRSTRLEN)) C_UTILS_LOG_WARNING(logger, "inet_ntop: '%s'", strerror(errno));
-   }
+   if (ip_addr)  
+      if (!inet_ntop(AF_INET, &addr, ip_addr , INET_ADDRSTRLEN)) C_UTILS_LOG_WARNING(logger, "inet_ntop: '%s'", strerror(errno));
+   
 
    return accepted;
 }
 
-static bool setup_socket(struct c_utils_socket *sock, size_t queue_size, unsigned int port, const char *ip_addr){
-	if(!sock) return false;
+static bool setup_socket(struct c_utils_socket *sock, size_t queue_size, unsigned int port, const char *ip_addr) {
+	if (!sock) return false;
 
 	int flag = 1;
 	struct sockaddr_in my_addr;
 	
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd == -1) {
+	if (sockfd == -1) {
 		C_UTILS_LOG_ERROR(logger, "socket: '%s'", strerror(errno));
 		return 0;
 	}
 	
-	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1){
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) == -1) {
 		C_UTILS_LOG_ERROR(logger, "setsockopt: '%s'", strerror(errno));
 		goto error;
 	}
@@ -92,12 +92,12 @@ static bool setup_socket(struct c_utils_socket *sock, size_t queue_size, unsigne
 	my_addr.sin_addr.s_addr = ip_addr ? inet_addr(ip_addr) : INADDR_ANY;
 	memset(&(my_addr.sin_zero), '\0', 8);
 	
-	if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1){
+	if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
 		C_UTILS_LOG_ERROR(logger, "bind: '%s'", strerror(errno));
 		goto error;
 	}
 	
-	if(listen(sockfd, queue_size) == -1){
+	if (listen(sockfd, queue_size) == -1) {
 		C_UTILS_LOG_ERROR(logger, "listen: '%s'", strerror(errno));
 		goto error;
 	}
@@ -109,19 +109,19 @@ static bool setup_socket(struct c_utils_socket *sock, size_t queue_size, unsigne
 	return true;
 
 	error:
-		if(sockfd != -1){
+		if (sockfd != -1) {
 			int close_failed;
 			C_UTILS_TEMP_FAILURE_RETRY(close_failed, close(sockfd));
-			if(close_failed){
+			if (close_failed)  
 				C_UTILS_LOG_ERROR(logger, "close: '%s'", strerror(errno));
-			}
+			
 		}
 		return false;
 }
 
-static struct c_utils_socket *create_socket(void){
+static struct c_utils_socket *create_socket(void) {
 	struct c_utils_socket *sock = calloc(1, sizeof(struct c_utils_socket));
-	if(!sock){
+	if (!sock) {
 		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
 	}
@@ -129,12 +129,12 @@ static struct c_utils_socket *create_socket(void){
 	return sock;
 }
 
-static struct c_utils_socket *reuse_socket(struct c_utils_socket **sockets, size_t size, size_t queue_size, unsigned int port, const char *ip_addr){
+static struct c_utils_socket *reuse_socket(struct c_utils_socket **sockets, size_t size, size_t queue_size, unsigned int port, const char *ip_addr) {
 	size_t i = 0;
-	for(;i < size; i++){
+	for (;i < size; i++) {
 		struct c_utils_socket *sock = sockets[i];
-		if(!sock->is_bound){
-			if(!setup_socket(sock, queue_size, port, ip_addr)){
+		if (!sock->is_bound) {
+			if (!setup_socket(sock, queue_size, port, ip_addr)) {
 				C_UTILS_LOG_WARNING(logger, "setup_socket: 'Was unable to setup bound socket!'");
 				return NULL;
 			}
@@ -144,15 +144,15 @@ static struct c_utils_socket *reuse_socket(struct c_utils_socket **sockets, size
 	return NULL;
 }
 
-static int destroy_socket(struct c_utils_socket *sock){
-	if(!sock) return 0;
+static int destroy_socket(struct c_utils_socket *sock) {
+	if (!sock) return 0;
 	
 	int close_failed = 0;
-	if(sock->is_bound){
+	if (sock->is_bound) {
 		C_UTILS_TEMP_FAILURE_RETRY(close_failed, close(sock->sockfd));
-		if(close_failed){
+		if (close_failed)  
 			C_UTILS_LOG_ERROR(logger, "close: '%s'", strerror(errno));
-		}
+		
 	}
 	
 	free(sock);
@@ -161,8 +161,8 @@ static int destroy_socket(struct c_utils_socket *sock){
 	return close_failed == 0;
 }
 
-static bool unbind_socket(struct c_utils_server *server, struct c_utils_socket *sock){
-	if(!sock) return false;
+static bool unbind_socket(struct c_utils_server *server, struct c_utils_socket *sock) {
+	if (!sock) return false;
 	
 	unsigned int port = sock->port;
 	
@@ -173,21 +173,21 @@ static bool unbind_socket(struct c_utils_server *server, struct c_utils_socket *
 		end-point.
 	*/
 	size_t i = 0;
-	for(;i < server->amount_of_connections; i++){
+	for (;i < server->amount_of_connections; i++) {
 		struct c_utils_connection *conn = server->connections[i];
-		if(c_utils_connection_get_port(conn) == port && c_utils_connection_in_use(conn)){
+		if (c_utils_connection_get_port(conn) == port && c_utils_connection_in_use(conn)) {
 			int is_disconnected = c_utils_connection_disconnect(conn);
-			if(!is_disconnected){
+			if (!is_disconnected)  
 				C_UTILS_LOG_ERROR(logger, "c_utils_connection_disconnect: 'Was unable to disconnect a connection!'");
-			}
+			
 		}
 	}
 	
 	int close_failed;
 	C_UTILS_TEMP_FAILURE_RETRY(close_failed, close(sock->sockfd));
-	if(close_failed){
+	if (close_failed)  
 		C_UTILS_LOG_ERROR(logger, "close: '%s'", strerror(errno));
-	}
+	
 
 	sock->is_bound = 0;
 	C_UTILS_LOG_INFO(logger, "Unbound from port %u!", port);
@@ -195,9 +195,9 @@ static bool unbind_socket(struct c_utils_server *server, struct c_utils_socket *
 	return true;
 }
 
-struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t sock_pool_size, bool synchronized){
+struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t sock_pool_size, bool synchronized) {
 	struct c_utils_server *server = calloc(1, sizeof(struct c_utils_server));
-	if(!server){
+	if (!server) {
 		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		goto error;
 	}
@@ -205,15 +205,15 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 	bool mutex_init = false;
 	pthread_mutex_t *lock = NULL;
 
-	if(synchronized){
+	if (synchronized) {
 		lock = malloc(sizeof(pthread_mutex_t));
-		if(!lock){
+		if (!lock) {
 			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 			goto error;
 		}
 
 		int failure = pthread_mutex_init(lock, NULL);
-		if(failure){
+		if (failure) {
 			C_UTILS_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(failure));
 			goto error;
 		}
@@ -222,7 +222,7 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 	}
 
 	server->lock = SCOPED_LOCK_FROM(lock);
-	if(!server->lock) {
+	if (!server->lock) {
 		C_UTILS_LOG_ERROR(logger, "SCOPED_LOCK_FROM: 'Unable to create scoped lock from mutex!'");
 		goto error;
 	}
@@ -239,15 +239,15 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 	server->amount_of_sockets = sock_pool_size ? sock_pool_size : 1;
 
 	server->sockets = calloc(server->amount_of_sockets, sizeof(struct c_utils_socket *));
-	if(!server->sockets){
+	if (!server->sockets) {
 		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 		goto error;
 	}
 
 	size_t i = 0;
-	for(;i < server->amount_of_sockets; i++){
+	for (;i < server->amount_of_sockets; i++) {
 		struct c_utils_socket *sock = create_socket();
-		if(!sock){
+		if (!sock) {
 			C_UTILS_LOG_ERROR(logger, "create_socket: 'Was unable to create bound socket #%zu'", ++i);
 			goto error;
 		}
@@ -257,15 +257,15 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 	
 	server->amount_of_connections = connection_pool_size ? connection_pool_size : 1;
 	server->connections = calloc(server->amount_of_connections, sizeof(struct c_utils_connection *));
-	if(!server->connections){
+	if (!server->connections) {
 		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
 		goto error;
 	}
 	
 	i = 0;
-	for(;i < server->amount_of_connections; i++){
+	for (;i < server->amount_of_connections; i++) {
 		struct c_utils_connection *conn = c_utils_connection_create(synchronized, logger);
-		if(!conn){
+		if (!conn) {
 			C_UTILS_LOG_ASSERT(logger, "c_utils_connection_create: 'Was unable to create connection #%zu!'", ++i);
 			goto error;
 		}
@@ -277,32 +277,32 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 
 	/// Deallocate all memory allocated if something were to fail!
 	error:
-		if(server){
-			if(server->lock) {
+		if (server) {
+			if (server->lock)   
 				c_utils_scoped_lock_destroy(server->lock);
-			} else if (lock) {
-				if(mutex_init) {
+			 else if (lock) {
+				if (mutex_init)   
 					pthread_mutex_destroy(lock);
-				}
+				
 				free(lock);
 			}
-			if(server->connections){
+			if (server->connections) {
 			size_t i = 0;
-			for(;i < connections_allocated; i++){
+			for (;i < connections_allocated; i++) {
 				int is_destroyed = c_utils_connection_destroy(server->connections[i]);
-				if(!is_destroyed){
+				if (!is_destroyed)  
 					C_UTILS_LOG_ERROR(logger, "c_utils_connection_destroy: 'Was unable to destroy a connection!'");
-				}
+				
 			}
 			free(server->connections);
 			}
-			if(server->sockets){
+			if (server->sockets) {
 				size_t i = 0;
-				for(;i < socks_allocated; i++){
+				for (;i < socks_allocated; i++) {
 					int is_destroyed = destroy_socket(server->sockets[i]);
-					if(!is_destroyed){
+					if (!is_destroyed)  
 						C_UTILS_LOG_ERROR(logger, "destroy_socket: 'Was unable to destroy a socket!'");
-					}
+					
 				}
 				free(server->sockets);
 			}
@@ -311,25 +311,25 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 		return NULL;
 }
 
-struct c_utils_socket *c_utils_server_bind(struct c_utils_server *server, size_t queue_size, unsigned int port, const char *ip_addr){
+struct c_utils_socket *c_utils_server_bind(struct c_utils_server *server, size_t queue_size, unsigned int port, const char *ip_addr) {
 	C_UTILS_ARG_CHECK(logger, NULL, server, port > 0, queue_size > 0);
 
 	// Acquire Mutex
 	SCOPED_LOCK(server->lock) {
 		struct c_utils_socket *sock = reuse_socket(server->sockets, server->amount_of_sockets, queue_size, port, ip_addr);
-		if(sock){
+		if (sock) {
 			C_UTILS_LOG_INFO(logger, "Bound a socket to %s on port %u!", ip_addr ? ip_addr : "localhost", port);
 			return sock;
 		}
 
 		sock = create_socket();
-		if(!sock){
+		if (!sock) {
 			C_UTILS_LOG_ERROR(logger, "create_socket: 'Was unable to create a bound socket!'");
 			return NULL;
 		}
 
 		struct c_utils_socket **tmp_sockets = realloc(server->sockets, sizeof(struct c_utils_socket *) * (server->amount_of_sockets + 1));
-		if(!tmp_sockets){
+		if (!tmp_sockets) {
 			C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
 			destroy_socket(sock);
 			return NULL;
@@ -345,7 +345,7 @@ struct c_utils_socket *c_utils_server_bind(struct c_utils_server *server, size_t
 	} // Release Mutex
 }
 
-bool c_utils_server_unbind(struct c_utils_server *server, struct c_utils_socket *sock){
+bool c_utils_server_unbind(struct c_utils_server *server, struct c_utils_socket *sock) {
 	C_UTILS_ARG_CHECK(logger, false, server, sock);
 
 	// Acquire Mutex
@@ -355,7 +355,7 @@ bool c_utils_server_unbind(struct c_utils_server *server, struct c_utils_socket 
 	return true;
 }
 
-struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, struct c_utils_socket *sock, long long int timeout){
+struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, struct c_utils_socket *sock, long long int timeout) {
 	C_UTILS_ARG_CHECK(logger, NULL, server, sock);
 
 	char ip_addr[INET_ADDRSTRLEN + 1];
@@ -370,13 +370,13 @@ struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, 
 		is_bound = sock->is_bound;
 	} // Release Mutex
 
-	if(!is_bound){
+	if (!is_bound) {
 		C_UTILS_LOG_WARNING(logger, "Socket is not bound!");
 		return NULL;
 	}
 
 	int sockfd = timed_accept(sock_fd, ip_addr, timeout);
-	if(sockfd == -1){
+	if (sockfd == -1) {
 		C_UTILS_LOG_VERBOSE(logger, "timed_accept: 'Was unable to accept a connection!'");
 		return NULL;
 	}
@@ -387,33 +387,33 @@ struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, 
 	// Acquire Mutex
 	SCOPED_LOCK(server->lock) {
 		/// In case that in between acquiring the lock and sockfd the socket gets unbound.
-		if(!sock->is_bound){
+		if (!sock->is_bound) {
 			C_UTILS_LOG_WARNING(logger, "Socket is not bound!");
 
 			int failure = 0;
 			C_UTILS_TEMP_FAILURE_RETRY(failure, close(sockfd));
-			if(failure){
+			if (failure)  
 				C_UTILS_LOG_ERROR(logger, "close: '%s'", strerror(errno));
-			}
+			
 
 			return NULL;
 		}
 
 		conn = c_utils_connection_reuse(server->connections, server->amount_of_connections, sockfd, port, ip_addr, logger);
-		if(conn){
+		if (conn) {
 			C_UTILS_LOG_INFO(logger, "%s connected to port %d", ip_addr, sock->port);
 			return conn;
 		}
 
 		// If NULL is returned, then a connection could not be reused, hence we initialize a new one below.
 		conn = c_utils_connection_create(server->synchronized, logger);
-		if(!conn){
+		if (!conn) {
 			C_UTILS_LOG_ERROR(logger, "c_utils_connection_create: 'Was unable to create a connection!'");
 			return NULL;
 		}
 
 		struct c_utils_connection **tmp_connections = realloc(server->connections, sizeof(struct c_utils_connection *) * (server->amount_of_connections + 1));
-		if(!tmp_connections){
+		if (!tmp_connections) {
 			C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
 			return NULL;
 		}
@@ -424,14 +424,14 @@ struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, 
 		is_initialized = c_utils_connection_init(conn, sockfd, sock->port, ip_addr, logger);
 	} // Release Mutex
 
-	if(!is_initialized) {
+	if (!is_initialized) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_connection_init: 'Was unable to initialize a connection!'");
 		
 		int close_failed;
 		C_UTILS_TEMP_FAILURE_RETRY(close_failed, close(sockfd));
-		if(close_failed){
+		if (close_failed)  
 			C_UTILS_LOG_ERROR(logger, "close: '%s'", strerror(errno));
-		}
+		
 		
 		return NULL;
 	}
@@ -441,7 +441,7 @@ struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, 
 }
 
 // TODO: change timeout to long long int and pass NULL instead of &tv if timeout < 0.
-struct c_utils_connection *c_utils_server_accept_any(struct c_utils_server *server, long long int timeout){
+struct c_utils_connection *c_utils_server_accept_any(struct c_utils_server *server, long long int timeout) {
 	C_UTILS_ARG_CHECK(logger, NULL, server);
 
 	fd_set are_bound;
@@ -456,20 +456,20 @@ struct c_utils_connection *c_utils_server_accept_any(struct c_utils_server *serv
    	// Acquire Mutex
  	SCOPED_LOCK(server->lock) {
 	 	size_t i = 0;
-	 	for(; i < server->amount_of_sockets; i++){
+	 	for (; i < server->amount_of_sockets; i++) {
 	 		struct c_utils_socket *sock = server->sockets[i];
-	 		if(!sock) continue;
-	 		if(sock->is_bound){
+	 		if (!sock) continue;
+	 		if (sock->is_bound) {
 	 			FD_SET(sock->sockfd, &are_bound);
-	 			if(sock->sockfd > max_fd) max_fd = sock->sockfd;
+	 			if (sock->sockfd > max_fd) max_fd = sock->sockfd;
 	 		}
 	 	}
  	} // Release Mutex
 
  	int ready = 0; 
  	C_UTILS_TEMP_FAILURE_RETRY(ready, select(max_fd + 1, &are_bound, NULL, NULL, timeout < 0 ? NULL : &tv));
- 	if(ready <= 0){
- 		if(!ready) C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out'");
+ 	if (ready <= 0) {
+ 		if (!ready) C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out'");
  		else C_UTILS_LOG_ERROR(logger, "select: '%s'", strerror(errno));
  		return NULL;
  	}
@@ -479,17 +479,17 @@ struct c_utils_connection *c_utils_server_accept_any(struct c_utils_server *serv
  	// Acquire Mutex
  	SCOPED_LOCK(server->lock) {
 	 	bool sockfd_found = false;
-	 	for(i = 0; i < server->amount_of_sockets; i++){
+	 	for (i = 0; i < server->amount_of_sockets; i++) {
 	 		sock = server->sockets[i];
-	 		if(!sock) continue;
-	 		if(sock->is_bound){
-	 			if(FD_ISSET(sock->sockfd, &are_bound)){
+	 		if (!sock) continue;
+	 		if (sock->is_bound) {
+	 			if (FD_ISSET(sock->sockfd, &are_bound)) {
 	 				sockfd_found = true;
 	 				break;
 	 			}
 	 		}
 	 	}
-	 	if(!sockfd_found){
+	 	if (!sockfd_found) {
 	 		C_UTILS_LOG_VERBOSE(logger, "Could not accept a connection!");
 	 		return NULL;
 	 	}
@@ -497,7 +497,7 @@ struct c_utils_connection *c_utils_server_accept_any(struct c_utils_server *serv
  	return c_utils_server_accept(server, sock, timeout);
 }
 
-bool c_utils_server_log(struct c_utils_server *server, const char *message, ...){
+bool c_utils_server_log(struct c_utils_server *server, const char *message, ...) {
 	C_UTILS_ARG_CHECK(logger, false, server, message);
 
 	va_list args;
@@ -505,7 +505,7 @@ bool c_utils_server_log(struct c_utils_server *server, const char *message, ...)
 
 	const int buf_size = 1024;
 	char buffer[buf_size];
-	if(vsnprintf(buffer, buf_size, message, args) < 0){ 
+	if (vsnprintf(buffer, buf_size, message, args) < 0) { 
 		C_UTILS_LOG_WARNING(logger, "vsnprintf: '%s'", strerror(errno));
 		return false;
 	}
@@ -514,40 +514,40 @@ bool c_utils_server_log(struct c_utils_server *server, const char *message, ...)
 	return true;
 }
 
-bool c_utils_server_disconnect(struct c_utils_server *server, struct c_utils_connection *conn){
+bool c_utils_server_disconnect(struct c_utils_server *server, struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(logger, false, server, conn);
 
 	int successful = c_utils_connection_disconnect(conn);
-	if(!successful){
+	if (!successful)  
 		C_UTILS_LOG_ERROR(logger, "c_utils_connection_disconnect: 'Was unable to fully disconnect a connection!'");
-	}
+	
 
 	C_UTILS_LOG_INFO(logger, "Disconnected from %s on port %u!", c_utils_connection_get_ip_addr(conn), c_utils_connection_get_port(conn));
 	return true;
 }
 
-bool c_utils_server_shutdown(struct c_utils_server *server){
+bool c_utils_server_shutdown(struct c_utils_server *server) {
 	C_UTILS_ARG_CHECK(logger, false, server);
 
 	// Acquire Mutex
 	SCOPED_LOCK(server->lock) {
 		size_t i = 0;
-		for(;i < server->amount_of_sockets; i++){
+		for (;i < server->amount_of_sockets; i++) {
 			int successful = unbind_sock(server, server->sockets[i]);
-			if(!successful){
+			if (!successful)  
 				C_UTILS_LOG_ERROR(logger, "unbind_sock: 'Was unable to fully unbind a socket!'");
-			}
+			
 		}
 	} // Release Mutex
 
 	return true;
 }
 
-bool c_utils_server_destroy(struct c_utils_server *server){
+bool c_utils_server_destroy(struct c_utils_server *server) {
 	C_UTILS_ARG_CHECK(logger, false, server);
 
 	int is_shutdown = c_utils_server_shutdown(server);
-	if(!is_shutdown){
+	if (!is_shutdown) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_server_shutdown: 'Was unable to shutdown server!'");
 		return false;
 	}
@@ -555,18 +555,18 @@ bool c_utils_server_destroy(struct c_utils_server *server){
 	// Acquire Mutex
 	SCOPED_LOCK(server->lock) {
 		size_t i = 0;
-		for(;i < server->amount_of_connections; i++){
+		for (;i < server->amount_of_connections; i++) {
 			int successful = c_utils_connection_destroy(server->connections[i]);
-			if(!successful){
+			if (!successful)  
 				C_UTILS_LOG_ERROR(logger, "c_utils_connection_destroy: 'Was unable to fully destroy a connection!'");
-			}
+			
 		}
 
-		for(i = 0;i < server->amount_of_sockets; i++){
+		for (i = 0;i < server->amount_of_sockets; i++) {
 			int successful = destroy_socket(server->sockets[i]);
-			if(!successful){
+			if (!successful)  
 				C_UTILS_LOG_ERROR(logger, "destroy_socket: 'Was unable to fully destroy a bound socket!'");
-			}
+			
 		}
 	} // Release Mutex
 

@@ -72,42 +72,42 @@ struct c_utils_iterator {
 };
 
 void *c_utils_iterator_head(struct c_utils_iterator *it){
-	if(!it || !it->head) return NULL;
+	if (!it || !it->head) return NULL;
 	return it->head(it->ds_handle, &it->pos);
 }
 
 void *c_utils_iterator_tail(struct c_utils_iterator *it){
-	if(!it || !it->tail) return NULL;
+	if (!it || !it->tail) return NULL;
 	return it->tail(it->ds_handle, &it->pos);
 }
 
 void *c_utils_iterator_next(struct c_utils_iterator *it){
-	if(!it || !it->next) return NULL;
+	if (!it || !it->next) return NULL;
 	return it->next(it->ds_handle, &it->pos);
 }
 
 void *c_utils_iterator_prev(struct c_utils_iterator *it){
-	if(!it || !it->prev) return NULL;
+	if (!it || !it->prev) return NULL;
 	return it->prev(it->ds_handle, &it->pos);
 }
 
 bool c_utils_iterator_append(struct c_utils_iterator *it, void *item){
-	if(!it || !it->append) return false;
+	if (!it || !it->append) return false;
 	return it->append(it->ds_handle, &it->pos, item);
 }
 
 bool c_utils_iterator_prepend(struct c_utils_iterator *it, void *item){
-	if(!it || !it->prepend) return false;
+	if (!it || !it->prepend) return false;
 	return it->prepend(it->ds_handle, &it->pos, item);
 }
 
 bool c_utils_iterator_for_each(struct c_utils_iterator *it, DS_general_cb cb){
-	if(!it || !it->for_each) return false;
+	if (!it || !it->for_each) return false;
 	return it->for_each(it->ds_handle, &it->pos, cb);
 }
 
 bool c_utils_iterator_remove(struct c_utils_iterator *it, DS_delete_cb del){
-	if(!it || !it->del) return NULL;
+	if (!it || !it->del) return NULL;
 	return it->del(it->ds_handle, &it->pos, del);
 }
 

@@ -3,7 +3,7 @@
 #include <NU_Server.h>
 #include <unistd.h>
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 
 static NU_Server_t *server = NULL;
 
@@ -63,7 +63,7 @@ static void *redirector_thread(void *args){
 		strcpy(redirect_message, username_prefix);
 		strcat(redirect_message, msg);
 		strcat(redirect_message, suffix);
-		//MU_LOG_VERBOSE(logger, "%s\n", new_msg);
+		//C_UTILS_LOG_VERBOSE(logger, "%s\n", new_msg);
 		if(!NU_Connection_send(task->receiver->client, redirect_message, strlen(redirect_message), task->timeout, 0)){
 			break;
 		}

@@ -4,7 +4,7 @@
 #include <MU_Logger.h>
 #include <MU_Test.h>
 
-static MU_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 
 int main(void){
     logger = MU_Logger_create("./String_Utils/Logs/SU_String_Test.log", "w", MU_ALL);

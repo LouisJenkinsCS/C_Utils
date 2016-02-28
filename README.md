@@ -100,10 +100,10 @@ pthread_mutex_t *lock;
 // Create a scoped lock instance of the given mutex.
 TU_Scoped_Lock_t *s_lock = TU_SCOPED_LOCK_FROM(lock);
 // Demonstrates Scoped Lock
-TU_SCOPED_LOCK(s_lock){
+TU_SCOPED_LOCK(s_lock) {
     do_something();
     do_something_else();
-    if(is_something){
+    if (is_something) {
         // Note, we return without needing to unlock.
         return;
     }
@@ -148,7 +148,7 @@ An example of it's usage can be seen below...
 ```c
 
 /// Logger for events. Assume it gets initialized and setup before calling events.
-MU_Logger_t *event_logger;
+struct c_utils_logger *event_logger;
 /*
     The event object used for signaling and waiting on events.
     This event is named "Test Event" and logs to the event logger,
@@ -183,26 +183,26 @@ An example of it's completed state (optimistically) will look somewhat akin to t
 
 ```c
 
-void *prepare_event(void *data){
+void *prepare_event(void *data) {
     return malloc(sizeof(struct some_event_t));
 }
 
-bool check_event(void *data){
-    if(do_something_with(data)) return true;
+bool check_event(void *data) {
+    if (do_something_with(data)) return true;
     return false;
 }
 
-bool dispatch_event(void *data){
+bool dispatch_event(void *data) {
     notify_thread_waiting_on(data);
     return true;
 }
 
-bool finalize_event(void *data){
+bool finalize_event(void *data) {
     free(data);
     return true;
 }
 
-bool print_something(void *data){
+bool print_something(void *data) {
     printf("Something!\n");
     return true;
 }
@@ -214,7 +214,7 @@ bool print_something(void *data){
     10ms. Next is a timed_event, which is will print "Something!" once
     every 10 seconds.
 */
-int main(void){
+int main(void) {
     TU_Event_Source_t *event = TU_Event_Source_create(prepare_event, check_event, dispatch_event, finalize_event, 0);
     TU_Event_Source_t *timed_event = TU_Event_Source_create(NULL, NULL, print_something, NULL, 10);
     TU_Event_Loop_t *loop = TU_Event_Loop_create();
@@ -253,17 +253,17 @@ Stack_t *stack;
     Lets emulate a simple pop lockless procedure.
 */
 Node_t *head, *next;
-while(true){
+while (true) {
     head = stack->head;
-    if(!head) return NULL;
+    if (!head) return NULL;
     MMU_Hazard_Pointer_acquire(head);
-    if(head != stack->head){
+    if (head != stack->head) {
         MMU_Hazard_Pointer_release(head);
         usleep(250);
         continue;
     }
     next = head->next;
-    if(__sync_bool_compare_and_swap(&stack->head, head, next)) break;
+    if (__sync_bool_compare_and_swap(&stack->head, head, next)) break;
     MMU_Hazard_Pointer_release(head);
     usleep(250);
 }
@@ -465,8 +465,8 @@ NU_Response_t *res = NU_Response_create();
 /*
     Note that it takes a rather elegant looking key-value pair, in the guise
     of a struct with two char * members. What the macro does, in gist, is
-    that it takes (NU_Field_t){ x, y}, into { x, y} by converting it for you.
-    Hence (NU_Field_t){ "Content-Length", file_size } becomes a much better:
+    that it takes (NU_Field_t) { x, y}, into { x, y} by converting it for you.
+    Hence (NU_Field_t) { "Content-Length", file_size } becomes a much better:
     { "Content-Length", file_size }.
 */
 NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
@@ -493,16 +493,16 @@ An optimistic example of it's use when finished can be seen below...
 /*
     Imagine that the below data structures are initialized already, containing strings.
 */
-DS_List_t *list;
+struct c_utils_list *list;
 DS_Vector_t *vec;
 DS_Map_t *map;
 /*
     Obtain the iterator of each in an array of iterators, like below.
 */
-DS_Iterator_t it[] = { DS_List_iterator(list), DS_Vector_iterator(vec), DS_Map_iterator(map) };
-for(int i = 0; i < 3; i++){
+DS_Iterator_t it[] = { c_utils_list_iterator(list), DS_Vector_iterator(vec), DS_Map_iterator(map) };
+for (int i = 0; i < 3; i++) {
     char *str;
-    while(str = DS_Iterator_next(it)) puts(str);
+    while (str = DS_Iterator_next(it)) puts(str);
 }
 
 ```
@@ -524,15 +524,15 @@ int comparator(void *item_one, void *item_two);
 const bool synchronized = true;
 void *item, *item_two;
 
-DS_List_t *list = DS_List_create(synchronized);
+struct c_utils_list *list = c_utils_list_create(synchronized);
 // Assume item was already allocated and points to a valid piece of memory.
-DS_List_add(list, item, NULL);
+c_utils_list_add(list, item, NULL);
 // We added the item to the list, unsorted. The third argument is a callback to add in sorted order.
-DS_List_add(list, item_two, comparator);
+c_utils_list_add(list, item_two, comparator);
 // The list is "Smart" enough to keep track of if an unsorted item was added, and will sort the list for you.
-DS_List_get(list, 0);
-DS_List_remove(list, 1);
-DS_List_destroy(list, free);
+c_utils_list_get(list, 0);
+c_utils_list_remove(list, 1);
+c_utils_list_destroy(list, free);
 
 ```
 
@@ -552,7 +552,7 @@ An example of it's use is detailed below...
 ```c
 
 /// The comparator. Simple, as it just compares two integers.
-int compare_vals(void *arg_one, void *arg_two){
+int compare_vals(void *arg_one, void *arg_two) {
     return *(int *)arg_one - *(int *)arg_two;
 }
 
@@ -649,7 +649,7 @@ Overall, it's simple and intuitive to use.
 
 ####Logger [<b>Stable</b>] Version: 1.4
 
-A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Also supports the usage of GCC & Clang compiler attributes to automatically manage the lifetime of the logger. This means that a logger can be initialized before any other operation occurs, even before main(), hence making it perfectly safe to use with almost no effort to setup. This can be accomplished by using the MU_LOGGER_AUTO_CREATE macro.
+A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Also supports the usage of GCC & Clang compiler attributes to automatically manage the lifetime of the logger. This means that a logger can be initialized before any other operation occurs, even before main(), hence making it perfectly safe to use with almost no effort to setup. This can be accomplished by using the C_UTILS_LOGGER_AUTO_CREATE macro.
 
 Formatting Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
 
@@ -658,11 +658,11 @@ Which is the current default, would look like such...
 ```c
 
 // Is static hence no linkage issues will arise.
-static MU_Logger_t *logger; 
-MU_LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", MU_INFO);
+static struct c_utils_logger *logger; 
+C_UTILS_LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", MU_INFO);
 
 // Later, when you need to log inside of some function.
-MU_LOG_INFO(logger, "Hello World!");
+C_UTILS_LOG_INFO(logger, "Hello World!");
 
 ```
 
@@ -724,13 +724,13 @@ An example of it's use can be seen below.
 ```c
 
 // Assume this is initialized sometime before test_func is called.
-MU_Logger_t *logger;
+struct c_utils_logger *logger;
 
 typedef struct {
     bool is_valid;
 } test_struct;
 
-bool test_func(char *msg, int val, test_struct *test){
+bool test_func(char *msg, int val, test_struct *test) {
     MU_ARG_CHECK(logger, false, msg, val > 0 && val < 100, test, test && test->is_valid);
     /*
         MU_ARG_CHECK takes a logger to log to, the return value, and then up to 8 arguments. Once again note that you must short-circuit test to get it's is_valid member safely as this is a limitation of macros.
@@ -751,7 +751,7 @@ As GCC's TEMP_FAILURE_RETRY macro allows you to restart functions which return -
 
 ```c
 
-#define MU_TEMP_FAILURE_RETRY(storage, function) while(errno = 0, storage = function, errno = EINTR)
+#define MU_TEMP_FAILURE_RETRY(storage, function) while (errno = 0, storage = function, errno = EINTR)
 
 ```
 

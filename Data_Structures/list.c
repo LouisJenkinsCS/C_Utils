@@ -89,7 +89,7 @@ static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *nod
 	if (compare(node->item, list->tail->item) >= 0)
 		return add_as_tail(list, node);
 
-	for(current_node = list->head; current_node; current_node = current_node->_double.next) {
+	for (current_node = list->head; current_node; current_node = current_node->_double.next) {
 		if (compare(node->item, current_node->item) <= 0)
 			return add_before(list, current_node, node);
 		else if (!current_node->_double.next)
@@ -182,11 +182,11 @@ static inline void swap_node_items(struct c_utils_node *node_one, struct c_utils
 
 static inline void insertion_sort_list(struct c_utils_list *list, c_utils_comparator_cb compare) {
 	struct c_utils_node *node = NULL, *sub_node = NULL;
-	for(node = list->head; node; node = node->_double.next) {
+	for (node = list->head; node; node = node->_double.next) {
 		void *item = node->item;
 		
 		sub_node = node->_double.prev;
-		while(sub_node && compare(sub_node->item, item) > 0) {
+		while (sub_node && compare(sub_node->item, item) > 0) {
 			swap_node_items(sub_node->_double.next, sub_node);
 			sub_node = sub_node->_double.prev;
 		}
@@ -203,7 +203,7 @@ static void print_list(struct c_utils_list *list, FILE *file, c_utils_to_string_
 	char *all_items_in_list;
 	
 	asprintf(&all_items_in_list, "{ ");
-	for(node = list->head; node ; node = node->_double.next) {
+	for (node = list->head; node ; node = node->_double.next) {
 		char *item_as_string = to_string(node->item);
 		char *old_items_in_list = all_items_in_list;
 		asprintf(&all_items_in_list, "%s  %s,", all_items_in_list, item_as_string);
@@ -221,7 +221,7 @@ static void print_list(struct c_utils_list *list, FILE *file, c_utils_to_string_
 }
 
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
-	while(list->head)
+	while (list->head)
 		remove_node(list, list->head, del);
 	
 	return 1;
@@ -230,7 +230,7 @@ static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
 #if 0
 static int node_exists(struct c_utils_list *list, struct c_utils_node *node) {
 	struct c_utils_node *temp_node = NULL;
-	for(temp_node = list->head; temp_node; temp_node = temp_node->_double.next) 
+	for (temp_node = list->head; temp_node; temp_node = temp_node->_double.next) 
 		if (temp_node == node) 
 			return 1;
 	return 0;
@@ -239,7 +239,7 @@ static int node_exists(struct c_utils_list *list, struct c_utils_node *node) {
 static int node_to_index(struct c_utils_list *list, struct c_utils_node *node) {
 	int index = 0;
 	struct c_utils_node *temp_node = NULL;
-	for(temp_node = list->head; temp_node; temp_node = temp_node->_double.next) {
+	for (temp_node = list->head; temp_node; temp_node = temp_node->_double.next) {
 		index++;
 		if (node == temp_node)
 			return index;
@@ -258,7 +258,7 @@ static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item) 
 		return list->tail;
 	
 	struct c_utils_node *node = NULL;
-	for(node = list->head; node ; node = node->_double.next)
+	for (node = list->head; node ; node = node->_double.next)
 		if (item == node->item)
 			return node;
 	
@@ -278,13 +278,13 @@ static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned in
 	if (index > (list->size / 2)) {
 		int i = list->size-1;
 		struct c_utils_node *node = list->tail;
-		while((node = node->_double.prev) && --i != index) ;
+		while ((node = node->_double.prev) && --i != index) ;
 		C_UTILS_ASSERT(i == index, logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 		return node;
 	} else {
 		int i = 0;
 		struct c_utils_node *node = list->head;
-		while((node = node->_double.next) && ++i != index);
+		while ((node = node->_double.next) && ++i != index);
 		C_UTILS_ASSERT(i == index, logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 	}
 	
@@ -293,7 +293,7 @@ static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned in
 
 static void for_each_item(struct c_utils_list *list, void (*callback)(void *item)) {
 	struct c_utils_node *node = NULL;
-	for(node = list->head; node; node = node->_double.next)
+	for (node = list->head; node; node = node->_double.next)
 		callback(node->item);
 }
 
@@ -308,7 +308,7 @@ static const int next_valid = 1 << 2;
 static unsigned int is_valid(struct c_utils_list *list, struct c_utils_position *pos) {
 	unsigned int retval = 0;
 	struct c_utils_node *tmp;
-	for(tmp = list->head; tmp; tmp = tmp->_double.next) {
+	for (tmp = list->head; tmp; tmp = tmp->_double.next) {
 		if (tmp == pos->curr) {
 			C_UTILS_FLAG_SET(retval, curr_valid);
 		} else if (tmp == pos->prev) {
@@ -568,7 +568,7 @@ struct c_utils_list *c_utils_list_from(void **array, size_t size, DS_comparator_
 	struct c_utils_list *list = c_utils_list_create(synchronized);
 	
 	int i = 0;
-	for(;i<size;i++)
+	for (;i<size;i++)
 		c_utils_list_add(list, array[i], compare);
 
 	return list;
@@ -715,9 +715,8 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 
 		struct c_utils_node *node = NULL;
 		int index = 0;
-		for(node = list->head; node; node = node->_double.next) {
+		for (node = list->head; node; node = node->_double.next)
 			array_of_items[index++] = node->item;
-		}
 
 		*size = index;
 		return array_of_items;
