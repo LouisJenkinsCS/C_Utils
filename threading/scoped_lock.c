@@ -67,8 +67,22 @@ static void *scoped_lock_no_op(struct c_utils_scoped_lock *s_lock) {
    return NULL + 1;
 }
 
+struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutexattr_t *attr, struct c_utils_logger *logger) {
+   pthread_mutex_t *lock = malloc(sizeof(*lock));
+   if (!lock) {
+      C_UTILS_LOG_ASSERT(logger, "malloc: \"%s\"", strerror(errno));
+      return NULL;
+   }
+   int failure = pthread_mutex_init(lock, attr);
+   if(failure) {
+      C_UTILS_LOG_LOCK(lock, C_UTILS_LOG_LEVEL_ERROR, "pthread_mutex_init: \"%s\"", strerror(failure));
+      free(lock);
+      return NULL;
+   }
+   return c_utils_scoped_lock_mutex_from(lock, logger);
+}
 
-struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_utils_logger *logger) {
+struct c_utils_scoped_lock *c_utils_scoped_lock_mutex_from(pthread_mutex_t *lock, struct c_utils_logger *logger) {
    struct c_utils_scoped_lock *s_lock = calloc(1, sizeof(struct c_utils_scoped_lock));
    if (!s_lock) {
       C_UTILS_LOG_ASSERT(logger, "calloc: \"%s\"", strerror(errno));

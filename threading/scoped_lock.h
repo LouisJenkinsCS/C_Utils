@@ -34,10 +34,19 @@ typedef struct c_utils_scoped_lock scoped_lock_t;
 #endif
 
 
-struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_utils_logger *logger);
+struct c_utils_scoped_lock *c_utils_scoped_lock_mutex_from(pthread_mutex_t *lock, struct c_utils_logger *logger);
 
+struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutexattr_t *attr, struct c_utils_logger *logger);
 
-struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, struct c_utils_logger *logger);
+struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock_from(pthread_spinlock_t *lock, struct c_utils_logger *logger);
+
+struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(int flags, struct c_utils_logger *logger);
+
+struct c_utils_scoped_lock *c_utils_scoped_lock_rwlock_from(pthread_rwlock_t *lock, struct c_utils_logger *logger);
+
+struct c_utils_scoped_lock *c_utils_scoped_lock_rwlock(pthread_rwlockattr_t *lock, struct c_utils_logger *logger);
+
+struct c_utils_scoped_lock *c_utils_scoped_lock_no_op();
 
 /**
 * Called to automatically unlock the passed c_utils_scoped_lock instance
@@ -51,7 +60,10 @@ void c_utils_auto_unlock(struct c_utils_scoped_lock **s_lock);
 void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 
 
-#define SCOPED_LOCK_FROM(lock, logger) _Generic((lock), pthread_mutex_t *: c_utils_scoped_lock_mutex, pthread_spinlock_t *: c_utils_scoped_lock_spinlock)(lock, logger)
+#define SCOPED_LOCK_FROM(lock, logger) _Generic((lock), \
+      pthread_mutex_t *: c_utils_scoped_lock_mutex_from, \
+      pthread_spinlock_t *: c_utils_scoped_lock_spinlock_from, \
+      pthread_rwlock_t *: c_utils_scoped_lock_rwlock_from)(lock, logger)
 
 /*
    Note how we create a temporary variable to point to the

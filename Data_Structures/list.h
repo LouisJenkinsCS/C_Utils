@@ -160,7 +160,9 @@ bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string
  */
 bool c_utils_list_contains(struct c_utils_list *list, void *item);
 
-bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
+void c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
+
+size_t c_utils_list_size(struct c_utils_list *list);
 
 /**
  * Destroys the passed linked list, freeing and destroying any of it's members, as well
@@ -171,7 +173,7 @@ bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
  * @param list List to destroy.
  * @param delete_item Callback used on each item.
  */
-bool c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del);
+void c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del);
 
 
 #endif /* C_UTILS_LIST_H */
