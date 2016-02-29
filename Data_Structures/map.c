@@ -1,6 +1,6 @@
-#include "data_structures/map.h"
-#include "io/logger.h"
-#include "threading/scoped_lock.h"
+#include "../data_structures/map.h"
+#include "../io/logger.h"
+#include "../threading/scoped_lock.h"
 
 struct c_utils_bucket {
 	/// The key associated with each bucket.

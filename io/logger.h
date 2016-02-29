@@ -90,62 +90,62 @@ typedef struct c_utils_logger logger_t;
 } while (0)
 #endif
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
-#define C_UTILS_ASSERT(condition, logger, message, ...) !condition ? c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, C_UTILS_LOGGER_STRINGIFY(condition), \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false;
+#define C_UTILS_ASSERT(condition, logger, message, ...) !condition ? c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, C_UTILS_STRINGIFY(condition), \
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false;
 
 /*
 	Log level of most imminent priority, normally used when an allocation fails.
 */
 #define C_UTILS_LOG_ASSERT(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level to alert than error has occured, and should be fixed immediately.
 */
 #define C_UTILS_LOG_ERROR(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ERROR, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level to alert the developer of a potential error, but is not severe enough to count as one.
 */
 #define C_UTILS_LOG_WARNING(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_WARNING, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level for custom log messages.
 */
 #define C_UTILS_LOG_CUSTOM(logger, custom_level, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_CUSTOM, custom_level, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level used for logging events, specifically for C_UTILS_LOG_LEVEL_Events, but can be used by anyone.
 */
 #define C_UTILS_LOG_EVENT(logger, event, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_EVENT, NULL, message, event, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level meant for informational logging, meaning it's good for the user to know, highlighting progress through
 	a program. You should find less of these than C_UTILS_LOG_LEVEL_VERBOSE, and it should contain information that is more important.
 */
 #define C_UTILS_LOG_INFO(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_INFO, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level meant for keeping track of verbose information, meaning it's not important enough for INFO, but very useful
 	for debugging without it being too tedious. Won't clog the log file as much as C_UTILS_LOG_LEVEL_TRACE. 
 */
 #define C_UTILS_LOG_VERBOSE(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_VERBOSE, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level meant for tracing information that is more verbose than C_UTILS_LOG_LEVEL_VERBOSE, normally tedious tracing of the 
 	flow of a program.
 */
 #define C_UTILS_LOG_TRACE(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_TRACE, NULL, message, NULL, \
-	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
+	__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
-#define C_UTILS_LOGGER_STRINGIFY(x) C_UTILS_LOGGER_STRINGIFY_THIS(x)
-#define C_UTILS_LOGGER_STRINGIFY_THIS(x) #x
+#define C_UTILS_STRINGIFY(x) C_UTILS_STRINGIFY_THIS(x)
+#define C_UTILS_STRINGIFY_THIS(x) #x
 
 #define C_UTILS_LOGGER_AUTO_CREATE(logger, filename, mode, level) \
 __attribute__((constructor)) static void init_ ##logger (void) { \

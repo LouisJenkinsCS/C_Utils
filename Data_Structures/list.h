@@ -18,15 +18,22 @@ struct c_utils_list;
 typedef struct c_utils_list list_t;
 
 /*
+	Macros
+*/
+#define LIST_FOR_EACH(...) C_UTILS_LIST_FOR_EACH(__VA_ARGS__)
+
+/*
 	Functions
 */
-#define list_create(...) c_utils_list_clear(__VA_ARGS__)
+#define list_create(...) c_utils_list_create(__VA_ARGS__)
+#define list_from(...) c_utils_list_from(__VA_ARGS__)
 #define list_get(...) c_utils_list_get(__VA_ARGS__)
 #define list_sort(...) c_utils_list_sort(__VA_ARGS__)
 #define list_iterator(...) c_utils_list_iterator(__VA_ARGS__)
 #define list_add(...) c_utils_list_add(__VA_ARGS__)
 #define list_contains(...) c_utils_list_contains(__VA_ARGS__)
 #define list_clear(...) c_utils_list_clear(__VA_ARGS__)
+#define list_size(...) c_utils_list_size(__VA_ARGS__)
 #define list_destroy(...) c_utils_list_destroy(__VA_ARGS__)
 #define list_from(...) c_utils_list_from(__VA_ARGS__)
 #define list_remove(...) c_utils_list_remove(__VA_ARGS__)
@@ -160,7 +167,7 @@ bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string
  */
 bool c_utils_list_contains(struct c_utils_list *list, void *item);
 
-void c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
+bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
 
 size_t c_utils_list_size(struct c_utils_list *list);
 
@@ -173,7 +180,7 @@ size_t c_utils_list_size(struct c_utils_list *list);
  * @param list List to destroy.
  * @param delete_item Callback used on each item.
  */
-void c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del);
+bool c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del);
 
 
 #endif /* C_UTILS_LIST_H */

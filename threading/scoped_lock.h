@@ -44,7 +44,7 @@ struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(int flags, struct c_uti
 
 struct c_utils_scoped_lock *c_utils_scoped_lock_rwlock_from(pthread_rwlock_t *lock, struct c_utils_logger *logger);
 
-struct c_utils_scoped_lock *c_utils_scoped_lock_rwlock(pthread_rwlockattr_t *lock, struct c_utils_logger *logger);
+struct c_utils_scoped_lock *c_utils_scoped_lock_rwlock(pthread_rwlockattr_t *attr, struct c_utils_logger *logger);
 
 struct c_utils_scoped_lock *c_utils_scoped_lock_no_op();
 
@@ -75,7 +75,7 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 #define SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
 
 #define _SCOPED_LOCK(s_lock, n) \
-   s_lock->info.line = C_UTILS_LOGGER_STRINGIFY(__LINE__); \
+   s_lock->info.line = C_UTILS_STRINGIFY(__LINE__); \
    s_lock->info.file = __FILE__; \
    s_lock->info.function = __FUNCTION__; \
    for (struct c_utils_scoped_lock *tmp_lock SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
@@ -85,5 +85,7 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 #define SCOPED_LOCK1(s_lock) _SCOPED_LOCK(s_lock, 1)
 
 #define SCOPED_LOCK(s_lock) SCOPED_LOCK0(s_lock)
+
+#define C_UTILS_UNACCESSIBLE do { __builtin_unreachable(); assert(0 && "Reach unreachable block!"); } while(0)
 
 #endif /* MU_SCOPED_LOCK_H */

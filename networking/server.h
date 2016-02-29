@@ -1,7 +1,7 @@
 #ifndef NET_UTILS_SERVER_H
 #define NET_UTILS_SERVER_H
 
-#include "networking/connection.h"
+#include "../networking/connection.h"
 
 /**
  *  c_utils_server is a simple manager of c_utils_connection objects and c_utils_socket objects in an

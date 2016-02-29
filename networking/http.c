@@ -1,4 +1,4 @@
-#include "networking/http.h"
+#include "../networking/http.h"
 #include <ctype.h>
 
 /// 31 is close enough to the amount of HTTP statuses, but is also a prime number.

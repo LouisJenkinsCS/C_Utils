@@ -2,10 +2,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "networking/server.h"
-#include "misc/signal_retry.h";
-#include "misc/argument_check.h";
-#include "threading/scoped_lock.h"
+#include "../networking/server.h"
+#include "../misc/signal_retry.h";
+#include "../misc/argument_check.h";
+#include "../threading/scoped_lock.h"
 
 struct c_utils_socket {
    /// The bound socket.

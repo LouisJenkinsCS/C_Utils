@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "string/string.h"
-#include "io/logger.h"
-#include "misc/argument_check.h"
+#include "../string/string.h"
+#include "../io/logger.h"
+#include "../misc/argument_check.h"
 
 static struct c_utils_logger *logger = NULL;
 

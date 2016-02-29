@@ -1,8 +1,9 @@
 #include "../data_structures/list.h"
 #include "../io/logger.h"
-#include "../misc/argument_check.h"
 #include "../misc/flags.h"
+#include "../misc/alloc_check.h"
 #include "../threading/scoped_lock.h"
+#include "../misc/argument_check.h"
 
 struct c_utils_list {
 	/// The head node of the list.
@@ -20,7 +21,7 @@ struct c_utils_list {
 /// Static logger for all linked lists do use.
 static struct c_utils_logger *logger = NULL;
 
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/list.log", "w", C_UTILS_LOG_LEVEL_ALL);
+C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/list.log", "w", C_UTILS_LOG_LEVEL_WARNING);
 
 /* Begin implementations of helper functions. */
 
@@ -308,7 +309,7 @@ static const int next_valid = 1 << 2;
 
 static unsigned int is_valid(struct c_utils_list *list, struct c_utils_position *pos) {
 	unsigned int retval = 0;
-	struct c_utils_node *tmp;
+	struct c_utils_node *tmp = NULL;
 	for (tmp = list->head; tmp; tmp = tmp->_double.next) {
 		if (tmp == pos->curr) {
 			C_UTILS_FLAG_SET(retval, curr_valid);
@@ -344,7 +345,7 @@ static void *head(void *instance, struct c_utils_position *pos) {
 		return get_item(head);
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 static void *tail(void *instance, struct c_utils_position *pos) {
@@ -358,7 +359,7 @@ static void *tail(void *instance, struct c_utils_position *pos) {
 		return get_item(tail);
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 static void *next(void *instance, struct c_utils_position *pos) {
@@ -397,7 +398,7 @@ static void *next(void *instance, struct c_utils_position *pos) {
 		return get_item(next);
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 static void *prev(void *instance, struct c_utils_position *pos) {
@@ -436,7 +437,7 @@ static void *prev(void *instance, struct c_utils_position *pos) {
 		return get_item(prev);
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 static bool append(void *instance, struct c_utils_position *pos, void *item) {
@@ -488,7 +489,7 @@ static bool append(void *instance, struct c_utils_position *pos, void *item) {
 		return true;
 	} // Release Writer Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
@@ -540,18 +541,15 @@ static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
 		return true;
 	} // Release Writer Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 /* Linked List Creation and Deletion functions */
 
 struct c_utils_list *c_utils_list_create(bool synchronized) {
-	struct c_utils_list *list = calloc(1, sizeof(struct c_utils_list));
-	if (!list) {
-		C_UTILS_DEBUG("See Log!!!\n");
-		C_UTILS_LOG_ERROR(logger, "Was unable to allocate list, Out of Memory\n");
+	struct c_utils_list *list;
+	C_UTILS_ON_BAD_CALLOC(list, logger, sizeof(*list))
 		return NULL;
-	}
 
 	list->head = list->tail = NULL;
 	list->size = 0;
@@ -575,29 +573,34 @@ struct c_utils_list *c_utils_list_from(void **array, size_t size, c_utils_compar
 	C_UTILS_ARG_CHECK(logger, NULL, array);
 	
 	struct c_utils_list *list = c_utils_list_create(synchronized);
-	
-	int i = 0;
-	for (;i<size;i++)
-		c_utils_list_add(list, array[i], compare);
+	if(list) {
+		int i = 0;
+		for (;i<size;i++)
+			c_utils_list_add(list, array[i], compare);
+	}
 
 	return list;
 }
 
-void c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, , list);
+bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del) {
+	C_UTILS_ARG_CHECK(logger, false , list);
 	
 	// Acquire Writer Lock
 	SCOPED_LOCK0(list->lock) 
 		delete_all_nodes(list, del);
+
+	return true;
 }
 
-void c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, , list);
+bool c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del) {
+	C_UTILS_ARG_CHECK(logger, false , list);
 
 	c_utils_list_clear(list, del);
 
 	c_utils_scoped_lock_destroy(list->lock);
 	free(list);
+
+	return true;
 }
 
 /* Linked List adding functions */
@@ -605,11 +608,10 @@ void c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del) {
 bool c_utils_list_add(struct c_utils_list *list, void *item, c_utils_comparator_cb compare) {
 	C_UTILS_ARG_CHECK(logger, false, list, item);
 	
-	struct c_utils_node *node = malloc(sizeof(struct c_utils_node));
-	if (!node) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+	struct c_utils_node *node;
+	C_UTILS_ON_BAD_MALLOC(node, logger, sizeof(*node))
 		return false;
-	}
+
 	node->item = item;
 	
 	// Acquire Writer Lock
@@ -623,7 +625,7 @@ bool c_utils_list_add(struct c_utils_list *list, void *item, c_utils_comparator_
 			return add_unsorted(list, node);
 	} // Release Writer Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 /* Linked List removal functions */
@@ -638,7 +640,7 @@ bool c_utils_list_remove(struct c_utils_list *list, void *item, c_utils_delete_c
 		return node ? remove_node(list, node, del) : false;
 	} // Release Writer Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_utils_delete_cb del) {
@@ -658,7 +660,7 @@ void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_ut
 		}
 	} // Release Writer Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 /* Linked List miscallaneous functions */
@@ -694,7 +696,7 @@ bool c_utils_list_contains(struct c_utils_list *list, void *item) {
 	SCOPED_LOCK1(list->lock)
 		return !!item_to_node(list, item);
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string_cb to_string) {
@@ -716,7 +718,7 @@ void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
 		return node ? node->item : NULL;
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
@@ -739,16 +741,14 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 		return array_of_items;
 	} // Release Reader Lock
 
-	__builtin_unreachable();
+	C_UTILS_UNACCESSIBLE;
 }
 
 
 struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
-	struct c_utils_iterator *it = calloc(1, sizeof(*it));
-	if (!it) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
+	struct c_utils_iterator *it;
+	C_UTILS_ON_BAD_CALLOC(it, logger, sizeof(*it))
+		return NULL;
 
 	it->handle = list;
 	it->head = head;
@@ -759,8 +759,4 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 	it->prepend = prepend;
 	
 	return it;
-
-	error:
-		free(it);
-		return NULL;
 }

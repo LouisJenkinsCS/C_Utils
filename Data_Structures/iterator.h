@@ -32,9 +32,7 @@ struct c_utils_iterator {
 	bool (*del)(void *, struct c_utils_position *, c_utils_delete_cb);
 };
 
-void c_utils_auto_destroy_iterator(struct c_utils_iterator **it){
-	free(*it);
-}
+void c_utils_auto_destroy_iterator(struct c_utils_iterator **it);
 
 #define C_UTILS_AUTO_ITERATOR struct c_utils_iterator *__attribute__ ((__cleanup__(c_utils_auto_destroy_iterator)))
 
@@ -75,44 +73,20 @@ typedef struct c_utils_iterator iterator_t;
 	is a pointer to the desired storage to store the result of the transaction. 
 */
 
-void *c_utils_iterator_head(struct c_utils_iterator *it){
-	if (!it || !it->head) return NULL;
-	return it->head(it->handle, &it->pos);
-}
+void *c_utils_iterator_head(struct c_utils_iterator *it);
 
-void *c_utils_iterator_tail(struct c_utils_iterator *it){
-	if (!it || !it->tail) return NULL;
-	return it->tail(it->handle, &it->pos);
-}
+void *c_utils_iterator_tail(struct c_utils_iterator *it);
 
-void *c_utils_iterator_next(struct c_utils_iterator *it){
-	if (!it || !it->next) return NULL;
-	return it->next(it->handle, &it->pos);
-}
+void *c_utils_iterator_next(struct c_utils_iterator *it);
 
-void *c_utils_iterator_prev(struct c_utils_iterator *it){
-	if (!it || !it->prev) return NULL;
-	return it->prev(it->handle, &it->pos);
-}
+void *c_utils_iterator_prev(struct c_utils_iterator *it);
 
-bool c_utils_iterator_append(struct c_utils_iterator *it, void *item){
-	if (!it || !it->append) return false;
-	return it->append(it->handle, &it->pos, item);
-}
+bool c_utils_iterator_append(struct c_utils_iterator *it, void *item);
 
-bool c_utils_iterator_prepend(struct c_utils_iterator *it, void *item){
-	if (!it || !it->prepend) return false;
-	return it->prepend(it->handle, &it->pos, item);
-}
+bool c_utils_iterator_prepend(struct c_utils_iterator *it, void *item);
 
-bool c_utils_iterator_for_each(struct c_utils_iterator *it, c_utils_general_cb cb){
-	if (!it || !it->for_each) return false;
-	return it->for_each(it->handle, &it->pos, cb);
-}
+bool c_utils_iterator_for_each(struct c_utils_iterator *it, c_utils_general_cb cb);
 
-bool c_utils_iterator_remove(struct c_utils_iterator *it, c_utils_delete_cb del){
-	if (!it || !it->del) return NULL;
-	return it->del(it->handle, &it->pos, del);
-}
+bool c_utils_iterator_remove(struct c_utils_iterator *it, c_utils_delete_cb del);
 
 #endif /* endif DS_ITERATOR_H */

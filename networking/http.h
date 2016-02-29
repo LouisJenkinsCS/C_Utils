@@ -122,8 +122,8 @@ typedef enum c_utils_http_version http_version_e;
 
 
 
-#include "networking/connection.h"
-#include "data_structures/map.h"
+#include "../networking/connection.h"
+#include "../data_structures/map.h"
 
 
 

@@ -1,6 +1,7 @@
 #ifndef ARG_CHECK_H
 #define ARG_CHECK_H
 
+#include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
@@ -43,7 +44,7 @@
 		case 6: C_UTILS_ARG_CHECK_6(arg_str, valid_args, __VA_ARGS__); break; \
 		case 7: C_UTILS_ARG_CHECK_7(arg_str, valid_args, __VA_ARGS__); break; \
 		case 8: C_UTILS_ARG_CHECK_8(arg_str, valid_args, __VA_ARGS__); break; \
-		default: assert(0); \
+		default: assert(0 && "Exceeds Maximum Argument of 8!"); \
 	} \
 	sprintf(arg_str, "%s!", arg_str); \
 	C_UTILS_LOG_ERROR(logger, "%s }", arg_str); \

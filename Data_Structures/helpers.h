@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include "../io/logger.h"
+#include "../misc/alloc_check.h"
 
 struct c_utils_node {
 	/// Union allows multiple types of nodes with only one type.
@@ -20,16 +21,7 @@ struct c_utils_node {
 	void *item;
 };
 
-struct c_utils_node *DS_Node_create(void *item, struct c_utils_logger *logger) {
-	struct c_utils_node *node = calloc(1, sizeof(*node));
-	if (!node) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
-	node->item = item;
-	return node;
-}
- 
+
 typedef void (*c_utils_general_cb)(void *);
 
 typedef int (*c_utils_comparator_cb)(const void *, const void *);

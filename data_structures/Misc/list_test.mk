@@ -1,15 +1,12 @@
-CC=gcc
+CC=clang
 PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
-CFLAGS=-g -D_GNU_SOURCE -Wall
-MP=./Misc_Utils/
-DSP=./Data_Structures/
+CFLAGS=-g -D_GNU_SOURCE -Wall -std=c11
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=MU_Logger.c MU_Arg_Check.c DS_List.c DS_List_Test.c DS_Iterator.c
+SOURCES=list.c list_test.c logger.c scoped_lock.c alloc_check.c iterator.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
-TARGET=DS_List_Test
-DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./Misc_Utils/ ./Data_Structures/ ./Data_Structures/Tests
+TARGET=list_test
+VPATH=./misc/ ./data_structures/ ./data_structures/tests ./io/ ./threading/
 
 all: $(TARGET)
 
