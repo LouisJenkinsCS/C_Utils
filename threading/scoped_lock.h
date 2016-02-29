@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <stdbool.h>
+#include "../io/logger.h"
 
 struct c_utils_scoped_lock;
 

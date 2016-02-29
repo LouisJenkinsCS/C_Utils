@@ -84,64 +84,64 @@ typedef struct c_utils_logger logger_t;
 #else
 /// Prints a debug message, along with it's timestamp, file and line of code it's on.
 #define C_UTILS_DEBUG(message, ...) do { \
-	char *timestamp = MU_get_timestamp(); \
+	char *timestamp = c_utils_get_timestamp(); \
 	fprintf(stderr, "%s: [DEBUG]: %s: " message "\n", timestamp, __FUNCTION__, ##__VA_ARGS__); \
 	free(timestamp); \
 } while (0)
 #endif
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
-#define C_UTILS_ASSERT(condition, logger, message, ...) !condition ? c_utils_logger_log(logger, MU_ASSERTION, NULL, message, C_UTILS_LOGGER_STRINGIFY(condition), \
+#define C_UTILS_ASSERT(condition, logger, message, ...) !condition ? c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, C_UTILS_LOGGER_STRINGIFY(condition), \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false;
 
 /*
 	Log level of most imminent priority, normally used when an allocation fails.
 */
-#define C_UTILS_LOG_ASSERT(logger, message, ...) c_utils_logger_log(logger, MU_ASSERTION, NULL, message, NULL, \
+#define C_UTILS_LOG_ASSERT(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level to alert than error has occured, and should be fixed immediately.
 */
-#define C_UTILS_LOG_ERROR(logger, message, ...) c_utils_logger_log(logger, MU_ERROR, NULL, message, NULL, \
+#define C_UTILS_LOG_ERROR(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ERROR, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level to alert the developer of a potential error, but is not severe enough to count as one.
 */
-#define C_UTILS_LOG_WARNING(logger, message, ...) c_utils_logger_log(logger, MU_WARNING, NULL, message, NULL, \
+#define C_UTILS_LOG_WARNING(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_WARNING, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level for custom log messages.
 */
-#define C_UTILS_LOG_CUSTOM(logger, custom_level, message, ...) c_utils_logger_log(logger, MU_CUSTOM, custom_level, message, NULL, \
+#define C_UTILS_LOG_CUSTOM(logger, custom_level, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_CUSTOM, custom_level, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
-	Log level used for logging events, specifically for MU_Events, but can be used by anyone.
+	Log level used for logging events, specifically for C_UTILS_LOG_LEVEL_Events, but can be used by anyone.
 */
-#define C_UTILS_LOG_EVENT(logger, event, message, ...) c_utils_logger_log(logger, MU_EVENT, NULL, message, event, \
+#define C_UTILS_LOG_EVENT(logger, event, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_EVENT, NULL, message, event, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level meant for informational logging, meaning it's good for the user to know, highlighting progress through
-	a program. You should find less of these than MU_VERBOSE, and it should contain information that is more important.
+	a program. You should find less of these than C_UTILS_LOG_LEVEL_VERBOSE, and it should contain information that is more important.
 */
-#define C_UTILS_LOG_INFO(logger, message, ...) c_utils_logger_log(logger, MU_INFO, NULL, message, NULL, \
+#define C_UTILS_LOG_INFO(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_INFO, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
 	Log level meant for keeping track of verbose information, meaning it's not important enough for INFO, but very useful
-	for debugging without it being too tedious. Won't clog the log file as much as MU_TRACE. 
+	for debugging without it being too tedious. Won't clog the log file as much as C_UTILS_LOG_LEVEL_TRACE. 
 */
-#define C_UTILS_LOG_VERBOSE(logger, message, ...) c_utils_logger_log(logger, MU_VERBOSE, NULL, message, NULL, \
+#define C_UTILS_LOG_VERBOSE(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_VERBOSE, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 /*
-	Log level meant for tracing information that is more verbose than MU_VERBOSE, normally tedious tracing of the 
+	Log level meant for tracing information that is more verbose than C_UTILS_LOG_LEVEL_VERBOSE, normally tedious tracing of the 
 	flow of a program.
 */
-#define C_UTILS_LOG_TRACE(logger, message, ...) c_utils_logger_log(logger, MU_TRACE, NULL, message, NULL, \
+#define C_UTILS_LOG_TRACE(logger, message, ...) c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_TRACE, NULL, message, NULL, \
 	__FILE__, C_UTILS_LOGGER_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__)
 
 #define C_UTILS_LOGGER_STRINGIFY(x) C_UTILS_LOGGER_STRINGIFY_THIS(x)
@@ -160,7 +160,7 @@ __attribute__((destructor)) static void destroy_ ##logger (void) { \
  * Creates a new logger with the given file name and mode, and only log beyond level.
  * @param filename Name of the file.
  * @param mode Mode of the file.
- * @param level Level to log up to, I.E MU_INFO logs only INFO and above.
+ * @param level Level to log up to, I.E C_UTILS_LOG_LEVEL_INFO logs only INFO and above.
  * @return Logger, or null if allocation error.
  */
 struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level);
@@ -186,5 +186,7 @@ bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e 
  * @return 
  */
 bool c_utils_logger_destroy(struct c_utils_logger *logger);
+
+char *c_utils_get_timestamp();
 
 #endif

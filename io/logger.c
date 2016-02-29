@@ -1,4 +1,4 @@
-#include "io/logger.h"
+#include "logger.h"
 
 struct c_utils_log_format{
 	char *all_f;
@@ -22,7 +22,7 @@ struct c_utils_logger {
 	enum c_utils_log_level_e level;
 };
 
-struct c_utils_log_format {
+struct c_utils_log_format_info {
 	const char *msg;
 	const char *file_name;
 	const char *line_number;
@@ -65,14 +65,8 @@ static const char *get_condition(struct c_utils_log_format_info *info, va_list a
 
 static const char *get_timestamp(struct c_utils_log_format_info *info, va_list args) {
 	info->should_free = 1;
-	const int buffer_size = 80;
-	time_t t = time(NULL);
-	struct tm *current_time = localtime(&t);
-	char *time_and_date = malloc(buffer_size);
-
-	strftime(time_and_date, buffer_size, "%I:%M:%S %p", current_time);
 	
-	return time_and_date;
+	return c_utils_get_timestamp();
 }
 
 /*
@@ -81,7 +75,7 @@ static const char *get_timestamp(struct c_utils_log_format_info *info, va_list a
 */
 struct {
 	const char *token;
-	const char *(*callback)(c_utils_log_format_info *info, va_list);
+	const char *(*callback)(struct c_utils_log_format_info *info, va_list);
 } static format_tokens[] = {
 	{ "%fnc", get_function_name }, 
 	{ "%fle", get_file_name }, 
@@ -105,13 +99,13 @@ static const char *parse_token(const char *token, struct c_utils_log_format_info
 
 static const char *log_level_to_string(enum c_utils_log_level_e level) {
 	switch(level) {
-		case LOG_LEVEL_ASSERTION: return "ASSERTION";
-		case LOG_LEVEL_ERROR: return "ERROR";
-		case LOG_LEVEL_WARNING: return "WARNING";
-		case LOG_LEVEL_EVENT: return "EVENT";
-		case LOG_LEVEL_INFO: return "INFO";
-		case LOG_LEVEL_VERBOSE: return "VERBOSE";
-		case LOG_LEVEL_TRACE: return "TRACE";
+		case C_UTILS_LOG_LEVEL_ASSERTION: return "ASSERTION";
+		case C_UTILS_LOG_LEVEL_ERROR: return "ERROR";
+		case C_UTILS_LOG_LEVEL_WARNING: return "WARNING";
+		case C_UTILS_LOG_LEVEL_EVENT: return "EVENT";
+		case C_UTILS_LOG_LEVEL_INFO: return "INFO";
+		case C_UTILS_LOG_LEVEL_VERBOSE: return "VERBOSE";
+		case C_UTILS_LOG_LEVEL_TRACE: return "TRACE";
 		default: return NULL;
 	}
 }
@@ -160,14 +154,14 @@ static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_lo
 	char *real_format = NULL;
 	
 	switch(level) {
-		case LOG_LEVEL_ASSERTION: real_format = format.assertion_f; break;
-		case LOG_LEVEL_ERROR: real_format = format.error_f; break;
-		case LOG_LEVEL_WARNING: real_format = format.warning_f; break;
-		case LOG_LEVEL_EVENT: real_format = format.event_f; break;
-		case LOG_LEVEL_CUSTOM: real_format = format.custom_f; break;
-		case LOG_LEVEL_INFO: real_format = format.info_f; break;
-		case LOG_LEVEL_VERBOSE: real_format = format.verbose_f; break;
-		case LOG_LEVEL_TRACE: real_format = format.trace_f;
+		case C_UTILS_LOG_LEVEL_ASSERTION: real_format = format.assertion_f; break;
+		case C_UTILS_LOG_LEVEL_ERROR: real_format = format.error_f; break;
+		case C_UTILS_LOG_LEVEL_WARNING: real_format = format.warning_f; break;
+		case C_UTILS_LOG_LEVEL_EVENT: real_format = format.event_f; break;
+		case C_UTILS_LOG_LEVEL_CUSTOM: real_format = format.custom_f; break;
+		case C_UTILS_LOG_LEVEL_INFO: real_format = format.info_f; break;
+		case C_UTILS_LOG_LEVEL_VERBOSE: real_format = format.verbose_f; break;
+		case C_UTILS_LOG_LEVEL_TRACE: real_format = format.trace_f;
 		default: real_format = NULL;
 	}
 	
@@ -183,15 +177,15 @@ static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_lo
 
 /// Initialize logger.
 struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level) {
-	c_utils_logger *logger = calloc(1, sizeof(c_utils_logger_t));
+	struct c_utils_logger *logger = calloc(1, sizeof(*logger));
 	if (!logger) {
-		MU_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
+		C_UTILS_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
 		goto error;
 	}
 	
 	logger->file = fopen(filename, mode);
 	if (!logger->file) {
-		MU_DEBUG("c_utils_logger_create->fopen: \"%s\"\n", strerror(errno));
+		C_UTILS_DEBUG("c_utils_logger_create->fopen: \"%s\"\n", strerror(errno));
 		goto error;
 	}
 	
@@ -225,11 +219,22 @@ bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e 
 	fprintf(logger->file, "%s", buffer);
 	fflush(logger->file);
 
-	if (level == LOG_LEVEL_ASSERTION) {
-		MU_DEBUG("ASSERTION FAILED: \n%s", buffer);
+	if (level == C_UTILS_LOG_LEVEL_ASSERTION) {
+		C_UTILS_DEBUG("ASSERTION FAILED: \n%s", buffer);
 	}
 
 	return true;
+}
+
+char *c_utils_get_timestamp() {
+	const int buffer_size = 80;
+	time_t t = time(NULL);
+	struct tm *current_time = localtime(&t);
+	char *time_and_date = malloc(buffer_size);
+
+	strftime(time_and_date, buffer_size, "%I:%M:%S %p", current_time);
+	
+	return time_and_date;
 }
 
 

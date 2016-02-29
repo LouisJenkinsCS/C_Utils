@@ -31,6 +31,7 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef void *(*c_utils_task)(void *);
 
@@ -59,7 +60,7 @@ const int LOWEST_PRIORITY = 1 << 2;
 /// Flags the task as low priority.
 const int LOW_PRIORITY = 1 << 3;
 /// Flags the task as high priority.
-const int HIGH_PRIORITY 1 << 4;
+const int HIGH_PRIORITY = 1 << 4;
 /// Flags the task as highest priority.
 const int HIGHEST_PRIORITY = 1 << 5;
 

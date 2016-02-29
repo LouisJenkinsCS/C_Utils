@@ -7,12 +7,12 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
-#include "threading/events.h"
-#include "misc/argument_check.h"
-#include "misc/flags.h"
-#include "io/logger.h"
-#include "threading/thread_pool.h"
-#include "data_structures/priority_queue.h"
+#include "events.h"
+#include "../misc/argument_check.h"
+#include "../misc/flags.h"
+#include "../io/logger.h"
+#include "thread_pool.h"
+#include "../data_structures/priority_queue.h"
 
 
 enum c_utils_priority {

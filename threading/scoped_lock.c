@@ -7,7 +7,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>
-#include "io/logger.h"
+#include "../io/logger.h"
 
 #define C_UTILS_LOG_LOCK(lock, level, format, ...) \
    c_utils_logger_log(lock->logger, level, "LOCK", format, NULL, lock->info.file, lock->info.line, lock->info.function, ##__VA_ARGS__)
@@ -25,13 +25,13 @@ struct c_utils_scoped_lock
    // Logger used to log debug information and errors.
    struct c_utils_logger *logger;
    // For normal locks, I.E Mutex and Spinlock
-   void *(*acquire0)(struct scoped_lock *);
+   void *(*acquire0)(struct c_utils_scoped_lock *);
    // For locks with types of locking mechanisms, I.E RWLocks
-   void *(*acquire1)(struct scoped_lock *);
+   void *(*acquire1)(struct c_utils_scoped_lock *);
    // For when we exit the scope
-   void *(*release)(struct scoped_lock *);
+   void *(*release)(struct c_utils_scoped_lock *);
    // For when the user frees this, the lock gets freed too.
-   void *(*dispose)(struct scoped_lock *);
+   void *(*dispose)(struct c_utils_scoped_lock *);
 };
 
 /**
@@ -45,6 +45,7 @@ static void _auto_unlock(struct c_utils_scoped_lock **s_lock) {
 
 static void *_bad_acquire1(struct c_utils_scoped_lock *s_lock) {
    C_UTILS_LOG_LOCK(s_lock, C_UTILS_LOG_LEVEL_ERROR, "The underlying lock does not support a secondary locking mechanism.");
+   return NULL + 1;
 }
 
 /*
@@ -89,7 +90,7 @@ static void *scoped_lock_no_op(struct c_utils_scoped_lock *s_lock) {
 }
 
 
-c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_utils_logger *logger) {
+struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, struct c_utils_logger *logger) {
    struct c_utils_scoped_lock *s_lock = calloc(1, sizeof(struct c_utils_scoped_lock));
    if (!s_lock) {
       C_UTILS_LOG_ASSERT(logger, "calloc: \"%s\"", strerror(errno));
@@ -150,7 +151,7 @@ static void *_release_scoped_lock_spinlock(struct c_utils_scoped_lock *s_lock) {
    return s_lock;
 }
 
-c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, struct c_utils_logger *logger) {
+struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, struct c_utils_logger *logger) {
    struct c_utils_scoped_lock *s_lock = calloc(1, sizeof(struct c_utils_scoped_lock));
    if (!s_lock) {
       C_UTILS_LOG_ASSERT(logger, "calloc: \"%s\"", strerror(errno));

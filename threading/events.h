@@ -1,8 +1,8 @@
 #ifndef TU_EVENTS_H
 #define TU_EVENTS_H
 
-#include "io/logger.h"
-#include "misc/flags.h"
+#include "../io/logger.h"
+#include "../misc/flags.h"
 
 struct c_utils_event;
 

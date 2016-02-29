@@ -1,8 +1,8 @@
 #define C_UTILS_USE_POSIX_STD
 #include <stdlib.h>
 #include <stdio.h>
-#include "threading/thread_pool.h"
-#include "io/logger.h"
+#include "../thread_pool.h"
+#include "../../io/logger.h"
 #include <unistd.h>
 
 static _Atomic int iterations = 0;

@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
-#include "data_structures/list.h"
-#include "threading/events.h"
-#include "threading/event_loop.h"
-#include "misc/flags.h"
-#include "misc/argument_check.h"
-#include "io/logger.h"
+#include "../data_structures/list.h"
+#include "../threading/events.h"
+#include "../threading/event_loop.h"
+#include "../misc/flags.h"
+#include "../misc/argument_check.h"
+#include "../io/logger.h"
 
 struct c_utils_event_loop {
 	/// Maintains list of sources to check.

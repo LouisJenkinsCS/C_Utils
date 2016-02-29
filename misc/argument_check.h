@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include "io/logger.h"
+#include "../io/logger.h"
 
 #ifdef NO_C_UTILS_PREFIX
 #define ARG_CHECK(...) C_UTILS_ARG_CHECK(__VA_ARGS__)
