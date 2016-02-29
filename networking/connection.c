@@ -9,9 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "networking/connection.h"
-#include "misc/argument_check.h"
-#include "misc/signal_retry.h"
+#include "../networking/connection.h"
+#include "../misc/argument_check.h"
+#include "../threading/scoped_lock.h"
+#include "../misc/signal_retry.h"
 
 struct c_utils_connection {
 	/// Socket file descriptor associated with host.
@@ -212,7 +213,6 @@ size_t c_utils_connection_send_file(struct c_utils_connection *conn, FILE *file,
 		while (buf_read > 0) {
 			if (send_all(conn->sockfd, buf, buf_read, timeout, flags, conn->logger) != buf_read) {
 				C_UTILS_LOG_WARNING(conn->logger, "c_utils_connection_send_file->send_all: 'Was unable to send all of message to %s'", conn->ip_addr);
-				COND_RWLOCK_UNLOCK(conn->lock, conn->logger);
 				return total_sent;
 			}
 			total_sent += buf_read;
@@ -263,7 +263,7 @@ size_t c_utils_connection_receive_file(struct c_utils_connection *conn, FILE *fi
 			total_received += received;
 		}
 
-		return total_received
+		return total_received;
 	} // Release Reader Lock
 }
 
@@ -429,7 +429,7 @@ bool c_utils_connection_set_sockfd(struct c_utils_connection *conn, int sockfd) 
 	C_UTILS_ARG_CHECK(conn->logger, false, conn);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->logger) return conn->sockfd = sockfd, true;
+	SCOPED_LOCK0(conn->lock) return conn->sockfd = sockfd, true;
 }
 
 int c_utils_connection_get_sockfd(struct c_utils_connection *conn) {

@@ -12,34 +12,12 @@
 #define C_UTILS_LOG_LOCK(lock, level, format, ...) \
    c_utils_logger_log(lock->logger, level, "LOCK", format, NULL, lock->info.file, lock->info.line, lock->info.function, ##__VA_ARGS__)
 
-struct c_utils_scoped_lock
-{
-   // The instance of lock.
-   void *lock;
-   // Keeps track of information needed to log any possible issues.
-   struct {
-      const char *line;
-      const char *file;
-      const char *function;
-   } info;
-   // Logger used to log debug information and errors.
-   struct c_utils_logger *logger;
-   // For normal locks, I.E Mutex and Spinlock
-   void *(*acquire0)(struct c_utils_scoped_lock *);
-   // For locks with types of locking mechanisms, I.E RWLocks
-   void *(*acquire1)(struct c_utils_scoped_lock *);
-   // For when we exit the scope
-   void *(*release)(struct c_utils_scoped_lock *);
-   // For when the user frees this, the lock gets freed too.
-   void *(*dispose)(struct c_utils_scoped_lock *);
-};
-
 /**
 * Called to automatically unlock the passed c_utils_scoped_lock instance
 * once it leaves the scope. This function gets called by the GCC or
 * Clang compiler attribute.
 */
-static void _auto_unlock(struct c_utils_scoped_lock **s_lock) {
+void c_utils_auto_unlock(struct c_utils_scoped_lock **s_lock) {
    (*s_lock)->release((*s_lock));
 }
 
@@ -163,10 +141,10 @@ struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *loc
       s_lock->dispose = s_lock->acquire0 = s_lock->acquire1 = s_lock->release = scoped_lock_no_op;
    } else {
       s_lock->lock = lock;
-      s_lock->dispose = _destroy_scoped_lock_mutex;
-      s_lock->acquire0 = _acquire_scoped_lock_mutex;
+      s_lock->dispose = _destroy_scoped_lock_spinlock;
+      s_lock->acquire0 = _acquire_scoped_lock_spinlock;
       s_lock->acquire1 = _bad_acquire1;
-      s_lock->release = _release_scoped_lock_mutex;
+      s_lock->release = _release_scoped_lock_spinlock;
    }
    s_lock->logger = logger;
 

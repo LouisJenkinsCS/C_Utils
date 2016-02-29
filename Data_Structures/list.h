@@ -2,12 +2,14 @@
 #define C_UTILS_LIST_H
 
 #include <pthread.h>
-#include <DS_Iterator.h>
+#include "iterator.h"
 #include <stdbool.h>
 #include <stdio.h>
-#include <DS_Helpers.h>
+#include "helpers.h"
 
 struct c_utils_list;
+
+#define C_UTILS_LIST_FOR_EACH(tmp_var, list) for(C_UTILS_AUTO_ITERATOR auto_it = c_utils_list_iterator(list); (tmp_var = c_utils_iterator_next(auto_it));)
 
 #ifdef NO_C_UTILS_PREFIX
 /*

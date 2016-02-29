@@ -5,7 +5,27 @@
 #include <stdbool.h>
 #include "../io/logger.h"
 
-struct c_utils_scoped_lock;
+struct c_utils_scoped_lock
+{
+   // The instance of lock.
+   void *lock;
+   // Keeps track of information needed to log any possible issues.
+   struct {
+      const char *line;
+      const char *file;
+      const char *function;
+   } info;
+   // Logger used to log debug information and errors.
+   struct c_utils_logger *logger;
+   // For normal locks, I.E Mutex and Spinlock
+   void *(*acquire0)(struct c_utils_scoped_lock *);
+   // For locks with types of locking mechanisms, I.E RWLocks
+   void *(*acquire1)(struct c_utils_scoped_lock *);
+   // For when we exit the scope
+   void *(*release)(struct c_utils_scoped_lock *);
+   // For when the user frees this, the lock gets freed too.
+   void *(*dispose)(struct c_utils_scoped_lock *);
+};
 
 #ifdef NO_C_UTILS_PREFIX
 typedef struct c_utils_scoped_lock scoped_lock_t;
@@ -18,6 +38,14 @@ struct c_utils_scoped_lock *c_utils_scoped_lock_mutex(pthread_mutex_t *lock, str
 
 
 struct c_utils_scoped_lock *c_utils_scoped_lock_spinlock(pthread_spinlock_t *lock, struct c_utils_logger *logger);
+
+/**
+* Called to automatically unlock the passed c_utils_scoped_lock instance
+* once it leaves the scope. This function gets called by the GCC or
+* Clang compiler attribute.
+*/
+void c_utils_auto_unlock(struct c_utils_scoped_lock **s_lock);
+
 
 // TODO: Implement!
 void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
@@ -32,17 +60,17 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
    called.
 */ 
 
-#define SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(_auto_unlock)))
+#define SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
 
-#define _SCOPED_LOCK(lock, n) \
-   lock->info.line = __LINE__; \
-   lock->info.file = __FILE__; \
-   lock->info.function = __FUNCTION__; \
+#define _SCOPED_LOCK(s_lock, n) \
+   s_lock->info.line = C_UTILS_LOGGER_STRINGIFY(__LINE__); \
+   s_lock->info.file = __FILE__; \
+   s_lock->info.function = __FUNCTION__; \
    for (struct c_utils_scoped_lock *tmp_lock SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
 
-#define SCOPED_LOCK0(lock) _SCOPED_LOCK(lock, 0)
+#define SCOPED_LOCK0(s_lock) _SCOPED_LOCK(s_lock, 0)
 
-#define SCOPED_LOCK1(lock) _SCOPED_LOCK(lock, 1)
+#define SCOPED_LOCK1(s_lock) _SCOPED_LOCK(s_lock, 1)
 
 #define SCOPED_LOCK(s_lock) SCOPED_LOCK0(s_lock)
 

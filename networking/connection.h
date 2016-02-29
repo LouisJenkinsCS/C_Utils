@@ -1,12 +1,13 @@
 #ifndef NU_CONNECTION_H
 #define NU_CONNECTION_H
 
-#include <stdint.h>
-#include <stdatomic.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <arpa/inet.h>
-#include "io/logger.h"
+#include <stdint.h>
+#include <stdatomic.h>
+
+#include "../io/logger.h"
 
 struct c_utils_connection;
 

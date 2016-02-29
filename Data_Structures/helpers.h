@@ -4,24 +4,24 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include "io/logger.h"
+#include "../io/logger.h"
 
 struct c_utils_node {
 	/// Union allows multiple types of nodes with only one type.
 	union {
 		struct {
-			struct DS_Node_t *next;
+			struct c_utils_node *next;
 		} _single;
 		struct {
-			struct DS_Node_t *next;
-			struct DS_Node_t *prev;
+			struct c_utils_node *next;
+			struct c_utils_node *prev;
 		} _double;
 	};
 	void *item;
 };
 
-DS_Node_t *DS_Node_create(void *item, struct c_utils_logger *logger) {
-	DS_Node_t *node = calloc(1, sizeof(*node));
+struct c_utils_node *DS_Node_create(void *item, struct c_utils_logger *logger) {
+	struct c_utils_node *node = calloc(1, sizeof(*node));
 	if (!node) {
 		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;

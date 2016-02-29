@@ -1,5 +1,5 @@
-#include "networking/client.h"
-#include "threading/scoped_locks.h"
+#include "../networking/client.h"
+#include "../threading/scoped_locks.h"
 
 struct c_utils_client {
 	/// Socket associated with this server.

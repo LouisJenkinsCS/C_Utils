@@ -1,6 +1,6 @@
-#include <DS_List.h>
+#include "../list.h"
 #include <stdlib.h>
-#include <MU_Logger.h>
+#include "../../io/logger.h"
 #include <stdio.h>
 
 
@@ -26,6 +26,10 @@ int main(void) {
 	logger = MU_Logger_create("./Data_Structures/Logs/c_utils_list_Test.log", "w", MU_ALL);
 	const int runs = 1000;
 	struct c_utils_list *list = c_utils_list_create(true);
+	void *tmp;
+	C_UTILS_LIST_FOR_EACH(tmp, list) {
+
+	}
 	void **array = malloc(sizeof(int *) * runs);
 	int i = 0;
 	C_UTILS_LOG_INFO(logger, "Testing adding elements unsorted...\n");
