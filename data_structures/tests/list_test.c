@@ -5,6 +5,7 @@
 #include "../../io/logger.h"
 #include <stdio.h>
 #include <string.h>
+#include "../../string/string_buffer.h"
 
 static const int runs = 100;
 
@@ -20,29 +21,20 @@ static int inverse_compare_ints(const void *item_one, const void *item_two) {
 	return (*(int *)item_two - *(int *)item_one);
 }
 
-static char *print_item(const void *item) {
-	char *item_to_string;
-	if (!item) asprintf(&item_to_string, "%s", "NULL");
-	else asprintf(&item_to_string, "%d", *(int *)item);
-	return item_to_string;
-}
-
 static void print_all(list_t *list) {
-	void *item;
-	char *str = NULL;
+	int *item;
+	string_buffer_t *buf = string_buffer_create(" { ", false);
 	LIST_FOR_EACH(item, list) {
-		char *_tmp = print_item(item);
-		if(!str) {
-			str = malloc(strlen(str) + 1);
-			sprintf(str, "%s", _tmp);
-		} else {
-			// ", " and \0 take up 3 bytes
-			str = realloc(str, strlen(str) + strlen(_tmp) + 3);
-			sprintf(str, "%s, %s", str, _tmp);
-		}
+		STRING_BUFFER_APPEND(buf, *item);
+		string_buffer_append(buf, ", ");
 	}
 
-	LOG_INFO(logger, "{ %s }", str);
+	// Strip the last ", " from the string buffer.
+	int size = string_buffer_size(buf);
+	string_buffer_delete(buf, size - 3, size-1);
+
+	string_buffer_append(buf, " } ");
+	LOG_INFO(logger, "%s", string_buffer_get(buf));
 }
 
 int main(void) {
@@ -58,6 +50,10 @@ int main(void) {
 		*(int *)array[i] = i * (rand() % runs);
 		list_add(list, array[i], NULL);
 	}
+
+	int *tmp;
+	LIST_FOR_EACH(tmp, list)
+		C_UTILS_DEBUG("%d", *tmp);
 
 	// Testing that insertion worked. List should be an exact copy of array.
 	int middle = runs/2;

@@ -1,12 +1,12 @@
-06:46:32 PM [INFO](./data_structures/tests/list_test.c:54) main(): 
+08:29:10 PM [INFO](./data_structures/tests/list_test.c:54) main(): 
 "Testing adding elements unsorted...
 "
-06:46:32 PM [INFO](./data_structures/tests/list_test.c:70) main(): 
+08:29:10 PM [INFO](./data_structures/tests/list_test.c:74) main(): 
 "Comparing elements of both array and list...
 "
-06:46:32 PM [INFO](./data_structures/tests/list_test.c:76) main(): 
+08:29:10 PM [INFO](./data_structures/tests/list_test.c:80) main(): 
 "Testing removal of item from list.
 "
-06:46:32 PM [VERBOSE](./data_structures/tests/list_test.c:86) main(): 
+08:29:10 PM [VERBOSE](./data_structures/tests/list_test.c:90) main(): 
 "Printing all elements inside of list unsorted!
 "
