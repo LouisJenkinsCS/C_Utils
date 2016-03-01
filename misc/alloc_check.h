@@ -18,7 +18,7 @@ void *c_utils_logged_calloc(size_t size, struct c_utils_logger *logger, const ch
 	Wrapper function to realloc; Logs on error, otherwise it will replace the underlying pointer
 	with the newly reallocated one.
 */
-void *c_utils_logged_realloc(void **data, size_t size, struct c_utils_logger *logger,
+void *c_utils_logged_realloc(void *data_ptr, size_t size, struct c_utils_logger *logger,
 	const char *var_name, const char *line, const char *function, const char *file);
 
 
@@ -63,7 +63,7 @@ void *c_utils_logged_realloc(void **data, size_t size, struct c_utils_logger *lo
 		__FILE__); !_tester; _tester++)
 
 #define C_UTILS_ON_BAD_REALLOC(var_ptr, logger, size) \
-	for(void *_tester = var = c_utils_logged_realloc(var_ptr, size, logger, \
+	for(void *_tester = c_utils_logged_realloc(var_ptr, size, logger, \
 		C_UTILS_STRINGIFY(var), C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, \
 		__FILE__); !_tester; _tester++)
 

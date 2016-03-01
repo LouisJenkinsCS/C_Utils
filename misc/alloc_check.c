@@ -26,9 +26,9 @@ void *c_utils_logged_calloc(size_t size, struct c_utils_logger *logger, const ch
 	Wrapper function to realloc; Logs on error, otherwise it will replace the underlying pointer
 	with the newly reallocated one.
 */
-void *c_utils_logged_realloc(void **data, size_t size, struct c_utils_logger *logger,
+void *c_utils_logged_realloc(void *data_ptr, size_t size, struct c_utils_logger *logger,
 	const char *var_name, const char *line, const char *function, const char *file) {
-	void *ptr = realloc(*data, size);
+	void *ptr = realloc(*(void **)data_ptr, size);
 	if(!ptr) {
 		c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL,
 			"realloc failed to allocate memory for size: \"%s\" for variable: \"%s\" with error: \"%s\"",
@@ -36,6 +36,6 @@ void *c_utils_logged_realloc(void **data, size_t size, struct c_utils_logger *lo
 		return NULL;
 	}
 
-	*data = ptr;
+	*(void **)data_ptr = ptr;
 	return ptr;
 }

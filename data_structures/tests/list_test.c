@@ -30,8 +30,7 @@ static void print_all(list_t *list) {
 	}
 
 	// Strip the last ", " from the string buffer.
-	int size = string_buffer_size(buf);
-	string_buffer_delete(buf, size - 3, size-1);
+	string_buffer_delete(buf, STRING_BUFFER_END - 1, STRING_BUFFER_END);
 
 	string_buffer_append(buf, " } ");
 	LOG_INFO(logger, "%s", string_buffer_get(buf));

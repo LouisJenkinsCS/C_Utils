@@ -13,7 +13,8 @@
 	This will allow much easier appending and prepending of data to streams of characters (a string),
 	without the necessity of having to keep track of sprintf or asprintf and resizing it on your own.
 
-	It allows for simplified generic types, which can be 
+	It allows for simplified generic types, which can be of any of the standard types. String literals
+	MUST be put through the non generic function, as it will fit perfectly anyway.
 */
 struct c_utils_string_buffer;
 
@@ -40,19 +41,24 @@ struct c_utils_string_buffer;
 	char *str; \
 	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
 	c_utils_string_buffer_append(buf, str); \
+	free(str); \
 } while(0)
 
 #define C_UTILS_STRING_BUFFER_PREPEND(buf, val) do { \
 	char *str; \
 	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
 	c_utils_string_buffer_prepend(buf, str); \
+	free(str); \
 } while(0)
 
 #define C_UTILS_STRING_BUFFER_INSERT(buf, val, start, end) do { \
 	char *str; \
 	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
 	c_utils_string_buffer_append(buf, str); \
+	free(str); \
 } while(0)
+
+#define C_UTILS_STRING_BUFFER_END -1
 
 #ifdef NO_C_UTILS_PREFIX
 /*
@@ -66,6 +72,7 @@ typedef struct c_utils_string_buffer string_buffer_t;
 #define STRING_BUFFER_APPEND(...) C_UTILS_STRING_BUFFER_APPEND(__VA_ARGS__)
 #define STRING_BUFFER_PREPEND(...) C_UTILS_STRING_BUFFER_PREPEND(__VA_ARGS__)
 #define STRING_BUFFER_INSERT(...) C_UTILS_STRING_BUFFER_INSERT(__VA_ARGS__)
+#define STRING_BUFFER_END C_UTILS_STRING_BUFFER_END
 
 /*
 	Functions
