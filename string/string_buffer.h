@@ -37,26 +37,32 @@ struct c_utils_string_buffer;
    	const char *: "%s", \
     void *: "%p" )
 
-#define C_UTILS_STRING_BUFFER_APPEND(buf, val) do { \
+#define C_UTILS_STRING_BUFFER_APPEND_FORMAT(buf, format, ...) do { \
 	char *str; \
-	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
+	asprintf(&s, format, ##__VA_ARGS__); \
 	c_utils_string_buffer_append(buf, str); \
 	free(str); \
 } while(0)
 
-#define C_UTILS_STRING_BUFFER_PREPEND(buf, val) do { \
+#define C_UTILS_STRING_BUFFER_APPEND(buf, val) C_UTILS_STRING_BUFFER_APPEND_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), val)
+
+#define C_UTILS_STRING_BUFFER_PREPEND_FORMAT(buf, format, ...) do { \
 	char *str; \
-	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
+	asprintf(&s, format, ##__VA_ARGS__); \
 	c_utils_string_buffer_prepend(buf, str); \
 	free(str); \
 } while(0)
 
-#define C_UTILS_STRING_BUFFER_INSERT(buf, val, start, end) do { \
+#define C_UTILS_STRING_BUFFER_PREPEND(buf, val) C_UTILS_STRING_BUFFER_PREPEND_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), val)
+
+#define C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, format, start, end, ...) do { \
 	char *str; \
-	asprintf(&str, C_UTILS_GENERIC_FORMAT(val), val); \
-	c_utils_string_buffer_append(buf, str); \
+	asprintf(&s, format, ##__VA_ARGS__); \
+	c_utils_string_buffer_insert(buf, str, start, end); \
 	free(str); \
 } while(0)
+
+#define C_UTILS_STRING_BUFFER_INSERT(buf, val, start, end) C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), start, end, val)
 
 #define C_UTILS_STRING_BUFFER_END -1
 
@@ -72,6 +78,9 @@ typedef struct c_utils_string_buffer string_buffer_t;
 #define STRING_BUFFER_APPEND(...) C_UTILS_STRING_BUFFER_APPEND(__VA_ARGS__)
 #define STRING_BUFFER_PREPEND(...) C_UTILS_STRING_BUFFER_PREPEND(__VA_ARGS__)
 #define STRING_BUFFER_INSERT(...) C_UTILS_STRING_BUFFER_INSERT(__VA_ARGS__)
+#define STRING_BUFFER_APPEND_FORMAT(...) C_UTILS_STRING_BUFFER_APPEND_FORMAT(__VA_ARGS__)
+#define STRING_BUFFER_PREPEND_FORMAT(...) C_UTILS_STRING_BUFFER_PREPEND_FORMAT(__VA_ARGS__)
+#define STRING_BUFFER_INSERT_FORMAT(...) C_UTILS_STRING_BUFFER_INSERT_FORMAT(__VA_ARGS__)
 #define STRING_BUFFER_END C_UTILS_STRING_BUFFER_END
 
 /*

@@ -346,6 +346,43 @@ SU_String is rather powerful, and also very simple. The String typedef makes it 
 
 OUTDATED: Documentation for version 1.2 available [here](http://theif519.github.io/String_Utils_Documentation/).
 
+####String Buffer [<b>In Development</b>]
+
+Abstracts away the need to manually allocate strings and do tedious string manipulations. The string_buffer automatically manages resizing itself and shrinking when needed. It features a generic macro (requires C11 _Generic keyword) to automatically append, prepend or insert any of the standard types. It is also optionally thread-safe.
+
+Examples of usage below...
+
+~~~c
+
+// Allocate with initial value with no synchronization
+string_buffer_t *str_buf = string_buffer_create("Hello World", false);
+
+// Append strings
+string_buffer_append(str_buf, ", I am ");
+
+// Append numbers
+STRING_BUFFER_APPEND(str_buf, 22);
+
+// But wait, there's a better way to do this...
+string_buffer_clear(str_buf);
+
+// Lets append all from one macro!
+STRING_BUFFER_APPEND_FORMAT(str_buf, "Hello World, I am %d years old!", 22);
+
+// Now lets delete Hello World
+string_buffer_delete(str_buf, 0, 12);
+
+// And remove the "old!" part
+string_buffer_delete(str_buf, STRING_BUFFER_END - 3, STRING_BUFFER_END);
+
+// And retrieve so we can display it.
+char *str = string_buffer_get(str_buf);
+puts(str);
+
+~~~
+
+Very simple. The string_buffer supports an option to enable synchronizaiton, which is done through a spinlock. Majority of cases do not require synchronization, however if ever you have a case where you require one, for say a producer-consumer relationship, it can be enabled easily. 
+
 ####Regular Expressions [<b>Unimplemented</b>]
 
 ###I/O Utilities
