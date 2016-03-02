@@ -55,14 +55,14 @@ struct c_utils_string_buffer;
 
 #define C_UTILS_STRING_BUFFER_PREPEND(buf, val) C_UTILS_STRING_BUFFER_PREPEND_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), val)
 
-#define C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, format, start, end, ...) do { \
+#define C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, format, index, ...) do { \
 	char *str; \
 	asprintf(&s, format, ##__VA_ARGS__); \
-	c_utils_string_buffer_insert(buf, str, start, end); \
+	c_utils_string_buffer_insert(buf, str, index); \
 	free(str); \
 } while(0)
 
-#define C_UTILS_STRING_BUFFER_INSERT(buf, val, start, end) C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), start, end, val)
+#define C_UTILS_STRING_BUFFER_INSERT(buf, val, index) C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, C_UTILS_GENERIC_FORMAT(val), index, val)
 
 #define C_UTILS_STRING_BUFFER_END -1
 
@@ -133,7 +133,7 @@ bool c_utils_string_buffer_prepend(struct c_utils_string_buffer *buf, char *str)
 	If buf or str is NULL, or if start > end, or if start and/or end is greater than currently used size,
 	it will return false, otherwise true.
 */
-bool c_utils_string_buffer_insert(struct c_utils_string_buffer *buf, char *str, int start, int end);
+bool c_utils_string_buffer_insert(struct c_utils_string_buffer *buf, char *str, int index);
 
 /*
 	Reverses the data held by this string buffer.
