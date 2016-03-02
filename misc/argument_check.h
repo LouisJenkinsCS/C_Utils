@@ -69,25 +69,8 @@
 
 #define C_UTILS_ARG_CHECK_1(string_ptr, valid_args, arg, ...) sprintf(string_ptr, "%s %s: %s", string_ptr,  C_UTILS_ARG_TO_STRING(arg), c_utils_arg_evaluate_boolean(valid_args[0]));
 
-bool c_utils_arg_evaluate_arguments(int num_args, bool *arr, ...) {
-	int i = num_args - 1;
-	
-	va_list list;
-	va_start(list, arr);
-	
-	bool result = true;
-	for (; i >= 0; i--) {
-		bool is_valid = va_arg(list, int);
-		arr[i] = is_valid;
-		if (!is_valid)
-			result = false;
-	}
+bool c_utils_arg_evaluate_arguments(int num_args, bool *arr, ...);
 
-	return result;
-}
-
-char *c_utils_arg_evaluate_boolean(bool arg) {
-	return arg ? "TRUE" : "FALSE";
-}
+char *c_utils_arg_evaluate_boolean(bool arg);
 
 #endif /* endif MU_ARG_CHECK_H */

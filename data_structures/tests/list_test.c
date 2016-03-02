@@ -1,10 +1,11 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #define NO_C_UTILS_PREFIX
 
 #include "../list.h"
-#include <stdlib.h>
 #include "../../io/logger.h"
-#include <stdio.h>
-#include <string.h>
 #include "../../string/string_buffer.h"
 
 static const int runs = 100;
@@ -25,6 +26,9 @@ static void print_all(list_t *list) {
 	int *item;
 	string_buffer_t *buf = string_buffer_create(" { ", false);
 	LIST_FOR_EACH(item, list) {
+		if(!item)
+			continue;
+
 		STRING_BUFFER_APPEND(buf, *item);
 		string_buffer_append(buf, ", ");
 	}
@@ -33,7 +37,11 @@ static void print_all(list_t *list) {
 	string_buffer_delete(buf, STRING_BUFFER_END - 1, STRING_BUFFER_END);
 
 	string_buffer_append(buf, " } ");
-	LOG_INFO(logger, "%s", string_buffer_get(buf));
+
+	char *all_str = string_buffer_get(buf);
+	LOG_INFO(logger, "%s", all_str);
+
+	free(all_str);
 }
 
 int main(void) {
@@ -49,10 +57,6 @@ int main(void) {
 		*(int *)array[i] = i * (rand() % runs);
 		list_add(list, array[i], NULL);
 	}
-
-	int *tmp;
-	LIST_FOR_EACH(tmp, list)
-		C_UTILS_DEBUG("%d", *tmp);
 
 	// Testing that insertion worked. List should be an exact copy of array.
 	int middle = runs/2;

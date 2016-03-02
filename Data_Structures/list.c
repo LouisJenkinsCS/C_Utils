@@ -339,7 +339,7 @@ static void *head(void *instance, struct c_utils_position *pos) {
 	struct c_utils_node *head;
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		head = list->head;
 		update_pos(pos, head);
 		return get_item(head);
@@ -353,7 +353,7 @@ static void *tail(void *instance, struct c_utils_position *pos) {
 	struct c_utils_node *tail;
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		tail = list->tail;
 		update_pos(pos, tail);
 		return get_item(tail);
@@ -367,7 +367,7 @@ static void *next(void *instance, struct c_utils_position *pos) {
 	struct c_utils_node *next = NULL;
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		if (list->size == 0) {
 			update_pos(pos, NULL);
 			return NULL;
@@ -406,7 +406,7 @@ static void *prev(void *instance, struct c_utils_position *pos) {
 	struct c_utils_node *prev;
 	
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		if (list->size == 0) {
 			update_pos(pos, NULL);
 			return NULL;
@@ -451,7 +451,7 @@ static bool append(void *instance, struct c_utils_position *pos, void *item) {
 	node->item = item;
 	
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_LOCK0(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(pos, node);
@@ -503,7 +503,7 @@ static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
 	node->item = item;
 	
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_LOCK0(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(pos, node);
@@ -586,7 +586,7 @@ bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false , list);
 	
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) 
+	C_UTILS_SCOPED_LOCK0(list->lock) 
 		delete_all_nodes(list, del);
 
 	return true;
@@ -615,7 +615,7 @@ bool c_utils_list_add(struct c_utils_list *list, void *item, c_utils_comparator_
 	node->item = item;
 	
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_LOCK0(list->lock) {
 		if (!list->size)
 			return add_as_only(list, node);
 
@@ -634,7 +634,7 @@ bool c_utils_list_remove(struct c_utils_list *list, void *item, c_utils_delete_c
 	C_UTILS_ARG_CHECK(logger, false, list, item);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_LOCK0(list->lock) {
 		struct c_utils_node *node = item_to_node(list, item);
 
 		return node ? remove_node(list, node, del) : false;
@@ -647,7 +647,7 @@ void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_ut
 	C_UTILS_ARG_CHECK(logger, NULL, list);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_LOCK0(list->lock) {
 		struct c_utils_node *temp_node = index_to_node(list, index);
 		
 		if (temp_node) {
@@ -673,7 +673,7 @@ bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *ite
 	C_UTILS_ARG_CHECK(logger, false, list, callback);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock)
+	C_UTILS_SCOPED_LOCK1(list->lock)
 		for_each_item(list, callback);
 		
 	return true;
@@ -683,7 +683,7 @@ bool c_utils_list_sort(struct c_utils_list *list, c_utils_comparator_cb compare)
 	C_UTILS_ARG_CHECK(logger, false, list, compare);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(list->lock)
+	C_UTILS_SCOPED_LOCK0(list->lock)
 		insertion_sort_list(list, compare);
 
 	return true;
@@ -693,7 +693,7 @@ bool c_utils_list_contains(struct c_utils_list *list, void *item) {
 	C_UTILS_ARG_CHECK(logger, false, list, item);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock)
+	C_UTILS_SCOPED_LOCK1(list->lock)
 		return !!item_to_node(list, item);
 
 	C_UTILS_UNACCESSIBLE;
@@ -703,7 +703,7 @@ bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string
 	C_UTILS_ARG_CHECK(logger, false, list, file, to_string);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock)
+	C_UTILS_SCOPED_LOCK1(list->lock)
 		print_list(list, file, to_string);
 
 	return true;
@@ -713,7 +713,7 @@ void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
 	C_UTILS_ARG_CHECK(logger, NULL, list);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		struct c_utils_node *node = index_to_node(list, index);
 		return node ? node->item : NULL;
 	} // Release Reader Lock
@@ -725,7 +725,7 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 	C_UTILS_ARG_CHECK(logger, NULL, list);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_LOCK1(list->lock) {
 		void **array_of_items = malloc(sizeof(void *) * list->size);
 		if (!array_of_items) {
 			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));

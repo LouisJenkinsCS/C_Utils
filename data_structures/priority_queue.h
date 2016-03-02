@@ -1,49 +1,44 @@
-#include <DS_Helpers.h>
-#include <pthread.h>
-#include <stdatomic.h>
+#ifndef C_UTILS_PRIORITY_QUEUE
+#define C_UTILS_PRIORITY_QUEUE
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define pbqueue_t DS_PBQueue_t
-#define pbqueue_create(...) DS_PBQueue_create(__VA_ARGS__)
-#define pbqueue_enqueue(...) DS_PBQueue_enqueue(__VA_ARGS__)
-#define pbqueue_dequeue(...) DS_PBQueue_dequeue(__VA_ARGS__)
-#define pbqueue_clear(...) DS_PBQueue_clear(__VA_ARGS__)
-#define pbqueue_size(...) DS_PBQueue_size(__VA_ARGS__)
-#define pbqueue_destroy(...) DS_PBQueue_destroy(__VA_ARGS__)
-#endif
+#include "helpers.h"
 
 /*
-	PBQueue is a minimal priority blocking queue which features not only a way to 
+	c_utils_priority_queue is a minimal priority blocking queue which features not only a way to 
 	create a bounded or unbounded queue, but also be used as a normal blocking queue
 	if no comparator callback is used, or even as a normal queue if a timeout of 0 is 
 	used each time. 
 
+	Items inserted are inserted in a sorted order using the passed comparator, and if there is none,
+	it will be appened to the tail of the queue. This queue supports blocking and non-blocking operations,
+	which can be configured using the timeout parameter. A timeout of -1 specifies an infinite length of time
+	to wait, and a timeout of 0 will immediately fail or succeed if the queue's operation is available.
+
 	The Priority Blocking Queue will wake up all threads blocking before destroying itself,
 	to prevent permanent deadlocks.
-*/
+*/	
+struct c_utils_priority_queue;
 
-typedef struct {
-	/// A pointer to the head node.
-	DS_Node_t *head;
-	/// A pointer to the tail node.
-	DS_Node_t *tail;
-	/// To compare elements to determine priority.
-	DS_comparator_cb compare;
-	/// Size of the current queue, meaning amount of elements currently in the queue.
-	_Atomic size_t size;
-	/// The maximum size of the queue if it is bounded. If it is unbounded it is 0.
-	size_t max_size;
-	/// A new element may be added to the PBQueue.
-	pthread_cond_t *not_full;
-	/// A element has been added and may be removed from the PBQueue.
-	pthread_cond_t *not_empty;
-	/// The lock used to add or remove an element to/from the queue (respectively).
-	pthread_mutex_t *manipulating_queue;
-	/// The amount of threads waiting.
-	_Atomic size_t threads_waiting;
-	/// Atomic flag for if it's being destroyed.
-	_Atomic bool shutting_down;
-} DS_PBQueue_t;
+#ifdef NO_C_UTILS_PREFIX
+/*
+	Typedef
+*/
+typedef struct c_utils_priority_queue priority_queue_t;
+
+/*
+	Functions
+*/
+#define priority_queue_create(...) c_utils_priority_queue_create(__VA_ARGS__)
+#define priority_queue_enqueue(...) c_utils_priority_queue_enqueue(__VA_ARGS__)
+#define priority_queue_dequeue(...) c_utils_priority_queue_dequeue(__VA_ARGS__)
+#define priority_queue_clear(...) c_utils_priority_queue_clear(__VA_ARGS__)
+#define priority_queue_size(...) c_utils_priority_queue_size(__VA_ARGS__)
+#define priority_queue_destroy(...) c_utils_priority_queue_destroy(__VA_ARGS__)
+#endif
+
+
+
+
 
 /**
  * Create a new instance of the priority blocking queue, with the option of having an unbounded or
@@ -55,7 +50,7 @@ typedef struct {
  * @param compare Comparator callback sort the queue.
  * @return A bounded or unbounded priority blocking queue, or NULL if failure in allocation.
  */
-DS_PBQueue_t *DS_PBQueue_create(size_t max_elements, DS_comparator_cb compare);
+struct c_utils_priority_queue *c_utils_priority_queue_create(size_t max_elements, c_utils_comparator_cb compare);
 
 /**
  * Enqueue an item to the queue, waiting until timeout if the queue is bounded and full.
@@ -64,7 +59,7 @@ DS_PBQueue_t *DS_PBQueue_create(size_t max_elements, DS_comparator_cb compare);
  * @param timeout Maximum timeout to wait until completion.
  * @return true if successful, false if queue is NULL, or timeout ellapses before succeeding.
  */
-bool DS_PBQueue_enqueue(DS_PBQueue_t *queue, void *item, long long int timeout);
+bool c_utils_priority_queue_enqueue(struct c_utils_priority_queue *queue, void *item, long long int timeout);
 
 /**
  * Dequeue an item from the queue, waiting until timeout if the queue is bounded and full.
@@ -72,7 +67,7 @@ bool DS_PBQueue_enqueue(DS_PBQueue_t *queue, void *item, long long int timeout);
  * @param timeout Maximum timeout to wait until completion.
  * @return The item dequeued, or NULL, if the queue is NULL or is empty.
  */
-void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
+void *c_utils_priority_queue_dequeue(struct c_utils_priority_queue *queue, long long int timeout);
 
 /**
  * Clears the queue of all items, calling the del deletion callback on any items
@@ -81,14 +76,14 @@ void *DS_PBQueue_dequeue(DS_PBQueue_t *queue, long long int timeout);
  * @param del Deletion callback to be called on each item if specified.
  * @return true if successful, or false if queue is NULL.
  */
-bool DS_PBQueue_clear(DS_PBQueue_t *queue, DS_delete_cb del);
+bool c_utils_priority_queue_clear(struct c_utils_priority_queue *queue, c_utils_delete_cb del);
 
 /**
  * Returns the size of the queue.
  * @param queue Instance of the queue.
  * @return The size of the queue, or 0 if empty or queue is NULL.
  */
-size_t DS_PBQueue_size(DS_PBQueue_t *queue);
+size_t c_utils_priority_queue_size(struct c_utils_priority_queue *queue);
 
 /**
  * Destroys the instance of the queue, waking up all threads waiting for to enqueue/dequeue.
@@ -97,4 +92,6 @@ size_t DS_PBQueue_size(DS_PBQueue_t *queue);
  * @param del Deletion callback to be called on each item if specified.
  * @return true if successful, false if queue is NULL.
  */
-bool DS_PBQueue_destroy(DS_PBQueue_t *queue, DS_delete_cb del);
+bool c_utils_priority_queue_destroy(struct c_utils_priority_queue *queue, c_utils_delete_cb del);
+
+#endif /* C_UTILS_PRIORITY_QUEUE */

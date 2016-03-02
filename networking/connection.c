@@ -106,7 +106,7 @@ static int add_valid_connections_to_fd_set(struct c_utils_connection **connectio
 		struct c_utils_connection *conn = connections[i];
 
 		// Acquire Reader Lock
-		SCOPED_LOCK1(conn->lock) {
+		C_UTILS_SCOPED_LOCK1(conn->lock) {
 			if (!conn->in_use)  
 				continue;
 			
@@ -123,7 +123,6 @@ static int add_valid_connections_to_fd_set(struct c_utils_connection **connectio
 // Implement
 struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_utils_logger *logger) {
 	struct c_utils_connection *conn = calloc(1, sizeof(struct c_utils_connection));
-	
 	if (!conn) {
 		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
 		return NULL;
@@ -150,9 +149,9 @@ struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_u
 		rwlock_init = true;
 	}
 
-	conn->lock = SCOPED_LOCK_FROM(lock, logger);
+	conn->lock = C_UTILS_SCOPED_LOCK_FROM(lock, logger);
 	if (!conn->lock) {
-		C_UTILS_LOG_ERROR(logger, "SCOPED_LOCK_FROM: 'Unable to create scoped lock from rwlock!");
+		C_UTILS_LOG_ERROR(logger, "C_UTILS_SCOPED_LOCK_FROM: 'Unable to create scoped lock from rwlock!");
 		goto error;
 	}
 
@@ -178,7 +177,7 @@ struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_u
 size_t c_utils_connection_send(struct c_utils_connection *conn, const void *buffer, size_t buf_size, long long int timeout, int flags) {
 	C_UTILS_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
 	
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return send_all(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
 
 	C_UTILS_UNACCESSIBLE;
@@ -188,7 +187,7 @@ size_t c_utils_connection_send(struct c_utils_connection *conn, const void *buff
 size_t c_utils_connection_receive(struct c_utils_connection *conn, void *buffer, size_t buf_size, long long int timeout, int flags) {
 	C_UTILS_ARG_CHECK(conn->logger, 0, conn, buffer, buf_size > 0);
 
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return timed_receive(conn->sockfd, buffer, buf_size, timeout, flags, conn->logger);
 
 	C_UTILS_UNACCESSIBLE;
@@ -199,7 +198,7 @@ size_t c_utils_connection_send_file(struct c_utils_connection *conn, FILE *file,
 	C_UTILS_ARG_CHECK(conn->logger, 0, conn, file);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) {
+	C_UTILS_SCOPED_LOCK1(conn->lock) {
 		struct stat file_stats;	
 
 		int file_fd = fileno(file);
@@ -244,7 +243,7 @@ size_t c_utils_connection_receive_file(struct c_utils_connection *conn, FILE *fi
 	C_UTILS_ARG_CHECK(conn->logger, 0, conn, file);
 
 	//Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) {
+	C_UTILS_SCOPED_LOCK1(conn->lock) {
 		struct stat file_stats;	
 
 		int file_fd = fileno(file);
@@ -422,7 +421,7 @@ struct c_utils_connection *c_utils_connection_reuse(struct c_utils_connection **
 		struct c_utils_connection *conn = connections[i];
 
 		// Acquire Writer Lock
-		SCOPED_LOCK0(conn->lock) { 
+		C_UTILS_SCOPED_LOCK0(conn->lock) { 
 			if (conn && !conn->in_use) {
 				conn->in_use = true;
 				conn->sockfd = sockfd;
@@ -441,7 +440,7 @@ bool c_utils_connection_set_sockfd(struct c_utils_connection *conn, int sockfd) 
 	C_UTILS_ARG_CHECK(conn->logger, false, conn);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) 
+	C_UTILS_SCOPED_LOCK0(conn->lock) 
 		return conn->sockfd = sockfd, true;
 
 	C_UTILS_UNACCESSIBLE;
@@ -451,7 +450,7 @@ int c_utils_connection_get_sockfd(struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(conn->logger, -1, conn);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock)
+	C_UTILS_SCOPED_LOCK1(conn->lock)
 		return conn->sockfd;
 
 	C_UTILS_UNACCESSIBLE;
@@ -461,7 +460,7 @@ bool c_utils_connection_set_ip_addr(struct c_utils_connection *conn, const char 
 	C_UTILS_ARG_CHECK(conn->logger, false, ip_addr);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) 
+	C_UTILS_SCOPED_LOCK0(conn->lock) 
 		return strncpy(conn->ip_addr, ip_addr, INET_ADDRSTRLEN), true;
 
 	C_UTILS_UNACCESSIBLE;
@@ -471,7 +470,7 @@ const char *c_utils_connection_get_ip_addr(struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(conn->logger, NULL, conn);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return conn->ip_addr;
 
 	C_UTILS_UNACCESSIBLE;
@@ -481,7 +480,7 @@ unsigned int c_utils_connection_get_port(struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(conn->logger, 0, conn);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return conn->port;
 
 	C_UTILS_UNACCESSIBLE;
@@ -491,7 +490,7 @@ bool c_utils_connection_set_port(struct c_utils_connection *conn, unsigned int p
 	C_UTILS_ARG_CHECK(conn->logger, false, conn, port > 0);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) 
+	C_UTILS_SCOPED_LOCK0(conn->lock) 
 		return conn->port = port, true;
 
 	C_UTILS_UNACCESSIBLE;
@@ -501,7 +500,7 @@ struct c_utils_logger *c_utils_connection_get_logger(struct c_utils_connection *
 	C_UTILS_ARG_CHECK(conn->logger, false, conn);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return conn->logger;
 
 	C_UTILS_UNACCESSIBLE;
@@ -511,7 +510,7 @@ bool c_utils_connection_set_logger(struct c_utils_connection *conn, struct c_uti
 	C_UTILS_ARG_CHECK(logger, false, conn);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) 
+	C_UTILS_SCOPED_LOCK0(conn->lock) 
 		return conn->logger = logger, true;
 
 	C_UTILS_UNACCESSIBLE;
@@ -521,7 +520,7 @@ bool c_utils_connection_init(struct c_utils_connection *conn, int sockfd, unsign
 	C_UTILS_ARG_CHECK(logger, false, conn, sockfd > -1, port > 0, ip_addr);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) {
+	C_UTILS_SCOPED_LOCK0(conn->lock) {
 		if (conn->in_use) {
 			C_UTILS_LOG_INFO(logger, "c_utils_connection_init: 'Connection already in use!'");
 			return false;
@@ -543,7 +542,7 @@ bool c_utils_connection_in_use(struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(conn->logger, false, conn);
 
 	// Acquire Reader Lock
-	SCOPED_LOCK1(conn->lock) 
+	C_UTILS_SCOPED_LOCK1(conn->lock) 
 		return conn->in_use;
 
 	C_UTILS_UNACCESSIBLE;
@@ -553,7 +552,7 @@ bool c_utils_connection_disconnect(struct c_utils_connection *conn) {
 	C_UTILS_ARG_CHECK(conn->logger, false, conn);
 
 	// Acquire Writer Lock
-	SCOPED_LOCK0(conn->lock) {
+	C_UTILS_SCOPED_LOCK0(conn->lock) {
 		if (!conn->in_use)  
 			return false;
 		

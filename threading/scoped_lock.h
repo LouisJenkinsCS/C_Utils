@@ -72,19 +72,19 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
    called.
 */ 
 
-#define SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
+#define C_UTILS_SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
 
-#define _SCOPED_LOCK(s_lock, n) \
+#define _C_UTILS_SCOPED_LOCK(s_lock, n) \
    s_lock->info.line = C_UTILS_STRINGIFY(__LINE__); \
    s_lock->info.file = __FILE__; \
    s_lock->info.function = __FUNCTION__; \
-   for (struct c_utils_scoped_lock *tmp_lock SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
+   for (struct c_utils_scoped_lock *tmp_lock C_UTILS_SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
 
-#define SCOPED_LOCK0(s_lock) _SCOPED_LOCK(s_lock, 0)
+#define C_UTILS_SCOPED_LOCK0(s_lock) _C_UTILS_SCOPED_LOCK(s_lock, 0)
 
-#define SCOPED_LOCK1(s_lock) _SCOPED_LOCK(s_lock, 1)
+#define C_UTILS_SCOPED_LOCK1(s_lock) _C_UTILS_SCOPED_LOCK(s_lock, 1)
 
-#define SCOPED_LOCK(s_lock) SCOPED_LOCK0(s_lock)
+#define C_UTILS_SCOPED_LOCK(s_lock) C_UTILS_SCOPED_LOCK0(s_lock)
 
 #define C_UTILS_UNACCESSIBLE do { __builtin_unreachable(); assert(0 && "Reach unreachable block!"); } while(0)
 

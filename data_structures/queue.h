@@ -1,21 +1,12 @@
-#ifndef DS_QUEUE_H
-#define DS_QUEUE_H
+#ifndef C_UTILS_QUEUE_H
+#define C_UTILS_QUEUE_H
 
-#include <DS_Helpers.h>
-#include <MU_Hazard_Pointers.h>
-#include <stdint.h>
-#include <stdatomic.h>
+#include <stdbool.h>
 
-#ifdef C_UTILS_USE_POSIX_STD
-#define queue_t DS_Queue_t
-#define queue_create(...) DS_Queue_create(__VA_ARGS__)
-#define queue_enqueue(...) DS_Queue_enqueue(__VA_ARGS__)
-#define queue_dequeue(...) DS_Queue_dequeue(__VA_ARGS__)
-#define queue_destroy(...) DS_Queue_destroy(__VA_ARGS__)
-#endif
+#include "helpers.h"
 
 /*
-	DS_Queue is a lock-free, fast and minimal queue built on top of
+	c_utils_queue is a lock-free, fast and minimal queue built on top of
 	Maged M. Michael's Hazard Pointer implementation that solves the ABA
 	problem. It is a very simple data structure, although also very powerful.
 
@@ -23,19 +14,28 @@
 	with the guarantee to never block, nor suffer from priority inversions,
 	deadlocks, livelocks, etc.
 */
+struct c_utils_queue;
 
-typedef struct {
-	DS_Node_t *head;
-	DS_Node_t *tail;
-	volatile size_t size;
-} DS_Queue_t;
+#ifdef NO_C_UTILS_PREFIX
+/*
+	Typedefs
+*/
+typedef struct c_utils_queue queue_t;
 
+/*
+	Functions
+*/
+#define queue_create(...) c_utils_queue_create(__VA_ARGS__)
+#define queue_enqueue(...) c_utils_queue_enqueue(__VA_ARGS__)
+#define queue_dequeue(...) c_utils_queue_dequeue(__VA_ARGS__)
+#define queue_destroy(...) c_utils_queue_destroy(__VA_ARGS__)
+#endif
 
 /*
  * Creates a new instance of the queue.
  * @return A new instance, or NULL if failure in allocating memory for the queue.
  */
-DS_Queue_t *DS_Queue_create(void);
+struct c_utils_queue *c_utils_queue_create(void);
 
 /*
  * Enqueue an item to the queue, with guarantee not to block. 
@@ -43,14 +43,14 @@ DS_Queue_t *DS_Queue_create(void);
  * @param data Data to enqueue.
  * @return true upon success, false if allocation fails for creating a node.
  */
-bool DS_Queue_enqueue(DS_Queue_t *queue, void *data);
+bool c_utils_queue_enqueue(struct c_utils_queue *queue, void *data);
 
 /*
  * Dequeue an item from the queue, with guarantee not to block.
  * @param queue Instance of the queue.
  * @return The data dequeued, or NULL if queue is NULL or if it is empty.
  */
-void *DS_Queue_dequeue(DS_Queue_t *queue);
+void *c_utils_queue_dequeue(struct c_utils_queue *queue);
 
 /*
  * Destroys the queue, calling the del deletion callback on each item in the
@@ -59,6 +59,6 @@ void *DS_Queue_dequeue(DS_Queue_t *queue);
  * @param del Deletion callback to call on each item if specified.
  * @return true if successful, false if queue is NULL.
  */
-bool DS_Queue_destroy(DS_Queue_t *queue, DS_delete_cb del);
+bool c_utils_queue_destroy(struct c_utils_queue *queue, c_utils_delete_cb del);
 
-#endif /* endif DS_QUEUE_H */
+#endif /* endif C_UTILS_QUEUE_H */

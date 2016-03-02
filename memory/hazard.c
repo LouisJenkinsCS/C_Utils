@@ -1,14 +1,18 @@
-#include <c_utils_hazards.h>
-#include <C_UTILS_Arg_Check.h>
 #include <stdlib.h>
+
+#include "hazard.h"
+#include "../io/logger.h"
+#include "../data_structures/list.h"
+#include "../misc/alloc_check.h"
+#include "../misc/argument_check.h"
 
 struct c_utils_hazard {
 	volatile bool in_use;
 	size_t id;
 	struct c_utils_list *retired;
-	void *owned[C_UTILS_HAZARDS_PER_THREAD];
+	void *owned[C_UTILS_HAZARD_PER_THREAD];
 	void (*destructor)(void *);
-	struct struct c_utils_hazard *next;
+	struct c_utils_hazard *next;
 };
 
 struct c_utils_hazard_list {
@@ -21,18 +25,16 @@ static struct c_utils_hazard_list *hazard_table = NULL;
 
 static pthread_key_t tls;
 
-static C_UTILS_Logger_t *logger = NULL;
+static struct c_utils_logger *logger = NULL;
 
-static const int max_hazard_pointers = C_UTILS_HAZARD_POINTERS_MAX_THREADS * C_UTILS_HAZARD_POINTERS_PER_THREAD;
+static const int max_hazard_pointers = C_UTILS_HAZARD_THREADS * C_UTILS_HAZARD_PER_THREAD;
 
 C_UTILS_LOGGER_AUTO_CREATE(logger, "./memory/logs/hazard.log", "w", C_UTILS_LOG_LEVEL_INFO);
 
 __attribute__((constructor)) static void init_hazard_table(void) {
-	hazard_table = calloc(1, sizeof(*hazard_table));
-	if (!hazard_table) {
-		C_UTILS_DEBUG("Was unable to allocate the hazard pointer table!");
+	C_UTILS_ON_BAD_CALLOC(hazard_table, logger, sizeof(*hazard_table))
 		return;
-	}
+
 	hazard_table->destructor = free;
 	hazard_table->size = 0;
 }
@@ -53,7 +55,7 @@ __attribute__((destructor)) static void destroy_hazard_table(void) {
 		free(prev_hp);
 		struct c_utils_iterator *it = c_utils_list_iterator(hp->retired);
 
-		for (int i = 0; i < C_UTILS_HAZARD_POINTERS_PER_THREAD; i++)
+		for (int i = 0; i < C_UTILS_HAZARD_PER_THREAD; i++)
 			if (hp->owned[i] && !c_utils_list_contains(del_list, hp->owned[i]))
 				c_utils_list_add(del_list, hp->owned[i], NULL);
 
@@ -79,7 +81,7 @@ static void scan(struct c_utils_hazard *hp) {
 		are non-NULL, hence in use.
 	*/
 	for (struct c_utils_hazard *tmp_hp = hazard_table->head; tmp_hp; tmp_hp = tmp_hp->next)
-		for (int i = 0; i < C_UTILS_HAZARD_POINTERS_PER_THREAD; i++)
+		for (int i = 0; i < C_UTILS_HAZARD_PER_THREAD; i++)
 			if (tmp_hp->owned[i])
 				c_utils_list_add(private_list, tmp_hp->owned[i], NULL);
 	
@@ -115,7 +117,9 @@ static void help_scan(struct c_utils_hazard *hp) {
 		void *data;
 		while ((data = c_utils_list_remove_at(tmp_hp->retired, 0, NULL))) {
 			c_utils_list_add(hp->retired, data, NULL);
-			if (hp->retired->size >= max_hazard_pointers) scan(hp);
+			
+			if (c_utils_list_size(hp->retired) >= max_hazard_pointers) 
+				scan(hp);
 		}
 
 		tmp_hp->in_use = false;
@@ -123,21 +127,23 @@ static void help_scan(struct c_utils_hazard *hp) {
 }
 
 static struct c_utils_hazard *create() {
-	struct c_utils_hazard *hp = calloc(1, sizeof(*hp));
-	if (!hp) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
+	struct c_utils_hazard *hp;
+	C_UTILS_ON_BAD_CALLOC(hp, logger, sizeof(*hp))
+		goto err;
 	hp->in_use = true;
 	
 	hp->retired = c_utils_list_create(false);
 	if (!hp->retired) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_list_create: '%s'", strerror(errno));
-		free(hp);
-		return NULL;
+		goto err_list;
 	}
 	
 	return hp;
+
+	err_list:
+		free(hp);
+	err:
+		return NULL;
 }
 
 static void init_tls_hp(void) {
@@ -165,14 +171,14 @@ static void init_tls_hp(void) {
 		old_head = hazard_table->head;
 		hp->next = old_head;
 	} while (!__sync_bool_compare_and_swap(&hazard_table->head, old_head, hp));
-	__sync_fetch_and_add(&hazard_table->size, C_UTILS_HAZARD_POINTERS_PER_THREAD);
+	__sync_fetch_and_add(&hazard_table->size, C_UTILS_HAZARD_PER_THREAD);
 	
 	pthread_setspecific(tls, hp);
 	C_UTILS_LOG_TRACE(logger, "Was successful in adding hazard pointer #%zu to hazard table!", hp->id);
 }
 
 bool c_utils_hazard_acquire(unsigned int index, void *data) {
-	C_UTILS_ARG_CHECK(logger, false, data, index <= C_UTILS_HAZARD_POINTERS_PER_THREAD);
+	C_UTILS_ARG_CHECK(logger, false, data, index <= C_UTILS_HAZARD_PER_THREAD);
 	
 	// Get the hazard pointer from thread-local storage if it is allocated.
 	struct c_utils_hazard *hp = pthread_getspecific(tls);
@@ -202,15 +208,15 @@ bool c_utils_hazard_release_all(bool retire) {
 		return false;
 	}
 	
-	for (int i = 0; i < C_UTILS_HAZARD_POINTERS_PER_THREAD; i++) {
+	for (int i = 0; i < C_UTILS_HAZARD_PER_THREAD; i++) {
 		void *data = hp->owned[i];
 		if (data) {
 			hp->owned[i] = NULL;
 			if (retire) {
 				c_utils_list_add(hp->retired, data, NULL);
-				C_UTILS_LOG_TRACE(logger, "Added data to retirement list for HP #%zu with size: %zu!", hp->id, hp->retired->size);
+				C_UTILS_LOG_TRACE(logger, "Added data to retirement list for HP #%zu with size: %zu!", hp->id, c_utils_list_size(hp->retired));
 				
-				if (hp->retired->size >= C_UTILS_HAZARD_POINTERS_PER_THREAD) {
+				if (c_utils_list_size(hp->retired) >= C_UTILS_HAZARD_PER_THREAD) {
 					C_UTILS_LOG_TRACE(logger, "Retirement list filled for HP #%zu, scanning...", hp->id);
 					scan(hp);
 					
@@ -233,13 +239,13 @@ bool c_utils_hazard_release(void *data, bool retire) {
 	if (!hp)
 		return false;
 	
-	for (int i = 0; i < C_UTILS_HAZARD_POINTERS_PER_THREAD; i++) {
+	for (int i = 0; i < C_UTILS_HAZARD_PER_THREAD; i++) {
 		if (hp->owned[i] == data) {
 			hp->owned[i] = NULL;
 			if (retire) {
 				c_utils_list_add(hp->retired, data, NULL);
-				C_UTILS_LOG_TRACE(logger, "Added data to retirement list for HP #%zu with size: %zu!", hp->id, hp->retired->size);
-				if (hp->retired->size >= C_UTILS_HAZARD_POINTERS_PER_THREAD) {
+				C_UTILS_LOG_TRACE(logger, "Added data to retirement list for HP #%zu with size: %zu!", hp->id, c_utils_list_size(hp->retired));
+				if (c_utils_list_size(hp->retired) >= C_UTILS_HAZARD_PER_THREAD) {
 					C_UTILS_LOG_TRACE(logger, "Retirement list filled for HP #%zu, scanning...", hp->id);
 					scan(hp);
 					

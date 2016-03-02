@@ -39,7 +39,7 @@ struct c_utils_string_buffer;
 
 #define C_UTILS_STRING_BUFFER_APPEND_FORMAT(buf, format, ...) do { \
 	char *str; \
-	asprintf(&s, format, ##__VA_ARGS__); \
+	asprintf(&str, format, ##__VA_ARGS__); \
 	c_utils_string_buffer_append(buf, str); \
 	free(str); \
 } while(0)
@@ -48,7 +48,7 @@ struct c_utils_string_buffer;
 
 #define C_UTILS_STRING_BUFFER_PREPEND_FORMAT(buf, format, ...) do { \
 	char *str; \
-	asprintf(&s, format, ##__VA_ARGS__); \
+	asprintf(&str, format, ##__VA_ARGS__); \
 	c_utils_string_buffer_prepend(buf, str); \
 	free(str); \
 } while(0)
@@ -57,7 +57,7 @@ struct c_utils_string_buffer;
 
 #define C_UTILS_STRING_BUFFER_INSERT_FORMAT(buf, format, index, ...) do { \
 	char *str; \
-	asprintf(&s, format, ##__VA_ARGS__); \
+	asprintf(&str, format, ##__VA_ARGS__); \
 	c_utils_string_buffer_insert(buf, str, index); \
 	free(str); \
 } while(0)

@@ -1,26 +1,25 @@
 #ifndef C_UTILS_HazardS_H
 #define C_UTILS_HazardS_H
 
-#include <MU_Logger.h>
-#include <DS_List.h>
+#include <stdbool.h>
 
-#ifdef C_UTILS_USE_POSIX_STD
+#ifdef NO_C_UTILS_PREFIX
 #define hazard_acquire(...) c_utils_hazard_acquire(__VA_ARGS__)
 #define hazard_release(...) c_utils_hazard_release(__VA_ARGS__)
 #define hazard_release_all(...) c_utils_hazard_release_all(__VA_ARGS__)
 #define hazard_register_destructor(...) c_utils_hazard_register_destructor(__VA_ARGS__)
 #endif
 
-#ifdef C_UTILS_HAZARDS_MAX_THREAD_COUNT
-#define C_UTILS_HAZARDS_MAX_THREADS C_UTILS_HAZARDS_MAX_THREAD_COUNT
+#ifdef C_UTILS_HAZARD_MAX_THREAD_COUNT
+#define C_UTILS_HAZARD_THREADS C_UTILS_HAZARD_MAX_THREAD_COUNT
 #else
-#define C_UTILS_HAZARDS_MAX_THREADS 4
+#define C_UTILS_HAZARD_THREADS 4
 #endif
 
-#ifdef C_UTILS_HAZARDS_MAX_PER_THREAD
-#define C_UTILS_HAZARDS_PER_THREAD C_UTILS_HAZARDS_MAX_PER_THREAD
+#ifdef C_UTILS_HAZARD_MAX_PER_THREAD
+#define C_UTILS_HAZARD_PER_THREAD C_UTILS_HAZARD_MAX_PER_THREAD
 #else
-#define C_UTILS_HAZARDS_PER_THREAD 4
+#define C_UTILS_HAZARD_PER_THREAD 4
 #endif
 
 /*
