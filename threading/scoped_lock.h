@@ -59,11 +59,14 @@ void c_utils_auto_unlock(struct c_utils_scoped_lock **s_lock);
 // TODO: Implement!
 void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 
+#define C_UTILS_SCOPED_LOCK_ERR_MSG "Was unable to allocate the scoped_lock, please check logs!!!"
 
-#define SCOPED_LOCK_FROM(lock, logger) _Generic((lock), \
+#define C_UTILS_SCOPED_LOCK_FROM(lock, logger) _Generic((lock), \
       pthread_mutex_t *: c_utils_scoped_lock_mutex_from, \
       pthread_spinlock_t *: c_utils_scoped_lock_spinlock_from, \
       pthread_rwlock_t *: c_utils_scoped_lock_rwlock_from)(lock, logger)
+
+#define C_UTILS_SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
 
 /*
    Note how we create a temporary variable to point to the
@@ -71,9 +74,6 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
    inside of the scope in order to have the cleanup function be
    called.
 */ 
-
-#define C_UTILS_SCOPE_AUTO_UNLOCK __attribute__ ((__cleanup__(c_utils_auto_unlock)))
-
 #define _C_UTILS_SCOPED_LOCK(s_lock, n) \
    s_lock->info.line = C_UTILS_STRINGIFY(__LINE__); \
    s_lock->info.file = __FILE__; \

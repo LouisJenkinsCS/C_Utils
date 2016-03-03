@@ -19,7 +19,7 @@ struct c_utils_logger {
 	/// The formatter for log strings.
 	struct c_utils_log_format format;
 	/// The level determining what messages will be printed.
-	enum c_utils_log_level_e level;
+	enum c_utils_log_level level;
 };
 
 struct c_utils_log_format_info {
@@ -53,9 +53,10 @@ static const char *get_file_name(struct c_utils_log_format_info *info, va_list a
 }
 
 static const char *get_message(struct c_utils_log_format_info *info, va_list args) {
-	char *str = malloc(1024+1);
-	vsnprintf(str, 1024, info->msg, args);
+	char *str = malloc(buffer_size+1);
+	vsnprintf(str, buffer_size, info->msg, args);
 	info->should_free = 1;
+	
 	return str;
 }
 
@@ -87,17 +88,14 @@ struct {
 };
 
 static const char *parse_token(const char *token, struct c_utils_log_format_info *info, va_list args) {
-	int i = 0;
-	for (; i < num_of_tokens; i++) {
-		if (strcmp(token, format_tokens[i].token) == 0) {
+	for (int i = 0; i < num_of_tokens; i++)
+		if (strcmp(token, format_tokens[i].token) == 0)
 			return format_tokens[i].callback(info, args);
-		}
-	}
 
 	return NULL;
 }
 
-static const char *log_level_to_string(enum c_utils_log_level_e level) {
+static const char *log_level_to_string(enum c_utils_log_level level) {
 	switch(level) {
 		case C_UTILS_LOG_LEVEL_ASSERTION: return "ASSERTION";
 		case C_UTILS_LOG_LEVEL_ERROR: return "ERROR";
@@ -119,7 +117,8 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 	char ch;
 	while ((ch = *format++))
 	{
-		if (!left) break;
+		if (!left) 
+			break;
 		
 		info->should_free = 0;
 		
@@ -134,7 +133,8 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 				buf_index += should_copy;
 				left -= should_copy;
 				
-				if (info->should_free) free((char *)tok_str);
+				if (info->should_free)
+					free((char *)tok_str);
 				
 				continue;
 			}
@@ -147,8 +147,9 @@ static int format_string(const char *format, char *buffer, int buf_size, struct 
 	return buf_index;
 }
 
-static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_log_level_e level) {
-	if (!logger) return NULL;
+static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_log_level level) {
+	if (!logger) 
+		return NULL;
 	
 	struct c_utils_log_format format = logger->format;
 	char *real_format = NULL;
@@ -167,26 +168,26 @@ static const char *get_log_format(struct c_utils_logger *logger, enum c_utils_lo
 	
 	if (!real_format) {
 		real_format = format.all_f;
-		if (!real_format) {
+
+		if (!real_format)
 			real_format = format.default_f;
-		}
 	}
 	
 	return real_format;
 }
 
 /// Initialize logger.
-struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level) {
+struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level level) {
 	struct c_utils_logger *logger = calloc(1, sizeof(*logger));
 	if (!logger) {
-		C_UTILS_DEBUG("c_utils_logger_create->malloc: \"%s\"\n", strerror(errno));
-		goto error;
+		C_UTILS_DEBUG("calloc: \"%s\"\n", strerror(errno));
+		goto err;
 	}
 	
 	logger->file = fopen(filename, mode);
 	if (!logger->file) {
-		C_UTILS_DEBUG("c_utils_logger_create->fopen: \"%s\"\n", strerror(errno));
-		goto error;
+		C_UTILS_DEBUG("fopen: \"%s\"\n", strerror(errno));
+		goto err_file;
 	}
 	
 	logger->level = level;
@@ -196,15 +197,15 @@ struct c_utils_logger *c_utils_logger_create(const char *filename, const char *m
 	
 	return logger;
 
-	error:
-		if (logger) {
-			free(logger);
-		}
+	err_file:
+		free(logger);
+	err:
 		return NULL;
 }
 
-bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...) {
-	if (!logger || !logger->file || logger->level > level) return false;
+bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...) {
+	if (!logger || !logger->file || logger->level > level) 
+		return false;
 	
 	va_list args;
 	va_start(args, function_name);
@@ -219,9 +220,8 @@ bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e 
 	fprintf(logger->file, "%s", buffer);
 	fflush(logger->file);
 
-	if (level == C_UTILS_LOG_LEVEL_ASSERTION) {
+	if (level == C_UTILS_LOG_LEVEL_ASSERTION)
 		C_UTILS_DEBUG("ASSERTION FAILED: \n%s", buffer);
-	}
 
 	return true;
 }
@@ -230,17 +230,25 @@ char *c_utils_get_timestamp() {
 	const int buffer_size = 80;
 	time_t t = time(NULL);
 	struct tm *current_time = localtime(&t);
+	
 	char *time_and_date = malloc(buffer_size);
+	if(!time_and_date) {
+		C_UTILS_DEBUG("malloc: \"%s\"", strerror(errno));
+		return NULL;
+	}
 
 	strftime(time_and_date, buffer_size, "%I:%M:%S %p", current_time);
-	
+
 	return time_and_date;
 }
 
 
 bool c_utils_logger_destroy(struct c_utils_logger *logger) {
-	if (!logger) return false;
-	if (logger->file) fclose(logger->file);
+	if (!logger) 
+		return false;
+	
+	if (logger->file) 
+		fclose(logger->file);
 
 	free(logger->format.all_f);
 	free(logger->format.trace_f);
@@ -251,7 +259,6 @@ bool c_utils_logger_destroy(struct c_utils_logger *logger) {
 	free(logger->format.warning_f);
 	free(logger->format.error_f);
 	free(logger->format.assertion_f);
-
 	free(logger);
 	
 	return true;

@@ -12,7 +12,7 @@
 
 struct c_utils_logger;
 
-enum c_utils_log_level_e {
+enum c_utils_log_level {
 	/// Display all log levels.
 	C_UTILS_LOG_LEVEL_ALL = 0,
 	/// Display Trace, Verbose, Info, Custom, Events, Warnings, Errors and Assertions only.
@@ -163,7 +163,7 @@ __attribute__((destructor)) static void destroy_ ##logger (void) { \
  * @param level Level to log up to, I.E C_UTILS_LOG_LEVEL_INFO logs only INFO and above.
  * @return Logger, or null if allocation error.
  */
-struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level_e level);
+struct c_utils_logger *c_utils_logger_create(const char *filename, const char *mode, enum c_utils_log_level level);
 
 /**
  * This should NEVER be called outside of the implementation for this logger. Instead, use the macros above.
@@ -178,7 +178,7 @@ struct c_utils_logger *c_utils_logger_create(const char *filename, const char *m
  * @param ...
  * @return 
  */
-bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level_e level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
+bool c_utils_logger_log(struct c_utils_logger *logger, enum c_utils_log_level level, const char *custom_level, const char *msg, const char *cond, const char *file_name, const char *line_number, const char *function_name, ...);
 
 /**
  * Destroys the logger.

@@ -4,13 +4,13 @@
 
 struct c_utils_bucket {
 	/// The key associated with each bucket.
-	char key[DS_HASH_MAP_KEY_SIZE + 1];
+	char key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
 	/// The value associated with each key.
 	void *value;
 	/// Determines whether or not the bucket is in use, to allow for "caching".
 	volatile unsigned char in_use;
 	/// In case of collision, it will chain to the next. There is no limit.
-	struct struct c_utils_bucket *next;
+	struct c_utils_bucket *next;
 };
 
 struct c_utils_map {
@@ -94,7 +94,7 @@ static void *get_value_from_bucket(struct c_utils_bucket *bucket, const char *ke
 	do {
 		if (!bucket->in_use) continue;
 		
-		if (strncmp(bucket->key, key, DS_HASH_MAP_KEY_SIZE) == 0)
+		if (strncmp(bucket->key, key, C_UTILS_HASH_MAP_KEY_SIZE) == 0)
 			break;
 	} while ((bucket = bucket->next));
 	
@@ -133,7 +133,7 @@ static struct c_utils_bucket *create_bucket(char *key, void *value, struct c_uti
 		return NULL;
 	}
 
-	snprintf(bucket->key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+	snprintf(bucket->key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 	bucket->value = value;
 	bucket->next = next;
 	
@@ -141,34 +141,29 @@ static struct c_utils_bucket *create_bucket(char *key, void *value, struct c_uti
 }
 
 /// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
-struct c_utils_map *c_utils_map_create(size_t amount_of_buckets, unsigned char init_locks) {
-	struct c_utils_map *map = calloc(1, sizeof(struct c_utils_map));
-	if (!map) {
-		C_UTILS_LOG_ASSERT(logger, "c_utils_map_create->malloc: \"%s\"", strerror(errno));
-		goto error;
-	}
+struct c_utils_map *c_utils_map_create(size_t amount_of_buckets, bool synchronized) {
+	struct c_utils_map *map;
+	C_UTILS_ON_BAD_CALLOC(map, logger, sizeof(*map))
+		goto err;
 	
 	map->amount_of_buckets = amount_of_buckets ? amount_of_buckets : 1;
 	
-	map->buckets = calloc(map->amount_of_buckets, sizeof(struct c_utils_bucket *));
-	if (!map->buckets) {
-		C_UTILS_LOG_ASSERT(logger, "c_utils_map_create->calloc: \"%s\"", strerror(errno));
-		goto error;
-	}
+	C_UTILS_ON_BAD_CALLOC(map->buckets, logger, sizeof(*map->buckets) * amount_of_buckets)
+		goto err_buckets;
 	
-	if (init_locks) {
-		map->lock = c_utils_scoped_lock_rwlock(NULL, logger);
-		if (!map->lock) {
-			C_UTILS_LOG_ASSERT(logger, "c_utils_scoped_lock_rwlock: \"Was unable to create scoped rwlock!\"";
-			goto error;
-		}
+	map->lock = synchronized ? c_utils_scoped_lock_rwlock(NULL, logger) : c_utils_scoped_lock_no_op();
+	if(!map->lock) {
+		C_UTILS_LOG_ERROR(logger, C_UTILS_SCOPED_LOCK_ERR_MSG);
+		goto err_lock;
 	}
 
 	return map;
 
-	error:
-		if (map)
-			free(map);
+	err_lock:
+		free(map->buckets);
+	err_buckets:
+		free(map);
+	err:
 		return NULL;
 }
 
@@ -177,8 +172,8 @@ bool c_utils_map_add(struct c_utils_map *map, char *key, void *value) {
 	C_UTILS_ARG_CHECK(logger, false, map, key);
 
 	SCOPED_LOCK0(map->lock) {
-		char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
-		snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
+		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
 		size_t index = get_bucket_index(trunc_key, map->amount_of_buckets);
 		struct c_utils_bucket *bucket = map->buckets[index];
@@ -222,8 +217,8 @@ bool c_utils_map_add(struct c_utils_map *map, char *key, void *value) {
 void *c_utils_map_get(struct c_utils_map *map, const char *key) {
 	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->size, map && map->buckets, key);
 	SCOPED_LOCK1(map->lock) {
-		char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
-		snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
+		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
 		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
 		return bucket_is_valid(bucket) ? get_value_from_bucket(bucket) : NULL;
@@ -235,8 +230,8 @@ void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delet
 	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size, key);
 
 	SCOPED_LOCK0(map->lock) {
-		char trunc_key[DS_HASH_MAP_KEY_SIZE + 1];
-		snprintf(trunc_key, DS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
+		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
 		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
 		if (!bucket_is_valid(bucket))
@@ -266,7 +261,7 @@ const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_u
 }
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
-bool DS_Hasp_Map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
+bool C_UTILS_Hasp_Map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
 	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size, callback_function);
 
 	SCOPED_LOCK1(map->lock) {

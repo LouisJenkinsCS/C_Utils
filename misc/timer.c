@@ -1,4 +1,5 @@
-#include "misc/timer.h"
+#include "timer.h"
+#include "alloc_check.h"
 
 struct c_utils_timer {
     /// Keeps track of the start time.
@@ -12,20 +13,15 @@ struct c_utils_timer {
 };
 
 struct c_utils_timer *c_utils_timer_init(int start) {
-	struct c_utils_timer *timer = calloc(1, sizeof(struct c_utils_timer));
-	if (!timer)   
-		goto error;
-	
+	struct c_utils_timer *timer;
+	C_UTILS_ON_BAD_CALLOC(timer, NULL, sizeof(*timer))
+		goto err;
 
-	timer->start = calloc(1, sizeof(time_t));
-	if (!timer->start)   
-		goto error;
+	C_UTILS_ON_BAD_CALLOC(timer->start, NULL, sizeof(*timer->start))
+		goto err_start;
 	
-	
-	timer->end = calloc(1 , sizeof(time_t));
-	if (!timer->end)   
-		goto error;
-	
+	C_UTILS_ON_BAD_CALLOC(timer->end, NULL, sizeof(*timer->end))
+		goto err_end;
 
 	if (start)
 		time(timer->start);
@@ -34,6 +30,13 @@ struct c_utils_timer *c_utils_timer_init(int start) {
 	timer->is_finished = 0;
 
 	return timer;
+
+	err_end:
+		free(timer->start);
+	err_start:
+		free(timer);
+	err:
+		return NULL;
 }
 
 int c_utils_timer_start(struct c_utils_timer *timer) {
@@ -91,6 +94,7 @@ char *c_utils_timer_string(struct c_utils_timer *timer) {
 void c_utils_timer_destroy(struct c_utils_timer *timer) {
 	if (!timer)
 		return;
+	
 	free(timer->start);
 	free(timer->end);
 	free(timer);

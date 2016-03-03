@@ -1,8 +1,7 @@
 #ifndef NET_UTILS_CLIENT_H
 #define NET_UTILS_CLIENT_H
 
-#include <NU_Helper.h>
-#include <NU_Connection.h>
+#include "connection.h"
 
 /*
 	c_utils_client is a simple manager for c_utils_connection instances, creating and managing a pool for you

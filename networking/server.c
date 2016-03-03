@@ -188,7 +188,7 @@ struct c_utils_server *c_utils_server_create(size_t connection_pool_size, size_t
 	C_UTILS_ON_BAD_CALLOC(server, logger, sizeof(*server))
 		goto err;
 
-	server->lock = synchronized ? c_utils_scoped_lock_mutex(NULL, logger) : c_utils_scoped_lock_no_op();
+	server->lock = (server->synchronized = synchronized) ? c_utils_scoped_lock_mutex(NULL, logger) : c_utils_scoped_lock_no_op();
 	if (!server->lock) {
 		C_UTILS_LOG_ERROR(logger, "Was unable to create scoped_lock!");
 		goto err_lock;
@@ -351,8 +351,10 @@ struct c_utils_connection *c_utils_server_accept(struct c_utils_server *server, 
 			return NULL;
 		}
 
-		C_UTILS_ON_BAD_REALLOC(&server->conn_pool, logger, (sizeof(struct c_utils_connection *) * (server->conn_pool_size + 1)))
+		C_UTILS_ON_BAD_REALLOC(&server->conn_pool, logger, (sizeof(struct c_utils_connection *) * (server->conn_pool_size + 1))) {
+			c_utils_connection_destroy(conn);
 			return NULL;
+		}
 		
 		server->conn_pool[server->conn_pool_size++] = conn;
 		

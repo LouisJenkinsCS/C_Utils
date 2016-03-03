@@ -24,7 +24,7 @@ struct c_utils_response {
     /// Contains the fields parsed from the header in a hash table.
     struct c_utils_map *header;
     /// The HTTP version.
-    NU_HTTP_Version_e version;
+    enum c_utils_http_version version;
     /// The HTTP status.
     unsigned int status;
 };
@@ -33,11 +33,11 @@ struct c_utils_request {
     /// Contains the fields parsed from the header in a hash table.
     struct c_utils_map *header;
     /// The HTTP method.
-    NU_HTTP_Method_e method;
+    enum c_utils_http_method method;
     /// The request file path.
     char *path;
     /// The HTTP version.
-    NU_HTTP_Version_e version;
+    enum c_utils_http_version version;
 };
 
 struct c_utils_field {

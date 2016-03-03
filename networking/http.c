@@ -260,39 +260,44 @@ static size_t parse_http_request(struct c_utils_request *req, char *header_str) 
 }
 
 struct c_utils_response *c_utils_response_create(void) {
-	struct c_utils_response *res = calloc(1, sizeof(struct c_utils_response));
-	if (!res) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
+	struct c_utils_response *res;
+	C_UTILS_ON_BAD_CALLOC(res, logger, sizeof(*res))
+		goto err;
 	
 	// Synchronized Map
 	res->header = c_utils_map_create(bucket_size, true);
 	if (!res->header) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
-		free(res);
-		return NULL;
+		goto err_header;
 	}
 	
 	return res;
+
+	err_header:
+		free(res);
+	err:
+		return NULL;
 }
 
 struct c_utils_request *c_utils_request_create(void) {
-	struct c_utils_request *req = calloc(1, sizeof(struct c_utils_request));
-	if (!req) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
+	struct c_utils_request *req;
+	C_UTILS_ON_BAD_CALLOC(req, logger, sizeof(*req))
+		goto err;
 	
 	// Synchronized Map
 	req->header = c_utils_map_create(bucket_size, true);
 	if (!req->header) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_map_create: 'Was unable to create Hash Table!'");
-		free(req);
-		return NULL;
+		goto err_header;
 	}
 	
 	return req;
+
+	err_header:
+		free(req);
+	err:
+		return NULL;
+
 }
 
 /*
@@ -366,24 +371,22 @@ bool c_utils_request_clear(struct c_utils_request *req) {
 char *c_utils_response_to_string(struct c_utils_response *res) {
 	C_UTILS_ARG_CHECK(logger, NULL, res);
 
-	char *buf = calloc(1, C_UTILS_HTTP_HEADER_LEN + 1);
-	if (!buf) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
+	char *buf;
+	C_UTILS_ON_BAD_CALLOC(buf, logger, C_UTILS_HTTP_HEADER_LEN + 1)
+		goto err_buf;
 
 	size_t size, i = 0, size_left = C_UTILS_HTTP_HEADER_LEN + 1;
 	
 	const char *status = (res->status > 509) ? NULL : C_UTILS_HTTP_Status_Codes[res->status];
 	if (!status) {
 		C_UTILS_LOG_INFO(logger, "Invalid HTTP Status!");
-		goto error;
+		goto err_bad_status;
 	}
 
 	char *version = http_version_to_string(res->version);
 	if (!version) {
 		C_UTILS_LOG_INFO(logger, "Invalid HTTP Version!");
-		goto error;
+		goto err_bad_version;
 	}
 
 	size_t retval = snprintf(buf, size_left, "%s %s\r\n", version, status);
@@ -393,7 +396,8 @@ char *c_utils_response_to_string(struct c_utils_response *res) {
 	for (; i < size; i++) {
 		// Length of the mapped value plus 2 bytes for carriage return.
 		size_t str_len = strlen(arr[i]) + 2;
-		if (size_left < str_len) break;
+		if (size_left < str_len) 
+			break;
 		
 		snprintf(buf, size_left, "%s%s\r\n", buf, arr[i]);
 		free(arr[i]);
@@ -402,46 +406,43 @@ char *c_utils_response_to_string(struct c_utils_response *res) {
 	sprintf(buf, "%s\r\n\r\n", buf);
 	free(arr);
 
-	char *tmp_buf = realloc(buf, strlen(buf) + 1);
-	if (!tmp_buf) {
-		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		return buf;
-	}
-	return tmp_buf;
+	C_UTILS_ON_BAD_REALLOC(&buf, logger, (strlen(buf) + 1))
+		goto err_buf_resize;
 
-	error:
-		if (buf)  
-			free(buf);
-		
+	return buf;
+
+	err_buf_resize:
+	err_bad_version:
+	err_bad_status:
+		free(buf);
+	err_buf:
 		return NULL;
 }
 
 char *c_utils_request_to_string(struct c_utils_request *req) {
 	C_UTILS_ARG_CHECK(logger, NULL, req);
 
-	char *buf = calloc(1, C_UTILS_HTTP_HEADER_LEN + 1);
-	if (!buf) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
+	char *buf;
+	C_UTILS_ON_BAD_CALLOC(buf, logger, C_UTILS_HTTP_HEADER_LEN + 1)
+		goto err_buf;
 	
 	size_t size, i = 0, size_left = C_UTILS_HTTP_HEADER_LEN + 1;
 	
 	char *method = http_method_to_string(req->method);
 	if (!method) {
 		C_UTILS_LOG_INFO(logger, "Invalid HTTP Method!");
-		goto error;
+		goto err_bad_method;
 	}
 	
 	if (!*(req->path)) {
 		C_UTILS_LOG_INFO(logger, "Invalid File Path!");
-		goto error;
+		goto err_bad_path;
 	}
 
 	char *version = http_version_to_string(req->version);
 	if (!version) {
 		C_UTILS_LOG_INFO(logger, "Invalid HTTP Version!");
-		goto error;
+		goto err_bad_version;
 	}
 	
 	size_t retval = snprintf(buf, size_left, "%s %s %s\r\n", method, req->path, version);
@@ -460,17 +461,17 @@ char *c_utils_request_to_string(struct c_utils_request *req) {
 	sprintf(buf, "%s\r\n\r\n", buf);
 	free(arr);
 	
-	char *tmp_buf = realloc(buf, strlen(buf) + 1);
-	if (!tmp_buf) {
-		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		return buf;
-	}
-	return tmp_buf;
+	C_UTILS_ON_BAD_REALLOC(&buf, logger, (strlen(buf) + 1))
+		goto err_buf_resize;
 
-	error:
-		if (buf)  
-			free(buf);
-		
+	return buf;
+
+	err_buf_resize:
+	err_bad_version:
+	err_bad_path:
+	err_bad_method:
+		free(buf);
+	err_buf:
 		return NULL;
 }
 

@@ -1,11 +1,20 @@
-#include "../networking/client.h"
-#include "../threading/scoped_locks.h"
+#include "client.h"
+
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#include "../threading/scoped_lock.h"
+#include "../misc/alloc_check.h"
+#include "../misc/signal_retry.h"
+#include "../misc/argument_check.h"
 
 struct c_utils_client {
 	/// Socket associated with this server.
-   	struct c_utils_connection **connections;
+   	struct c_utils_connection **conn_pool;
    	/// Amount of servers currently connected to.
-   	size_t amount_of_connections;
+   	size_t conn_pool_size;
    	/// Lock used for synchronization and thread safety.
    	struct c_utils_scoped_lock *lock;
    	/// Whether or not to initialize locks on everything.
@@ -55,8 +64,11 @@ static int get_connection_socket(const char *host, unsigned int port, long long 
 	    
 	    C_UTILS_TEMP_FAILURE_RETRY(retval, select(sockfd + 1, &connect_set, NULL, NULL, timeout < 0 ? NULL : &tv));
 	    if (retval <= 0) {
-	    	if (!retval) C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out!': Iteration: #%d", ++iteration);
-	    	else C_UTILS_LOG_VERBOSE(logger, "select: '%s': Iteration: #%d", strerror(errno), ++iteration);
+	    	if (!retval)
+	    		C_UTILS_LOG_VERBOSE(logger, "select: 'Timed out!': Iteration: #%d", ++iteration);
+	    	else
+	    		C_UTILS_LOG_VERBOSE(logger, "select: '%s': Iteration: #%d", strerror(errno), ++iteration);
+	    	
 	    	C_UTILS_TEMP_FAILURE_RETRY(retval, close(sockfd));
 	    	continue;
 	    }
@@ -77,83 +89,46 @@ static int get_connection_socket(const char *host, unsigned int port, long long 
 	return current ? sockfd : -1;
 }
 
-struct c_utils_client *c_utils_client_create(size_t connection_pool_size, bool init_locks) {
-	struct c_utils_client *client = calloc(1, sizeof(struct c_utils_client));
-	if (!client) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
-	
-	bool mutex_init = false;
-	pthread_mutex_t *lock = NULL;
+struct c_utils_client *c_utils_client_create(size_t connection_pool_size, bool synchronized) {
+	struct c_utils_client *client;
+	C_UTILS_ON_BAD_CALLOC(client, logger, sizeof(*client))
+		goto err;
 
-	if (init_locks) {
-		lock = malloc(sizeof(pthread_mutex_t));
-		if (!lock) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
-		int failure = pthread_mutex_init(lock, NULL);
-		if (failure) {
-			C_UTILS_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(failure));
-			goto error;
-		}
-		
-		mutex_init = true;
-		client->synchronized = true;
-	}
-	
-	client->lock = SCOPED_LOCK_FROM(lock, logger);
+	client->lock = (client->synchronized = synchronized) ? c_utils_scoped_lock_mutex(NULL, logger) : c_utils_scoped_lock_no_op();
 	if (!client->lock) {
-		C_UTILS_LOG_ASSERT(logger, "SCOPED_LOCK_FROM: 'Unable to create scoped lock from mutex!'");
-		goto error;
+		C_UTILS_LOG_ERROR(logger, "Was unable to create scoped_lock!");
+		goto err_lock;
 	}
-	
-	size_t connections_allocated = 0;
-	client->amount_of_connections = connection_pool_size ? connection_pool_size : 1;
-	client->connections = calloc(client->amount_of_connections, sizeof(struct c_utils_connection *));
-	if (!client->connections) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
-	
-	size_t i = 0;
-	for (;i < client->amount_of_connections; i++) {
-		struct c_utils_connection *conn = c_utils_connection_create(init_locks, logger);
+
+	size_t conns_allocated = 0;
+	client->conn_pool_size = connection_pool_size ? connection_pool_size : 1;
+	C_UTILS_ON_BAD_CALLOC(client->conn_pool, logger, sizeof(*client->conn_pool))
+		goto err_conn_pool;
+
+	for (size_t i = 0; i < client->conn_pool_size; i++) {
+		struct c_utils_connection *conn = c_utils_connection_create(synchronized, logger);
 		if (!conn) {
-			C_UTILS_LOG_ASSERT(logger, "c_utils_connection_create: 'Was unable to create connection #%d!'", ++i);
-			goto error;
+			C_UTILS_LOG_ERROR(logger, "c_utils_connection_create: 'Was unable to create connection #%zu!'", ++i);
+			goto err_conn_alloc;
 		}
-		client->connections[i] = conn;
+
+		client->conn_pool[i] = conn;
+		conns_allocated++;
 	}
-	
+
 	return client;
 
 	/// Deallocate all memory allocated if anything fails!
-	error:
-		if (client->connections) {
-			size_t i = 0;
-			for (;i < connections_allocated; i++) {
-				int is_destroyed = c_utils_connection_destroy(client->connections[i]);
-				if (!is_destroyed)  
-					C_UTILS_LOG_ERROR(logger, "c_utils_connection_destroy: 'Was unable to destroy a connection'");
-				
-			}
-			free(client->connections);
-		}
-		if (client->lock)  
-			c_utils_scoped_lock_destroy(client->lock);
-		 else if (lock) {
-			if (mutex_init)   
-				pthread_mutex_destroy(lock);
-			
-			free(lock);
-		}
-		if (client)  
-			free(client);
-		
+	err_conn_alloc:
+		for(size_t i = 0; i < conns_allocated; i++)
+			if(!c_utils_connection_destroy(client->conn_pool[i]))
+				C_UTILS_LOG_ERROR(logger, "c_utils_connection_destroy: 'Was unable to destroy a connection'");
+	err_conn_pool:
+		c_utils_scoped_lock_destroy(client->lock);
+	err_lock:
+		free(client);
+	err:
 		return NULL;
-
 }
 
 struct c_utils_connection *c_utils_client_connect(struct c_utils_client *client, const char *ip_addr, unsigned int port, long long int timeout) {
@@ -166,9 +141,10 @@ struct c_utils_connection *c_utils_client_connect(struct c_utils_client *client,
 	}
 	
 	bool successful = false;
+	struct c_utils_connection *conn;
 	// Acquire Mutex
-	SCOPED_LOCK(client->lock) {
-		struct c_utils_connection *conn = c_utils_connection_reuse(client->connections, client->amount_of_connections, sockfd, port, ip_addr, logger);
+	C_UTILS_SCOPED_LOCK(client->lock) {
+		conn = c_utils_connection_reuse(client->conn_pool, client->conn_pool_size, sockfd, port, ip_addr, logger);
 		if (conn) {
 			C_UTILS_LOG_INFO(logger, "Connected to %s on port %u", ip_addr, port);
 			return conn;
@@ -180,14 +156,13 @@ struct c_utils_connection *c_utils_client_connect(struct c_utils_client *client,
 			return NULL;
 		}
 		
-		struct c_utils_connection **tmp_connections = realloc(client->connections, sizeof(struct c_utils_connection *) * client->amount_of_connections + 1);
-		if (!tmp_connections) {
-			C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
+		C_UTILS_ON_BAD_REALLOC(&client->conn_pool, logger, sizeof(struct c_utils_connection *) * (client->conn_pool_size + 1)) {
+			c_utils_connection_destroy(conn);
 			return NULL;
 		}
 		
-		client->connections = tmp_connections;
-		client->connections[client->amount_of_connections++] = conn;
+		client->conn_pool = tmp_connections;
+		client->conn_pool[client->conn_pool_size++] = conn;
 		successful = c_utils_connection_init(conn, sockfd, port, ip_addr, logger);
 	} // Release Mutex
 	if (!successful) {
@@ -220,32 +195,36 @@ bool c_utils_client_disconnect(struct c_utils_client *client, struct c_utils_con
 	C_UTILS_ARG_CHECK(logger, false, client, conn);
 	
 	// Acquire Mutex
-	SCOPED_LOCK(client->lock) {
+	C_UTILS_SCOPED_LOCK(client->lock) {
 		int successful = c_utils_connection_disconnect(conn);
 		if (!successful)  
 			C_UTILS_LOG_ERROR(logger, "c_utils_connection_disconnect: 'Was unable to fully disconnect a connection!'");
 		
 		return successful;
 	} // Release Mutex
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 bool c_utils_client_shutdown(struct c_utils_client *client) {
 	C_UTILS_ARG_CHECK(logger, false, client);
 	
 	// Acquire Mutex
-	SCOPED_LOCK(client->lock) {
+	C_UTILS_SCOPED_LOCK(client->lock) {
 		bool fully_shutdown = true;
 		size_t i = 0;
-		for (;i < client->amount_of_connections; i++) {
-			int successful = c_utils_connection_disconnect(client->connections[i]);
+		for (;i < client->conn_pool_size; i++) {
+			int successful = c_utils_connection_disconnect(client->conn_pool[i]);
 			if (!successful) {
 				fully_shutdown = false;
 				C_UTILS_LOG_ERROR(logger, "c_utils_connection_shutdown: 'Was unable to fully shutdown a connection!'");
 			}
 		}
 
-		return fully_shutdown
+		return fully_shutdown;
 	} // Release Mutex
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 bool c_utils_client_destroy(struct c_utils_client *client) {
@@ -258,18 +237,13 @@ bool c_utils_client_destroy(struct c_utils_client *client) {
 	}
 
 	// Acquire Mutex
-	SCOPED_LOCK(client->lock) {
-		size_t i = 0;
-		for (;i < client->amount_of_connections; i++) {
-			int successful = c_utils_connection_destroy(client->connections[i]);
-			if (!successful)  
+	C_UTILS_SCOPED_LOCK(client->lock)
+		for (size_t i = 0;i < client->conn_pool_size; i++)
+			if (!c_utils_connection_destroy(client->conn_pool[i]))
 				C_UTILS_LOG_ERROR(logger, "c_utils_connection_destroy: 'Was unable to fully destroy a connection!'");
-			
-		}
-	} // Release Mutex
 
 	c_utils_scoped_lock_destroy(client->lock);
-	free(client->connections);
+	free(client->conn_pool);
 	free(client);
 
 	return true;

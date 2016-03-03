@@ -248,13 +248,11 @@ size_t c_utils_connection_receive_file(struct c_utils_connection *conn, FILE *fi
 
 int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_size, struct c_utils_connection ***senders, size_t *s_size,
  	long long int timeout, struct c_utils_logger *logger) {
-	struct c_utils_connection **send_connections = NULL;
-	struct c_utils_connection **recv_connections = NULL;
+	
 
 	/* 
-		Initialized at top for goto statement consistency. The checks below ensure that at least one of the two groups are valid,
-		and if not, logs it appropriately. This kind of check isn't generic enough to use C_UTILS_ARG_CHECK for, as it evaluates them individually,
-		as well as collectively.
+		The checks below ensure that at least one of the two groups are valid, and if not, logs it appropriately. 
+		This kind of check isn't generic enough to use C_UTILS_ARG_CHECK for, as it evaluates them individually, as well as collectively.
 
 		Basically, we must ensure that at least one set of arguments are valid; either senders or receivers. If neither happens to be
 		accurate, it is still possible that, say, 2/3 arguments are accurate and normally this would be very hard to debug. So, the solution
@@ -265,7 +263,7 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 				"Senders: %s;Sender Size_ptr: %s;Sender Size > 0: %s'\nMessage: '%s'", receivers ? "OK!" : "NULL",
 						r_size ? "OK!" : "NO!", *r_size ? "OK!" : "NO!", senders ? "OK!" : "NULL", s_size ? "OK!" : "NULL",
 								*s_size ? "OK!" : "NO!", "Neither receivers nor senders were valid!");
-		goto error;
+		goto err_bad_params;
 	}
 
 	fd_set receive_set;
@@ -286,7 +284,7 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 	int max_fd = 0, can_receive = 0, can_send = 0;
 	int r_max_fd = add_valid_connections_to_fd_set(r_conns, recv_size, &receive_set);
 	can_receive = (r_max_fd != -1);
-	if (r_max_fd > max_fd)  
+	if (r_max_fd > max_fd)
 		max_fd = r_max_fd;
 	
 	
@@ -298,7 +296,7 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 	
 	if (!can_receive && !can_send) {
 		C_UTILS_LOG_WARNING(logger, "Was unable to find a valid receiver or sender connection!");
-		goto error;
+		goto err_bad_params;
 	}
 	
 	/*
@@ -308,22 +306,21 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 	size_t are_ready;
 	C_UTILS_TEMP_FAILURE_RETRY(are_ready, select(max_fd + 1, &receive_set, &send_set, NULL, timeout < 0 ? NULL : &tv));
 	if (are_ready <= 0) {
-		if (!are_ready) C_UTILS_LOG_INFO(logger, "select: 'Timed out!'");
-		else C_UTILS_LOG_WARNING(logger, "select: '%s'", strerror(errno));
-		goto error;
+		if (!are_ready) 
+			C_UTILS_LOG_INFO(logger, "select: 'Timed out!'");
+		else 
+			C_UTILS_LOG_WARNING(logger, "select: '%s'", strerror(errno));
+		
+		goto err_select;
 	}
 	
-	recv_connections = malloc(sizeof(struct c_utils_connection *) * are_ready);
-	if (!recv_connections) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		goto error;
-	}
+	struct c_utils_connection **recv_connections;
+	C_UTILS_ON_BAD_MALLOC(recv_connections, logger, sizeof(struct c_utils_connection *) * are_ready)
+		goto err_recv;
 	
-	send_connections = malloc(sizeof(struct c_utils_connection *) * are_ready);
-	if (!send_connections) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		goto error;
-	}
+	struct c_utils_connection **send_connections;
+	C_UTILS_ON_BAD_MALLOC(send_connections, logger, sizeof(struct c_utils_connection *) * are_ready)
+		goto err_send;
 	
 	/*
 		In the below, we loop through each connection in both receiver and sender array, to check
@@ -333,34 +330,25 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 		Hence, if out of a group of 10 valid senders and receivers, only 3 senders and 7 receivers are ready,
 		the initial size will be of size 10, but it will then be shrinked to their respective sides.
 	*/
-	size_t i = 0;
-	for (; i < recv_size && r_conns; i++) {
+	for (size_t i = 0; i < recv_size && r_conns; i++) {
 		struct c_utils_connection *conn = r_conns[i];
 		if (FD_ISSET(conn->sockfd, &receive_set))  
 			recv_connections[can_receive++] = conn;
-		
 	}
 	
-	struct c_utils_connection **tmp_recv_connections = realloc(recv_connections, sizeof(struct c_utils_connection *) * can_receive);
-	if (can_receive && !tmp_recv_connections) {
-		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		goto error;
-	}
-	recv_connections = tmp_recv_connections;
+	C_UTILS_ON_BAD_REALLOC(&recv_connections, logger, sizeof(struct c_utils_connection *) * can_receive)
+		if(can_receive)
+			goto err_recv_resize;
 
-	for (i = 0; i < send_size && s_conns; i++) {
+	for (size_t i = 0; i < send_size && s_conns; i++) {
 		struct c_utils_connection *conn = s_conns[i];
 		if (FD_ISSET(conn->sockfd, &send_set))  
 			send_connections[can_send++] = conn;
-		
 	}
 	
-	struct c_utils_connection **tmp_send_connections = realloc(send_connections, sizeof(struct c_utils_connection *) * can_send);
-	if (can_send && !tmp_send_connections) {
-		C_UTILS_LOG_ASSERT(logger, "realloc: '%s'", strerror(errno));
-		goto error;
-	}
-	send_connections = tmp_send_connections;
+	C_UTILS_ON_BAD_REALLOC(&send_connections, logger, sizeof(struct c_utils_connection *) * can_send)
+		if(can_send)
+			goto err_send_resize;
 
 	*receivers = recv_connections;
 	*senders = send_connections;
@@ -369,14 +357,17 @@ int c_utils_connection_select(struct c_utils_connection ***receivers, size_t *r_
 
 	return are_ready;
 
-	error:
-		// TODO: Test this! Frees them before even declared.
+	err_send_resize:
+	err_recv_resize:
 		free(send_connections);
+	err_send:
 		free(recv_connections);
-		*receivers = NULL;
+	err_recv:
+	err_select:
+	err_bad_params:
 		*r_size = 0;
-		*senders = NULL;
 		*s_size = 0;
+
 		return 0;
 }
 
