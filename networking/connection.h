@@ -61,11 +61,11 @@ typedef struct c_utils_connection_t {
 
 /**
  * Create a new instance that is not connected to an endpoint. 
- * @param init_locks If true, R/W lock will be used.
+ * @param synchronized If true, R/W lock will be used.
  * @param logger The logger to log any information to if not left NULL.
  * @return A new instance of c_utils_connection, not connected.
  */
-struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_utils_logger *logger);
+struct c_utils_connection *c_utils_connection_create(bool synchronized, struct c_utils_logger *logger);
 
 /**
  * If the conn is connected, it will attempt to send the contents in buffer up to buf_size

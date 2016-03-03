@@ -121,55 +121,23 @@ static int add_valid_connections_to_fd_set(struct c_utils_connection **connectio
 }
 
 // Implement
-struct c_utils_connection *c_utils_connection_create(bool init_locks, struct c_utils_logger *logger) {
-	struct c_utils_connection *conn = calloc(1, sizeof(struct c_utils_connection));
-	if (!conn) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		return NULL;
-	}
+struct c_utils_connection *c_utils_connection_create(bool synchronized, struct c_utils_logger *logger) {
+	struct c_utils_connection *conn;
+	C_UTILS_ON_BAD_CALLOC(conn, logger, sizeof(*conn))
+		goto err;
 
-	bool rwlock_init = false;
-	pthread_rwlock_t *lock = NULL;
-
-	if (init_locks) {
-		lock = malloc(sizeof(pthread_rwlock_t));
-		if (!conn->lock) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-			return NULL;
-		}
-
-		int retval;
-		if ((retval = pthread_rwlock_init(lock, NULL)) < 0) {
-			C_UTILS_LOG_ERROR(logger, "pthread_rwlock_init: '%s'", strerror(retval));
-			goto error;
-			return NULL;
-		}
-		
-		rwlock_init = true;
-	}
-
-	conn->lock = C_UTILS_SCOPED_LOCK_FROM(lock, logger);
-	if (!conn->lock) {
-		C_UTILS_LOG_ERROR(logger, "C_UTILS_SCOPED_LOCK_FROM: 'Unable to create scoped lock from rwlock!");
-		goto error;
+	conn->lock = synchronized ? c_utils_scoped_lock_rwlock(NULL, logger) : c_utils_scoped_lock_no_op();
+	if(!conn->lock) {
+		C_UTILS_LOG_ERROR(logger, "Was unable to create scoped_lock!");
+		goto err_lock;
 	}
 
 	conn->logger = logger;
 	return conn;
 
-	error:
-		if (conn) {
-			if (conn->lock)   
-				c_utils_scoped_lock_destroy(conn->lock);
-			 else if (lock) {
-				if (rwlock_init)   
-					pthread_rwlock_destroy(lock);
-				
-				free(lock);
-			}
-		}
+	err_lock:
 		free(conn);
+	err:
 		return NULL;
 }
 

@@ -51,9 +51,8 @@ struct c_utils_string_buffer *c_utils_string_buffer_create(char *str, bool synch
 		goto err;
 
 	int len = (str ? strlen(str) * resize_ratio : default_size) + 1;
-	C_UTILS_ON_BAD_MALLOC(buf->data, logger, len) {
+	C_UTILS_ON_BAD_MALLOC(buf->data, logger, len)
 		goto err_data;
-	}
 
 	if(str)
 		snprintf(buf->data, len, "%s", str);
@@ -86,7 +85,7 @@ bool c_utils_string_buffer_append(struct c_utils_string_buffer *buf, char *str) 
 
 		snprintf(buf->data, len, "%s%s", buf->data, str);
 
-		C_UTILS_LOG_INFO(logger, "Old Length: %d; New Length: %d;", buf->used, len);
+		C_UTILS_LOG_TRACE(logger, "Old Length: %d; New Length: %d;", buf->used, len);
 
 		buf->used = len;
 	}
@@ -105,7 +104,7 @@ bool c_utils_string_buffer_prepend(struct c_utils_string_buffer *buf, char *str)
 
 		snprintf(buf->data, len, "%s%s", str, buf->data);
 
-		C_UTILS_LOG_INFO(logger, "Old Length: %d; New Length: %d;", buf->used, len);
+		C_UTILS_LOG_TRACE(logger, "Old Length: %d; New Length: %d;", buf->used, len);
 
 		buf->used = len;
 	}
@@ -130,7 +129,7 @@ bool c_utils_string_buffer_insert(struct c_utils_string_buffer *buf, char *str, 
 
 		snprintf(buf->data, len, "%.*s%s%s", index, buf->data, str, buf->data + index);
 
-		C_UTILS_LOG_INFO(logger, "Old Length: %d; New Length: %d;", buf->used, len);
+		C_UTILS_LOG_TRACE(logger, "Old Length: %d; New Length: %d;", buf->used, len);
 
 		buf->used = len;
 	}
@@ -165,7 +164,7 @@ int c_utils_string_buffer_size(struct c_utils_string_buffer *buf) {
 bool c_utils_string_buffer_delete(struct c_utils_string_buffer *buf, int start, int end) {
 	C_UTILS_ARG_CHECK(logger, false, buf);
 
-	C_UTILS_LOG_INFO(logger, "Initial Start: %d; Initial End: %d;", start, end);
+	C_UTILS_LOG_TRACE(logger, "Initial Start: %d; Initial End: %d;", start, end);
 
 	C_UTILS_SCOPED_LOCK(buf->lock) {
 		start = start < 0 ? buf->used + start - 2 : start;
@@ -183,18 +182,18 @@ bool c_utils_string_buffer_delete(struct c_utils_string_buffer *buf, int start, 
 			return NULL;
 		}
 
-		C_UTILS_LOG_INFO(logger, "Corrected Start: %d; Corrected End: %d;", start, end);
+		C_UTILS_LOG_TRACE(logger, "Corrected Start: %d; Corrected End: %d;", start, end);
 
 		int len = buf->used - (end - start);
 		
-		C_UTILS_LOG_INFO(logger, "Buffer used: %d; New Length: %d;", buf->used, len);
+		C_UTILS_LOG_TRACE(logger, "Buffer used: %d; New Length: %d;", buf->used, len);
 
 		buf->used = len;
 
-		C_UTILS_LOG_INFO(logger, "Before: buf->data: \"%s\";", buf->data);
+		C_UTILS_LOG_TRACE(logger, "Before: buf->data: \"%s\";", buf->data);
 		snprintf(buf->data, len, "%.*s%s", start, buf->data, buf->data + end);
 
-		C_UTILS_LOG_INFO(logger, "After: buf->data: \"%s\";", buf->data);
+		C_UTILS_LOG_TRACE(logger, "After: buf->data: \"%s\";", buf->data);
 
 		resize(buf, len);
 	}

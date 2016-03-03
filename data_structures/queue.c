@@ -20,7 +20,7 @@ static struct c_utils_logger *logger = NULL;
 C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/queue.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 struct c_utils_queue *c_utils_queue_create(void) {
-	struct c_utils_queue *queue;
+ 	struct c_utils_queue *queue;
 	C_UTILS_ON_BAD_CALLOC(queue, logger, sizeof(*queue))
 		goto err;
 
