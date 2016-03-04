@@ -33,9 +33,8 @@
 #define COND_RWLOCK_INIT(lock, attr, storage, logger) do { \
 	if (lock) { \
 	    int errcode = pthread_rwlock_init(lock, attr); \
-	    if (errcode) { \
+	    if (errcode) \
 	        C_UTILS_LOG_ERROR(logger, "pthread_rwlock_init: '%s'", strerror(errcode)); \
-	    } \
 	    storage = errcode ? 0 : 1; \
    	} \
 } while (0) 
@@ -43,36 +42,32 @@
 #define COND_RWLOCK_WRLOCK(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_rwlock_wrlock(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_wrlock: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)
 
 #define COND_RWLOCK_RDLOCK(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_rwlock_rdlock(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_rdlock: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)
 
 #define COND_RWLOCK_UNLOCK(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_rwlock_unlock(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_unlock: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)
 
 #define COND_RWLOCK_DESTROY(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_rwlock_destroy(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_destroy: '%s'", strerror(errcode)); \
-      } \
       free(lock); \
    } \
 } while (0)
@@ -80,9 +75,8 @@
 #define COND_MUTEX_INIT(lock, attr, storage, logger) do { \
 	if (lock) { \
       int errcode = pthread_mutex_init(lock, attr); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(errcode)); \
-      } \
       storage = errcode; \
    } \
 } while (0)
@@ -90,26 +84,23 @@
 #define COND_MUTEX_LOCK(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_mutex_lock(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_lock: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)
 
 #define COND_MUTEX_UNLOCK(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_mutex_unlock(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_unlock: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)
 
 #define COND_MUTEX_DESTROY(lock, logger) do { \
 	if (lock) { \
       int errcode = pthread_mutex_destroy(lock); \
-      if (errcode) { \
+      if (errcode) \
          C_UTILS_LOG_ERROR(logger, "pthread_rwlock_destroy: '%s'", strerror(errcode)); \
-      } \
    } \
 } while (0)

@@ -9,6 +9,7 @@
 
 #include "events.h"
 #include "../misc/argument_check.h"
+#include "../misc/alloc_check.h"
 #include "../misc/flags.h"
 #include "../io/logger.h"
 #include "thread_pool.h"
@@ -17,15 +18,15 @@
 
 enum c_utils_priority {
 	/// Lowest possible c_utils_priority
-	PRIORITY_LOWEST,
+	C_UTILS_PRIORITY_LOWEST,
 	/// Low c_utils_priority, above Lowest.
-	PRIORITY_LOW,
+	C_UTILS_PRIORITY_LOW,
 	/// Medium c_utils_priority, considered the "average".
-	PRIORITY_MEDIUM,
+	C_UTILS_PRIORITY_MEDIUM,
 	/// High c_utils_priority, or "above average".
-	PRIORITY_HIGH,
+	C_UTILS_PRIORITY_HIGH,
 	/// Highest c_utils_priority, or "imminent"
-	PRIORITY_HIGHEST
+	C_UTILS_PRIORITY_HIGHEST
 };
 
 struct c_utils_thread_worker {
@@ -81,48 +82,50 @@ static const char *result_event_name = "Result Ready";
 static struct c_utils_logger *logger = NULL;
 static struct c_utils_logger *event_logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./threading/logs/thread_pool.log", "w", C_UTILS_LOG_LEVEL_ALL);
-LOGGER_AUTO_CREATE(event_logger, "./threading/logs/thread_pool_events.log", "w", C_UTILS_LOG_LEVEL_ALL);
+C_UTILS_LOGGER_AUTO_CREATE(logger, "./threading/logs/thread_pool.log", "w", C_UTILS_LOG_LEVEL_ALL);
+C_UTILS_LOGGER_AUTO_CREATE(event_logger, "./threading/logs/thread_pool_events.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 /* Begin Static, Private functions */
 
 /// Destructor for a task.
 static void destroy_task(struct c_utils_thread_task *task) {
-	if (!task) return;
+	if (!task) 
+		return;
 	
 	if (task->result) {
 		c_utils_event_destroy(task->result->is_ready, 0);
 		free(task->result);
 	}
+
 	free(task);
 }
 
 static void destroy_worker(struct c_utils_thread_worker *worker) {
-	if (!worker) return;
+	if (!worker) 
+		return;
 
 	free(worker->thread);
 	free(worker);
 }
 
-/// Return the Worker associated with the calling thread.
+/// Return the thread_worker associated with the calling thread.
 static struct c_utils_thread_worker *get_self(struct c_utils_thread_pool *tp) {
 	pthread_t self = pthread_self();
 	int thread_count = tp->thread_count;
 
-	int i = 0;
-	for (;i<thread_count;i++) {
+	for (int i = 0;i<thread_count;i++)
 		if (pthread_equal(*(tp->worker_threads[i]->thread), self))  
 			return tp->worker_threads[i];
-		
-	}
 
 	C_UTILS_LOG_ERROR(logger, "A worker thread could not be identified from pthread_self!");
+	
 	return NULL;
 }
 
 
 static void process_task(struct c_utils_thread_task *task, unsigned int thread_id) {
-	if (!task) return;
+	if (!task) 
+		return;
 
 	void *retval = task->callback(task->args);
 	if (task->result) {
@@ -150,7 +153,7 @@ static void *get_tasks(void *args) {
 	struct c_utils_thread_worker *self = get_self(tp);
 	// Note that this while loop checks for keep_alive to be true, rather than false. 
 	while (tp->keep_alive) {
-		c_utils_thread_task *task = NULL;
+		struct c_utils_thread_task *task = NULL;
 		task = c_utils_priority_queue_dequeue(tp->queue, -1);
 
 		if (!tp->keep_alive)  
@@ -174,7 +177,6 @@ static void *get_tasks(void *args) {
 		// Close as we are going to get testing if the queue is fully empty. 
 		if (c_utils_priority_queue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0)  
 			c_utils_event_signal(tp->finished, self->thread_id);
-		
 	}
 	atomic_fetch_sub(&tp->thread_count, 1);
 	C_UTILS_LOG_VERBOSE(logger, "Thread #%d: Exited!\n", self->thread_id);
@@ -183,25 +185,35 @@ static void *get_tasks(void *args) {
 }
 
 /// Is used to obtain the priority from the flag and set the task's priority to it. Has to be done this way to allow for bitwise.
-static void set_priority(c_utils_thread_task *task, int flags) {
-	if (FLAG_GET(flags, LOWEST_PRIORITY)) task->priority = PRIORITY_LOWEST;
-	else if (FLAG_GET(flags, LOW_PRIORITY)) task->priority = PRIORITY_LOW;
-	else if (FLAG_GET(flags, HIGH_PRIORITY)) task->priority = PRIORITY_HIGH;
-	else if (FLAG_GET(flags, HIGHEST_PRIORITY)) task->priority = PRIORITY_HIGHEST;
-	else task->priority = PRIORITY_MEDIUM;
+static void set_priority(struct c_utils_thread_task *task, int flags) {
+	if (C_UTILS_FLAG_GET(flags, C_UTILS_LOWEST_PRIORITY)) 
+		task->priority = C_UTILS_PRIORITY_LOWEST;
+	else if (C_UTILS_FLAG_GET(flags, C_UTILS_LOW_PRIORITY)) 
+		task->priority = C_UTILS_PRIORITY_LOW;
+	else if (C_UTILS_FLAG_GET(flags, C_UTILS_HIGH_PRIORITY)) 
+		task->priority = C_UTILS_PRIORITY_HIGH;
+	else if (C_UTILS_FLAG_GET(flags, C_UTILS_HIGHEST_PRIORITY)) 
+		task->priority = C_UTILS_PRIORITY_HIGHEST;
+	else 
+		task->priority = C_UTILS_PRIORITY_MEDIUM;
 
 }
 
-static char *get_priority(c_utils_thread_task *task) {
-	if (task->priority == PRIORITY_LOWEST) return "Lowest";
-	else if (task->priority == PRIORITY_LOW) return "Low";
-	else if (task->priority == PRIORITY_MEDIUM) return "Medium";
-	else if (task->priority == PRIORITY_HIGH) return "High";
-	else if (task->priority == PRIORITY_HIGHEST) return "Highest";
-	else {
+static char *get_priority(struct c_utils_thread_task *task) {
+	if (task->priority == C_UTILS_PRIORITY_LOWEST) 
+		return "Lowest";
+	else if (task->priority == C_UTILS_PRIORITY_LOW) 
+		return "Low";
+	else if (task->priority == C_UTILS_PRIORITY_MEDIUM) 
+		return "Medium";
+	else if (task->priority == C_UTILS_PRIORITY_HIGH) 
+		return "High";
+	else if (task->priority == C_UTILS_PRIORITY_HIGHEST) 
+		return "Highest";
+	else
 		C_UTILS_LOG_ERROR(logger, "Was unable to retrieve the priority of the task!\n");
-		return NULL;
-	}
+
+	return NULL;
 }
 
 /// Simple comparator to compare two task priorities.
@@ -214,11 +226,9 @@ static int compare_task_priority(void *task_one, void *task_two) {
 struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size) {
 	size_t workers_allocated = 0;
 
-	struct c_utils_thread_pool *tp = calloc(1, sizeof(struct c_utils_thread_pool));
-	if (!tp) {
-		C_UTILS_LOG_ASSERT(logger, "calloc: '%s'", strerror(errno));
-		goto error;
-	}
+	struct c_utils_thread_pool *tp;
+	C_UTILS_ON_BAD_CALLOC(tp, logger, sizeof(*tp))
+		goto err;
 
 	tp->thread_count = ATOMIC_VAR_INIT(0);
 	tp->active_threads = ATOMIC_VAR_INIT(0);
@@ -226,114 +236,105 @@ struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size) {
 	tp->queue = c_utils_priority_queue_create(0, (void *)compare_task_priority);
 	if (!tp->queue) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_priority_queue_create: 'Was unable to create prioritized event queue!'");
-		goto error;
+		goto err_queue;
 	}
 
-	tp->resume = c_utils_event_create(pause_event_name, event_logger, MU_EVENT_SIGNALED_BY_DEFAULT | MU_EVENT_SIGNAL_ON_TIMEOUT);
+	tp->resume = c_utils_event_create(pause_event_name, event_logger, C_UTILS_EVENT_SIGNALED_BY_DEFAULT | C_UTILS_EVENT_SIGNAL_ON_TIMEOUT);
 	if (!tp->resume) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create event: %s!'", pause_event_name);
-		goto error;
+		goto err_resume;
 	}
 
 	tp->finished = c_utils_event_create(finished_event_name, event_logger, 0);
 	if (!tp->finished) {
 		C_UTILS_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create event: %s!'", finished_event_name);
-		goto error;
+		goto err_finished;
 	}
 
-	tp->worker_threads = malloc(sizeof(pthread_t *) * pool_size);
-	if (!tp->worker_threads) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		goto error;
-	}
+	C_UTILS_ON_BAD_MALLOC(tp->worker_threads, logger, sizeof(*tp->worker_threads) * pool_size)
+		goto err_workers;
 
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
-	size_t i = 0;
-	for (;i < pool_size; i++) {
-		struct c_utils_thread_worker *worker = calloc(1, sizeof(struct c_utils_thread_worker));
-		if (!worker) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
+	for (size_t i = 0;i < pool_size; i++) {
+		struct c_utils_thread_worker *worker;
+		C_UTILS_ON_BAD_CALLOC(worker, logger, sizeof(*worker))
+			goto err_worker_alloc;
+
 		workers_allocated++;
 		
-		worker->thread = malloc(sizeof(pthread_t));
-		if (!worker->thread) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
+		C_UTILS_ON_BAD_MALLOC(worker->thread, logger, sizeof(*worker->thread))
+			goto err_worker_alloc;
+
 		worker->thread_id = i+1;
 		
 		int create_error = pthread_create(worker->thread, &attr, get_tasks, tp);
 		if (create_error) {
 			C_UTILS_LOG_ERROR(logger, "pthread_create: '%s'", strerror(create_error));
-			goto error;
+			goto err_worker_alloc;
 		}
 		
 		tp->worker_threads[i] = worker;
 		tp->thread_count++;
 	}
+
 	pthread_attr_destroy(&attr);
 	tp->keep_alive = 1;
 	
 	return tp;
 
-	error:
-		if (tp) {
-			tp->init_error = true;
-			if (tp->queue)  
-				c_utils_priority_queue_destroy(tp->queue);
-			
-			c_utils_event_destroy(tp->resume, 0);
-			c_utils_event_destroy(tp->finished, 0);
-			if (tp->worker_threads) {
-				size_t i = 0;
-				for (; i < workers_allocated; i++) {
-					struct c_utils_thread_worker *worker = tp->worker_threads[i];
-					free(worker->thread);
-					free(worker);
-				}
-				while (atomic_load(&tp->thread_count))  
-					pthread_yield();
-				
-				free(tp->worker_threads);
-			}
-			free(tp);
+	err_worker_alloc:
+		// Since the threads are polling until keep_alive is true, this informs them that they should exit.
+		tp->init_error = true;
+		
+		for(size_t i = 0; i < workers_allocated; i++) {
+			struct c_utils_thread_worker *worker = tp->worker_threads[i];
+			free(worker->thread);
+			free(worker);
 		}
+
+		// Wait for all threads to exit
+		while (atomic_load(&tp->thread_count))
+					pthread_yield();
+
+		free(tp->worker_threads);
+	err_workers:
+		c_utils_event_destroy(tp->finished, 0);
+	err_finished:
+		c_utils_event_destroy(tp->resume, 0);
+	err_resume:
+		c_utils_priority_queue_destroy(tp->queue, NULL);
+	err_queue:
+		free(tp);
+	err:
 		return NULL;
 }
 
 struct c_utils_result *c_utils_thread_pool_add(struct c_utils_thread_pool *tp, c_utils_task task, void *args, int flags) {
-	C_UTILS_ARG_CHECK(logger, NULL, tp, callback);
+	C_UTILS_ARG_CHECK(logger, NULL, tp, task);
 
 	struct c_utils_result *result = NULL;
 	struct c_utils_thread_task *thread_task = NULL;
 	
-	if (!FLAG_GET(flags, TU_NO_RESULT)) {
-		result = calloc(1, sizeof(TU_Result_t));
-		if (!result) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
+	if (!C_UTILS_FLAG_GET(flags, C_UTILS_NO_RESULT)) {
+		C_UTILS_ON_BAD_CALLOC(result, logger, sizeof(*result))
+			goto err_result;
 
 		result->is_ready = c_utils_event_create(result_event_name, event_logger, 0);
 		if (!result->is_ready) {
 			C_UTILS_LOG_ERROR(logger, "c_utils_event_create: 'Was unable to create event: %s!'", result_event_name);
-			goto error;
+			goto err_result;
 		}
 
 	}
-	thread_task = calloc(1, sizeof(struct c_utils_thread_task));
-	if (!task) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-		goto error;
-	}
+
+	C_UTILS_ON_BAD_CALLOC(thread_task, logger, sizeof(*thread_task))
+		goto err_task;
 	
-	thread_task->task = task;
-	task->args = args;
+	thread_task->callback = task;
+	thread_task->args = args;
 	set_priority(thread_task, flags);
 	thread_task->result = result;
 
@@ -341,22 +342,22 @@ struct c_utils_result *c_utils_thread_pool_add(struct c_utils_thread_pool *tp, c
 	bool enqueued = c_utils_priority_queue_enqueue(tp->queue, thread_task, -1);
 	if (!enqueued) {
 		C_UTILS_LOG_ERROR(logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
-		goto error;
+		goto err_enqueue;
 	}
 
 	C_UTILS_LOG_VERBOSE(logger, "A task of %s priority has been added to the task_queue!", get_priority(thread_task));
 	return result;
 
-	error:
-		if (result) {
-			if (result->is_ready)  
+	err_enqueue:
+		free(task);
+	err_task:
+	err_result:
+		if(result)
+			if(result->is_ready)
 				c_utils_event_destroy(result->is_ready, 0);
-			
-			free(result);
-		}
-		if (thread_task)  
-			free(thread_task);
-		
+
+		free(result);
+
 		return NULL;
 }
 
@@ -364,6 +365,7 @@ bool c_utils_thread_pool_clear(struct c_utils_thread_pool *tp) {
 	C_UTILS_ARG_CHECK(logger, false, tp);
 
 	C_UTILS_LOG_VERBOSE(logger, "Clearing all tasks from Thread Pool!");
+	
 	return c_utils_priority_queue_clear(tp->queue, (void *)destroy_task);
 }
 
@@ -373,6 +375,7 @@ bool c_utils_result_destroy(struct c_utils_result *result) {
 
 	c_utils_event_destroy(result->is_ready, 0);
 	free(result);
+
 	return true;
 }
 /// Will block until result is ready. 
@@ -380,6 +383,7 @@ void *c_utils_result_get(struct c_utils_result *result, long long int timeout) {
 	C_UTILS_ARG_CHECK(logger, NULL, result);
 
 	bool is_ready = c_utils_event_wait(result->is_ready, timeout, 0);
+	
 	return is_ready ? result->retval : NULL;
 }
 
@@ -388,6 +392,7 @@ bool c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int time
 	C_UTILS_ARG_CHECK(logger, false, tp);
 
 	bool is_finished = c_utils_event_wait(tp->finished, timeout, 0);
+	
 	return is_finished;
 }
 
@@ -409,12 +414,9 @@ bool c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp) {
 	while (atomic_load(&tp->active_threads))   
 		pthread_yield();
 	
-
-	int i = 0;
-	for (; i < old_thread_count; i++)   
+	for (int i = 0; i < old_thread_count; i++)   
 		destroy_worker(tp->worker_threads[i]);
 	
-
 	free(tp->worker_threads);
 	free(tp);
 	
@@ -426,6 +428,7 @@ bool c_utils_thread_pool_pause(struct c_utils_thread_pool *tp, long long int tim
 	C_UTILS_ARG_CHECK(logger, false, tp);
 	
 	tp->seconds_to_pause = timeout;
+	
 	return c_utils_event_reset(tp->resume, 0);
 }
 

@@ -239,7 +239,7 @@ char *c_utils_string_trim(char **string_ptr, size_t len);
  * @param ignore_case if true, search is case insensitive.
  * @return The index at the beginning of the substr.
  */
-int c_utils_string_index_of(const char *str, const char *substr, size_t len, bool ignore_case);
+long long int c_utils_string_index_of(const char *str, const char *substr, size_t len, bool ignore_case);
 
 /**
  * Counts the occurences of the substr in the given str up to len (strlen if len == 0).

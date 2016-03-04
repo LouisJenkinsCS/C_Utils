@@ -1,4 +1,7 @@
-#include "../data_structures/map.h"
+#include "map.h"
+
+#include "../misc/alloc_check.h"
+#include "../misc/argument_check.h"
 #include "../io/logger.h"
 #include "../threading/scoped_lock.h"
 
@@ -89,10 +92,12 @@ static int clear_map(struct c_utils_map *map, c_utils_delete_cb del) {
 }
 
 static void *get_value_from_bucket(struct c_utils_bucket *bucket, const char *key) {
-	if (!bucket) return NULL;
+	if (!bucket) 
+		return NULL;
 
 	do {
-		if (!bucket->in_use) continue;
+		if (!bucket->in_use) 
+			continue;
 		
 		if (strncmp(bucket->key, key, C_UTILS_HASH_MAP_KEY_SIZE) == 0)
 			break;
@@ -153,7 +158,7 @@ struct c_utils_map *c_utils_map_create(size_t amount_of_buckets, bool synchroniz
 	
 	map->lock = synchronized ? c_utils_scoped_lock_rwlock(NULL, logger) : c_utils_scoped_lock_no_op();
 	if(!map->lock) {
-		C_UTILS_LOG_ERROR(logger, C_UTILS_SCOPED_LOCK_ERR_MSG);
+		C_UTILS_LOG_ERROR(logger, "Was unable to create the scoped_lock!");
 		goto err_lock;
 	}
 
@@ -171,7 +176,7 @@ struct c_utils_map *c_utils_map_create(size_t amount_of_buckets, bool synchroniz
 bool c_utils_map_add(struct c_utils_map *map, char *key, void *value) {
 	C_UTILS_ARG_CHECK(logger, false, map, key);
 
-	SCOPED_LOCK0(map->lock) {
+	C_UTILS_SCOPED_LOCK0(map->lock) {
 		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
 		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
@@ -216,20 +221,23 @@ bool c_utils_map_add(struct c_utils_map *map, char *key, void *value) {
 /// Obtains the value from the key provided.
 void *c_utils_map_get(struct c_utils_map *map, const char *key) {
 	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->size, map && map->buckets, key);
-	SCOPED_LOCK1(map->lock) {
+	
+	C_UTILS_SCOPED_LOCK1(map->lock) {
 		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
 		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
 		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
-		return bucket_is_valid(bucket) ? get_value_from_bucket(bucket) : NULL;
+		return bucket_is_valid(bucket) ? get_value_from_bucket(bucket, key) : NULL;
 	} // Release reader lock.
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 /// Return and remove the value at the key provided, deleting it if the deletion callback is not NULL.
 void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size, key);
 
-	SCOPED_LOCK0(map->lock) {
+	C_UTILS_SCOPED_LOCK0(map->lock) {
 		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
 		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 
@@ -240,13 +248,15 @@ void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delet
 		map->size--;
 		return get_value_from_bucket(bucket, trunc_key);
 	} // Release writer lock.
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 /// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
 const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_utils_comparator_cb cmp) {
 	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size);
 
-	SCOPED_LOCK1(map->lock) {
+	C_UTILS_SCOPED_LOCK1(map->lock) {
 		size_t i = 0, total_buckets = map->amount_of_buckets;
 		// O(N) complexity.
 		for (; i < total_buckets; i++) {
@@ -264,7 +274,7 @@ const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_u
 bool C_UTILS_Hasp_Map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
 	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size, callback_function);
 
-	SCOPED_LOCK1(map->lock) {
+	C_UTILS_SCOPED_LOCK1(map->lock) {
 		size_t i = 0, total_buckets = map->amount_of_buckets;
 		for (; i < total_buckets; i++)
 			for_each_bucket(map->buckets[i], callback_function, 0);
@@ -276,14 +286,20 @@ bool C_UTILS_Hasp_Map_for_each(struct c_utils_map *map, c_utils_general_cb callb
 bool c_utils_map_clear(struct c_utils_map *map, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size);
 	
-	SCOPED_LOCK0(map->lock) return clear_map(map, del);
+	C_UTILS_SCOPED_LOCK0(map->lock) 
+		return clear_map(map, del);
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 /// Determines the size at the time this function is called.
 size_t c_utils_map_size(struct c_utils_map *map) {
 	C_UTILS_ARG_CHECK(logger, 0, map, map && map->buckets, map && map->size);
 
-	SCOPED_LOCK1(map->lock) return map->size;
+	C_UTILS_SCOPED_LOCK1(map->lock) 
+		return map->size;
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, c_utils_to_string_cb to_string) {
@@ -295,7 +311,7 @@ char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_
 		and still in-scope, there should not be an issue.
 	*/
 	const size_t buf_size = 256;
-	SCOPED_LOCK1(map->lock) {
+	C_UTILS_SCOPED_LOCK1(map->lock) {
 		char **arr = NULL;
 		
 		size_t arr_size = map->size, str_allocated = 0;
@@ -346,12 +362,14 @@ char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_
 			*size = 0;
 			return NULL;
 	} // Release reader lock
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 bool c_utils_map_destroy(struct c_utils_map *map, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false, map);
 
-	SCOPED_LOCK0(map->lock) {
+	C_UTILS_SCOPED_LOCK0(map->lock) {
 		delete_all_buckets(map->buckets, map->amount_of_buckets, del);
 
 		map->amount_of_buckets = 0;

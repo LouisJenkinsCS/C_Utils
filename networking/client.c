@@ -161,10 +161,10 @@ struct c_utils_connection *c_utils_client_connect(struct c_utils_client *client,
 			return NULL;
 		}
 		
-		client->conn_pool = tmp_connections;
 		client->conn_pool[client->conn_pool_size++] = conn;
 		successful = c_utils_connection_init(conn, sockfd, port, ip_addr, logger);
 	} // Release Mutex
+	
 	if (!successful) {
 		C_UTILS_LOG_WARNING(logger, "c_utils_connection_init: 'Was unable to initalize client!'");
 		return NULL;

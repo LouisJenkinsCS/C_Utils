@@ -2,7 +2,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "../networking/server.h"
+#include "server.h"
 #include "../misc/signal_retry.h"
 #include "../misc/argument_check.h"
 #include "../misc/alloc_check.h"

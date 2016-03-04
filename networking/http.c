@@ -1,12 +1,18 @@
-#include "../networking/http.h"
+#include "http.h"
+
 #include <ctype.h>
+
+#include "../data_structures/map.h"
+#include "../io/logger.h"
+#include "../misc/alloc_check.h"
+#include "../misc/argument_check.h"
 
 /// 31 is close enough to the amount of HTTP statuses, but is also a prime number.
 static const int bucket_size = 31;
 
 static struct c_utils_logger *logger = NULL;
 
-LOGGER_AUTO_CREATE(logger, "./networking/logs/http.log", "w", C_UTILS_LOG_LEVEL_ALL);
+C_UTILS_LOGGER_AUTO_CREATE(logger, "./networking/logs/http.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 static const char *C_UTILS_HTTP_Status_Codes[] = {
 	[100] = "100 Continue",
@@ -138,7 +144,7 @@ static void parse_http_status(struct c_utils_response *res, const char *line) {
 	res->status = status;
 }
 
-static void parse_http_version(C_UTILS_HTTP_Version_e *version, const char *line) {
+static void parse_http_version(enum c_utils_http_version *version, const char *line) {
 	C_UTILS_LOG_TRACE(logger, "%s", line);
 	
 	const int protocol_len = 8;

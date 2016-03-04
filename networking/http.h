@@ -1,6 +1,9 @@
 #ifndef NET_UTILS_HTTP_H
 #define NET_UTILS_HTTP_H
 
+#include <stddef.h>
+#include <stdbool.h>
+
 enum c_utils_http_method {
     /// If the method is unitialized
     C_UTILS_HTTP_NO_METHOD,
@@ -96,36 +99,29 @@ typedef enum c_utils_http_version http_version_e;
     Adjustable maximum lengths
 */
 
-#ifdef NU_HTTP_FILE_PATH_MAX_LEN
-#define NU_HTTP_FILE_PATH_LEN NU_HTTP_FILE_PATH_MAX_LEN
+#ifdef C_UTILS_HTTP_FILE_PATH_MAX_LEN
+#define C_UTILS_HTTP_FILE_PATH_LEN C_UTILS_HTTP_FILE_PATH_MAX_LEN
 #else
-#define NU_HTTP_FILE_PATH_LEN 128
+#define C_UTILS_HTTP_FILE_PATH_LEN 128
 #endif
 
-#ifdef NU_HTTP_HEADER_FIELD_MAX_LEN
-#define NU_HTTP_HEADER_FIELD_LEN NU_HTTP_HEADER_FIELD_MAX_LEN
+#ifdef C_UTILS_HTTP_HEADER_FIELD_MAX_LEN
+#define C_UTILS_HTTP_HEADER_FIELD_LEN C_UTILS_HTTP_HEADER_FIELD_MAX_LEN
 #else
-#define NU_HTTP_HEADER_FIELD_LEN 128
+#define C_UTILS_HTTP_HEADER_FIELD_LEN 128
 #endif
 
-#ifdef NU_HTTP_HEADER_VALUE_MAX_LEN
-#define NU_HTTP_HEADER_VALUE_LEN NU_HTTP_HEADER_VALUE_MAX_LEN
+#ifdef C_UTILS_HTTP_HEADER_VALUE_MAX_LEN
+#define C_UTILS_HTTP_HEADER_VALUE_LEN C_UTILS_HTTP_HEADER_VALUE_MAX_LEN
 #else
-#define NU_HTTP_HEADER_VALUE_LEN 1024
+#define C_UTILS_HTTP_HEADER_VALUE_LEN 1024
 #endif
 
-#ifdef NU_HTTP_HEADER_MAX_LEN
-#define NU_HTTP_HEADER_LEN NU_HTTP_HEADER_MAX_LEN
+#ifdef C_UTILS_HTTP_HEADER_MAX_LEN
+#define C_UTILS_HTTP_HEADER_LEN C_UTILS_HTTP_HEADER_MAX_LEN
 #else
-#define NU_HTTP_HEADER_LEN 4096
+#define C_UTILS_HTTP_HEADER_LEN 4096
 #endif
-
-
-
-#include "../networking/connection.h"
-#include "../data_structures/map.h"
-
-
 
 // TODO: Make Field Values case-insensitive!
 
@@ -217,7 +213,7 @@ char *c_utils_request_to_string(struct c_utils_request *req);
 
 /**
  * A helper-macro used for convenience which allows you to declare key-value pairs in the guise of an anonymous struct declaration, I.E
- * C_UTILS_REQUEST_WRITE(res, 200, NU_HTTP_GET,, "/", NULL);
+ * C_UTILS_REQUEST_WRITE(res, 200, C_UTILS_HTTP_GET,, "/", NULL);
  * @param request Request.
  * @param http_status The HTTP status.
  * @param http_method The HTTP method.

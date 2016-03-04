@@ -54,15 +54,15 @@ typedef struct c_utils_result result_t;
 #endif
 
 /// Will not return a Result upon submitting a task.
-const int NO_RESULT = 1 << 1;
+const int C_UTILS_NO_RESULT = 1 << 1;
 /// Flags the task as lowest priority.
-const int LOWEST_PRIORITY = 1 << 2;
+const int C_UTILS_LOWEST_PRIORITY = 1 << 2;
 /// Flags the task as low priority.
-const int LOW_PRIORITY = 1 << 3;
+const int C_UTILS_LOW_PRIORITY = 1 << 3;
 /// Flags the task as high priority.
-const int HIGH_PRIORITY = 1 << 4;
+const int C_UTILS_HIGH_PRIORITY = 1 << 4;
 /// Flags the task as highest priority.
-const int HIGHEST_PRIORITY = 1 << 5;
+const int C_UTILS_HIGHEST_PRIORITY = 1 << 5;
 
 /**
  * Returns a newly allocated thread pool with pool_size worker threads.

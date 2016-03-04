@@ -5,26 +5,28 @@
 #include <stdbool.h>
 #include "../io/logger.h"
 
+struct c_utils_scoped_lock_log_info {
+   const char *line;
+   const char *file;
+   const char *function;
+};
+
 struct c_utils_scoped_lock
 {
    // The instance of lock.
    void *lock;
-   // Keeps track of information needed to log any possible issues.
-   struct {
-      const char *line;
-      const char *file;
-      const char *function;
-   } info;
    // Logger used to log debug information and errors.
    struct c_utils_logger *logger;
+   // Log information for when something goes wrong.
+   struct c_utils_scoped_lock_log_info log_info;
    // For normal locks, I.E Mutex and Spinlock
-   void *(*acquire0)(struct c_utils_scoped_lock *);
+   void *(*acquire0)(struct c_utils_scoped_lock *, struct c_utils_scoped_lock_log_info);
    // For locks with types of locking mechanisms, I.E RWLocks
-   void *(*acquire1)(struct c_utils_scoped_lock *);
+   void *(*acquire1)(struct c_utils_scoped_lock *, struct c_utils_scoped_lock_log_info);
    // For when we exit the scope
-   void *(*release)(struct c_utils_scoped_lock *);
+   void (*release)(struct c_utils_scoped_lock *);
    // For when the user frees this, the lock gets freed too.
-   void *(*dispose)(struct c_utils_scoped_lock *);
+   void (*dispose)(struct c_utils_scoped_lock *);
 };
 
 #ifdef NO_C_UTILS_PREFIX
@@ -59,8 +61,6 @@ void c_utils_auto_unlock(struct c_utils_scoped_lock **s_lock);
 // TODO: Implement!
 void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 
-#define C_UTILS_SCOPED_LOCK_ERR_MSG "Was unable to allocate the scoped_lock, please check logs!!!"
-
 #define C_UTILS_SCOPED_LOCK_FROM(lock, logger) _Generic((lock), \
       pthread_mutex_t *: c_utils_scoped_lock_mutex_from, \
       pthread_spinlock_t *: c_utils_scoped_lock_spinlock_from, \
@@ -75,10 +75,9 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
    called.
 */ 
 #define _C_UTILS_SCOPED_LOCK(s_lock, n) \
-   s_lock->info.line = C_UTILS_STRINGIFY(__LINE__); \
-   s_lock->info.file = __FILE__; \
-   s_lock->info.function = __FUNCTION__; \
-   for (struct c_utils_scoped_lock *tmp_lock C_UTILS_SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock); _test; _test = NULL)
+   for (struct c_utils_scoped_lock *tmp_lock C_UTILS_SCOPE_AUTO_UNLOCK = s_lock, *_test = tmp_lock->acquire ##n (tmp_lock, \
+         (struct c_utils_scoped_lock_log_info) { .line = C_UTILS_STRINGIFY(__LINE__), .file = __FILE__, .function = __FUNCTION__ }); \
+         _test; _test = NULL)
 
 #define C_UTILS_SCOPED_LOCK0(s_lock) _C_UTILS_SCOPED_LOCK(s_lock, 0)
 

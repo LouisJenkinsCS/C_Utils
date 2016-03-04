@@ -16,18 +16,18 @@ typedef struct c_utils_event event_t;
 #endif
 
 /// When the signal times out, signal and broadcast the event.
-const int EVENT_SIGNAL_ON_TIMEOUT = 1 << 0;
+const int C_UTILS_EVENT_SIGNAL_ON_TIMEOUT = 1 << 0;
 
 /// When the event is created, it is automatically flagged as signaled.
-const int EVENT_SIGNALED_BY_DEFAULT = 1 << 1;
+const int C_UTILS_EVENT_SIGNALED_BY_DEFAULT = 1 << 1;
 
 /// When a thread leaves the event, it will flag the event as being non-signaled.
-const int EVENT_AUTO_RESET = 1 << 2;
+const int C_UTILS_EVENT_AUTO_RESET = 1 << 2;
 
 /// Like TU_EVENT_AUTO_RESET, execpt it will only flag the event as being non-signaled by the last thread to exit.
-const int EVENT_AUTO_RESET_ON_LAST = 1 << 3;
+const int C_UTILS_EVENT_AUTO_RESET_ON_LAST = 1 << 3;
 
-#define EVENT_MAX_NAME_LEN 64
+#define C_UTILS_EVENT_MAX_NAME_LEN 64
 
 /**
  * Creates a new event with the passed name, registers it's logger, and any other interal flags passed.
@@ -63,7 +63,7 @@ bool c_utils_event_wait(struct c_utils_event *event, long long int timeout, unsi
  * @param thread_id Debugging Information.
  * @return True if event !null.
  */
-;
+bool c_utils_event_signal(struct c_utils_event *event, unsigned int thread_id);
 
 /**
  * Destroys the event, first waking up any threads waiting on this event, and allowing
