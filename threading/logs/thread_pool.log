@@ -1,0 +1,39 @@
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:348) c_utils_thread_pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:172) get_tasks(): 
+"Thread #2: received a task!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:348) c_utils_thread_pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:348) c_utils_thread_pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:172) get_tasks(): 
+"Thread #4: received a task!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:172) get_tasks(): 
+"Thread #1: received a task!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:348) c_utils_thread_pool_add(): 
+"A task of Medium priority has been added to the task_queue!"
+03:30:46 PM [VERBOSE](./threading/thread_pool.c:172) get_tasks(): 
+"Thread #3: received a task!"
+03:30:49 PM [VERBOSE](./threading/thread_pool.c:174) get_tasks(): 
+"Thread #4: finished a task!"
+03:30:49 PM [VERBOSE](./threading/thread_pool.c:174) get_tasks(): 
+"Thread #3: finished a task!"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:174) get_tasks(): 
+"Thread #1: finished a task!"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:174) get_tasks(): 
+"Thread #2: finished a task!"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:182) get_tasks(): 
+"Thread #2: Exited!
+"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:182) get_tasks(): 
+"Thread #1: Exited!
+"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:182) get_tasks(): 
+"Thread #4: Exited!
+"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:182) get_tasks(): 
+"Thread #3: Exited!
+"
+03:31:02 PM [VERBOSE](./threading/thread_pool.c:423) c_utils_thread_pool_destroy(): 
+"Thread pool has been properly destroyed!
+"

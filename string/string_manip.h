@@ -8,7 +8,7 @@
  * From simple string reversal or splitting and joining a string based on a delimiter, or even dynamic concatenation of strings,
  * is all included in this library. This library fixes and improves upon the standard libc and glibc library
  * by adding functionality that is sorely missing, in an efficient manner.
- *
+ *	
  * There is also a convenience typedef for cstrings, String, which abstracts the need to use pointers.
  * Lastly, there is a convenience macro that can be used to handle memory management of non-constant strings, 
  * TEMP, which utilitizes the GCC or Clang's compiler attributes.

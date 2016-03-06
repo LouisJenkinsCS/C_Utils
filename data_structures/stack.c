@@ -1,4 +1,4 @@
-#include <DS_Stack.h>
+#include "stack.h"
 
 #include <stdint.h>
 #include <stdatomic.h>
@@ -18,7 +18,7 @@ static struct c_utils_logger *logger = NULL;
 
 C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/stack.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
-struct c_utils_stack *DS_Stack_create(void) {
+struct c_utils_stack *c_utils_stack_create(void) {
 	struct c_utils_stack *stack;
 	C_UTILS_ON_BAD_CALLOC(stack, logger, sizeof(*stack))
 		return NULL;
@@ -26,7 +26,7 @@ struct c_utils_stack *DS_Stack_create(void) {
 	return stack;
 }
 
-bool DS_Stack_push(struct c_utils_stack *stack, void *item) {
+bool c_utils_stack_push(struct c_utils_stack *stack, void *item) {
 	C_UTILS_ARG_CHECK(logger, false, stack, item);
 
 	struct c_utils_node *node;
@@ -59,7 +59,7 @@ bool DS_Stack_push(struct c_utils_stack *stack, void *item) {
 	return true;
 }
 
-void *DS_Stack_pop(struct c_utils_stack *stack) {
+void *c_utils_stack_pop(struct c_utils_stack *stack) {
 	C_UTILS_ARG_CHECK(logger, NULL, stack);
 	
 	struct c_utils_node *head;
@@ -87,7 +87,7 @@ void *DS_Stack_pop(struct c_utils_stack *stack) {
 	return data;
 }
 
-bool DS_Stack_destroy(struct c_utils_stack *stack, c_utils_delete_cb del) {
+bool c_utils_stack_destroy(struct c_utils_stack *stack, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false, stack);
 	
 	c_utils_hazard_release_all(false);

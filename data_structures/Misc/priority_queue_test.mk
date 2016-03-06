@@ -1,15 +1,13 @@
 CC=gcc
 PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
-CFLAGS=-g -D_GNU_SOURCE -Wall
-MP=./Misc_Utils/
-DSP=./Data_Structures/
+CFLAGS=-g -D_GNU_SOURCE -Wall -std=c11
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=MU_Logger.c MU_Arg_Check.c DS_Hash_Map.c DS_Hash_Map_Test.c
+SOURCES=logger.c argument_check.c alloc_check.c priority_queue_test.c priority_queue.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
-TARGET=DS_Hash_Map_Test
+TARGET=priority_queue_test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./Misc_Utils/ ./Data_Structures/ ./Data_Structures/Tests
+VPATH=./misc/ ./io/ ./data_structures/ ./data_structures/Tests
 
 all: $(TARGET)
 

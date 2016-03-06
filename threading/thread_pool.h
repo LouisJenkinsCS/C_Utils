@@ -12,12 +12,12 @@
  * the usage of the thread pool.
  * 
  * For example, if you wanted to add a task of above average (high) priority, but you
- * do want the result, you simply pass the flag TU_HIGH_PRIORITY. However, lets say you 
+ * do want the result, you simply pass the flag HIGH_PRIORITY. However, lets say you 
  * do not want the result but still want it to be high priority, then it's as simple
- * as TU_HIGH_PRIORITY | TU_NO_RESULT. 
+ * as HIGH_PRIORITY | NO_RESULT. 
  * 
  * Now, lets say you don't want to deal with prioritized tasks and want the result, which
- * is the default, you can simply pass TP_NONE or 0 for flags.
+ * is the default, you can simply pass 0 for flags.
  * 
  * Finally it has the ability to pause and resume the thread pool, or even pause
  * the thread pool for a specified amount of time. Trivial, yet useful in certain situations.
@@ -39,9 +39,36 @@ struct c_utils_result;
 
 struct c_utils_thread_pool;
 
+/// Will not return a Result upon submitting a task.
+#define C_UTILS_NO_RESULT 1 << 1
+/// Flags the task as lowest priority.
+#define C_UTILS_LOWEST_PRIORITY 1 << 2
+/// Flags the task as low priority.
+#define C_UTILS_LOW_PRIORITY 1 << 3
+/// Flags the task as high priority.
+#define C_UTILS_HIGH_PRIORITY 1 << 4
+/// Flags the task as highest priority.
+#define C_UTILS_HIGHEST_PRIORITY 1 << 5
+
 #ifdef NO_C_UTILS_PREFIX
+/*
+	Typedefs
+*/
 typedef struct c_utils_thread_pool thread_pool_t;
 typedef struct c_utils_result result_t;
+
+/*
+	Enumerations & Constants
+*/
+#define NO_RESULT C_UTILS_NO_RESULT
+#define LOWEST_PRIORITY C_UTILS_LOWEST_PRIORITY
+#define LOW_PRIORITY C_UTILS_LOW_PRIORITY
+#define HIGH_PRIORITY C_UTILS_HIGH_PRIORITY
+#define HIGHEST_PRIORITY C_UTILS_HIGHEST_PRIORITY
+
+/*
+	Functions
+*/
 #define thread_pool_create(...) c_utils_thread_pool_create(__VA_ARGS__)
 #define thread_pool_add(...) c_utils_thread_pool_add(__VA_ARGS__)
 #define thread_pool_clear(...) c_utils_thread_pool_clear(__VA_ARGS__)
@@ -52,17 +79,6 @@ typedef struct c_utils_result result_t;
 #define result_get(...) c_utils_result_get(__VA_ARGS__)
 #define result_destroy(...) c_utils_result_destroy(__VA_ARGS__)
 #endif
-
-/// Will not return a Result upon submitting a task.
-const int C_UTILS_NO_RESULT = 1 << 1;
-/// Flags the task as lowest priority.
-const int C_UTILS_LOWEST_PRIORITY = 1 << 2;
-/// Flags the task as low priority.
-const int C_UTILS_LOW_PRIORITY = 1 << 3;
-/// Flags the task as high priority.
-const int C_UTILS_HIGH_PRIORITY = 1 << 4;
-/// Flags the task as highest priority.
-const int C_UTILS_HIGHEST_PRIORITY = 1 << 5;
 
 /**
  * Returns a newly allocated thread pool with pool_size worker threads.
@@ -77,9 +93,8 @@ struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size);
  * but has undefined behavior.
  * @param task Callback function to be called as the task.
  * @param args Arguments to pass to the thread pool.
- * @param flags TP_NONE | TP_LOWEST_PRIORITY | TP_LOW_PRIORITY | TP_HIGH_PRIORITY
- * | TP_HIGHEST_PRIORITY | TP_NO_RESULT.
- * @return The result from the task to be obtained later or NULL if TP_NO_RESULT.
+ * @param flags LOWEST_PRIORITY | LOW_PRIORITY | HIGH_PRIORITY | HIGHEST_PRIORITY | NO_RESULT.
+ * @return The result from the task to be obtained later or NULL if NO_RESULT.
  */
 struct c_utils_result *c_utils_thread_pool_add(struct c_utils_thread_pool *tp, c_utils_task task, void *args, int flags);
 

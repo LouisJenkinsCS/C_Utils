@@ -1,33 +1,53 @@
-#ifndef TU_EVENTS_H
-#define TU_EVENTS_H
+#ifndef C_UTILS_EVENTS_H
+#define C_UTILS_EVENTS_H
 
 #include "../io/logger.h"
 #include "../misc/flags.h"
 
+/*
+	Simple implementation for Win32 events using conditional variables and mutexes. Allows you to 
+	wait on certain events, signal events, reset them, etc. Also is configurable by passing certain flags.
+*/
 struct c_utils_event;
 
+/// When the signal times out, signal and broadcast the event.
+#define C_UTILS_EVENT_SIGNAL_ON_TIMEOUT 1 << 0
+
+/// When the event is created, it is automatically flagged as signaled.
+#define C_UTILS_EVENT_SIGNALED_BY_DEFAULT 1 << 1
+
+/// When a thread leaves the event, it will flag the event as being non-signaled.
+#define C_UTILS_EVENT_AUTO_RESET 1 << 2
+
+/// Like EVENT_AUTO_RESET, execpt it will only flag the event as being non-signaled by the last thread to exit.
+#define C_UTILS_EVENT_AUTO_RESET_ON_LAST 1 << 3
+
+#define C_UTILS_EVENT_MAX_NAME_LEN 64
+
+
 #ifdef NO_C_UTILS_PREFIX
+/*
+	Typedef
+*/
 typedef struct c_utils_event event_t;
+
+/*
+	Macros
+*/
+#define EVENT_SIGNAL_ON_TIMEOUT C_UTILS_EVENT_SIGNAL_ON_TIMEOUT
+#define EVENT_SIGNALED_BY_DEFAULT C_UTILS_EVENT_SIGNALED_BY_DEFAULT
+#define EVENT_AUTO_RESET C_UTILS_EVENT_AUTO_RESET
+#define EVENT_AUTO_RESET_ON_LAST C_UTILS_EVENT_AUTO_RESET_ON_LAST
+
+/*
+	Functions
+*/
 #define event_create(...) c_utils_event_create(__VA_ARGS__)
 #define event_reset(...) c_utils_event_reset(__VA_ARGS__)
 #define event_wait(...) c_utils_event_wait(__VA_ARGS__)
 #define event_signal(...) c_utils_event_signal(__VA_ARGS__)
 #define event_destroy(...) c_utils_event_destroy(__VA_ARGS__)
 #endif
-
-/// When the signal times out, signal and broadcast the event.
-const int C_UTILS_EVENT_SIGNAL_ON_TIMEOUT = 1 << 0;
-
-/// When the event is created, it is automatically flagged as signaled.
-const int C_UTILS_EVENT_SIGNALED_BY_DEFAULT = 1 << 1;
-
-/// When a thread leaves the event, it will flag the event as being non-signaled.
-const int C_UTILS_EVENT_AUTO_RESET = 1 << 2;
-
-/// Like TU_EVENT_AUTO_RESET, execpt it will only flag the event as being non-signaled by the last thread to exit.
-const int C_UTILS_EVENT_AUTO_RESET_ON_LAST = 1 << 3;
-
-#define C_UTILS_EVENT_MAX_NAME_LEN 64
 
 /**
  * Creates a new event with the passed name, registers it's logger, and any other interal flags passed.
@@ -74,4 +94,4 @@ bool c_utils_event_signal(struct c_utils_event *event, unsigned int thread_id);
  */
 bool c_utils_event_destroy(struct c_utils_event *event, unsigned int thread_id);
 
-#endif /* endif TU_EVENTS_H */
+#endif /* endif C_UTILS_EVENTS_H */

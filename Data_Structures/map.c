@@ -244,8 +244,10 @@ void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delet
 		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
 		if (!bucket_is_valid(bucket))
 			return NULL;
+
 		bucket->in_use = 0;
 		map->size--;
+		
 		return get_value_from_bucket(bucket, trunc_key);
 	} // Release writer lock.
 

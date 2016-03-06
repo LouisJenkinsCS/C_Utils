@@ -1,0 +1,24 @@
+03:55:16 PM [VERBOSE](./data_structures/tests/map_test.c:38) main(): 
+"Logging all Key-Value pairs!"
+03:55:16 PM [VERBOSE](./data_structures/tests/map_test.c:46) main(): 
+"{ 
+Host: net.tutsplus.com
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko
+Cache-Control: no-cache
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/
+Accept-Language: en-us,en;q=0.5
+Keep-Alive: 300
+}"
+03:55:16 PM [INFO](./data_structures/tests/map_test.c:49) main(): 
+"Creating Hash Map..."
+03:55:16 PM [INFO](./data_structures/tests/map_test.c:53) main(): 
+"Adding all key-value pairs to hash map..."
+03:55:16 PM [INFO](./data_structures/tests/map_test.c:59) main(): 
+"Printing all Key-Value pairs from hash map!"
+03:55:16 PM [INFO](./data_structures/tests/map_test.c:68) main(): 
+"Retrieivng all values from keys from hash map..."
+03:55:16 PM [INFO](./data_structures/tests/map_test.c:76) main(): 
+"Removing Key-Value pair ("Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/")..."
+03:55:16 PM [ASSERTION](./data_structures/tests/map_test.c:77) main(): 
+Condition: "c_utils_map_remove(map, keys[3], ((void *)0))"
+Message: "c_utils_map_remove: "Was unable to remove key: "Accept"!""

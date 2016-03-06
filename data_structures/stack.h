@@ -6,16 +6,19 @@
 #include "helpers.h"
 
 /*
-	A lock-free implementation of a stack. It is guaranteed to be wait-free, and supports basic
-	stack manipulations.
+	A mostly lock-free implementation of a stack. It is guaranteed to be wait-free, and supports basic
+	stack manipulations. 
+
+	It is "mostly" lock-free as the lock-free memory allocator is not currently implemented, hence
+	malloc/calloc use its own internal lock for it's heap. Otherwise, it is lock-free.
 */
 struct c_utils_stack;
 
-#ifdef NO_C_UTILS_PREFIX
 /*
-	Typedefs
+	No typedef for stack, as it is taken in POSIX standard.
 */
-typedef struct c_utils_stack stack_t;
+
+#ifdef NO_C_UTILS_PREFIX
 
 /*
 	Functions

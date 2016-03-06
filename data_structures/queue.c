@@ -44,7 +44,8 @@ bool c_utils_queue_enqueue(struct c_utils_queue *queue, void *data) {
 
 	struct c_utils_node *node;
 	C_UTILS_ON_BAD_CALLOC(node, logger, sizeof(*node))
-		return NULL;
+		return false;
+	node->item = data;
 
 	struct c_utils_node *tail;
 	struct c_utils_node *next;
@@ -109,8 +110,10 @@ void *c_utils_queue_dequeue(struct c_utils_queue *queue) {
 		}
 		
 		// Is Empty.
-		if (next == NULL) 
+		if (next == NULL) {
+			c_utils_hazard_release_all(false);
 			return NULL;
+		}
 		
 		// If Head and Tail are the same, yet is not empty, then it is outdated.
 		if (head == tail) {
