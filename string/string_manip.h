@@ -40,7 +40,7 @@
 /**
 * Convenience typedef of char *.
 */
-typedef char *string_t;
+typedef char *string;
 
 /**
  * Uses compiler attributes to cleanup strings after leaving the scope of the function.

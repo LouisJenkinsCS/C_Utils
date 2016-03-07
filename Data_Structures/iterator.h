@@ -36,11 +36,19 @@ void c_utils_auto_destroy_iterator(struct c_utils_iterator **it);
 
 #define C_UTILS_AUTO_ITERATOR struct c_utils_iterator *__attribute__ ((__cleanup__(c_utils_auto_destroy_iterator)))
 
+#define C_UTILS_ITERATOR_FOR_EACH(tmp_var, it) for(C_UTILS_AUTO_ITERATOR auto_it = it; (tmp_var = c_utils_iterator_next(auto_it));)
+
+
 #ifdef NO_C_UTILS_PREFIX
 /*
 	Typedefs
 */
 typedef struct c_utils_iterator iterator_t;
+
+/*
+	Macros
+*/
+AUTO_ITERATOR C_UTILS_AUTO_ITERATOR
 
 /*
 	Functions
