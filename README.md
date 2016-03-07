@@ -649,11 +649,14 @@ response_t *res = response_create();
 /*
     Note that it takes a rather elegant looking key-value pair, in the guise
     of a struct with two char * members. What the macro does, in gist, is
-    that it takes (NU_Field_t) { x, y}, into { x, y} by converting it for you.
-    Hence (NU_Field_t) { "Content-Length", file_size } becomes a much better:
+    that it takes (field_t) { x, y }, into { x, y } by converting it for you.
+    Hence (field_t) { "Content-Length", file_size } becomes a much better:
     { "Content-Length", file_size }.
 */
-NU_RESPONSE_WRITE(res, status, NU_HTTP_VER_1_0, { "Content-Length", get_page_size(file) }, { "Content-Type", content_type });
+RESPONSE_WRITE(res, status, HTTP_VER_1_0,
+ { "Content-Length", get_page_size(file) },
+ { "Content-Type", content_type }
+ );
 char *response = response_to_string(res);
 
 ```
@@ -715,11 +718,11 @@ int comparator(void *item_one, void *item_two);
 const bool synchronized = true;
 void *item, *item_two;
 
-struct c_utils_list *list = c_utils_list_create(synchronized);
+list_t *list = list_create(synchronized);
 // Assume item was already allocated and points to a valid piece of memory.
-c_utils_list_add(list, item, NULL);
+list_add(list, item, NULL);
 // We added the item to the list, unsorted. The third argument is a callback to add in sorted order.
-c_utils_list_add(list, item_two, comparator);
+list_add(list, item_two, comparator);
 
 void *tmp;
 // Loop for_each
@@ -727,11 +730,11 @@ LIST_FOR_EACH(tmp, list)
     do_something_with(tmp);
 
 // The list is "Smart" enough to keep track of if an unsorted item was added, and will sort the list for you.
-c_utils_list_get(list, 0);
+list_get(list, 0);
 
-c_utils_list_remove(list, 1);
+list_remove(list, 1);
 
-c_utils_list_destroy(list, free);
+list_destroy(list, free);
 
 ```
 
