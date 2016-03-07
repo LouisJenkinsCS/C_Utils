@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#define _GNU_SOURCE
 #include <stdio.h>
 
 /*

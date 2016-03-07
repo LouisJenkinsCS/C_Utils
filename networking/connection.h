@@ -11,8 +11,15 @@
 
 struct c_utils_connection;
 
-#ifdef C_UTILS_USE_POSIX_STD
+#ifdef NO_C_UTILS_PREFIX
+/*
+   Typedef
+*/
 typedef struct c_utils_connection connection_t;
+
+/*
+   Functions
+*/
 #define connection_init(...) c_utils_connection_init(__VA_ARGS__)
 #define connection_create(...) c_utils_connection_create(__VA_ARGS__)
 #define connection_send(...) c_utils_connection_send(__VA_ARGS__)

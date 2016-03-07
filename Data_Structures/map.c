@@ -132,11 +132,9 @@ static char *get_key_if_match(struct c_utils_bucket *bucket, const void *value, 
 }
 
 static struct c_utils_bucket *create_bucket(char *key, void *value, struct c_utils_bucket *next) {
-	struct c_utils_bucket *bucket = malloc(sizeof(struct c_utils_bucket));
-	if (!bucket) {
-		C_UTILS_LOG_ASSERT(logger, "create_bucket->malloc: \"%s\"", strerror(errno));
+	struct c_utils_bucket *bucket;
+	C_UTILS_ON_BAD_CALLOC(bucket, logger, sizeof(*bucket))
 		return NULL;
-	}
 
 	snprintf(bucket->key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
 	bucket->value = value;
@@ -207,6 +205,8 @@ bool c_utils_map_add(struct c_utils_map *map, char *key, void *value) {
 				break;
 			} else if (!bucket->next) {
 				bucket->next = create_bucket(trunc_key, value, NULL);
+				if(!bucket->next)
+					return false;
 				bucket->next->in_use = 1;
 				
 				map->size++;
@@ -245,10 +245,11 @@ void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delet
 		if (!bucket_is_valid(bucket))
 			return NULL;
 
+		void *item = get_value_from_bucket(bucket, trunc_key);
 		bucket->in_use = 0;
 		map->size--;
 		
-		return get_value_from_bucket(bucket, trunc_key);
+		return item;
 	} // Release writer lock.
 
 	C_UTILS_UNACCESSIBLE;

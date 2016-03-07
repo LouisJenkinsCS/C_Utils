@@ -1,4 +1,0 @@
-03:30:46 PM [ERROR](./memory/hazard.c:181) c_utils_hazard_acquire(): 
-"c_utils_hazard_acquire: Invalid Arguments=> {  data: FALSE; index <= 4: TRUE! }"
-03:30:46 PM [ERROR](./memory/hazard.c:181) c_utils_hazard_acquire(): 
-"c_utils_hazard_acquire: Invalid Arguments=> {  data: FALSE; index <= 4: TRUE! }"

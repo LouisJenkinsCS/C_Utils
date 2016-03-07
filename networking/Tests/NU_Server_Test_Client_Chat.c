@@ -13,6 +13,7 @@ static const unsigned int generous_timeout = 60;
 static const unsigned int port_num = 10000;
 static const unsigned int max_clients = 2;
 static const unsigned int max_bsocks = 1;
+static const char *ip_addr = "192.168.1.136"
 
 typedef struct {
 	NU_Connection_t *client;
@@ -89,7 +90,7 @@ static Client_Wrapper_t *obtain_client(NU_Bound_Socket_t *bsock){
 int main(void){
 	logger = MU_Logger_create("./Net_Utils/Logs/NU_Server_Telnet_Client_Chat.log", "w", MU_ALL);
 	server = NU_Server_create(max_clients, max_bsocks, true);
-	NU_Bound_Socket_t *bsock = NU_Server_bind(server, max_clients, port_num, "192.168.1.112");
+	NU_Bound_Socket_t *bsock = NU_Server_bind(server, max_clients, port_num, ip_addr);
 	MU_ASSERT(bsock, logger, "Failed while attempting to bind a socket!");
 	pthread_t thread_one, thread_two;
 	Client_Wrapper_t **wrappers = malloc(sizeof(Client_Wrapper_t *) * max_clients);

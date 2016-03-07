@@ -35,9 +35,16 @@ struct c_utils_server;
 struct c_utils_socket;
 
 
-#ifdef C_UTILS_USE_POSIX_STD
+#ifdef NO_C_UTILS_PREFIX
+/*
+	Typedefs
+*/
 typedef struct c_utils_server server_t;
 typedef struct c_utils_socket socket_t;
+
+/*
+	Functions
+*/
 #define server_create(...) c_utils_server_create(__VA_ARGS__)
 #define server_bind(...) c_utils_server_bind(__VA_ARGS__)
 #define server_unbind(...) c_utils_server_unbind(__VA_ARGS__)

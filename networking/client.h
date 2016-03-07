@@ -18,8 +18,15 @@
 */
 struct c_utils_client;
 
-#ifdef C_UTILS_USE_POSIX_STD
+#ifdef NO_C_UTILS_PREFIX
+/*
+	Typedefs
+*/
 typedef struct c_utils_client client_t;
+
+/*
+	Functions
+*/
 #define client_create(...) c_utils_client_create(__VA_ARGS__)
 #define client_connect(...) c_utils_client_connect(__VA_ARGS__)
 #define client_disconnect(...) c_utils_client_disconnect(__VA_ARGS__)

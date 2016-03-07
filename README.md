@@ -2,35 +2,55 @@
 
 ##Summary
 
-Utilities Package for the C Programming Language, or C_Utils for short, is my attempt at providing a full fledged package of various libraries ranging from thread-safe (some lockless) data structures, to a Thread Pool, to an HTTP parser, to a simple event loop implementation (and separate Win32 Event implementations for POSIX), etc.
+Utilities Package for the C Programming Language, dubbed C_Utils, contains a plethora of varying, but very useful abstractions for the modern day C programmer. It is designed to be easy to use and easy to read, and very newbie-friendly. As the C standard library is extremely minimal, I decided to create my own abstractions and package them to share them with others who may desire to use them. 
 
-C_Utils is essentially my personal playground, where if I wish to find out how something works internally, I implement and/or reverse-engineer it into being. Yes, it is reinventing the wheel, but when that wheel can be infinite as the universe itself, what's the harm in knowing more about them?
+This project originally began as a way to teach myself the C Programming language, and so I am mainly self-taught. This may lead to some "weird" semantics and style choices, however this has been remedied as of March of 2016, by redesigning the entire library, to increase readability and overall control flow.
 
-C_Utils may never actually be finished, for as long I have something I wish to learn about at a lower level, I will add and implement it here, however to date I have put in over 500 hours since I started it this summer (2015), and I plan on continuing developing this utilities package.
+As of now, this project will be continued to be worked on and expanded on as I desire to learn new things. The amount of time spent developing this package has bordered on 800 hours now, and I do not think I'll ever be truly finished, as there are nearly infinitely many amount of things I can do. 
 
-##About the Author
+It should be noted once again, while this project is my "personal playground" does not mean it will be unusable to others. 
 
-I a late-but-upcoming Computer Science major who's developed more than a bit of a fascination into the world of computing, data structures, algorithms, and all other wonders modern technology brings. While I am rather late to the game, it doesn't make me any less willing to learn, as I use this utilities package as my personal playground.
+##Development Stages
 
-##Notes
+[<b>Unimplemented</b>] - I have not begun to implement this yet, but I do plan on doing so at a later date.
 
-[<b>Unimplemented</b>] means it has not been started at all but I am planning on implementing at a later date.
+[<b>In Development</b>] - I am currently working on the implementation of this, and I should be finished soon.
 
-[<b>In Development</b>] means that it is currently in development and should be finished soon.
+[<b>Unstable</b>] - I have finished developing this, and have done minor testing, but have not done enough to determine if it is bug-free yet.
 
-[<b>Unstable</b>] means I'm not sure if it's stable, but it's usable although not well tested.
+[<b>Stable</b>] - I have finished developing this, and have done repeated tests to ensure it's stability, however I may add some more features later on at my leisure.
 
-[<b>Stable</b>] means that it is stable enough to use, although features may be added later.
-
-[<b>Finished</b>] means that in all likely hood, I'll no longer work on it unless a bug presents itself.
+[<b>Finished</b>] - I have finished developing this, and have done repeated tests to ensure it's stability, and I do not plan on adding anything more than bug-fixes in the future.
 
 ##Artificial Namespace patterns
 
-All files contain structs and functions which follow a guideline to significantly reduce collisions during compilation. All of them begin the abbrieviated package name, an uppercase for the first word in each, followed by an underscore (I.E: String Utils -> SU_). All structs and functions follow this, but with structs, they also end with an underscore followed by a t (I.E: TU_Event_t).
+To avoid the issue of namespace collision, as C has only one namespace, all libraries in this package contain the C_UTILS_ prefix for macros, and c_utils_ prefix for functions and structs. Now, this can look rather ugly. For example...
 
-These may be unwieldy for some, and to placate this potential issue, each header file defines aliases for it's functions and types stripped without the namespaces and is POSIX compliant, (I.E MU_Event_wait -> event_wait; MU_Event_t -> event_t). Note that these have the most likely chance to cause collisions. This can be done by defining C_UTILS_USE_POSIX_STD before the includes of a package.
+~~~c
 
-This way it allows the user to determine just how much they care about potential collision and how much they want the code to conform to the rest of their code base.
+struct c_utils_logger *logger;
+C_UTILS_LOGGER_AUTO_CREATE(logger, ...);
+
+struct c_utils_thread_pool *pool = c_utils_thread_pool_create(...);
+
+~~~
+
+There's no dodging around it, the c_utils_ prefix makes everything more long-winded. However, this is necessary when writing libraries like these. While it may be unwieldy, maybe you think you don't have to worry about collisions for  a logger or a thread_pool because no other library you use has them. This is where the NO_C_UTILS_NO_PREFIX define comes in. If you define this before importing the libraries, it will strip the c_utils prefix through macro defines, typedef most (99%) of the library the name, ended with a "_t". For example...
+
+~~~c
+
+#define NO_C_UTILS_PREFIX
+#include <logger.h>
+#include <thread_pool.h>
+
+logger_t *logger;
+LOGGER_AUTO_CREATE(logger, ...);
+
+thread_pool_t *pool = thread_pool_create(...);
+
+~~~
+
+Now it is a LOT less long-winded, and much more elegant looking. This trade off adds the issue of potential collision, so be warned. Because of this conciseness, all below code samples use the NO_C_UTILS_PREFIX, and so contain no c_utils_ prefix. 
 
 ##Libraries Packages
 
@@ -385,9 +405,59 @@ Very simple. The string_buffer supports an option to enable synchronizaiton, whi
 
 ####Regular Expressions [<b>Unimplemented</b>]
 
-###I/O Utilities
+###I/O
 
-Brings useful abstractions when dealing with streams through file descriptors. Buffering (I.E line-by-line), to asynchronous reading/writing without needing to worry if it is a FILE or socket file descriptor.
+Brings useful abstractions when dealing with streams through file descriptors. Buffering (I.E line-by-line), to asynchronous reading/writing without needing to worry if it is a FILE or socket file descriptor. Also features a configurable logging utility.
+
+####Logger [<b>Stable</b>] Version: 1.5
+
+A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Supports the usage of the __constructro__ and __destructor__ compiler attributes (available with Clang and GCC) to automatically manage the lifetime of the logger, through the LOGGER_AUTO_CREATE macro.
+
+Below is an example of a custom format. This is the default logging format used when no custom format has been provided.
+
+"%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n"
+
+Would produce the following:
+
+9:39:32 PM \[INFO\](test_file:63) main():
+"Hello World!"
+
+The currently implemented log format tokens are...
+
+%tsm: Timestamp (HH/MM/SS AM/PM)
+%lvl: Log Level
+%fle: File
+%lno: Line Number
+%fnc: Function
+%msg: Message
+%cond: Condition (Used for assertions)
+
+#####Code Sample
+
+```c
+
+/*
+    Instantiation
+*/
+static logger_t *logger; 
+LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", LOG_LEVEL_ALL);
+
+/*
+    Usage
+*/
+LOG_INFO(logger, "Hello %s", "World");
+DEBUG("Hello World");
+ASSERT(1 == 0, logger, "1 != 0!");
+
+```
+
+#####Planned Features
+
+* Configuration File support
+* Logging to a set of loggers rather than just one
+    - Allows a group of loggers with different log levels to be logged to
+    - Allows late registration and unregistration for injection
+* More Log Format Tokens
 
 ####File Buffering [<b>Unimplemented</b>]
 
@@ -683,34 +753,6 @@ Overall, it's simple and intuitive to use.
 ####Deque [<b>Unimplemented</b>]
 
 ###Misc. Utilities
-
-####Logger [<b>Stable</b>] Version: 1.4
-
-A minimal logging utility which supports logging based on log levels, with it's own custom formatting. Also supports a custom log level with custom log label for formatting. Also supports the usage of GCC & Clang compiler attributes to automatically manage the lifetime of the logger. This means that a logger can be initialized before any other operation occurs, even before main(), hence making it perfectly safe to use with almost no effort to setup. This can be accomplished by using the C_UTILS_LOGGER_AUTO_CREATE macro.
-
-Formatting Example: "%tsm \[%lvl\](%fle:%lno) %fnc(): \n\"%msg\"\n" 
-
-Which is the current default, would look like such...
-
-```c
-
-// Is static hence no linkage issues will arise.
-static struct c_utils_logger *logger; 
-C_UTILS_LOGGER_AUTO_CREATE(logger, "Test_File.txt", "w", MU_INFO);
-
-// Later, when you need to log inside of some function.
-C_UTILS_LOG_INFO(logger, "Hello World!");
-
-```
-
-The above would produce the following output:
-
-9:39:32 PM \[INFO\](test_file:63) main():
-"Hello World!"
-
-The most notable features being that it lets you know not only the exact line number and file, but also the function it is being called from.
-
-In the future, there will be more log formats being accepted, as well as config file support and syslog support, even a lockless ring buffer and a worker thread to manage them.
 
 ####Timer [<b>Unstable</b>] Version: 1.0
 
