@@ -274,7 +274,7 @@ const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_u
 }
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
-bool C_UTILS_Hasp_Map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
+bool c_utils_map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
 	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size, callback_function);
 
 	C_UTILS_SCOPED_LOCK1(map->lock) {
