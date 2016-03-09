@@ -75,6 +75,11 @@ typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, size_
 */
 typedef void (*c_utils_finalize)(void *user_data);
 
+enum c_utils_event_source_type {
+	C_UTILS_EVENT_SOURCE_TYPE_READ = 1 << 0,
+	C_UTILS_EVENT_SOURCE_TYPE_WRITE = 1 << 1
+};
+
 #ifdef NO_C_UTILS_PREFIX
 /*
 	Typedefs
@@ -82,6 +87,12 @@ typedef void (*c_utils_finalize)(void *user_data);
 typedef struct c_utils_event_loop_fd event_loop_fd_t;
 typedef struct c_utils_event_source_fd event_source_fd_t;
 typedef struct c_utils_event_local_fd event_local_fd_t;
+
+/*
+	Enumerators
+*/
+#define EVENT_SOURCE_TYPE_READ C_UTILS_EVENT_SOURCE_TYPE_READ
+#define EVENT_SOURCE_TYPE_WRITE C_UTILS_EVENT_SOURCE_TYPE_WRITE
 #endif
 
 
