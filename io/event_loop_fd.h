@@ -67,7 +67,7 @@ struct c_utils_event_loop_fd;
 	If the return value is true, this fd and event_source as a whole will be removed from the
 	file descriptor set.
 */
-typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, size_t data_len);
+typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, int data_len, int rw_flags);
 
 /*
 	If user_data is passed to the event_source, then this callback will be invoked on the user_data

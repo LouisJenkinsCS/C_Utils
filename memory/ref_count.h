@@ -15,7 +15,7 @@
 	library projects to allow easy reference counting. 
 */
 
-#ifndef C_UTILS_REF_COUNT
+#if !defined(C_UTILS_REF_COUNT) && !defined(C_UTILS_REF_COUNT_IGNORE_WARNING)
 #warning You should "#define C_UTILS_REF_COUNT" before #include "ref_count.h"
 #endif
 
