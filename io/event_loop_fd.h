@@ -66,6 +66,11 @@ struct c_utils_event_loop_fd;
 
 	If the return value is true, this fd and event_source as a whole will be removed from the
 	file descriptor set.
+
+	TODO: Let dispatch return flags which manipulate the underlying event_source. For example if
+	the user wants to R/W, but can only write when there is an associated read, then we will only
+	report write once until after both read and write are marked as ready. Also, of course a flag
+	to tell it to consume the event.
 */
 typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, int data_len, int rw_flags);
 
@@ -75,6 +80,17 @@ typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, int d
 */
 typedef void (*c_utils_finalize)(void *user_data);
 
+/*
+	The type of event the source will poll for, and handle. These will also be passed as
+	flags to help determine which of the events are ready. For example, if you pass
+	EVENT_SOURCE_TYPE_READ | EVENT_SOURCE_TYPE_WRITE, and the file descriptor is only available
+	for EVENT_SOURCE_TYPE_READ, yet you need to collect data to write, what you can pass until the
+	next round of polling begins.
+
+	Remember that poll is level-triggered, so until you can no longer write, the next poll will begin
+	immediately. Hence, you may want to write until all data is filled, then consume the event by returning
+	true in the dispatcher, otherwise resources are wasted waking up repeatedly.
+*/
 enum c_utils_event_source_type {
 	C_UTILS_EVENT_SOURCE_TYPE_READ = 1 << 0,
 	C_UTILS_EVENT_SOURCE_TYPE_WRITE = 1 << 1

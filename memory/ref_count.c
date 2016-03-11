@@ -69,7 +69,7 @@ void c_utils_ref_dec(void *ptr) {
 	// If the count is already 0 (since it fetches old value first) we fail assertion.
 	assert((refs = atomic_fetch_sub(&rc->counter, 1)));
 
-	/* 
+	/*
 		Note that if a thread attempts to increment after count is 0, this race condition invoked undefined behavior.
 		Hence it is up to the caller. The assertions just make finding the errors easier, the edge cases where something
 		increments the count after we succeed the assertion and enter the if condition, is a result of the failure on the caller.
