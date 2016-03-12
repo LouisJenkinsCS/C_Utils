@@ -15,11 +15,6 @@
 
 #define C_UTILS_EVENT_LOOP_NAME_MAX_LEN 64
 
-struct c_utils_event_local_fd {
-	/// Array of pipe file descriptor.
-	int pipe_fds[2];
-};
-
 struct c_utils_event_source_fd {
 	/// File descriptor associated with this event
 	int fd;
@@ -117,14 +112,21 @@ static bool handled_dispatch(struct c_utils_event_source_fd *source, int flags) 
 	if(flags & C_UTILS_EVENT_SOURCE_TYPE_READ) {
 		int bytes_read = read(source->fd, buf, BUFSIZ);
 		if(bytes_read <= 0) {
-			if(bytes_read == -1)
+			if(bytes_read == -1) {
 				C_UTILS_LOG_ERROR(logger, "Error occuring while reading from event name: \"%s\"'s file descriptor: \"%s\"", source->name,  strerror(errno));
-			else
+				return true;
+			}
+			else {
 				C_UTILS_LOG_VERBOSE(logger, "Event name: \"%s\" returned EOF!", source->name);
-
-			return true;
+				source->type &= ~C_UTILS_EVENT_SOURCE_TYPE_READ;
+				source->type |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
+				return false;
+			}
 		}
 	}
+
+	if(source->type & C_UTILS_EVENT_SOURCE_TYPE_EOF)
+		flags |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
 
 	if(source->dispatcher(source->user_data, source->fd, buf, bytes_read, flags))
 		return true;

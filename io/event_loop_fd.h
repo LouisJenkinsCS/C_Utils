@@ -3,15 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-
-/*
-	event_local encapsulates a local event file descriptor. When
-	the event_local writes to it's file descriptor, the event_loop
-	will react to what is written. Note that, it is possible for the
-	event_loop to write back over the file descriptor. Receiving is
-	up to the caller.
-*/
-struct c_utils_event_local_fd;
+#include <string.h>
 
 /*
 	The event_source is used to manage and maintain an emission of
@@ -64,15 +56,19 @@ struct c_utils_event_loop_fd;
 	If the type of struct represented by read_data is known, data_len may as well be ignored.
 	However, in the case of a string, it can be used to idenitify a cstring.
 
-	If the return value is true, this fd and event_source as a whole will be removed from the
-	file descriptor set.
+	The ready_flags passed is used to identify which events are ready, based on the polled information.
+	For example, if only write is available, EVENT_SOURCE_TYPE_WRITE will be passed.
 
-	TODO: Let dispatch return flags which manipulate the underlying event_source. For example if
-	the user wants to R/W, but can only write when there is an associated read, then we will only
-	report write once until after both read and write are marked as ready. Also, of course a flag
-	to tell it to consume the event.
+	The returned flags help modify the underlying event source for this event. For example, if one
+	were to register for EVENT_SOURCE_TYPE_READ and EVENT_SOURCE_TYPE_WRITE events, one would receive
+	both read and write events, even when you can only write after the next read. A way to circumvent
+	this is to return EVENT_FLAGS_WRITE_DONE, which will remove the EVENT_SOURCE_TYPE_WRITE flag from
+	the types of input this source polls for. Then after receiving input, we may send EVENT_FLAGS_WRITE
+	to re-enable writing again, and optionally EVENT_FLAGS_READ_DONE to disable reading. Lastly, if we are
+	finally finished with this event, return EVENT_FLAG_DONE, or optionally EVENT_FLAGS_READ_DONE | EVENT_FLAGS_WRITE_DONE.
+	If no modifications are desired, return EVENT_FLAG_NONE, or 0.
 */
-typedef bool (*c_utils_dispatch)(void *user_data, int fd, void *read_data, int data_len, int rw_flags);
+typedef enum c_utils_event_flags (*c_utils_dispatch)(void *user_data, int fd, void *read_data, int data_len, int ready_flags);
 
 /*
 	If user_data is passed to the event_source, then this callback will be invoked on the user_data
@@ -90,11 +86,94 @@ typedef void (*c_utils_finalize)(void *user_data);
 	Remember that poll is level-triggered, so until you can no longer write, the next poll will begin
 	immediately. Hence, you may want to write until all data is filled, then consume the event by returning
 	true in the dispatcher, otherwise resources are wasted waking up repeatedly.
+
+	The flags EOF is normally only set internally, however if it is passed as an initial flag, it will
+	only read once if read flag is passed.
 */
 enum c_utils_event_source_type {
 	C_UTILS_EVENT_SOURCE_TYPE_READ = 1 << 0,
-	C_UTILS_EVENT_SOURCE_TYPE_WRITE = 1 << 1
+	C_UTILS_EVENT_SOURCE_TYPE_WRITE = 1 << 1,
+	C_UTILS_EVENT_SOURCE_TYPE_EOF = 1 << 2
 };
+
+/*
+	Event flags returned from a dispatch to modify the underlying event source.
+*/
+enum c_utils_event_flags {
+	C_UTILS_EVENT_FLAGS_NONE = 0,
+	C_UTILS_EVENT_FLAGS_DONE = 1 << 0,
+	C_UTILS_EVENT_FLAGS_WRITE = 1 << 1,
+	C_UTILS_EVENT_FLAGS_WRITE_DONE = 1 << 2,
+	C_UTILS_EVENT_FLAGS_READ = 1 << 3,
+	C_UTILS_EVENT_FLAGS_READ_DONE = 1 << 4
+};
+
+/*
+	Convenience macro to create an event source from a passed file, returning the result through
+	src. The event_name will be the name of file when it was opened, and the file descriptor
+	being the actual file descriptor associated with file.
+*/
+#define C_UTILS_EVENT_SOURCE_FROM(src, file, user_data, dispatcher, finalizer, flags) \
+do { \
+	if(!file) \
+		goto err; \
+	\
+	int fd = fileno(file); \
+	if(fd == -1)  \
+    	goto err; \
+    \
+    char *proc_link; \
+    asprintf(&proc_link, "/proc/self/fd/%d", fd); \
+    if(!proc_link) \
+    	goto err; \
+    \
+    char filename[BUFSIZ + 1]; \
+    int retval = readlink(proc_link, filename, BUFSIZ); \
+    if(retval < 0) \
+    	goto err_filename; \
+    filename[retval] = '\0'; \
+    \
+  	src = c_utils_event_source_fd_create(filename, fd, user_data, dispatcher, finalizer, flags); \
+  	\
+  	free(proc_link); \
+  	break; \
+  	\
+  	err_filename: \
+  		free(proc_link); \
+	err: \
+		src = NULL; \
+		break; \
+} while(0)
+
+/*
+	Creates an event source that is polled on for local writes to fd. fd should NOT be a valid file descriptor,
+	it is in fact created and the passed fd is set to the created one. If there is an error, src will be null and
+	fd will be -1. Let me repeat, do NOT pass an actual file descriptor, because it will be replaced. 
+
+	Note that the flags are not modifiable nor configurable. This is because pipes offer unidirectional streams of
+	data, and hence we the event source can only read from the socket, while the returned_fd is always the writing end.
+*/
+#define C_UTILS_EVENT_SOURCE_LOCAL(src, returned_fd, event_name, user_data, dispatcher, finalizer) \
+do { \
+	int fds[2]; \
+	\
+	int retval = pipe(fds); \
+	if(retval == -1) \
+		goto err; \
+	\
+	returned_fd = fds[1]; \
+	src = c_utils_event_source_fd_create(event_name, fds[0], user_data, dispatcher, finalizer, C_UTILS_EVENT_SOURCE_TYPE_READ); \
+	if(!src) \
+		goto err; \
+	\
+	break; \
+	\
+	err: \
+		src = NULL; \
+		returned_fd = -1; \
+		\
+		break; \
+} while(0)
 
 #ifdef NO_C_UTILS_PREFIX
 /*
@@ -105,12 +184,40 @@ typedef struct c_utils_event_source_fd event_source_fd_t;
 typedef struct c_utils_event_local_fd event_local_fd_t;
 
 /*
+	Macros
+*/
+#define EVENT_SOURCE_FROM(...) C_UTILS_EVENT_SOURCE_FROM(__VA_ARGS__)
+#define EVENT_SOURCE_LOCAL(...) C_UTILS_EVENT_SOURCE_LOCAL(__VA_ARGS__)
+
+/*
 	Enumerators
 */
 #define EVENT_SOURCE_TYPE_READ C_UTILS_EVENT_SOURCE_TYPE_READ
 #define EVENT_SOURCE_TYPE_WRITE C_UTILS_EVENT_SOURCE_TYPE_WRITE
+#define EVENT_SOURCE_TYPE_EOF C_UTILS_EVENT_SOURCE_TYPE_EOF
+#define EVENT_SOURCE_TYPE_DONE C_UTILS_EVENT_SOURCE_TYPE_DONE
+
+/*
+	Functions
+*/
+#define event_loop_fd_create(...) c_utils_event_loop_fd_create(__VA_ARGS__)
+#define event_loop_fd_add(...) c_utils_event_loop_fd_add(__VA_ARGS__)
+#define event_loop_fd_remove(...) c_utils_event_loop_fd_remove(__VA_ARGS__)
+#define event_source_fd_create(...) c_utils_event_source_fd_create(__VA_ARGS__)
+#define event_source_fd_destroy(...) c_utils_event_source_fd_destroy(__VA_ARGS__)
 #endif
 
+struct c_utils_event_loop_fd *c_utils_event_loop_fd_create();
 
+bool c_utils_event_loop_fd_add(struct c_utils_event_source_fd *source);
+
+bool c_utils_event_loop_fd_remove(struct c_utils_event_source_fd *source);
+
+struct c_utils_event_source_fd *c_utils_event_source_fd_create(char *event_name, int fd, void *user_data,
+	c_utils_dispatch dispatcher, c_utils_finalize finalizer, enum c_utils_event_source_type flags);
+
+void c_utils_event_source_fd_destroy(struct c_utils_event_source_fd *source);
+
+void c_utils_event_loop_fd_destroy(struct c_utils_event_loop_fd *loop);
 
 #endif /* C_UTILS_EVENT_LOOP_H */
