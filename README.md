@@ -8,7 +8,7 @@ This project originally began as a way to teach myself the C Programming languag
 
 As of now, this project will be continued to be worked on and expanded on as I desire to learn new things. The amount of time spent developing this package has bordered on 800 hours now, and I do not think I'll ever be truly finished, as there are nearly infinitely many amount of things I can do. 
 
-It should be noted once again, while this project is my "personal playground" does not mean it will be unusable to others. 
+It should be noted once again, while this project is my "personal playground" does not mean it will be unusable to others.
 
 ##Development Stages
 
@@ -21,6 +21,10 @@ It should be noted once again, while this project is my "personal playground" do
 [<b>Stable</b>] - I have finished developing this, and have done repeated tests to ensure it's stability, however I may add some more features later on at my leisure.
 
 [<b>Finished</b>] - I have finished developing this, and have done repeated tests to ensure it's stability, and I do not plan on adding anything more than bug-fixes in the future.
+
+##Stable vs Development Branches
+
+Just to get this out of the way early in the README, as of yet, C_Utils has gone through a MAJOR refactoring, and even now as I write this it is not finished, and hence the stable version does NOT accurately reflect the code samples, or even the libraries within this package. Hence, I urge that, if not already, see https://github.com/theif519/C_Utils/tree/development. 
 
 ##Artificial Namespace patterns
 
@@ -51,6 +55,36 @@ thread_pool_t *pool = thread_pool_create(...);
 ~~~
 
 Now it is a LOT less long-winded, and much more elegant looking. This trade off adds the issue of potential collision, so be warned. Because of this conciseness, all below code samples use the NO_C_UTILS_PREFIX, and so contain no c_utils_ prefix. 
+
+##Lifetime Management
+
+All objects returned from this library can optionally be reference counted. This will work using the lock-free allocator wrapper provided in memory/ref_count.h, to allocate the structure using it. This drastically eases the usage and management the libraries in this package.
+
+##Configurations
+
+Recently, I found that just adding extra parameters won't fit the bill any longer, and so I decided to begin to rewrite everything again, implementing a new way to creating an object, whether that be a list, a thead_pool, or an event.
+
+This new way is simulator to the Configuration Object pattern, or well, it pretty much is. The configuration object will allow the user to fine-tune the objects during construction, such as assigning it a specific logger to log to (so no more logging to about 30 different files), if it should be synchronized (so no extra boolean parameter in every constructor), and other context-specific options. Each will also have its own default behavior, allowing for shorter and easier construction.
+
+###Code Sample
+
+~~~c
+
+/*
+    The below configuration object routes all logging to my_logger;
+    Sorts and searches for elements with my_comparator;
+    Deletes all items with my_destructor;
+    Utilizes reader-writer locks for thread-safe concurrent access;
+    Uses reference counting wrapper, ./memory/ref_count.h, for lifetime management.
+*/
+list_conf_t conf = { .logger = my_logger, .cmp = my_comparator, .del = my_destructor, .concurrent = true, .ref_counted = true };
+list_t *list = list_create_conf(&conf);
+/*
+    Creates a vanilla and minimal default list.
+*/
+list_t *vanilla_list = list_create();
+
+~~~
 
 ##Libraries Packages
 
