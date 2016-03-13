@@ -1,5 +1,5 @@
-#ifndef MISC_UTILS_H
-#define MISC_UTILS_H
+#ifndef C_UTILS_LOGGER_H
+#define C_UTILS_LOGGER_H
 
 #include <stdio.h>
 #include <stdlib.h>
