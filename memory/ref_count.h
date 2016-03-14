@@ -15,10 +15,6 @@
 	library projects to allow easy reference counting. 
 */
 
-#if !defined(C_UTILS_REF_COUNT) && !defined(C_UTILS_REF_COUNT_IGNORE_WARNING)
-#warning You should "#define C_UTILS_REF_COUNT" before #include "ref_count.h"
-#endif
-
 /*
 	The meta-data for the reference counting mechanisms. It manages the destructor, 
 	the reference count, and the allocated data.

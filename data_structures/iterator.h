@@ -13,6 +13,11 @@ struct c_utils_position {
 	struct c_utils_node *prev;
 };
 
+struct c_utils_iterator_conf {
+	/// If we hold a reference count to the handle.
+	bool ref_counted;
+};
+
 struct c_utils_iterator {
 	/// Handle for the data structure being iterated over.
 	void *handle;
@@ -30,6 +35,8 @@ struct c_utils_iterator {
 	bool (*prepend)(void *, struct c_utils_position *, void *);
 	bool (*for_each)(void *, struct c_utils_position *, c_utils_general_cb);
 	bool (*del)(void *, struct c_utils_position *, c_utils_delete_cb);
+	// Configuration
+	struct c_utils_iterator_conf conf;
 };
 
 void c_utils_auto_destroy_iterator(struct c_utils_iterator **it);
@@ -48,7 +55,7 @@ typedef struct c_utils_iterator iterator_t;
 /*
 	Macros
 */
-AUTO_ITERATOR C_UTILS_AUTO_ITERATOR
+#define AUTO_ITERATOR C_UTILS_AUTO_ITERATOR
 
 /*
 	Functions
@@ -61,6 +68,7 @@ AUTO_ITERATOR C_UTILS_AUTO_ITERATOR
 #define iterator_prepend(...) c_utils_iterator_prepend(__VA_ARGS__)
 #define iterator_remove(...) c_utils_iterator_remove(__VA_ARGS__)
 #define iterator_for_each(...) c_utils_iterator_for_each(__VA_ARGS__)
+#define iterator_destroy(...) c_utils_iterator_destroy(__VA_ARGS__)
 #endif
 
 /*
@@ -96,5 +104,7 @@ bool c_utils_iterator_prepend(struct c_utils_iterator *it, void *item);
 bool c_utils_iterator_for_each(struct c_utils_iterator *it, c_utils_general_cb cb);
 
 bool c_utils_iterator_remove(struct c_utils_iterator *it, c_utils_delete_cb del);
+
+void c_utils_iterator_destroy(struct c_utils_iterator *it);
 
 #endif /* endif DS_ITERATOR_H */

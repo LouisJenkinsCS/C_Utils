@@ -4,6 +4,7 @@
 #include "../misc/alloc_check.h"
 #include "../threading/scoped_lock.h"
 #include "../misc/argument_check.h"
+#include "../memory/ref_count.h"
 
 struct c_utils_list {
 	/// The head node of the list.
@@ -16,16 +17,372 @@ struct c_utils_list {
 	volatile unsigned char is_sorted;
 	/// Ensures only one thread manipulates the items in the list, but multiple threads can read.
 	struct c_utils_scoped_lock *lock;
+	/// The configuration object used to retrieve callbacks and flags.
+	struct c_utils_list_conf conf;
 };
 
-/// Static logger for all linked lists do use.
-static struct c_utils_logger *logger = NULL;
 
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/list.log", "w", C_UTILS_LOG_LEVEL_WARNING);
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						List Add Helper Functions                                   //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
 
-/* Begin implementations of helper functions. */
 
-/* Helper functions used for adding nodes to the list. */
+static inline int add_as_head(struct c_utils_list *list, struct c_utils_node *node);
+
+static inline int add_as_tail(struct c_utils_list *list, struct c_utils_node *node);
+
+static inline int add_after(struct c_utils_list *list, struct c_utils_node *current_node, struct c_utils_node *new_node);
+
+static inline int add_as_only(struct c_utils_list *list, struct c_utils_node *node);
+
+static inline int add_before(struct c_utils_list *list, struct c_utils_node *current_node, struct c_utils_node *new_node);
+
+static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *node, c_utils_comparator_cb compare);
+
+static inline int add_unsorted(struct c_utils_list *list, struct c_utils_node *node);
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						List Removal Helper Functions                               //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+static inline int remove_only(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del);
+
+static inline int remove_head(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del);
+
+static inline int remove_tail(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del);
+
+static inline int remove_normal(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del);
+
+static inline int remove_node(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del);
+
+static void *remove_at(struct c_utils_list *list, unsigned int index, bool delete_item);
+
+static void remove_item(struct c_utils_list *list, void *item, bool delete_item);
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						List Misc Helper Functions                                  //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+static inline void insertion_sort_list(struct c_utils_list *list, c_utils_comparator_cb compare);
+
+static inline void swap_node_items(struct c_utils_node *node_one, struct c_utils_node *node_two);
+
+static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del);
+
+static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item);
+
+static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned int index);
+
+static void for_each_item(struct c_utils_list *list, void (*callback)(void *item));
+
+static void destroy_list(void *instance);
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						Iterator Implementation functions                           //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
+static unsigned int is_valid(struct c_utils_list *list, struct c_utils_position *pos);
+
+static inline void *get_item(struct c_utils_node *node);
+
+static void update_pos(struct c_utils_position *pos, struct c_utils_node *node);
+
+static void *head(void *instance, struct c_utils_position *pos);
+
+static void *tail(void *instance, struct c_utils_position *pos);
+
+static void *next(void *instance, struct c_utils_position *pos);
+
+static void *prev(void *instance, struct c_utils_position *pos);
+
+static bool append(void *instance, struct c_utils_position *pos, void *item);
+
+static bool prepend(void *instance, struct c_utils_position *pos, void *item);
+
+
+
+
+struct c_utils_list *c_utils_list_create() {
+	struct c_utils_list_conf conf = {};
+	return c_utils_list_create_conf(&conf);
+}
+
+struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
+	if(!conf)
+		return NULL;
+
+	struct c_utils_list *list;
+
+	if(conf->ref_counted)
+		list = c_utils_ref_create(sizeof(*list), destroy_list);
+	else
+		list = calloc(1, sizeof(*list));
+
+	if(!list)
+		return NULL;
+
+	list->head = list->tail = NULL;
+	list->size = 0;
+	list->is_sorted = 1;
+
+	if (conf->concurrent)
+		list->lock = c_utils_scoped_lock_rwlock(NULL, conf->logger);
+	else
+		list->lock = c_utils_scoped_lock_no_op();
+
+	if (!list->lock) {
+		C_UTILS_LOG_ERROR(conf->logger, "Was unable to create scoped_lock for rwlock!");
+		free(list);
+		return NULL;
+	}
+
+	list->conf = *conf;
+
+	return list;
+}
+
+struct c_utils_list *c_utils_list_from(void *array, size_t size) {
+	if(!array)
+		return NULL;
+
+	struct c_utils_list_conf conf = {};
+	return c_utils_list_from_conf(array, size, &conf);
+}
+
+struct c_utils_list *c_utils_list_from_conf(void *array, size_t size, struct c_utils_list_conf *conf) {
+	struct c_utils_list *list = c_utils_list_create_conf(conf);
+	if(list) {
+		int i = 0;
+		for (;i<size;i++)
+			c_utils_list_add(list, ((void **) array)[i]);
+	}
+
+	return list;
+}
+
+void c_utils_list_remove_all(struct c_utils_list *list) {
+	if(!list)
+		return;
+	
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock)
+		delete_all_nodes(list, NULL);
+}
+
+void c_utils_list_delete_all(struct c_utils_list *list) {
+	if(!list)
+		return;
+	
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock) 
+		delete_all_nodes(list, list->conf.del);
+}
+
+void c_utils_list_destroy(struct c_utils_list *list) {
+	if(!list)
+		return;
+
+	if(list->conf.ref_counted) {
+		c_utils_ref_dec(list);
+		return;
+	}
+
+	destroy_list(list);
+}
+
+bool c_utils_list_add(struct c_utils_list *list, void *item) {
+	if(!list)
+		return false;
+
+	if(!item) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "This list does not support NULL elements!");
+		return false;
+	}
+	
+	struct c_utils_node *node;
+	C_UTILS_ON_BAD_MALLOC(node, list->conf.logger, sizeof(*node))
+		return false;
+
+	node->item = item;
+	
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock) {
+		if (!list->size)
+			return add_as_only(list, node);
+
+		if (list->conf.cmp)
+			return add_sorted(list, node, list->conf.cmp);
+		else
+			return add_unsorted(list, node);
+	} // Release Writer Lock
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+void c_utils_list_remove(struct c_utils_list *list, void *item) {
+	if(!list)
+		return;
+
+	if(!item) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "This list does not support NULL elements!");
+		return;
+	}
+
+	remove_item(list, item, false);
+}
+
+void c_utils_list_delete(struct c_utils_list *list, void *item) {
+	if(!list)
+		return;
+
+	if(!item) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "This list does not support NULL elements!");
+		return;
+	}
+
+	remove_item(list, item, true);
+}
+
+void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index) {
+	if(!list)
+		return NULL;
+
+	return remove_at(list, index, false);
+}
+
+void c_utils_list_delete_at(struct c_utils_list *list, unsigned int index) {
+	if(!list)
+		return;
+
+	remove_at(list, index, true);
+}
+
+size_t c_utils_list_size(struct c_utils_list *list) {
+	return list->size;
+}
+
+bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *item)) {
+	if(!list)
+		return false;
+
+	if(!callback) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "A callback function is expected to be invoked on each item!");
+		return false;
+	}
+
+	// Acquire Reader Lock
+	C_UTILS_SCOPED_LOCK1(list->lock)
+		for_each_item(list, callback);
+		
+	return true;
+}
+
+bool c_utils_list_sort(struct c_utils_list *list) {
+	if(!list)
+		return false;
+
+	if(!list->conf.cmp) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "A comparator was not passed with initial configuration!");
+		return false;
+	}
+
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock)
+		insertion_sort_list(list, list->conf.cmp);
+
+	return true;
+}
+
+bool c_utils_list_contains(struct c_utils_list *list, void *item) {
+	if(!list)
+		return false;
+
+	if(!item) {
+		C_UTILS_LOG_ERROR(list->conf.logger, "This list does not support NULL elements!");
+		return false;
+	}
+
+	// Acquire Reader Lock
+	C_UTILS_SCOPED_LOCK1(list->lock)
+		return !!item_to_node(list, item);
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
+	if(!list)
+		return NULL;
+
+	// Acquire Reader Lock
+	C_UTILS_SCOPED_LOCK1(list->lock) {
+		struct c_utils_node *node = index_to_node(list, index);
+		return node ? node->item : NULL;
+	} // Release Reader Lock
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
+	if(!list)
+		return NULL;
+
+	// Acquire Reader Lock
+	C_UTILS_SCOPED_LOCK1(list->lock) {
+		void **array_of_items;
+		C_UTILS_ON_BAD_MALLOC(array_of_items, list->conf.logger, sizeof(void *) * list->size)
+			return NULL;
+
+		int index = 0;
+		for (struct c_utils_node *node = list->head; node; node = node->_double.next)
+			array_of_items[index++] = node->item;
+
+		*size = index;
+		return array_of_items;
+	} // Release Reader Lock
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
+	if(!list)
+		return NULL;
+
+	struct c_utils_iterator *it;
+	C_UTILS_ON_BAD_CALLOC(it, list->conf.logger, sizeof(*it))
+		return NULL;
+
+	it->handle = list;
+	it->head = head;
+	it->tail = tail;
+	it->next = next;
+	it->prev = prev;
+	it->append = append;
+	it->prepend = prepend;
+
+	// Increment reference count for iterator.
+	if(list->conf.ref_counted) {
+		c_utils_ref_inc(list);
+		it->conf.ref_counted = true;
+	}
+
+	return it;
+}
+
+
+
 
 static inline int add_as_head(struct c_utils_list *list, struct c_utils_node *node) {
 	node->_double.next = list->head;
@@ -78,7 +435,7 @@ static inline int add_before(struct c_utils_list *list, struct c_utils_node *cur
 
 static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *node, c_utils_comparator_cb compare) {
 	if (!list->is_sorted) 
-		c_utils_list_sort(list, compare);
+		c_utils_list_sort(list);
 
 	struct c_utils_node *current_node = NULL;
 	if (list->size == 1)
@@ -96,7 +453,7 @@ static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *nod
 		else if (!current_node->_double.next)
 			return add_as_tail(list, node);
 	}
-	C_UTILS_LOG_ERROR(logger, "Was unable to add an item, sortedly, to the list!\n");
+	C_UTILS_LOG_ERROR(list->conf.logger, "Was unable to add an item, sortedly, to the list!\n");
 	
 	return 0;
 }
@@ -173,6 +530,33 @@ static inline int remove_node(struct c_utils_list *list, struct c_utils_node *no
 		return remove_normal(list, node, del);
 }
 
+static void *remove_at(struct c_utils_list *list, unsigned int index, bool delete_item) {
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock) {
+		struct c_utils_node *temp_node = index_to_node(list, index);
+		
+		if (temp_node) {
+			void *item = temp_node->item;
+			remove_node(list, temp_node, delete_item ? list->conf.del : NULL);
+			return item;
+		} else {
+			C_UTILS_LOG_WARNING(list->conf.logger, "The node returned from Index_To_Node was NULL!\n");
+			return NULL;
+		}
+	} // Release Writer Lock
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static void remove_item(struct c_utils_list *list, void *item, bool delete_item) {
+	// Acquire Writer Lock
+	C_UTILS_SCOPED_LOCK0(list->lock) {
+		struct c_utils_node *node = item_to_node(list, item);
+
+		remove_node(list, node, delete_item ? list->conf.del : NULL);
+	} // Release Writer Lock
+}
+
 /* Helper functions for sorting the linked list */
 
 static inline void swap_node_items(struct c_utils_node *node_one, struct c_utils_node *node_two) {
@@ -197,29 +581,8 @@ static inline void insertion_sort_list(struct c_utils_list *list, c_utils_compar
 	}
 }
 
-/* Helper functions for general linked list operations. */
 
-static void print_list(struct c_utils_list *list, FILE *file, c_utils_to_string_cb to_string) {
-	struct c_utils_node *node = NULL;
-	char *all_items_in_list;
-	
-	asprintf(&all_items_in_list, "{ ");
-	for (node = list->head; node ; node = node->_double.next) {
-		char *item_as_string = to_string(node->item);
-		char *old_items_in_list = all_items_in_list;
-		asprintf(&all_items_in_list, "%s  %s,", all_items_in_list, item_as_string);
-		free(old_items_in_list);
-		free(item_as_string);
-	}
-	char *old_items_in_list = all_items_in_list;
-	asprintf(&all_items_in_list, "%s } Size: %zu\n", all_items_in_list, list->size);
-	
-	fprintf(file, "%s\n", all_items_in_list);
-	fflush(file);
-	
-	free(old_items_in_list);
-	free(all_items_in_list);
-}
+
 
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
 	while (list->head)
@@ -227,29 +590,6 @@ static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
 	
 	return 1;
 }
-
-#if 0
-static int node_exists(struct c_utils_list *list, struct c_utils_node *node) {
-	struct c_utils_node *temp_node = NULL;
-	for (temp_node = list->head; temp_node; temp_node = temp_node->_double.next) 
-		if (temp_node == node) 
-			return 1;
-	return 0;
-}
-
-static int node_to_index(struct c_utils_list *list, struct c_utils_node *node) {
-	int index = 0;
-	struct c_utils_node *temp_node = NULL;
-	for (temp_node = list->head; temp_node; temp_node = temp_node->_double.next) {
-		index++;
-		if (node == temp_node)
-			return index;
-	}
-	C_UTILS_LOG_WARNING(logger, "Node_To_Index failed as the node was not found!\n");
-	return 0;
-}
-#endif
-
 
 static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item) {
 	if (list->head && list->head->item == item)
@@ -266,6 +606,10 @@ static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item) 
 	return NULL;
 }
 
+
+
+
+
 static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned int index) {
 	if (index >= list->size)
 		return NULL;
@@ -280,14 +624,15 @@ static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned in
 	if (index > (list->size / 2)) {
 		int i = list->size-1;
 		node = list->tail;
-		while ((node = node->_double.prev) && --i != index) ;
-		C_UTILS_ASSERT(i == index, logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
+		while ((node = node->_double.prev) && --i != index)
+			;
+		C_UTILS_ASSERT(i == index, list->conf.logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 		return node;
 	} else {
 		int i = 0;
 		node = list->head;
 		while ((node = node->_double.next) && ++i != index);
-		C_UTILS_ASSERT(i == index, logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
+		C_UTILS_ASSERT(i == index, list->conf.logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 	}
 	
 	return node;
@@ -299,9 +644,15 @@ static void for_each_item(struct c_utils_list *list, void (*callback)(void *item
 		callback(node->item);
 }
 
-/* End implementations of helper functions. */
+static void destroy_list(void *instance) {
+	struct c_utils_list *list = instance;
+	delete_all_nodes(list, list->conf.del_items_on_free ? list->conf.del : NULL);
 
-/* Implementation of c_utils_iterator callbacks */
+	c_utils_scoped_lock_destroy(list->lock);
+	free(list);
+}
+
+
 
 static const int curr_valid = 1 << 0;
 static const int prev_valid = 1 << 1;
@@ -445,7 +796,7 @@ static bool append(void *instance, struct c_utils_position *pos, void *item) {
 	
 	struct c_utils_node *node = malloc(sizeof(*node));
 	if (!node) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(list->conf.logger, "malloc: '%s'", strerror(errno));
 		return false;
 	}
 	node->item = item;
@@ -495,11 +846,9 @@ static bool append(void *instance, struct c_utils_position *pos, void *item) {
 static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
 	struct c_utils_list *list = instance;
 	
-	struct c_utils_node *node = malloc(sizeof(*node));
-	if (!node) {
-		C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
+	struct c_utils_node *node;
+	C_UTILS_ON_BAD_MALLOC(node, list->conf.logger, sizeof(*node))
 		return false;
-	}
 	node->item = item;
 	
 	// Acquire Writer Lock
@@ -542,221 +891,4 @@ static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
 	} // Release Writer Lock
 
 	C_UTILS_UNACCESSIBLE;
-}
-
-/* Linked List Creation and Deletion functions */
-
-struct c_utils_list *c_utils_list_create(bool synchronized) {
-	struct c_utils_list *list;
-	C_UTILS_ON_BAD_CALLOC(list, logger, sizeof(*list))
-		return NULL;
-
-	list->head = list->tail = NULL;
-	list->size = 0;
-	list->is_sorted = 1;
-
-	if (synchronized)
-		list->lock = c_utils_scoped_lock_rwlock(NULL, logger);
-	else
-		list->lock = c_utils_scoped_lock_no_op();
-
-	if (!list->lock) {
-		C_UTILS_LOG_ERROR(logger, "Was unable to create scoped_lock for rwlock!");
-		free(list);
-		return NULL;
-	}
-
-	return list;
-}
-
-struct c_utils_list *c_utils_list_from(void **array, size_t size, c_utils_comparator_cb compare, bool synchronized) {
-	C_UTILS_ARG_CHECK(logger, NULL, array);
-	
-	struct c_utils_list *list = c_utils_list_create(synchronized);
-	if(list) {
-		int i = 0;
-		for (;i<size;i++)
-			c_utils_list_add(list, array[i], compare);
-	}
-
-	return list;
-}
-
-bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false , list);
-	
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) 
-		delete_all_nodes(list, del);
-
-	return true;
-}
-
-bool c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false , list);
-
-	c_utils_list_clear(list, del);
-
-	c_utils_scoped_lock_destroy(list->lock);
-	free(list);
-
-	return true;
-}
-
-/* Linked List adding functions */
-
-bool c_utils_list_add(struct c_utils_list *list, void *item, c_utils_comparator_cb compare) {
-	C_UTILS_ARG_CHECK(logger, false, list, item);
-	
-	struct c_utils_node *node;
-	C_UTILS_ON_BAD_MALLOC(node, logger, sizeof(*node))
-		return false;
-
-	node->item = item;
-	
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
-		if (!list->size)
-			return add_as_only(list, node);
-
-		if (compare)
-			return add_sorted(list, node, compare);
-		else
-			return add_unsorted(list, node);
-	} // Release Writer Lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-/* Linked List removal functions */
-
-bool c_utils_list_remove(struct c_utils_list *list, void *item, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false, list, item);
-
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
-		struct c_utils_node *node = item_to_node(list, item);
-
-		return node ? remove_node(list, node, del) : false;
-	} // Release Writer Lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, NULL, list);
-
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
-		struct c_utils_node *temp_node = index_to_node(list, index);
-		
-		if (temp_node) {
-			void *item = temp_node->item;
-			remove_node(list, temp_node, del);
-			return item;
-		} else {
-			C_UTILS_LOG_WARNING(logger, "The node returned from Index_To_Node was NULL!\n");
-			return NULL;
-		}
-	} // Release Writer Lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-/* Linked List miscallaneous functions */
-
-size_t c_utils_list_size(struct c_utils_list *list) {
-	return list->size;
-}
-
-bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *item)) {
-	C_UTILS_ARG_CHECK(logger, false, list, callback);
-
-	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock)
-		for_each_item(list, callback);
-		
-	return true;
-}
-
-bool c_utils_list_sort(struct c_utils_list *list, c_utils_comparator_cb compare) {
-	C_UTILS_ARG_CHECK(logger, false, list, compare);
-
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock)
-		insertion_sort_list(list, compare);
-
-	return true;
-}
-
-bool c_utils_list_contains(struct c_utils_list *list, void *item) {
-	C_UTILS_ARG_CHECK(logger, false, list, item);
-
-	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock)
-		return !!item_to_node(list, item);
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string_cb to_string) {
-	C_UTILS_ARG_CHECK(logger, false, list, file, to_string);
-
-	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock)
-		print_list(list, file, to_string);
-
-	return true;
-}
-
-void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
-	C_UTILS_ARG_CHECK(logger, NULL, list);
-
-	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
-		struct c_utils_node *node = index_to_node(list, index);
-		return node ? node->item : NULL;
-	} // Release Reader Lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
-	C_UTILS_ARG_CHECK(logger, NULL, list);
-
-	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
-		void **array_of_items = malloc(sizeof(void *) * list->size);
-		if (!array_of_items) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			return NULL;
-		}
-
-		struct c_utils_node *node = NULL;
-		int index = 0;
-		for (node = list->head; node; node = node->_double.next)
-			array_of_items[index++] = node->item;
-
-		*size = index;
-		return array_of_items;
-	} // Release Reader Lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-
-struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
-	struct c_utils_iterator *it;
-	C_UTILS_ON_BAD_CALLOC(it, logger, sizeof(*it))
-		return NULL;
-
-	it->handle = list;
-	it->head = head;
-	it->tail = tail;
-	it->next = next;
-	it->prev = prev;
-	it->append = append;
-	it->prepend = prepend;
-	
-	return it;
 }

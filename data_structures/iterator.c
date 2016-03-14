@@ -1,7 +1,8 @@
 #include "iterator.h"
+#include "../memory/ref_count.h"
 
 void c_utils_auto_destroy_iterator(struct c_utils_iterator **it){
-	free(*it);
+	c_utils_iterator_destroy(*it);
 }
 
 void *c_utils_iterator_head(struct c_utils_iterator *it){
@@ -42,4 +43,11 @@ bool c_utils_iterator_for_each(struct c_utils_iterator *it, c_utils_general_cb c
 bool c_utils_iterator_remove(struct c_utils_iterator *it, c_utils_delete_cb del){
 	if (!it || !it->del) return NULL;
 	return it->del(it->handle, &it->pos, del);
+}
+
+void c_utils_iterator_destroy(struct c_utils_iterator *it) {
+	if(it->conf.ref_counted)
+		c_utils_ref_dec(it->handle);
+
+	free(it);
 }

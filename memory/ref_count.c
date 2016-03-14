@@ -33,7 +33,7 @@ void *c_utils_ref_create(size_t size, c_utils_destructor dtor) {
 	// Points to the end of the struct, the data allocated after ref_count
 	rc->ptr = rc + 1;
 
-	return rc;
+	return rc->ptr;
 }
 
 void c_utils_ref_inc(void *ptr) {
@@ -67,7 +67,7 @@ void c_utils_ref_dec(void *ptr) {
 
 	int refs;
 	// If the count is already 0 (since it fetches old value first) we fail assertion.
-	assert((refs = atomic_fetch_sub(&rc->counter, 1)));
+	assert((refs = atomic_fetch_sub(&rc->counter, 1)) > -1);
 
 	/*
 		Note that if a thread attempts to increment after count is 0, this race condition invoked undefined behavior.

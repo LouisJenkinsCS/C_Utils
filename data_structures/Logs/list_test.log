@@ -1,41 +1,41 @@
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:53) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:54) main(): 
 "Testing adding elements unsorted...
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:69) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:70) main(): 
 "Comparing elements of both array and list...
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:75) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:76) main(): 
 "Testing removal of item from list.
 "
-03:10:53 PM [VERBOSE](./data_structures/tests/list_test.c:85) main(): 
+12:30:42 AM [VERBOSE](./data_structures/tests/list_test.c:86) main(): 
 "Printing all elements inside of list unsorted!
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 0, 35, 106, 57, 76, 110, 462, 602, 312, 432, 160, 165, 1044, 156, 518, 960, 624, 1020, 936, 1368, 720, 1323, 1496, 989, 504, 2100, 702, 621, 756, 2465, 2940, 1271, 1024, 1551, 1972, 1820, 3024, 703, 1824, 1560, 1240, 2091, 420, 1333, 2244, 2925, 3634, 47, 1296, 2842, 5049, 2548, 1007, 108, 5060, 168, 3306, 290, 295, 4260, 5490, 2170, 3087, 704, 845, 2442, 1005, 5508, 5796, 1680, 4828, 1080, 2628, 1332, 5850, 532, 4004, 7488, 0, 5520, 6642, 4756, 2407, 5544, 935, 3698, 7221, 1408, 5429, 2790, 7826, 5980, 465, 752, 7980, 5664, 6208, 3528, 3960 } "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:88) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
+" { 0, 5, 26, 63, 124, 405, 492, 315, 344, 27, 580, 891, 228, 819, 476, 1410, 1344, 459, 594, 1026, 480, 1281, 22, 1288, 1128, 2075, 1664, 2376, 1120, 1073, 2910, 1364, 2176, 2541, 1394, 1785, 288, 1295, 1938, 1365, 1520, 3854, 3402, 3096, 1320, 3780, 3082, 1081, 672, 1617, 4029, 3484, 4505, 4374, 440, 1568, 5301, 3074, 0, 5220, 4026, 4402, 5607, 4928, 3120, 4158, 2010, 2992, 3381, 4200, 5609, 6696, 4380, 2220, 3750, 2432, 3388, 702, 4977, 7920, 7938, 1148, 6723, 2688, 4760, 7396, 3654, 968, 3738, 6480, 8463, 552, 2976, 7614, 7410, 3744, 6693, 588, 2772 } "
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:89) main(): 
 "Testing removal of elements at requested index...
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:97) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:98) main(): 
 "Creating a list from the array and sorting!
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:102) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:106) main(): 
 "Printing all elements inside of list_two in descending order!
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 7980, 7826, 7488, 7221, 6642, 6208, 5980, 5850, 5796, 5664, 5544, 5520, 5508, 5490, 5429, 5060, 5049, 4828, 4756, 4450, 4260, 4004, 3960, 3698, 3634, 3528, 3306, 3087, 3024, 2940, 2925, 2842, 2790, 2628, 2548, 2465, 2442, 2407, 2244, 2170, 2100, 2091, 1972, 1824, 1820, 1680, 1560, 1551, 1496, 1408, 1368, 1333, 1332, 1323, 1296, 1271, 1240, 1080, 1044, 1024, 1020, 1007, 1005, 989, 960, 936, 935, 845, 756, 752, 720, 704, 703, 702, 624, 621, 602, 532, 518, 504, 465, 462, 432, 420, 312, 295, 290, 168, 165, 160, 156, 110, 108, 106, 76, 57, 47, 35, 0, 0 } "
-03:10:53 PM [VERBOSE](./data_structures/tests/list_test.c:123) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
+" { 0, 0, 5, 22, 26, 27, 63, 124, 200, 228, 288, 315, 344, 405, 440, 459, 476, 480, 492, 552, 580, 588, 594, 672, 702, 819, 891, 968, 1026, 1073, 1081, 1120, 1128, 1148, 1281, 1288, 1295, 1320, 1344, 1364, 1365, 1394, 1410, 1520, 1568, 1617, 1664, 1785, 1938, 2010, 2075, 2176, 2220, 2376, 2432, 2541, 2688, 2772, 2910, 2976, 2992, 3074, 3082, 3096, 3120, 3381, 3388, 3402, 3484, 3654, 3738, 3744, 3750, 3780, 3854, 4026, 4029, 4158, 4200, 4374, 4380, 4402, 4505, 4760, 4928, 4977, 5220, 5301, 5607, 5609, 6480, 6693, 6696, 6723, 7396, 7410, 7614, 7920, 7938, 8463 } "
+12:30:42 AM [VERBOSE](./data_structures/tests/list_test.c:127) main(): 
 "Printing all elements inside of list_two in ascending order!
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 0, 0, 35, 47, 57, 76, 106, 108, 110, 156, 160, 165, 168, 290, 295, 312, 420, 432, 462, 465, 504, 518, 532, 602, 621, 624, 702, 703, 704, 720, 752, 756, 845, 935, 936, 960, 989, 1005, 1007, 1020, 1024, 1044, 1080, 1240, 1271, 1296, 1323, 1332, 1333, 1368, 1408, 1496, 1551, 1560, 1680, 1820, 1824, 1972, 2091, 2100, 2170, 2244, 2407, 2442, 2465, 2548, 2628, 2790, 2842, 2925, 2940, 3024, 3087, 3306, 3528, 3634, 3698, 3960, 4004, 4260, 4450, 4756, 4828, 5049, 5060, 5429, 5490, 5508, 5520, 5544, 5664, 5796, 5850, 5980, 6208, 6642, 7221, 7488, 7826, 7980 } "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:126) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
+" { 0, 0, 5, 22, 26, 27, 63, 124, 200, 228, 288, 315, 344, 405, 440, 459, 476, 480, 492, 552, 580, 588, 594, 672, 702, 819, 891, 968, 1026, 1073, 1081, 1120, 1128, 1148, 1281, 1288, 1295, 1320, 1344, 1364, 1365, 1394, 1410, 1520, 1568, 1617, 1664, 1785, 1938, 2010, 2075, 2176, 2220, 2376, 2432, 2541, 2688, 2772, 2910, 2976, 2992, 3074, 3082, 3096, 3120, 3381, 3388, 3402, 3484, 3654, 3738, 3744, 3750, 3780, 3854, 4026, 4029, 4158, 4200, 4374, 4380, 4402, 4505, 4760, 4928, 4977, 5220, 5301, 5607, 5609, 6480, 6693, 6696, 6723, 7396, 7410, 7614, 7920, 7938, 8463 } "
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:130) main(): 
 "Testing adding elements before and after the current elements!
 "
-03:10:53 PM [VERBOSE](./data_structures/tests/list_test.c:131) main(): 
+12:30:42 AM [VERBOSE](./data_structures/tests/list_test.c:135) main(): 
 "Printing all elements inside of list_two after inserting bad elements!
 "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
 "  } "
-03:10:53 PM [INFO](./data_structures/tests/list_test.c:147) main(): 
+12:30:42 AM [INFO](./data_structures/tests/list_test.c:151) main(): 
 "All Tests Passed!
 "

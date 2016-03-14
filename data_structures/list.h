@@ -2,10 +2,12 @@
 #define C_UTILS_LIST_H
 
 #include <pthread.h>
-#include "iterator.h"
 #include <stdbool.h>
 #include <stdio.h>
+
+#include "iterator.h"
 #include "helpers.h"
+#include "../io/logger.h"
 
 struct c_utils_list;
 
@@ -14,14 +16,14 @@ struct c_utils_list_conf {
 	bool concurrent;
 	/// Determines if this list should be reference counted.
 	bool ref_counted;
+	/// Determines if the list's items should be del'd on destroy
+	bool del_items_on_free;
 	/// Used to sort the list of items when mutated.
 	c_utils_comparator_cb cmp;
 	/// Used to delete the item in the list. Defaults to free()
 	c_utils_delete_cb del;
 	/// Used to log any errors or trace information to.
-	#ifdef C_UTILS_LOGGER_H
 	struct c_utils_logger *logger;
-	#endif
 };
 
 #define C_UTILS_LIST_FOR_EACH(tmp_var, list) for(C_UTILS_AUTO_ITERATOR auto_it = c_utils_list_iterator(list); (tmp_var = c_utils_iterator_next(auto_it));)
@@ -42,21 +44,25 @@ typedef struct c_utils_list_conf list_conf_t;
 	Functions
 */
 #define list_create(...) c_utils_list_create(__VA_ARGS__)
+#define list_create_conf(...) c_utils_list_create_conf(__VA_ARGS__)
 #define list_from(...) c_utils_list_from(__VA_ARGS__)
+#define list_from_conf(...) c_utils_list_from_conf(__VA_ARGS__)
 #define list_get(...) c_utils_list_get(__VA_ARGS__)
 #define list_sort(...) c_utils_list_sort(__VA_ARGS__)
 #define list_iterator(...) c_utils_list_iterator(__VA_ARGS__)
 #define list_add(...) c_utils_list_add(__VA_ARGS__)
 #define list_contains(...) c_utils_list_contains(__VA_ARGS__)
-#define list_clear(...) c_utils_list_clear(__VA_ARGS__)
 #define list_size(...) c_utils_list_size(__VA_ARGS__)
 #define list_destroy(...) c_utils_list_destroy(__VA_ARGS__)
 #define list_from(...) c_utils_list_from(__VA_ARGS__)
 #define list_remove(...) c_utils_list_remove(__VA_ARGS__)
 #define list_remove_at(...) c_utils_list_remove_at(__VA_ARGS__)
+#define list_remove_all(...) c_utils_list_remove_all(__VA_ARGS__)
+#define list_delete(...) c_utils_list_delete(__VA_ARGS__)
+#define list_delete_at(...) c_utils_list_delete_at(__VA_ARGS__)
+#define list_delete_all(...) c_utils_list_delete_all(__VA_ARGS__)
 #define list_as_array(...) c_utils_list_as_array(__VA_ARGS__)
 #define list_for_each(...) c_utils_list_for_each(__VA_ARGS__)
-#define list_print(...) c_utils_list_print(__VA_ARGS__)
 #endif
 
 /* End struct c_utils_list function pointers and callbacks. */
@@ -67,7 +73,7 @@ typedef struct c_utils_list_conf list_conf_t;
  * Allocates and initializes a new empty Linked List.
  * @return Empty c_utils_list or NULL if out of memory error.
  */
-struct c_utils_list *c_utils_list_create(bool synchronized);
+struct c_utils_list *c_utils_list_create();
 
 struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf);
 
@@ -81,7 +87,7 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf);
  * @param compare Used to add sorted, if not NULL, otherwise added unsorted.
  * @return An initialized c_utils_list with all elements, or NULL if out of memory error.
  */
-struct c_utils_list *c_utils_list_from(void **array, size_t size, c_utils_comparator_cb compare, bool synchronized);
+struct c_utils_list *c_utils_list_from(void *array, size_t size);
 
 struct c_utils_list *c_utils_list_from_conf(void *array, size_t size, struct c_utils_list_conf *conf);
 
@@ -95,15 +101,6 @@ struct c_utils_list *c_utils_list_from_conf(void *array, size_t size, struct c_u
 void *c_utils_list_get(struct c_utils_list *list, unsigned int index);
 
 /**
- * Sort the Linked List relative to the passed comparator. If no comparator is passed,
- * NULL is returned.
- * @param list The list to sort.
- * @param compare The comparator used to sort the list.
- * @return 1 on success, 0 if list or compare is NULL.
- */
-bool c_utils_list_sort(struct c_utils_list *list, c_utils_comparator_cb compare);
-
-/**
  * Removes the item from the list if it is found, along with the node associated with it.
  * If delete_item is NULL, the item removed will not be freed.
  * @param list The list to remove the element from.
@@ -111,11 +108,11 @@ bool c_utils_list_sort(struct c_utils_list *list, c_utils_comparator_cb compare)
  * @param delete_item Callback used to free the item.
  * @return 1 on success, 0 if list is NULL, or if the item is not found in the list.
  */
-bool c_utils_list_remove(struct c_utils_list *list, void *item, c_utils_delete_cb delete_item);
+void c_utils_list_remove(struct c_utils_list *list, void *item);
 
-bool c_utils_list_delete(struct c_utils_list *list, void *item);
+void c_utils_list_delete(struct c_utils_list *list, void *item);
 
-bool c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
+void c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
 
 /**
  * Removes the item at the given index if it is in bounds. If delete_item is NULL, 
@@ -125,7 +122,7 @@ bool c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
  * @param delete_item Callback used to free the item.
  * @return The item at the given index, whether or not delete_item is passed, or NULL list is NULL or out of bounds.
  */
-void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_utils_delete_cb delete_item);
+void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index);
 
 /**
  * Creates and initializes an iterator for the linked list. The following operations supported are below:
@@ -147,6 +144,8 @@ void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index, c_ut
  */
 struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list);
 
+bool c_utils_list_sort(struct c_utils_list *list);
+
 /**
  * Adds the item to the list, in sorted order if the callback is not NULL, or at the tail if it is.
  * @param list List to add the item to.
@@ -154,7 +153,7 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list);
  * @param compare Comparator to add the item sorted.
  * @return 1 upon success, 0 if the list is NULL.
  */
-bool c_utils_list_add(struct c_utils_list *list, void *item, c_utils_comparator_cb compare);
+bool c_utils_list_add(struct c_utils_list *list, void *item);
 
 /**
  * Returns an array of items inside of the Linked List, setting the array_size parameter
@@ -174,16 +173,6 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *array_size);
 bool c_utils_list_for_each(struct c_utils_list *list, c_utils_general_cb callback);
 
 /**
- * Prints all items in a formatted, bracketed and comma separated way based on the
- * to_string callback passed. The items in the list will be represented as such:
- * { item_one, item_two, item_three, ... , item_n } size: n
- * @param list List to print all elements from.
- * @param file The file to print to, I.E stdio or an actual FILE.
- * @param to_string Callback to obtain a string representation of each item in the list.
- */
-bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string_cb to_string);
-
-/**
  * Returns whether or not the list contains the given item.
  * @param list List to search.
  * @param item Item to search for.
@@ -191,7 +180,7 @@ bool c_utils_list_print(struct c_utils_list *list, FILE *file, c_utils_to_string
  */
 bool c_utils_list_contains(struct c_utils_list *list, void *item);
 
-bool c_utils_list_clear(struct c_utils_list *list, c_utils_delete_cb del);
+bool c_utils_list_clear(struct c_utils_list *list);
 
 void c_utils_list_remove_all(struct c_utils_list *list);
 
@@ -208,6 +197,6 @@ size_t c_utils_list_size(struct c_utils_list *list);
  * @param list List to destroy.
  * @param delete_item Callback used on each item.
  */
-bool c_utils_list_destroy(struct c_utils_list *list, c_utils_delete_cb del);
+void c_utils_list_destroy(struct c_utils_list *list);
 
 #endif /* C_UTILS_LIST_H */

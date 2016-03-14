@@ -47,15 +47,16 @@ static void print_all(list_t *list) {
 int main(void) {
 	srand(time(NULL));
 
+	list_conf_t conf = { .logger = logger, .cmp = inverse_compare_ints, .ref_counted = true, .del = free};
 	void **array = malloc(sizeof(int *) * runs);
-	list_t *list = list_create(true);
+	list_t *list = list_create(&conf);
 
 	LOG_INFO(logger, "Testing adding elements unsorted...\n");
 	int i = 0;
 	for (; i < runs; i++) {
 		array[i] = malloc(sizeof(int));
 		*(int *)array[i] = i * (rand() % runs);
-		list_add(list, array[i], NULL);
+		list_add(list, array[i]);
 	}
 
 	// Testing that insertion worked. List should be an exact copy of array.
@@ -73,7 +74,7 @@ int main(void) {
 			logger, "Iterator failed on comparison of elements!");
 	
 	LOG_INFO(logger, "Testing removal of item from list.\n");
-	ASSERT(list_remove(list, array[middle], NULL), logger, "Unable to remove item from the list!");
+	list_remove(list, array[middle]);
 	
 	// We test both the iterator and list by seeing if we still find the removed element in list.
 	int *item = NULL;
@@ -87,7 +88,7 @@ int main(void) {
 
 	LOG_INFO(logger, "Testing removal of elements at requested index...\n");
 	for (i = 0; i<(runs-1);i++) {
-		int *result = list_remove_at(list, 0, NULL);
+		int *result = list_remove_at(list, 0);
 		ASSERT(result, logger, "Was unable to remove an element!");
 	}
 
@@ -95,8 +96,11 @@ int main(void) {
 	ASSERT(list_size(list) == 0, logger, "List's size was not properly managed!");
 
 	LOG_INFO(logger, "Creating a list from the array and sorting!\n");
-	list_t *list_two = list_from(array, runs, inverse_compare_ints, false);
-	free(it);
+	conf.del_items_on_free = true;
+	conf.cmp = compare_ints;
+	list_t *list_two = list_from_conf(array, runs, &conf);
+
+	iterator_destroy(it);
 	it = list_iterator(list_two);
 	
 	LOG_INFO(logger, "Printing all elements inside of list_two in descending order!\n");
@@ -110,7 +114,7 @@ int main(void) {
 		ASSERT(*(int *)item == *(int *)sorted_array[i], logger, "Array returned is inaccurate to list!");
 	}
 
-	list_sort(list_two, compare_ints);
+	list_sort(list_two);
 	for (i = 0;i < runs; i += 2) {
 		void *result_one = iterator_next(it);
 		void *result_two = iterator_next(it);
@@ -138,9 +142,9 @@ int main(void) {
 	void *item_two = iterator_next(it);
 	ASSERT(!item_one && !item_two, logger, "Was unable to add after or before!");
 
-	list_destroy(list, NULL);
-	list_destroy(list_two, free);
-	free(it);
+	list_destroy(list);
+	list_destroy(list_two);
+	iterator_destroy(it);
 	free(array);
 	free(sorted_array);
 
