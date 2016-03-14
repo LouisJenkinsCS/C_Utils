@@ -6,12 +6,12 @@
 #include <stdatomic.h>
 
 struct c_utils_ref_count {
-	// Destructor called when ref_count is 0
-	c_utils_destructor dtor;
-	// Atomic reference counter
-	_Atomic int counter;
-	// Pointer to allocated data region outside of this struct
-	void *ptr;
+	/// Atomic reference counter
+	_Atomic int refs;
+	/// Pointer to allocated data region outside of this struct
+	void *data;
+	/// Configuration
+	struct c_utils_ref_count_conf conf;
 };
 
 /*
@@ -22,18 +22,30 @@ static struct c_utils_ref_count *get_ref_count_from(void *ptr) {
 	return ptr - sizeof(struct c_utils_ref_count);
 }
 
-void *c_utils_ref_create(size_t size, c_utils_destructor dtor) {
+void *c_utils_ref_create(size_t size) {
+	struct c_utils_ref_count_conf conf = {};
+	return c_utils_ref_create_conf(size, &conf);
+}
+
+void *c_utils_ref_create_conf(size_t size, struct c_utils_ref_count_conf *conf) {
+	if(!conf)
+		return NULL;
+	
 	// Note we allocate more than just enough for the ref_count.
 	struct c_utils_ref_count *rc = malloc(sizeof(*rc) + size);
 	if(!rc)
 		return NULL;
 
-	rc->dtor = dtor;
-	rc->counter = ATOMIC_VAR_INIT(0);
-	// Points to the end of the struct, the data allocated after ref_count
-	rc->ptr = rc + 1;
+	rc->conf = *conf;
+	if(!rc->conf.destructor)
+		rc->conf.destructor = free;
 
-	return rc->ptr;
+	rc->refs = ATOMIC_VAR_INIT(conf->initial_ref_count);
+	// Points to the end of the struct, the data allocated after ref_count
+	rc->data = rc + 1;
+
+	C_UTILS_LOG_TRACE(conf->logger, "An object of size %zu was allocated with an initial reference count of %u", size, conf->initial_ref_count);
+	return rc->data;
 }
 
 void c_utils_ref_inc(void *ptr) {
@@ -45,7 +57,7 @@ void c_utils_ref_inc(void *ptr) {
 		pointer as was returned originally, there is a possibility of a segmentation
 		fault. That is true for anything at all, however by making this check, we
 		can avoid undefined behavior almost entirely by checking if at the offset
-		of ptr in the region of data is the same as ptr, it is safe to continue.
+		of data in ref_count is the same as ptr, it is safe to continue.
 
 		However, if they are NOT equal, then we fail the assertion. The significance of this is
 		that if the ptr is still inside this heap, then we have a high chance of avoing data corruption.
@@ -54,28 +66,32 @@ void c_utils_ref_inc(void *ptr) {
 		heap... best case scenario, we fail assertion and we know exactly why.
 	*/
 	struct c_utils_ref_count *rc = get_ref_count_from(ptr);
-	assert(rc->ptr == ptr);
+	assert(rc->data == ptr);
 
-	atomic_fetch_add(&rc->counter, 1);
+	int refs = atomic_fetch_add(&rc->refs, 1);
+
+	C_UTILS_LOG_TRACE(rc->conf.logger, "Reference count was incremented from %d to %d", refs, refs + 1);
 }
 
 void c_utils_ref_dec(void *ptr) {
 	assert(ptr);
 
 	struct c_utils_ref_count *rc = get_ref_count_from(ptr);
-	assert(rc->ptr == ptr);
+	assert(rc->data == ptr);
 
 	int refs;
 	// If the count is already 0 (since it fetches old value first) we fail assertion.
-	assert((refs = atomic_fetch_sub(&rc->counter, 1)) > -1);
+	assert((refs = atomic_fetch_sub(&rc->refs, 1)) > -1);
 
+	C_UTILS_LOG_TRACE(rc->conf.logger, "Reference count was decremented from %d to %d", refs, refs - 1);
 	/*
 		Note that if a thread attempts to increment after count is 0, this race condition invoked undefined behavior.
 		Hence it is up to the caller. The assertions just make finding the errors easier, the edge cases where something
 		increments the count after we succeed the assertion and enter the if condition, is a result of the failure on the caller.
 	*/
 	if(!refs) {
-		rc->dtor(ptr);
+		C_UTILS_LOG_TRACE(rc->conf.logger, "Reference count reached below 0, destroying object...");
+		rc->conf.destructor(ptr);
 		free(rc);
 	}
 }

@@ -144,8 +144,6 @@ void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index);
  */
 struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list);
 
-bool c_utils_list_sort(struct c_utils_list *list);
-
 /**
  * Adds the item to the list, in sorted order if the callback is not NULL, or at the tail if it is.
  * @param list List to add the item to.
@@ -189,13 +187,10 @@ void c_utils_list_delete_all(struct c_utils_list *list);
 size_t c_utils_list_size(struct c_utils_list *list);
 
 /**
- * Destroys the passed linked list, freeing and destroying any of it's members, as well
- * as freeing the list pointer. Note that operations on a linked list should cease before
- * calling this function, as it destroys any and all locks, which may cause deadlocks
- * on threads trying to operate on it. If the delete_item callback is not NULL, or it will be
- * called on every item during deletion, ideally so free can be passed.
+ * Destroys the linked list, invoking the list's del callback on each item
+ * if it is both flagged for (del_items_on_free) and present (del), which are
+ * set in the create_conf constructor.
  * @param list List to destroy.
- * @param delete_item Callback used on each item.
  */
 void c_utils_list_destroy(struct c_utils_list *list);
 

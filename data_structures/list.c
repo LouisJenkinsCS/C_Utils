@@ -13,8 +13,6 @@ struct c_utils_list {
 	struct c_utils_node *tail;
 	/// The current size of the linked list.
 	volatile size_t size;
-	/// Determines whether the list is sorted.
-	volatile unsigned char is_sorted;
 	/// Ensures only one thread manipulates the items in the list, but multiple threads can read.
 	struct c_utils_scoped_lock *lock;
 	/// The configuration object used to retrieve callbacks and flags.
@@ -73,10 +71,6 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 //////////////////////////////////////////////////////////////////////////////////////
 
 
-static inline void insertion_sort_list(struct c_utils_list *list, c_utils_comparator_cb compare);
-
-static inline void swap_node_items(struct c_utils_node *node_one, struct c_utils_node *node_two);
-
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del);
 
 static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item);
@@ -126,17 +120,19 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
 
 	struct c_utils_list *list;
 
-	if(conf->ref_counted)
-		list = c_utils_ref_create(sizeof(*list), destroy_list);
-	else
+	if(conf->ref_counted) {
+		struct c_utils_ref_count_conf rc_conf = { .logger = conf->logger, .destructor = destroy_list };
+		list = c_utils_ref_create_conf(sizeof(*list), &rc_conf);
+	}
+	else {
 		list = calloc(1, sizeof(*list));
+	}
 
 	if(!list)
 		return NULL;
 
 	list->head = list->tail = NULL;
 	list->size = 0;
-	list->is_sorted = 1;
 
 	if (conf->concurrent)
 		list->lock = c_utils_scoped_lock_rwlock(NULL, conf->logger);
@@ -290,22 +286,6 @@ bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *ite
 	return true;
 }
 
-bool c_utils_list_sort(struct c_utils_list *list) {
-	if(!list)
-		return false;
-
-	if(!list->conf.cmp) {
-		C_UTILS_LOG_ERROR(list->conf.logger, "A comparator was not passed with initial configuration!");
-		return false;
-	}
-
-	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock)
-		insertion_sort_list(list, list->conf.cmp);
-
-	return true;
-}
-
 bool c_utils_list_contains(struct c_utils_list *list, void *item) {
 	if(!list)
 		return false;
@@ -434,9 +414,6 @@ static inline int add_before(struct c_utils_list *list, struct c_utils_node *cur
 }
 
 static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *node, c_utils_comparator_cb compare) {
-	if (!list->is_sorted) 
-		c_utils_list_sort(list);
-
 	struct c_utils_node *current_node = NULL;
 	if (list->size == 1)
 		return compare(node->item, list->head->item) < 0 ? add_as_head(list, node) : add_as_tail(list, node);
@@ -463,7 +440,6 @@ static inline int add_unsorted(struct c_utils_list *list, struct c_utils_node *n
 	node->_double.prev = list->tail;
 	list->tail->_double.next = node;
 	list->tail = node;
-	list->is_sorted = 0;
 	list->size++;
 
 	return 1;
@@ -556,31 +532,6 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 		remove_node(list, node, delete_item ? list->conf.del : NULL);
 	} // Release Writer Lock
 }
-
-/* Helper functions for sorting the linked list */
-
-static inline void swap_node_items(struct c_utils_node *node_one, struct c_utils_node *node_two) {
-	void *item = node_one->item;
-	node_one->item = node_two->item;
-	node_two->item = item;
-}
-
-static inline void insertion_sort_list(struct c_utils_list *list, c_utils_comparator_cb compare) {
-	struct c_utils_node *node = NULL, *sub_node = NULL;
-	for (node = list->head; node; node = node->_double.next) {
-		void *item = node->item;
-		
-		sub_node = node->_double.prev;
-		while (sub_node && compare(sub_node->item, item) > 0) {
-			swap_node_items(sub_node->_double.next, sub_node);
-			sub_node = sub_node->_double.prev;
-		}
-		
-		if (sub_node)
-			sub_node->_double.next->item = item;
-	}
-}
-
 
 
 

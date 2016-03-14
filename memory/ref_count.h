@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "../io/logger.h"
+
 /*
 	ref_count is a reference counting wrapper for malloc. It utilizes advanced pointer arithmetic
 	to allow reference counting without needing to alter current data structures. It should be
@@ -21,18 +23,35 @@
 */
 struct c_utils_ref_count;
 
+struct c_utils_ref_count_conf {
+	/// The initial reference count.
+	unsigned int initial_ref_count;
+	/// Destructor called on once ref_count is below 0.
+	void (*destructor)(void *);
+	/// Trace logging for reference count changes and destruction.
+	struct c_utils_logger *logger;
+};
+
 typedef void (*c_utils_destructor)(void *);
 
 #ifdef NO_C_UTILS_PREFIX
 /*
+	Typedefs
+*/
+typedef struct c_utils_ref_count_conf ref_count_conf_t;
+
+/*
 	Functions
 */
 #define ref_create(...) c_utils_ref_create(__VA_ARGS__)
+#define ref_create_conf(...) c_utils_ref_create_conf(__VA_ARGS__)
 #define ref_inc(...) c_utils_ref_inc(__VA_ARGS__)
 #define ref_dec(...) c_utils_ref_dec(__VA_ARGS__)
 #endif
 
-void *c_utils_ref_create(size_t size, c_utils_destructor dtor);
+void *c_utils_ref_create(size_t size);
+
+void *c_utils_ref_create_conf(size_t size, struct c_utils_ref_count_conf *conf);
 
 void c_utils_ref_inc(void *data);
 
