@@ -9,6 +9,30 @@
 #include "helpers.h"
 #include "../io/logger.h"
 
+/*
+	A double linked-list implementation, which can used as a generic data structure. 
+
+	The linked list allows custom configuration through list_conf_t objects, which act
+	as configuration objects for the linked list. Through this, the list can be a
+	ordered, if cmp is specified; a concurrent and thread-safe list through the protection
+	of a reader-writer lock (pthread_rwlock_t); verbose logging of information through 
+	the custom logger, for trace logging and debugging errors; deleting items in the list
+	if del is specified; deleting all items on destruction if del_items_on_free is specified.
+
+	To get on to the more interesting part, this list is concurrent, allowing multiple readers to
+	safely access the list. This is most notable with the iterator implementation, allowing for
+	easy concurrent reads without directly impeding performance over the direct callback for_each
+	function.
+
+	Time complexity of all functions are in fact O(N), with the exception for list_add, which if
+	there is no comparator, it will be O(1).
+
+	Time complexity of the iterator functions are also O(N), with the exceptions of iterator_append and
+	iterator_prepend, which are O(1) at that position. I say that they are O(N) because, functions
+	iterator_next and iterator_prev, while they iterate in an O(1) fashion, iterating through the
+	entirety of the list is O(N).
+*/
+
 struct c_utils_list;
 
 struct c_utils_list_conf {

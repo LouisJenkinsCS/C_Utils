@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdatomic.h>
+
 #include "../io/logger.h"
 #include "../misc/alloc_check.h"
 
@@ -18,6 +21,7 @@ struct c_utils_node {
 			struct c_utils_node *prev;
 		} _double;
 	};
+	_Atomic bool is_valid;
 	void *item;
 };
 

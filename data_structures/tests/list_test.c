@@ -114,7 +114,6 @@ int main(void) {
 		ASSERT(*(int *)item == *(int *)sorted_array[i], logger, "Array returned is inaccurate to list!");
 	}
 
-	list_sort(list_two);
 	for (i = 0;i < runs; i += 2) {
 		void *result_one = iterator_next(it);
 		void *result_two = iterator_next(it);

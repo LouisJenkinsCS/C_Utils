@@ -30,7 +30,7 @@ void *c_utils_ref_create(size_t size) {
 void *c_utils_ref_create_conf(size_t size, struct c_utils_ref_count_conf *conf) {
 	if(!conf)
 		return NULL;
-	
+
 	// Note we allocate more than just enough for the ref_count.
 	struct c_utils_ref_count *rc = malloc(sizeof(*rc) + size);
 	if(!rc)
@@ -84,6 +84,7 @@ void c_utils_ref_dec(void *ptr) {
 	assert((refs = atomic_fetch_sub(&rc->refs, 1)) > -1);
 
 	C_UTILS_LOG_TRACE(rc->conf.logger, "Reference count was decremented from %d to %d", refs, refs - 1);
+	
 	/*
 		Note that if a thread attempts to increment after count is 0, this race condition invoked undefined behavior.
 		Hence it is up to the caller. The assertions just make finding the errors easier, the edge cases where something

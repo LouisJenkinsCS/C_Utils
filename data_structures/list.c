@@ -19,6 +19,11 @@ struct c_utils_list {
 	struct c_utils_list_conf conf;
 };
 
+struct c_utils_list_iterator_position {
+	struct c_utils_node *prev;
+	struct c_utils_node *curr;
+	struct c_utils_node *next;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////
 //	 																				//
@@ -70,6 +75,9 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 //  																				//
 //////////////////////////////////////////////////////////////////////////////////////
 
+static struct c_utils_node *create_node(void *item);
+
+static void invalidate_node(struct c_utils_node *node);
 
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del);
 
@@ -88,23 +96,23 @@ static void destroy_list(void *instance);
 //  																				//
 //////////////////////////////////////////////////////////////////////////////////////
 
-static unsigned int is_valid(struct c_utils_list *list, struct c_utils_position *pos);
-
 static inline void *get_item(struct c_utils_node *node);
 
-static void update_pos(struct c_utils_position *pos, struct c_utils_node *node);
+static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node);
 
-static void *head(void *instance, struct c_utils_position *pos);
+static void *head(void *instance, void *pos);
 
-static void *tail(void *instance, struct c_utils_position *pos);
+static void *tail(void *instance, void *pos);
 
-static void *next(void *instance, struct c_utils_position *pos);
+static void *next(void *instance, void *pos);
 
-static void *prev(void *instance, struct c_utils_position *pos);
+static void *prev(void *instance, void *pos);
 
-static bool append(void *instance, struct c_utils_position *pos, void *item);
+static bool append(void *instance, void *pos, void *item);
 
-static bool prepend(void *instance, struct c_utils_position *pos, void *item);
+static bool prepend(void *instance, void *pos, void *item);
+
+static void finalize(void *instance, void *pos);
 
 
 
@@ -208,11 +216,11 @@ bool c_utils_list_add(struct c_utils_list *list, void *item) {
 		return false;
 	}
 	
-	struct c_utils_node *node;
-	C_UTILS_ON_BAD_MALLOC(node, list->conf.logger, sizeof(*node))
+	struct c_utils_node *node = create_node(item);
+	if(!node) {
+		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: \"Failed to create reference counted node!\"");
 		return false;
-
-	node->item = item;
+	}
 	
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_LOCK0(list->lock) {
@@ -344,6 +352,11 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 	C_UTILS_ON_BAD_CALLOC(it, list->conf.logger, sizeof(*it))
 		return NULL;
 
+	C_UTILS_ON_BAD_CALLOC(it->pos, list->conf.logger, sizeof(struct c_utils_list_iterator_position)) {
+		free(it);
+		return NULL;
+	}
+
 	it->handle = list;
 	it->head = head;
 	it->tail = tail;
@@ -351,6 +364,7 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 	it->prev = prev;
 	it->append = append;
 	it->prepend = prepend;
+	it->finalize = finalize;
 
 	// Increment reference count for iterator.
 	if(list->conf.ref_counted) {
@@ -453,7 +467,7 @@ static inline int remove_only(struct c_utils_list *list, struct c_utils_node *no
 	
 	if (del)
 		del(node->item);
-	free(node);
+	invalidate_node(node);
 	list->size--;
 	
 	return 1;
@@ -465,7 +479,7 @@ static inline int remove_head(struct c_utils_list *list, struct c_utils_node *no
 
 	if (del)
 		del(node->item);
-	free(node);
+	invalidate_node(node);
 	list->size--;
 	
 	return 1;
@@ -477,7 +491,7 @@ static inline int remove_tail(struct c_utils_list *list, struct c_utils_node *no
 	
 	if (del)
 		del(node->item);
-	free(node);
+	invalidate_node(node);
 	list->size--;
 	
 	return 1;
@@ -489,7 +503,7 @@ static inline int remove_normal(struct c_utils_list *list, struct c_utils_node *
 	
 	if (del)
 		del(node->item);
-	free(node);
+	invalidate_node(node);
 	list->size--;
 	
 	return 1;
@@ -534,6 +548,23 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 }
 
 
+
+static struct c_utils_node *create_node(void *item) {
+	struct c_utils_ref_count_conf conf = { .destructor = free };
+	struct c_utils_node *node = c_utils_ref_create_conf(sizeof(*node), &conf);
+	if(!node)
+		return NULL;
+
+	node->item = item;
+	node->is_valid = ATOMIC_VAR_INIT(true);
+
+	return node;
+}
+
+static void invalidate_node(struct c_utils_node *node) {
+	atomic_store(&node->is_valid, false);
+	c_utils_ref_dec(node);
+}
 
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
 	while (list->head)
@@ -605,38 +636,37 @@ static void destroy_list(void *instance) {
 
 
 
-static const int curr_valid = 1 << 0;
-static const int prev_valid = 1 << 1;
-static const int next_valid = 1 << 2;
-
-static unsigned int is_valid(struct c_utils_list *list, struct c_utils_position *pos) {
-	unsigned int retval = 0;
-	struct c_utils_node *tmp = NULL;
-	for (tmp = list->head; tmp; tmp = tmp->_double.next) {
-		if (tmp == pos->curr) {
-			C_UTILS_FLAG_SET(retval, curr_valid);
-		} else if (tmp == pos->prev) {
-			C_UTILS_FLAG_SET(retval, prev_valid);
-		} else if (tmp == pos->next) {
-			C_UTILS_FLAG_SET(retval, next_valid);
-			break;
-		}
-	}
-
-	return retval;
-}
-
 static inline void *get_item(struct c_utils_node *node) {
 	return node ? node->item : NULL;
 }
 
-static void update_pos(struct c_utils_position *pos, struct c_utils_node *node) {
+static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node) {
+	// Decrement reference counts of old nodes.
+	if(pos->curr)
+		c_utils_ref_dec(pos->curr);
+	if(pos->next)
+		c_utils_ref_dec(pos->next);
+	if(pos->prev)
+		c_utils_ref_dec(pos->prev);
+
+	// Acquire reference count to new nodes.
+	if(node) {
+		c_utils_ref_inc(node);
+
+		if(node->_double.next)
+			c_utils_ref_inc(node->_double.next);
+
+		if(node->_double.prev)
+			c_utils_ref_inc(node->_double.prev);
+	}
+
+	// Update the position to hold new nodes.
 	pos->curr = node;
 	pos->next = node ? node->_double.next : NULL;
 	pos->prev = node ? node->_double.prev : NULL;
 }
 
-static void *head(void *instance, struct c_utils_position *pos) {
+static void *head(void *instance, void *pos) {
 	struct c_utils_list *list = instance;
 	struct c_utils_node *head;
 
@@ -650,7 +680,7 @@ static void *head(void *instance, struct c_utils_position *pos) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-static void *tail(void *instance, struct c_utils_position *pos) {
+static void *tail(void *instance, void *pos) {
 	struct c_utils_list *list = instance;
 	struct c_utils_node *tail;
 
@@ -664,38 +694,34 @@ static void *tail(void *instance, struct c_utils_position *pos) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-static void *next(void *instance, struct c_utils_position *pos) {
+static void *next(void *instance, void *pos) {
 	struct c_utils_list *list = instance;
+	struct c_utils_list_iterator_position *p = pos;
 	struct c_utils_node *next = NULL;
 
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_LOCK1(list->lock) {
-		if (list->size == 0) {
+		if (!list->size) {
 			update_pos(pos, NULL);
 			return NULL;
 		}
 
-		if (!pos->curr) {
+		if (!p->curr) {
 			next = list->head;
-			update_pos(pos, next);
+			update_pos(p, next);
 			return get_item(next);
 		}
 
-		unsigned int are_valid = is_valid(list, pos);
-		if (C_UTILS_FLAG_GET(are_valid, curr_valid)) {
-			next = pos->curr->_double.next;
-		} else if (C_UTILS_FLAG_GET(are_valid, next_valid)) {
-			next = pos->next;
-		} else if (C_UTILS_FLAG_GET(are_valid, prev_valid)) {
-			next = pos->prev;
-			if (next)
-				next = next->_double.next;
-			else
-				next = list->head;
+		if (atomic_load(&p->curr->is_valid)) {
+			next = p->curr->_double.next;
+		} else if (p->next && atomic_load(&p->next->is_valid)) {
+			next = p->next;
+		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
+			next = p->prev->_double.next;
 		} else {
 			next = list->head;
 		}
-		update_pos(pos, next);
+		update_pos(p, next);
 		
 		return get_item(next);
 	} // Release Reader Lock
@@ -703,10 +729,11 @@ static void *next(void *instance, struct c_utils_position *pos) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-static void *prev(void *instance, struct c_utils_position *pos) {
+static void *prev(void *instance, void *pos) {
 	struct c_utils_list *list = instance;
+	struct c_utils_list_iterator_position *p = pos;
 	struct c_utils_node *prev;
-	
+
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_LOCK1(list->lock) {
 		if (list->size == 0) {
@@ -714,79 +741,77 @@ static void *prev(void *instance, struct c_utils_position *pos) {
 			return NULL;
 		}
 
-		if (!pos->curr) {
+		if (!p->curr) {
 			prev = list->tail;
-			update_pos(pos, prev);
+			update_pos(p, prev);
 			return get_item(prev);;
 		}
 
-		unsigned int are_valid = is_valid(list, pos);
-		if (C_UTILS_FLAG_GET(are_valid, curr_valid)) {
-			prev = pos->curr->_double.prev;
-		} else if (C_UTILS_FLAG_GET(are_valid, prev_valid)) {
-			prev = pos->prev;
-		} else if (C_UTILS_FLAG_GET(are_valid, next_valid)) {
-			prev = pos->next;
-			if (prev)
-				prev = prev->_double.prev;
-			else 
-				prev = list->tail;
-		} else {
+		if (atomic_load(&p->curr->is_valid))
+			prev = p->curr->_double.prev;
+		else if (p->prev && atomic_load(&p->prev->is_valid))
+			prev = p->prev;
+		else if (p->next && atomic_load(&p->next->is_valid))
+			prev = p->next->_double.prev;
+		else
 			prev = list->tail;
-		}
-		update_pos(pos, prev);
-		
+
+		update_pos(p, prev);
+
 		return get_item(prev);
 	} // Release Reader Lock
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-static bool append(void *instance, struct c_utils_position *pos, void *item) {
+static bool append(void *instance, void *pos, void *item) {
 	struct c_utils_list *list = instance;
-	
-	struct c_utils_node *node = malloc(sizeof(*node));
+	struct c_utils_list_iterator_position *p = pos;
+
+	struct c_utils_node *node = create_node(item);
 	if (!node) {
-		C_UTILS_LOG_ASSERT(list->conf.logger, "malloc: '%s'", strerror(errno));
+		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: 'Was unable to create a reference counted node!'");
 		return false;
 	}
-	node->item = item;
-	
+
+	// Since the list must have a reference as well, we append it here.
+	c_utils_ref_inc(node);
+
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_LOCK0(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
-			update_pos(pos, node);
+			update_pos(p, node);
 			return true;
 		}
 
 		// If current is NULL, we append it to the end.
-		if (!pos->curr) {
+		if (!p->curr) {
 			add_as_tail(list, node);
-			update_pos(pos, node);
+			update_pos(p, node);
 			return true;
 		}
-		
-		unsigned int are_valid = is_valid(list, pos);
-		if (C_UTILS_FLAG_GET(are_valid, curr_valid)) {
-			if (pos->curr->_double.next)
-				add_after(list, pos->curr, node);
+
+		if (atomic_load(&p->curr->is_valid)) {
+			if (p->curr->_double.next)
+				add_after(list, p->curr, node);
 			else
 				add_as_tail(list, node);
-		} else if (C_UTILS_FLAG_GET(are_valid, next_valid)) {
-			if (pos->next->_double.next)
-				add_after(list, pos->next, node);
+		} else if (p->next && atomic_load(&p->next->is_valid)) {
+			if (p->next->_double.next)
+				add_after(list, p->next, node);
 			else
 				add_as_tail(list, node);
-		} else if (C_UTILS_FLAG_GET(are_valid, prev_valid)) {
-			if (pos->prev->_double.next)
-				add_after(list, pos->prev, node);
+		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
+			if (p->prev->_double.next)
+				add_after(list, p->prev, node);
 			else
 				add_as_tail(list, node);
 		} else {
 			add_as_tail(list, node);
 		}
-		update_pos(pos, node);
+
+		update_pos(p, node);
 
 		return true;
 	} // Release Writer Lock
@@ -794,52 +819,62 @@ static bool append(void *instance, struct c_utils_position *pos, void *item) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-static bool prepend(void *instance, struct c_utils_position *pos, void *item) {
+static bool prepend(void *instance, void *pos, void *item) {
 	struct c_utils_list *list = instance;
-	
-	struct c_utils_node *node;
-	C_UTILS_ON_BAD_MALLOC(node, list->conf.logger, sizeof(*node))
+	struct c_utils_list_iterator_position *p = pos;
+
+	struct c_utils_node *node = create_node(item);
+	if (!node) {
+		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: 'Was unable to create a reference counted node!'");
 		return false;
-	node->item = item;
-	
+	}
+
+	// Since the list must have a reference as well, we append it here.
+	c_utils_ref_inc(node);
+
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_LOCK0(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
-			update_pos(pos, node);
+			update_pos(p, node);
 			return true; 
 		}
 
 		// If current is NULL, we prepend to the beginning.
-		if (!pos->curr) {
+		if (!p->curr) {
 			add_as_tail(list, node);
-			update_pos(pos, node);
+			update_pos(p, node);
 			return true;
 		}
 
-		unsigned int are_valid = is_valid(list, pos);
-		if (C_UTILS_FLAG_GET(are_valid, curr_valid)) {
-			if (pos->curr->_double.prev)
-				add_before(list, pos->curr, node);
-			else 
-				add_as_head(list, node);
-		} else if (C_UTILS_FLAG_GET(are_valid, next_valid)) {
-			if (pos->next->_double.prev)
-				add_before(list, pos->next, node);
+		if (atomic_load(&p->curr->is_valid)) {
+			if (p->curr->_double.prev)
+				add_before(list, p->curr, node);
 			else
 				add_as_head(list, node);
-		} else if (C_UTILS_FLAG_GET(are_valid, prev_valid)) {
-			if (pos->prev->_double.prev)
-				add_before(list, pos->prev, node);
+		} else if (p->next && atomic_load(&p->next->is_valid)) {
+			if (p->next->_double.prev)
+				add_before(list, p->next, node);
+			else
+				add_as_head(list, node);
+		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
+			if (p->prev->_double.prev)
+				add_before(list, p->prev, node);
 			else
 				add_as_head(list, node);
 		} else {
 			add_as_head(list, node);
 		}
-		update_pos(pos, node);
+
+		update_pos(p, node);
 
 		return true;
 	} // Release Writer Lock
 
 	C_UTILS_UNACCESSIBLE;
+}
+
+static void finalize(void *instance, void *pos) {
+	update_pos(pos, NULL);
+	free(pos);
 }

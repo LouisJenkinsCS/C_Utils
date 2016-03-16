@@ -6,13 +6,6 @@
 #include "helpers.h"
 #include "../io/logger.h"
 
-/// Struct used to help the data structure hint at it's current position.
-struct c_utils_position {
-	struct c_utils_node *curr;
-	struct c_utils_node *next;
-	struct c_utils_node *prev;
-};
-
 struct c_utils_iterator_conf {
 	/// If we hold a reference count to the handle.
 	bool ref_counted;
@@ -22,19 +15,20 @@ struct c_utils_iterator {
 	/// Handle for the data structure being iterated over.
 	void *handle;
 	/// The relative position
-	struct c_utils_position pos;
+	void *pos;
 	/*
 		Below are callbacks that may be filled out by the data structure that creates
 		an instance of this object.
 	*/
-	void *(*head)(void *, struct c_utils_position *);
-	void *(*tail)(void *, struct c_utils_position *);
-	void *(*next)(void *, struct c_utils_position *);
-	void *(*prev)(void *, struct c_utils_position *);
-	bool (*append)(void *, struct c_utils_position *, void *);
-	bool (*prepend)(void *, struct c_utils_position *, void *);
-	bool (*for_each)(void *, struct c_utils_position *, c_utils_general_cb);
-	bool (*del)(void *, struct c_utils_position *, c_utils_delete_cb);
+	void *(*head)(void *handle, void *pos);
+	void *(*tail)(void *handle, void *pos);
+	void *(*next)(void *handle, void *pos);
+	void *(*prev)(void *handle, void *pos);
+	bool (*append)(void *handle, void *pos, void *item);
+	bool (*prepend)(void *handle, void *pos, void *item);
+	bool (*for_each)(void *handle, void *pos, c_utils_general_cb);
+	bool (*del)(void *handle, void *pos, c_utils_delete_cb);
+	void (*finalize)(void *handle, void *pos);
 	// Configuration
 	struct c_utils_iterator_conf conf;
 };
