@@ -11,17 +11,13 @@
 #include "../misc/alloc_check.h"
 
 struct c_utils_node {
-	/// Union allows multiple types of nodes with only one type.
-	union {
-		struct {
-			struct c_utils_node *next;
-		} _single;
-		struct {
-			struct c_utils_node *next;
-			struct c_utils_node *prev;
-		} _double;
-	};
-	_Atomic bool is_valid;
+	// Next node if used.
+	struct c_utils_node *next;
+	// Previous node if used
+	struct c_utils_node *prev;
+	// If this node is valid, used by iterator implementations.
+	volatile bool is_valid;
+	// Item assocaited with node.
 	void *item;
 };
 

@@ -334,7 +334,7 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 			return NULL;
 
 		int index = 0;
-		for (struct c_utils_node *node = list->head; node; node = node->_double.next)
+		for (struct c_utils_node *node = list->head; node; node = node->next)
 			array_of_items[index++] = node->item;
 
 		*size = index;
@@ -379,30 +379,30 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 
 
 static inline int add_as_head(struct c_utils_list *list, struct c_utils_node *node) {
-	node->_double.next = list->head;
-	list->head->_double.prev = node;
+	node->next = list->head;
+	list->head->prev = node;
 	list->head = node;
-	node->_double.prev = NULL;
+	node->prev = NULL;
 	list->size++;
 	
 	return 1;
 }
 
 static inline int add_as_tail(struct c_utils_list *list, struct c_utils_node *node) {
-	list->tail->_double.next = node;
-	node->_double.prev = list->tail;
+	list->tail->next = node;
+	node->prev = list->tail;
 	list->tail = node;
-	node->_double.next = NULL;
+	node->next = NULL;
 	list->size++;
 	
 	return 1;
 }
 
 static inline int add_after(struct c_utils_list *list, struct c_utils_node *current_node, struct c_utils_node *new_node) {
-	current_node->_double.next->_double.prev = new_node;
-	new_node->_double.next = current_node->_double.next;
-	new_node->_double.prev = current_node;
-	current_node->_double.next = new_node;
+	current_node->next->prev = new_node;
+	new_node->next = current_node->next;
+	new_node->prev = current_node;
+	current_node->next = new_node;
 	list->size++;
 	
 	return 1;
@@ -411,17 +411,17 @@ static inline int add_after(struct c_utils_list *list, struct c_utils_node *curr
 
 static inline int add_as_only(struct c_utils_list *list, struct c_utils_node *node) {
 	list->head = list->tail = node;
-	node->_double.next = node->_double.prev = NULL;
+	node->next = node->prev = NULL;
 	list->size++;
 	
 	return 1;
 }
 
 static inline int add_before(struct c_utils_list *list, struct c_utils_node *current_node, struct c_utils_node *new_node) {
-	current_node->_double.prev->_double.next = new_node;
-	new_node->_double.next = current_node;
-	new_node->_double.prev = current_node->_double.prev;
-	current_node->_double.prev = new_node;
+	current_node->prev->next = new_node;
+	new_node->next = current_node;
+	new_node->prev = current_node->prev;
+	current_node->prev = new_node;
 	list->size++;
 	
 	return 1;
@@ -438,10 +438,10 @@ static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *nod
 	if (compare(node->item, list->tail->item) >= 0)
 		return add_as_tail(list, node);
 
-	for (current_node = list->head; current_node; current_node = current_node->_double.next) {
+	for (current_node = list->head; current_node; current_node = current_node->next) {
 		if (compare(node->item, current_node->item) <= 0)
 			return add_before(list, current_node, node);
-		else if (!current_node->_double.next)
+		else if (!current_node->next)
 			return add_as_tail(list, node);
 	}
 	C_UTILS_LOG_ERROR(list->conf.logger, "Was unable to add an item, sortedly, to the list!\n");
@@ -450,9 +450,9 @@ static inline int add_sorted(struct c_utils_list *list, struct c_utils_node *nod
 }
 
 static inline int add_unsorted(struct c_utils_list *list, struct c_utils_node *node) {
-	node->_double.next = NULL;
-	node->_double.prev = list->tail;
-	list->tail->_double.next = node;
+	node->next = NULL;
+	node->prev = list->tail;
+	list->tail->next = node;
 	list->tail = node;
 	list->size++;
 
@@ -474,8 +474,8 @@ static inline int remove_only(struct c_utils_list *list, struct c_utils_node *no
 }
 
 static inline int remove_head(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del) {
-	list->head->_double.next->_double.prev = NULL;
-	list->head = list->head->_double.next;
+	list->head->next->prev = NULL;
+	list->head = list->head->next;
 
 	if (del)
 		del(node->item);
@@ -486,8 +486,8 @@ static inline int remove_head(struct c_utils_list *list, struct c_utils_node *no
 }
 
 static inline int remove_tail(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del) {
-	list->tail = list->tail->_double.prev;
-	list->tail->_double.next = NULL;
+	list->tail = list->tail->prev;
+	list->tail->next = NULL;
 	
 	if (del)
 		del(node->item);
@@ -498,8 +498,8 @@ static inline int remove_tail(struct c_utils_list *list, struct c_utils_node *no
 }
 
 static inline int remove_normal(struct c_utils_list *list, struct c_utils_node *node, c_utils_delete_cb del) {
-	node->_double.next->_double.prev = node->_double.prev;
-	node->_double.prev->_double.next = node->_double.next;
+	node->next->prev = node->prev;
+	node->prev->next = node->next;
 	
 	if (del)
 		del(node->item);
@@ -556,13 +556,13 @@ static struct c_utils_node *create_node(void *item) {
 		return NULL;
 
 	node->item = item;
-	node->is_valid = ATOMIC_VAR_INIT(true);
+	node->is_valid = true;
 
 	return node;
 }
 
 static void invalidate_node(struct c_utils_node *node) {
-	atomic_store(&node->is_valid, false);
+	node->is_valid = false;
 	c_utils_ref_dec(node);
 }
 
@@ -581,7 +581,7 @@ static struct c_utils_node *item_to_node(struct c_utils_list *list, void *item) 
 		return list->tail;
 	
 	struct c_utils_node *node = NULL;
-	for (node = list->head; node ; node = node->_double.next)
+	for (node = list->head; node ; node = node->next)
 		if (item == node->item)
 			return node;
 	
@@ -606,14 +606,14 @@ static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned in
 	if (index > (list->size / 2)) {
 		int i = list->size-1;
 		node = list->tail;
-		while ((node = node->_double.prev) && --i != index)
+		while ((node = node->prev) && --i != index)
 			;
 		C_UTILS_ASSERT(i == index, list->conf.logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 		return node;
 	} else {
 		int i = 0;
 		node = list->head;
-		while ((node = node->_double.next) && ++i != index);
+		while ((node = node->next) && ++i != index);
 		C_UTILS_ASSERT(i == index, list->conf.logger, "Error in Node Traversal!Expected index %u, stopped at index %d!", index, i);
 	}
 	
@@ -622,7 +622,7 @@ static struct c_utils_node *index_to_node(struct c_utils_list *list, unsigned in
 
 static void for_each_item(struct c_utils_list *list, void (*callback)(void *item)) {
 	struct c_utils_node *node = NULL;
-	for (node = list->head; node; node = node->_double.next)
+	for (node = list->head; node; node = node->next)
 		callback(node->item);
 }
 
@@ -653,17 +653,17 @@ static void update_pos(struct c_utils_list_iterator_position *pos, struct c_util
 	if(node) {
 		c_utils_ref_inc(node);
 
-		if(node->_double.next)
-			c_utils_ref_inc(node->_double.next);
+		if(node->next)
+			c_utils_ref_inc(node->next);
 
-		if(node->_double.prev)
-			c_utils_ref_inc(node->_double.prev);
+		if(node->prev)
+			c_utils_ref_inc(node->prev);
 	}
 
 	// Update the position to hold new nodes.
 	pos->curr = node;
-	pos->next = node ? node->_double.next : NULL;
-	pos->prev = node ? node->_double.prev : NULL;
+	pos->next = node ? node->next : NULL;
+	pos->prev = node ? node->prev : NULL;
 }
 
 static void *head(void *instance, void *pos) {
@@ -712,15 +712,14 @@ static void *next(void *instance, void *pos) {
 			return get_item(next);
 		}
 
-		if (atomic_load(&p->curr->is_valid)) {
-			next = p->curr->_double.next;
-		} else if (p->next && atomic_load(&p->next->is_valid)) {
+		if (p->curr->is_valid) {
+			next = p->curr->next;
+		} else if (p->next && p->next->is_valid) {
 			next = p->next;
-		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
-			next = p->prev->_double.next;
-		} else {
-			next = list->head;
+		} else if (p->prev && p->prev->is_valid) {
+			next = p->prev->next;
 		}
+
 		update_pos(p, next);
 		
 		return get_item(next);
@@ -732,7 +731,7 @@ static void *next(void *instance, void *pos) {
 static void *prev(void *instance, void *pos) {
 	struct c_utils_list *list = instance;
 	struct c_utils_list_iterator_position *p = pos;
-	struct c_utils_node *prev;
+	struct c_utils_node *prev = NULL;
 
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_LOCK1(list->lock) {
@@ -747,14 +746,12 @@ static void *prev(void *instance, void *pos) {
 			return get_item(prev);;
 		}
 
-		if (atomic_load(&p->curr->is_valid))
-			prev = p->curr->_double.prev;
-		else if (p->prev && atomic_load(&p->prev->is_valid))
+		if (p->curr->is_valid)
+			prev = p->curr->prev;
+		else if (p->prev && p->prev->is_valid)
 			prev = p->prev;
-		else if (p->next && atomic_load(&p->next->is_valid))
-			prev = p->next->_double.prev;
-		else
-			prev = list->tail;
+		else if (p->next && p->next->is_valid)
+			prev = p->next->prev;
 
 		update_pos(p, prev);
 
@@ -792,18 +789,18 @@ static bool append(void *instance, void *pos, void *item) {
 			return true;
 		}
 
-		if (atomic_load(&p->curr->is_valid)) {
-			if (p->curr->_double.next)
+		if (p->curr->is_valid) {
+			if (p->curr->next)
 				add_after(list, p->curr, node);
 			else
 				add_as_tail(list, node);
-		} else if (p->next && atomic_load(&p->next->is_valid)) {
-			if (p->next->_double.next)
+		} else if (p->next && p->next->is_valid) {
+			if (p->next->next)
 				add_after(list, p->next, node);
 			else
 				add_as_tail(list, node);
-		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
-			if (p->prev->_double.next)
+		} else if (p->prev && p->prev->is_valid) {
+			if (p->prev->next)
 				add_after(list, p->prev, node);
 			else
 				add_as_tail(list, node);
@@ -847,18 +844,18 @@ static bool prepend(void *instance, void *pos, void *item) {
 			return true;
 		}
 
-		if (atomic_load(&p->curr->is_valid)) {
-			if (p->curr->_double.prev)
+		if (p->curr->is_valid) {
+			if (p->curr->prev)
 				add_before(list, p->curr, node);
 			else
 				add_as_head(list, node);
-		} else if (p->next && atomic_load(&p->next->is_valid)) {
-			if (p->next->_double.prev)
+		} else if (p->next && p->next->is_valid) {
+			if (p->next->prev)
 				add_before(list, p->next, node);
 			else
 				add_as_head(list, node);
-		} else if (p->prev && atomic_load(&p->prev->is_valid)) {
-			if (p->prev->_double.prev)
+		} else if (p->prev && p->prev->is_valid) {
+			if (p->prev->prev)
 				add_before(list, p->prev, node);
 			else
 				add_as_head(list, node);

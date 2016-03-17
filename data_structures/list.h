@@ -139,7 +139,7 @@ void c_utils_list_delete(struct c_utils_list *list, void *item);
 void c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
 
 /**
- * Removes the item at the given index if it is in bounds. If delete_item is NULL, 
+ * Removes the item at the given index if it is in bounds. If delete_item is NULL,
  * the item removed will not be freed.
  * @param list The list to remove the element from.
  * @param index The index of the node to be removed from the list.

@@ -49,6 +49,11 @@ typedef struct c_utils_ref_count_conf ref_count_conf_t;
 #define ref_dec(...) c_utils_ref_dec(__VA_ARGS__)
 #endif
 
+/*
+	TODO: Create a macro for this instead, so when we wish to increment and decrement, it will automatically pass in
+	the __LINE__, __FILE__, and __FUNCTION__ it is being called from.
+*/
+
 void *c_utils_ref_create(size_t size);
 
 void *c_utils_ref_create_conf(size_t size, struct c_utils_ref_count_conf *conf);
