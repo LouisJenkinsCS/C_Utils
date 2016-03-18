@@ -31,6 +31,10 @@ struct c_utils_ref_count_conf {
 
 typedef void (*c_utils_destructor)(void *);
 
+#define C_UTILS_REF_INC(data) _c_utils_ref_inc(data, C_UTILS_LOCATION)
+
+#define C_UTILS_REF_DEC(data) _c_utils_ref_dec(data, C_UTILS_LOCATION)
+
 #ifdef NO_C_UTILS_PREFIX
 /*
 	Typedefs
@@ -55,8 +59,8 @@ void *c_utils_ref_create(size_t size);
 
 void *c_utils_ref_create_conf(size_t size, struct c_utils_ref_count_conf *conf);
 
-void c_utils_ref_inc(void *data);
+void _c_utils_ref_inc(void *data, struct c_utils_location log_info);
 
-void c_utils_ref_dec(void *data);
+void _c_utils_ref_dec(void *data, struct c_utils_location log_info);
 
 #endif /* C_UTILS_REF_COUNT_H */

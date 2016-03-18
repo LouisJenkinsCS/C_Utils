@@ -24,6 +24,7 @@ struct c_utils_iterator {
 	void *(*tail)(void *handle, void *pos);
 	void *(*next)(void *handle, void *pos);
 	void *(*prev)(void *handle, void *pos);
+	void *(*curr)(void *handle, void *pos);
 	bool (*append)(void *handle, void *pos, void *item);
 	bool (*prepend)(void *handle, void *pos, void *item);
 	bool (*for_each)(void *handle, void *pos, c_utils_general_cb);
@@ -59,9 +60,11 @@ typedef struct c_utils_iterator iterator_t;
 #define iterator_tail(...) c_utils_iterator_tail(__VA_ARGS__)
 #define iterator_next(...) c_utils_iterator_next(__VA_ARGS__)
 #define iterator_prev(...) c_utils_iterator_prev(__VA_ARGS__)
+#define iterator_curr(...) c_utils_iterator_curr(__VA_ARGS__)
 #define iterator_append(...) c_utils_iterator_append(__VA_ARGS__)
 #define iterator_prepend(...) c_utils_iterator_prepend(__VA_ARGS__)
 #define iterator_remove(...) c_utils_iterator_remove(__VA_ARGS__)
+#define iterator_delete(...) c_utils_iterator_delete(__VA_ARGS__)
 #define iterator_for_each(...) c_utils_iterator_for_each(__VA_ARGS__)
 #define iterator_destroy(...) c_utils_iterator_destroy(__VA_ARGS__)
 #endif
@@ -101,6 +104,8 @@ void *c_utils_iterator_tail(struct c_utils_iterator *it);
 void *c_utils_iterator_next(struct c_utils_iterator *it);
 
 void *c_utils_iterator_prev(struct c_utils_iterator *it);
+
+void *c_utils_iterator_curr(struct c_utils_iterator *it);
 
 bool c_utils_iterator_append(struct c_utils_iterator *it, void *item);
 

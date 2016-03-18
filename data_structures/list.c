@@ -108,9 +108,15 @@ static void *next(void *instance, void *pos);
 
 static void *prev(void *instance, void *pos);
 
+static void *curr(void *instance, void *pos);
+
 static bool append(void *instance, void *pos, void *item);
 
 static bool prepend(void *instance, void *pos, void *item);
+
+static bool del(void *instance, void *pos);
+
+static bool rem(void *instance, void *pos);
 
 static void finalize(void *instance, void *pos);
 
@@ -200,7 +206,7 @@ void c_utils_list_destroy(struct c_utils_list *list) {
 		return;
 
 	if(list->conf.ref_counted) {
-		c_utils_ref_dec(list);
+		C_UTILS_REF_DEC(list);
 		return;
 	}
 
@@ -362,13 +368,16 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 	it->tail = tail;
 	it->next = next;
 	it->prev = prev;
+	it->curr = curr;
 	it->append = append;
 	it->prepend = prepend;
+	it->rem = rem;
+	it->del = del;
 	it->finalize = finalize;
 
 	// Increment reference count for iterator.
 	if(list->conf.ref_counted) {
-		c_utils_ref_inc(list);
+		C_UTILS_REF_INC(list);
 		it->conf.ref_counted = true;
 	}
 
@@ -563,7 +572,7 @@ static struct c_utils_node *create_node(void *item) {
 
 static void invalidate_node(struct c_utils_node *node) {
 	node->is_valid = false;
-	c_utils_ref_dec(node);
+	C_UTILS_REF_DEC(node);
 }
 
 static int delete_all_nodes(struct c_utils_list *list, c_utils_delete_cb del) {
@@ -643,21 +652,21 @@ static inline void *get_item(struct c_utils_node *node) {
 static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node) {
 	// Decrement reference counts of old nodes.
 	if(pos->curr)
-		c_utils_ref_dec(pos->curr);
+		C_UTILS_REF_DEC(pos->curr);
 	if(pos->next)
-		c_utils_ref_dec(pos->next);
+		C_UTILS_REF_DEC(pos->next);
 	if(pos->prev)
-		c_utils_ref_dec(pos->prev);
+		C_UTILS_REF_DEC(pos->prev);
 
 	// Acquire reference count to new nodes.
 	if(node) {
-		c_utils_ref_inc(node);
+		C_UTILS_REF_INC(node);
 
 		if(node->next)
-			c_utils_ref_inc(node->next);
+			C_UTILS_REF_INC(node->next);
 
 		if(node->prev)
-			c_utils_ref_inc(node->prev);
+			C_UTILS_REF_INC(node->prev);
 	}
 
 	// Update the position to hold new nodes.
@@ -762,8 +771,15 @@ static void *prev(void *instance, void *pos) {
 }
 
 static bool append(void *instance, void *pos, void *item) {
+	if(!item)
+		return false;
+
 	struct c_utils_list *list = instance;
 	struct c_utils_list_iterator_position *p = pos;
+
+	// We cannot append to the list and violate sorted order.
+	if(list->conf.cmp)
+		return false;
 
 	struct c_utils_node *node = create_node(item);
 	if (!node) {
@@ -772,7 +788,7 @@ static bool append(void *instance, void *pos, void *item) {
 	}
 
 	// Since the list must have a reference as well, we append it here.
-	c_utils_ref_inc(node);
+	C_UTILS_REF_INC(node);
 
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
@@ -817,8 +833,15 @@ static bool append(void *instance, void *pos, void *item) {
 }
 
 static bool prepend(void *instance, void *pos, void *item) {
+	if(!item)
+		return false;
+
 	struct c_utils_list *list = instance;
 	struct c_utils_list_iterator_position *p = pos;
+
+	// We cannot prepend an element if it will violate the sorted principle.
+	if(list->conf.cmp)
+		return false;
 
 	struct c_utils_node *node = create_node(item);
 	if (!node) {
@@ -827,7 +850,7 @@ static bool prepend(void *instance, void *pos, void *item) {
 	}
 
 	// Since the list must have a reference as well, we append it here.
-	c_utils_ref_inc(node);
+	C_UTILS_REF_INC(node);
 
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
@@ -867,6 +890,56 @@ static bool prepend(void *instance, void *pos, void *item) {
 
 		return true;
 	} // Release Writer Lock
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static bool del(void *instance, void *pos) {
+	struct c_utils_list *list = instance;
+	struct c_utils_list_iterator_position *p = pos;
+
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
+		// List is empty or we are not pointed to a node.
+		if(!list->size || !p->curr)
+			return false;
+
+		if (p->curr->is_valid)
+			remove_node(list, p->curr, list->conf.del);
+
+		return true;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static bool rem(void *instance, void *pos) {
+	struct c_utils_list *list = instance;
+	struct c_utils_list_iterator_position *p = pos;
+
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
+		// List is empty or we are not pointed to a node.
+		if(!list->size || !p->curr)
+			return false;
+
+		if (p->curr->is_valid)
+			remove_node(list, p->curr, NULL);
+
+		return true;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static void *curr(void *instance, void *pos) {
+	struct c_utils_list *list = instance;
+	struct c_utils_list_iterator_position *p = pos;
+
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
+		if (p->curr && p->curr->is_valid)
+			return p->curr->item;
+
+		return NULL;
+	}
 
 	C_UTILS_UNACCESSIBLE;
 }

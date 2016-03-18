@@ -31,6 +31,50 @@
 	iterator_prepend, which are O(1) at that position. I say that they are O(N) because, functions
 	iterator_next and iterator_prev, while they iterate in an O(1) fashion, iterating through the
 	entirety of the list is O(N).
+
+	Head:
+		Concurrent:
+			Yes
+		Complexity:
+			O(1)
+		Notes:
+			Advances the iterator to the head of the list.
+	Tail:
+		Concurrent:
+			Yes
+		Complexity:
+			O(1)
+		Notes:
+			Advances the iterator to the tail of the list.
+	Next:
+ 		Concurrent:
+ 			Yes
+ 		Complexity:
+ 			O(1)
+		Notes:
+			If the current node is invalidated, it will first check if next is valid, and then if prev is valid.
+			If next is valid, it will just advance to next, which would have been the next item in the list had
+			it not been invalidated anyway. If prev is valid, it will jump to prev->next to attempt to bridge
+			the gap. If neither are valid, the iterator is in an invalidated state and the current position is
+			reset and it will return a failure.
+	Prev:
+		Concurrent:
+			Yes
+		Complexity:
+			O(1)
+		Notes:
+			If the current node is invalidated, it will first check if prev is valid, and then if next is valid.
+			If prev is valid, it will just advance to prev, which would have been the previous item in the list had
+			it not been invalidated anyway. If next is invalid, it will jump to next->prev to attempt to bridge
+			the gap. If neither are valid, the iterator is in an invalidated state and the current position is
+			reset and it will return a failure.
+	Curr:
+		Concurrent:
+			Yes
+		Complexity:
+			O(1)
+		Notes:
+			Obtains the last item the iterator has iterated over if it is still valid.
 */
 
 struct c_utils_list;
@@ -50,7 +94,11 @@ struct c_utils_list_conf {
 	struct c_utils_logger *logger;
 };
 
-#define C_UTILS_LIST_FOR_EACH(tmp_var, list) for(C_UTILS_AUTO_ITERATOR auto_it = c_utils_list_iterator(list); (tmp_var = c_utils_iterator_next(auto_it));)
+#define C_UTILS_LIST_FOR_EACH(item, list) \
+	for(C_UTILS_AUTO_ITERATOR _this_iterator = c_utils_list_iterator(list); (item = c_utils_iterator_next(_this_iterator));)
+
+#define C_UTILS_LIST_FOR_EACH_REV(item, list) \
+	for(C_UTILS_AUTO_ITERATOR _this_iterator = c_utils_list_iterator(list); (item = c_utils_iterator_prev(_this_iterator));)
 
 #ifdef NO_C_UTILS_PREFIX
 /*
@@ -63,6 +111,7 @@ typedef struct c_utils_list_conf list_conf_t;
 	Macros
 */
 #define LIST_FOR_EACH(...) C_UTILS_LIST_FOR_EACH(__VA_ARGS__)
+#define LIST_FOR_EACH_REV(...) C_UTILS_LIST_FOR_EACH_REV(__VA_ARGS__)
 
 /*
 	Functions
@@ -149,18 +198,10 @@ void c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
 void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index);
 
 /**
- * Creates and initializes an iterator for the linked list. The following operations supported are below:
- * Next, Prev, Append, Prepend, Head, Tail.
- *
- * The list also features a node-correction algorithm, which if the current node has already been removed from the list, it will
- * attempt to start at the next or previous node instead of the starting at the beginning if possible. The iterator must be freed
- * no longer in use, and the iterator does not get updated if the list instance it belongs to gets freed, so use with caution.
- *
- * All iterator functions use the list's internal read-write lock, so it is not a lock-less operation, but it will not block for a 
- * prolonged period of time. Hence, due to the usage of a read-write lock, it allows concurrent threads to iterate over the list so long
- * as they do not attempt to append or prepend to the list. 
- *
- * Finally, this iterator is barebones and is a work-in-progress, so use with caution
+ * Will create a properly configured and initialized iterator. The iterator is entirely thread safe, and supports
+ * parallel/concurrent access for non-mutating calls (next, prev, current, etc.) Mutating calls (I.E append and prepend)
+ * acquire the writer lock. If the list is reference counted, the iterator will also maintain reference to the list to prevent
+ * invalidation while it is in use.
  *
  * @param list Instance of the list.
  * @return A new instance of an iterator, or NULL if list is NULL or if there were problems allocating memory for one. 

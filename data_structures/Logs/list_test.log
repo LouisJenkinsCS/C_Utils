@@ -1,63 +1,78 @@
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:54) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:51) main(): 
 "Testing adding elements unsorted...
 "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:70) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:67) main(): 
 "Comparing elements of both array and list...
 "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:76) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:73) main(): 
 "Testing removal of item from list.
 "
-04:42:45 PM [VERBOSE](./data_structures/tests/list_test.c:86) main(): 
+06:27:11 PM [VERBOSE](./data_structures/tests/list_test.c:83) main(): 
 "Printing all elements inside of list unsorted!
 "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 0, 20, 58, 189, 336, 290, 552, 546, 656, 792, 760, 935, 924, 832, 1148, 915, 448, 272, 1062, 1577, 0, 1764, 814, 552, 1800, 1175, 130, 810, 1148, 1015, 630, 589, 992, 2145, 3128, 2240, 1872, 3330, 874, 2886, 1800, 4059, 756, 1032, 2992, 3600, 3818, 705, 1872, 3087, 3978, 4264, 4558, 3834, 1925, 5264, 4902, 580, 5428, 3780, 2562, 3844, 819, 2176, 1690, 2574, 670, 3196, 6417, 5460, 3550, 792, 6351, 1036, 5475, 684, 4543, 1170, 5846, 2960, 6885, 6642, 4897, 924, 5185, 8514, 1044, 7920, 8010, 4590, 2093, 368, 3720, 4042, 3040, 2976, 2522, 392, 2772 } "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:89) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:39) print_all(): 
+" { 0, 68, 32, 78, 188, 310, 342, 623, 592, 810, 890, 1056, 1152, 1001, 126, 15, 1104, 867, 342, 152, 320, 1470, 286, 2070, 1224, 2025, 1170, 1755, 1904, 2059, 2280, 248, 1696, 231, 374, 1190, 504, 3663, 912, 624, 2560, 1804, 3108, 86, 616, 3150, 1150, 188, 96, 3332, 306, 4264, 2385, 2430, 825, 1120, 3078, 2900, 3363, 180, 2806, 124, 1512, 128, 4290, 2112, 2881, 1088, 5658, 1120, 5325, 6480, 2409, 1258, 2025, 6612, 6622, 3588, 1501, 4560, 6723, 5248, 2158, 1344, 6715, 4730, 2697, 5280, 3382, 2430, 5460, 4048, 3348, 7050, 5415, 8160, 8730, 2156, 1881 } "
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:86) main(): 
 "Testing removal of elements at requested index...
 "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:98) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:95) main(): 
 "Creating a list from the array and sorting!
 "
-04:42:45 PM [TRACE](./memory/ref_count.c:47) c_utils_ref_create_conf(): 
+06:27:11 PM [TRACE](./memory/ref_count.c:47) c_utils_ref_create_conf(): 
 "An object of size 64 was allocated with an initial reference count of 0"
-04:42:45 PM [TRACE](./memory/ref_count.c:73) c_utils_ref_inc(): 
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
 "Reference count was incremented from 0 to 1"
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:106) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:103) main(): 
 "Printing all elements inside of list_two in descending order!
 "
-04:42:45 PM [TRACE](./memory/ref_count.c:73) c_utils_ref_inc(): 
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
 "Reference count was incremented from 1 to 2"
-04:42:45 PM [TRACE](./memory/ref_count.c:86) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
 "Reference count was decremented from 2 to 1"
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 0, 0, 20, 58, 130, 189, 272, 290, 336, 368, 392, 448, 546, 552, 552, 580, 589, 630, 656, 670, 684, 705, 756, 760, 792, 792, 810, 814, 819, 832, 874, 915, 924, 924, 935, 992, 1015, 1032, 1036, 1044, 1062, 1148, 1148, 1170, 1175, 1577, 1690, 1764, 1800, 1800, 1872, 1872, 1925, 2050, 2093, 2145, 2176, 2240, 2522, 2562, 2574, 2772, 2886, 2960, 2976, 2992, 3040, 3087, 3128, 3196, 3330, 3550, 3600, 3720, 3780, 3818, 3834, 3844, 3978, 4042, 4059, 4264, 4543, 4558, 4590, 4897, 4902, 5185, 5264, 5428, 5460, 5475, 5846, 6351, 6417, 6642, 6885, 7920, 8010, 8514 } "
-04:42:45 PM [VERBOSE](./data_structures/tests/list_test.c:126) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:39) print_all(): 
+" { 0, 15, 32, 68, 78, 86, 96, 124, 126, 128, 152, 180, 188, 188, 231, 248, 286, 306, 310, 320, 342, 342, 374, 504, 592, 616, 623, 624, 810, 825, 867, 890, 912, 1001, 1056, 1088, 1104, 1120, 1120, 1150, 1152, 1170, 1190, 1224, 1258, 1344, 1470, 1501, 1512, 1696, 1755, 1804, 1881, 1904, 2025, 2025, 2059, 2070, 2112, 2156, 2158, 2280, 2385, 2409, 2430, 2430, 2560, 2697, 2806, 2881, 2900, 3078, 3108, 3150, 3332, 3348, 3363, 3382, 3588, 3663, 4048, 4264, 4290, 4560, 4730, 4750, 5248, 5280, 5325, 5415, 5460, 5658, 6480, 6612, 6622, 6715, 6723, 7050, 8160, 8730 } "
+06:27:11 PM [VERBOSE](./data_structures/tests/list_test.c:123) main(): 
 "Printing all elements inside of list_two in ascending order!
 "
-04:42:45 PM [TRACE](./memory/ref_count.c:73) c_utils_ref_inc(): 
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
 "Reference count was incremented from 1 to 2"
-04:42:45 PM [TRACE](./memory/ref_count.c:86) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
 "Reference count was decremented from 2 to 1"
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
-" { 0, 0, 20, 58, 130, 189, 272, 290, 336, 368, 392, 448, 546, 552, 552, 580, 589, 630, 656, 670, 684, 705, 756, 760, 792, 792, 810, 814, 819, 832, 874, 915, 924, 924, 935, 992, 1015, 1032, 1036, 1044, 1062, 1148, 1148, 1170, 1175, 1577, 1690, 1764, 1800, 1800, 1872, 1872, 1925, 2050, 2093, 2145, 2176, 2240, 2522, 2562, 2574, 2772, 2886, 2960, 2976, 2992, 3040, 3087, 3128, 3196, 3330, 3550, 3600, 3720, 3780, 3818, 3834, 3844, 3978, 4042, 4059, 4264, 4543, 4558, 4590, 4897, 4902, 5185, 5264, 5428, 5460, 5475, 5846, 6351, 6417, 6642, 6885, 7920, 8010, 8514 } "
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:129) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:39) print_all(): 
+" { 0, 15, 32, 68, 78, 86, 96, 124, 126, 128, 152, 180, 188, 188, 231, 248, 286, 306, 310, 320, 342, 342, 374, 504, 592, 616, 623, 624, 810, 825, 867, 890, 912, 1001, 1056, 1088, 1104, 1120, 1120, 1150, 1152, 1170, 1190, 1224, 1258, 1344, 1470, 1501, 1512, 1696, 1755, 1804, 1881, 1904, 2025, 2025, 2059, 2070, 2112, 2156, 2158, 2280, 2385, 2409, 2430, 2430, 2560, 2697, 2806, 2881, 2900, 3078, 3108, 3150, 3332, 3348, 3363, 3382, 3588, 3663, 4048, 4264, 4290, 4560, 4730, 4750, 5248, 5280, 5325, 5415, 5460, 5658, 6480, 6612, 6622, 6715, 6723, 7050, 8160, 8730 } "
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:126) main(): 
 "Testing adding elements before and after the current elements!
 "
-04:42:45 PM [VERBOSE](./data_structures/tests/list_test.c:134) main(): 
+06:27:11 PM [VERBOSE](./data_structures/tests/list_test.c:131) main(): 
 "Printing all elements inside of list_two after inserting bad elements!
 "
-04:42:45 PM [TRACE](./memory/ref_count.c:73) c_utils_ref_inc(): 
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
 "Reference count was incremented from 1 to 2"
-04:42:45 PM [TRACE](./memory/ref_count.c:86) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
 "Reference count was decremented from 2 to 1"
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:42) print_all(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:39) print_all(): 
+" { 0, 15, 32, 68, 78, 86, 96, 124, 126, 128, 152, 180, 188, 188, 231, 248, 286, 306, 310, 320, 342, 342, 374, 504, 592, 616, 623, 624, 810, 825, 867, 890, 912, 1001, 1056, 1088, 1104, 1120, 1120, 1150, 1152, 1170, 1190, 1224, 1258, 1344, 1470, 1501, 1512, 1696, 1755, 1804, 1881, 1904, 2025, 2025, 2059, 2070, 2112, 2156, 2158, 2280, 2385, 2409, 2430, 2430, 2560, 2697, 2806, 2881, 2900, 3078, 3108, 3150, 3332, 3348, 3363, 3382, 3588, 3663, 4048, 4264, 4290, 4560, 4730, 4750, 5248, 5280, 5325, 5415, 5460, 5658, 6480, 6612, 6622, 6715, 6723, 7050, 8160, 8730 } "
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:134) main(): 
+"Clearing the list through the iterator..."
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
+"Reference count was incremented from 1 to 2"
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
+"Reference count was decremented from 2 to 1"
+06:27:11 PM [VERBOSE](./data_structures/tests/list_test.c:138) main(): 
+"Printing all elements inside of list_two after clearing through iterator!
+"
+06:27:11 PM [TRACE](./data_structures/list.c:380) c_utils_list_iterator(): 
+"Reference count was incremented from 1 to 2"
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
+"Reference count was decremented from 2 to 1"
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:39) print_all(): 
 "  } "
-04:42:45 PM [TRACE](./memory/ref_count.c:86) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/list.c:209) c_utils_list_destroy(): 
 "Reference count was decremented from 1 to 0"
-04:42:45 PM [TRACE](./memory/ref_count.c:86) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
 "Reference count was decremented from 0 to -1"
-04:42:45 PM [TRACE](./memory/ref_count.c:94) c_utils_ref_dec(): 
+06:27:11 PM [TRACE](./data_structures/iterator.c:83) c_utils_iterator_destroy(): 
 "Reference count reached below 0, destroying object..."
-04:42:45 PM [INFO](./data_structures/tests/list_test.c:150) main(): 
+06:27:11 PM [INFO](./data_structures/tests/list_test.c:147) main(): 
 "All Tests Passed!
 "

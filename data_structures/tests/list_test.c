@@ -26,9 +26,6 @@ static void print_all(list_t *list) {
 	int *item;
 	string_buffer_t *buf = string_buffer_create(" { ", false);
 	LIST_FOR_EACH(item, list) {
-		if(!item)
-			continue;
-
 		STRING_BUFFER_APPEND(buf, *item);
 		string_buffer_append(buf, ", ");
 	}
@@ -134,12 +131,12 @@ int main(void) {
 	LOG_VERBOSE(logger, "Printing all elements inside of list_two after inserting bad elements!\n");
 	print_all(list_two);
 
-	// Retrieve the elements inserted at predicted indexes. Extremely type unsafe ofc.
-	void *item_one = iterator_head(it);
-	// discarded
-	iterator_next(it);
-	void *item_two = iterator_next(it);
-	ASSERT(!item_one && !item_two, logger, "Was unable to add after or before!");
+	LOG_INFO(logger, "Clearing the list through the iterator...");
+	LIST_FOR_EACH_REV(item, list_two)
+		iterator_delete(_this_iterator);
+
+	LOG_VERBOSE(logger, "Printing all elements inside of list_two after clearing through iterator!\n");
+	print_all(list_two);
 
 	list_destroy(list);
 	list_destroy(list_two);
