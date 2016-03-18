@@ -30,9 +30,30 @@ struct c_utils_scoped_lock
 };
 
 #ifdef NO_C_UTILS_PREFIX
+/*
+   Typedefs
+*/
 typedef struct c_utils_scoped_lock scoped_lock_t;
+
+/*
+   Macros
+*/
+#define SCOPED_LOCK_FROM(...) C_UTILS_SCOPED_LOCK_FROM(__VA_ARGS__)
+#define SCOPED_LOCK(...) C_UTILS_SCOPED_LOCK(__VA_ARGS__)
+#define SCOPED_LOCK_RDLOCK(...) C_UTILS_SCOPED_RDLOCK(__VA_ARGS__)
+#define SCOPED_LOCK_WRLOCK(...) C_UTILS_SCOPED_WRLOCK(__VA_ARGS__)
+#define UNACCESSIBLE C_UTILS_UNACCESSIBLE
+
+/*
+   Functions
+*/
 #define scoped_lock_mutex(...) c_utils_scoped_lock_mutex(__VA_ARGS__)
+#define scoped_lock_mutex_from(...) c_utils_scoped_lock_mutex_from(__VA_ARGS__)
 #define scoped_lock_spinlock(...) c_utils_scoped_lock_spinlock(__VA_ARGS__)
+#define scoped_lock_spinlock_from(...) c_utils_scoped_lock_spinlock_from(__VA_ARGS__)
+#define scoped_lock_rwlock(...) c_utils_scoped_lock_rwlock(__VA_ARGS__)
+#define scoped_lock_rwlock_from(...) c_utils_scoped_lock_rwlock_from(__VA_ARGS__)
+#define scoped_lock_no_op(...) c_utils_scoped_lock_no_op(__VA_ARGS__)
 #endif
 
 
@@ -84,6 +105,10 @@ void c_utils_scoped_lock_destroy(struct c_utils_scoped_lock *lock);
 #define C_UTILS_SCOPED_LOCK1(s_lock) _C_UTILS_SCOPED_LOCK(s_lock, 1)
 
 #define C_UTILS_SCOPED_LOCK(s_lock) C_UTILS_SCOPED_LOCK0(s_lock)
+
+#define C_UTILS_SCOPED_RDLOCK(s_lock) C_UTILS_SCOPED_LOCK1(s_lock)
+
+#define C_UTILS_SCOPED_WRLOCK(s_lock) C_UTILS_SCOPED_LOCK0(s_lock)
 
 #define C_UTILS_UNACCESSIBLE do { __builtin_unreachable(); assert(0 && "Reach unreachable block!"); } while(0)
 

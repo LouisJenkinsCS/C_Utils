@@ -27,7 +27,8 @@ struct c_utils_iterator {
 	bool (*append)(void *handle, void *pos, void *item);
 	bool (*prepend)(void *handle, void *pos, void *item);
 	bool (*for_each)(void *handle, void *pos, c_utils_general_cb);
-	bool (*del)(void *handle, void *pos, c_utils_delete_cb);
+	bool (*rem)(void *handle, void *pos);
+	bool (*del)(void *handle, void *pos);
 	void (*finalize)(void *handle, void *pos);
 	// Configuration
 	struct c_utils_iterator_conf conf;
@@ -66,21 +67,31 @@ typedef struct c_utils_iterator iterator_t;
 #endif
 
 /*
-	The below structure is an early prototype on my own implementation of a generic iterator.
-	By using an anonymous/opaque handle, it allows me to generalize it's use, as well as 
-	maintain complete flexibility. The big problem being there is no way to validate if the
-	handle is still valid, but that is true for all non-kernel data structures, hence it is
-	up to the user to not destroy the data structure being pointed to and attempt to dereference it.
+	The iterator works by invoking callbacks specified by the creator (I.E, the C_Utils data structures)
+	and if one is not specified (left as NULL), we automatically fail the call. This allows one to use
+	the iterator generically for any data structure, so long as they support the call.
 
-	The structure is callback heavy, and all callbacks should be filled by the data structures which
-	creates this structure, and the callbacks themselves should not be called by the user, only through
-	the abstraction layer supplied as the API. The callbacks themselves can be rather tricky, but are
-	relatively simple. They all pass the handle to the callback, meaning any data structure can
-	implement this, generically. Then it takes a pointer to the current node, also maintained 
-	by the iterator itself, and should be checked to see if it is still valid, hence all operations
-	should be O(n), even if it's a simple operation such as next and prev. Lastly, except for del which
-	takes an obvious, with no need to mention, deletion callback, in which case is it's 4th, the 3rd parameter
-	is a pointer to the desired storage to store the result of the transaction. 
+	The iterator can optionally maintain a reference count to the underlying data structure to ensure that
+	it does not become invalid between calls, before the iterator is actually destroyed. The iterator supports
+	custom macros for iterating through each item in the list, however more often than not, the implementor have
+	macros which are more specific and should be used instead.
+
+	Iterators support passing a custom type, of which can  be checked to ensure the iterator is compatible with
+	their helper macros. For example, in C_Util's concurrent map, it supports iterating over the map by
+	keys, values, and key-value pairs; none of which would work on one returned from list. This allows generic but
+	safe iterators to prevent the invokation of unintentional undefined behavior.
+
+	To summarize when you would use the iterator macro over the for_each, or even iterator_for_each, remember that
+	there are some short-comings when it comes having it invoke the callback on each directly. For one, for concurrent
+	data structures, this means you acquire the lock for the entire time, which may be good depending on use, it may also
+	cause starvation of other threads attempting to access the underlying data structure. For instance, list supports
+	concurrent access through a reader-writer lock supplied in the pthread library, named pthread_rwlock_t, and upon which
+	calling for_each on a large list can result in writer starvation as it uses the reader-lock. Through the iterator macro,
+	it will allow any writers the chance to write to the data structure, making for more efficient, less starved, and possibly
+	less contended accesses. Furthermore, there is the convenience of using a block of code on each item rather, say, having to
+	create a function just to do a simple procedure. Lastly, you cannot remove an item from the list while the reader-lock is
+	acquired (as this would dead-lock) with for_each, while you CAN with the iterator macro because you relinquish the lock on each
+	call.
 */
 
 void *c_utils_iterator_head(struct c_utils_iterator *it);
@@ -97,7 +108,9 @@ bool c_utils_iterator_prepend(struct c_utils_iterator *it, void *item);
 
 bool c_utils_iterator_for_each(struct c_utils_iterator *it, c_utils_general_cb cb);
 
-bool c_utils_iterator_remove(struct c_utils_iterator *it, c_utils_delete_cb del);
+bool c_utils_iterator_remove(struct c_utils_iterator *it);
+
+bool c_utils_iterator_delete(struct c_utils_iterator *it);
 
 void c_utils_iterator_destroy(struct c_utils_iterator *it);
 

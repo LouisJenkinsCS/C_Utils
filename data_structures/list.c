@@ -182,7 +182,7 @@ void c_utils_list_remove_all(struct c_utils_list *list) {
 		return;
 	
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock)
+	C_UTILS_SCOPED_WRLOCK(list->lock)
 		delete_all_nodes(list, NULL);
 }
 
@@ -191,7 +191,7 @@ void c_utils_list_delete_all(struct c_utils_list *list) {
 		return;
 	
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) 
+	C_UTILS_SCOPED_WRLOCK(list->lock) 
 		delete_all_nodes(list, list->conf.del);
 }
 
@@ -223,7 +223,7 @@ bool c_utils_list_add(struct c_utils_list *list, void *item) {
 	}
 	
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (!list->size)
 			return add_as_only(list, node);
 
@@ -288,7 +288,7 @@ bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *ite
 	}
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock)
+	C_UTILS_SCOPED_RDLOCK(list->lock)
 		for_each_item(list, callback);
 		
 	return true;
@@ -304,7 +304,7 @@ bool c_utils_list_contains(struct c_utils_list *list, void *item) {
 	}
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock)
+	C_UTILS_SCOPED_RDLOCK(list->lock)
 		return !!item_to_node(list, item);
 
 	C_UTILS_UNACCESSIBLE;
@@ -315,7 +315,7 @@ void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
 		return NULL;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		struct c_utils_node *node = index_to_node(list, index);
 		return node ? node->item : NULL;
 	} // Release Reader Lock
@@ -328,7 +328,7 @@ void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 		return NULL;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		void **array_of_items;
 		C_UTILS_ON_BAD_MALLOC(array_of_items, list->conf.logger, sizeof(void *) * list->size)
 			return NULL;
@@ -522,7 +522,7 @@ static inline int remove_node(struct c_utils_list *list, struct c_utils_node *no
 
 static void *remove_at(struct c_utils_list *list, unsigned int index, bool delete_item) {
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		struct c_utils_node *temp_node = index_to_node(list, index);
 		
 		if (temp_node) {
@@ -540,7 +540,7 @@ static void *remove_at(struct c_utils_list *list, unsigned int index, bool delet
 
 static void remove_item(struct c_utils_list *list, void *item, bool delete_item) {
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		struct c_utils_node *node = item_to_node(list, item);
 
 		remove_node(list, node, delete_item ? list->conf.del : NULL);
@@ -671,7 +671,7 @@ static void *head(void *instance, void *pos) {
 	struct c_utils_node *head;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		head = list->head;
 		update_pos(pos, head);
 		return get_item(head);
@@ -685,7 +685,7 @@ static void *tail(void *instance, void *pos) {
 	struct c_utils_node *tail;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		tail = list->tail;
 		update_pos(pos, tail);
 		return get_item(tail);
@@ -700,7 +700,7 @@ static void *next(void *instance, void *pos) {
 	struct c_utils_node *next = NULL;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		if (!list->size) {
 			update_pos(pos, NULL);
 			return NULL;
@@ -734,7 +734,7 @@ static void *prev(void *instance, void *pos) {
 	struct c_utils_node *prev = NULL;
 
 	// Acquire Reader Lock
-	C_UTILS_SCOPED_LOCK1(list->lock) {
+	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		if (list->size == 0) {
 			update_pos(pos, NULL);
 			return NULL;
@@ -775,7 +775,7 @@ static bool append(void *instance, void *pos, void *item) {
 	c_utils_ref_inc(node);
 
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(p, node);
@@ -830,7 +830,7 @@ static bool prepend(void *instance, void *pos, void *item) {
 	c_utils_ref_inc(node);
 
 	// Acquire Writer Lock
-	C_UTILS_SCOPED_LOCK0(list->lock) {
+	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(p, node);

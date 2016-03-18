@@ -12,9 +12,6 @@
 	noted that if the caller must NEVER EVER use the object after decrementing their own count, 
 	they should increment the count BEFORE passing to a callee (I.E another thread), and should
 	not decrement the count twice.
-
-	As well, the should define C_UTILS_REF_COUNT if they want to use this utility for other
-	library projects to allow easy reference counting. 
 */
 
 /*
