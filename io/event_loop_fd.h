@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#define C_UTILS_EVENT_LOOP_NAME_MAX_LEN 64
+
 /*
 	The event_source is used to manage and maintain an emission of
 	events through a file descriptor. This file descriptor can be
@@ -107,6 +109,41 @@ enum c_utils_event_flags {
 	C_UTILS_EVENT_FLAGS_READ = 1 << 3,
 	C_UTILS_EVENT_FLAGS_READ_DONE = 1 << 4
 };
+
+/*
+	Defaults:
+		name:
+			"FD: [FILE_DESCRIPTOR]"
+		user_data:
+			NULL
+		type:
+			READ | WRITE
+		finalizer:
+			NULL
+		ref_counted:
+			false
+		close_fd:
+			false
+		logger:
+			NULL
+*/
+struct c_utils_event_source_fd_conf {
+	/// Name associated with this event.
+	char name[C_UTILS_EVENT_LOOP_NAME_MAX_LEN + 1];
+	/// Data from user to pass to the dispatcher
+	void *user_data;
+	/// The event source type (determines what events we poll for).
+	enum c_utils_event_source_type type;
+	/// Callback to handle finalizing user_data
+	c_utils_finalize finalizer;
+	/// If we reference count this event source.
+	bool ref_counted;
+	/// If we should close file descriptor on destruction
+	bool close_fd;
+	/// Logger used to log any tracing debug and errors to.
+	struct c_utils_logger *logger;
+};
+
 
 /*
 	Convenience macro to create an event source from a passed file, returning the result through

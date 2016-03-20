@@ -1,10 +1,9 @@
 #include "event_loop_fd.h"
 #include "../data_structures/list.h"
 #include "logger.h"
-#ifdef C_UTILS_REF_COUNT
 #include "../memory/ref_count.h"
-#endif
 #include "../misc/argument_check.h"
+#include "../misc/signal_retry.h"
 
 #include <stdint.h>
 #include <stdatomic.h>
@@ -13,21 +12,13 @@
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 
-#define C_UTILS_EVENT_LOOP_NAME_MAX_LEN 64
-
 struct c_utils_event_source_fd {
 	/// File descriptor associated with this event
 	int fd;
-	/// Name associated with this event.
-	char name[C_UTILS_EVENT_LOOP_NAME_MAX_LEN + 1];
-	/// Data from user to pass to the dispatcher
-	void *user_data;
-	/// The event source type (determines what events we poll for).
-	enum c_utils_event_source_type type;
 	/// Callback to handle dispatching the event.
 	c_utils_dispatch dispatcher;
-	/// Callback to handle finalizing user_data
-	c_utils_finalize finalizer;
+	/// Configuration
+	struct c_utils_event_source_fd_conf conf;
 };
 
 struct c_utils_event_loop_fd {
@@ -72,12 +63,13 @@ static bool socket_to_non_blocking(int fd) {
 */
 static void finished_with_source(void *src) {
 	struct c_utils_event_source_fd *source = src;
-	if(source->finalizer)
-			source->finalizer(source->user_data);
+	if(source->conf.finalizer)
+			source->conf.finalizer(source->conf.user_data);
 
-	#ifdef C_UTILS_REF_COUNT
-	c_utils_ref_dec(src);
-	#endif
+	if(source->conf.close_fd)
+		close(source->fd);
+
+	free(source);
 }
 
 
@@ -113,32 +105,29 @@ static bool handled_dispatch(struct c_utils_event_source_fd *source, int flags) 
 		int bytes_read = read(source->fd, buf, BUFSIZ);
 		if(bytes_read <= 0) {
 			if(bytes_read == -1) {
-				C_UTILS_LOG_ERROR(logger, "Error occuring while reading from event name: \"%s\"'s file descriptor: \"%s\"", source->name,  strerror(errno));
+				C_UTILS_LOG_ERROR(logger, "Error occuring while reading from event name: \"%s\"'s file descriptor: \"%s\"", source->conf.name,  strerror(errno));
 				return true;
 			}
 			else {
-				C_UTILS_LOG_VERBOSE(logger, "Event name: \"%s\" returned EOF!", source->name);
-				source->type &= ~C_UTILS_EVENT_SOURCE_TYPE_READ;
-				source->type |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
+				C_UTILS_LOG_VERBOSE(logger, "Event name: \"%s\" returned EOF!", source->conf.name);
+				source->conf.type &= ~C_UTILS_EVENT_SOURCE_TYPE_READ;
+				source->conf.type |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
 				return false;
 			}
 		}
 	}
 
-	if(source->type & C_UTILS_EVENT_SOURCE_TYPE_EOF)
+	if(source->conf.type & C_UTILS_EVENT_SOURCE_TYPE_EOF)
 		flags |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
 
-	if(source->dispatcher(source->user_data, source->fd, buf, bytes_read, flags))
-		return true;
-
-	return false;
+	return source->dispatcher(source->conf.user_data, source->fd, buf, bytes_read, flags);
 }
 
 /*
 	Checks to see if the passed file descriptor is bad and should be removed from the pollfd array
 	ASAP. This also manages the logging of such errors as well.
 */
-static inline bool is_bad_fd(struct pollfd *fd, const char *event_name) {
+static inline bool is_bad_fd(struct c_utils_logger *logger, struct pollfd *fd, const char *event_name) {
 	if(has_error(fd))
 		C_UTILS_LOG_ERROR(logger,  "Event Source: \"%s\" has had an error!", event_name);
 	else if(is_invalid(fd))
@@ -155,10 +144,12 @@ static inline bool is_bad_fd(struct pollfd *fd, const char *event_name) {
 	Where we poll the pollfd array, check them when woken to see any are ready, and if they are,
 	dispatch them through their dispatcher callback.
 */
-static void poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int size) {
-	int retval = poll(fds, size, -1);
+static bool poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int size) {
+	int retval;
+	C_UTILS_TEMP_FAILURE_RETRY(retval, poll(fds, size, -1));
 	if (retval == -1) {
-		// Handle errors
+		C_UTILS_LOG_ERROR(loop->conf.logger, "poll: \"%s\"", strerror(errno));
+		return false;
 	}
 
 	// Since we poll indefinitely without timeout, it would be REALLY strange if it returned 0, but just in case.
@@ -169,7 +160,7 @@ static void poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int
 		// Decrement size, and if it is 0, there are no others ready.
 		if(!--retval) {
 			C_UTILS_LOG_TRACE(logger, "Woken up prematurely, returning from poll early...");
-			return;
+			return true;
 		}
 	}
 
@@ -180,8 +171,8 @@ static void poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int
 	for(int i = 1; retval && i <= num_sources; i++) {
 		struct c_utils_event_source_fd *source = sources[i-1];
 
-		if(is_bad_fd(fds + i, source->name)) {
-			c_utils_list_add(loop->remove_sources, source, NULL);
+		if(is_bad_fd(source->conf.logger, fds + i, source->conf.name)) {
+			c_utils_list_add(loop->remove_sources, source);
 			retval--;
 			continue;
 		}
@@ -189,7 +180,7 @@ static void poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int
 		int flags = (has_input(fds + i) ? C_UTILS_EVENT_SOURCE_TYPE_READ : 0) |
 				  (has_output(fds + i) ? C_UTILS_EVENT_SOURCE_TYPE_WRITE : 0);
 		if (flags && handled_dispatch(source, flags)) {
-			c_utils_list_add(loop->remove_sources, source, NULL);
+			c_utils_list_add(loop->remove_sources, source);
 			retval--;
 		}
 	}
@@ -215,13 +206,13 @@ static void update_loop_sources(struct c_utils_event_loop_fd *loop) {
 
 	// First, we add any new_sources to the list of sources.
 	C_UTILS_LIST_FOR_EACH(source, loop->add_sources)
-		c_utils_list_add(loop->sources, source, NULL);
-	c_utils_list_clear(loop->add_sources, NULL);
+		c_utils_list_add(loop->sources, source);
+	c_utils_list_remove_all(loop->add_sources);
 
 	// Then we clear sources of any removed_sources.
 	C_UTILS_LIST_FOR_EACH(source, loop->remove_sources)
-		c_utils_list_remove(loop->add_sources, source, NULL);
-	c_utils_list_clear(loop->remove_sources, finished_with_source);
+		c_utils_list_remove(loop->add_sources, source);
+	c_utils_list_delete_all(loop->remove_sources);
 }
 
 static void create_pollfd_from_sources(struct c_utils_event_loop_fd *loop, struct pollfd **fds, int *size) {
@@ -261,14 +252,14 @@ static void start_loop(struct c_utils_event_loop_fd *loop) {
 			fds[index++] = (struct pollfd) {
 				.fd =source->fd,
 				.events = 
-					((source->type & C_UTILS_EVENT_SOURCE_TYPE_READ) ? POLLIN : 0) |
-				  ((source->type & C_UTILS_EVENT_SOURCE_TYPE_WRITE) ? POLLOUT : 0)
+					((source->conf.type & C_UTILS_EVENT_SOURCE_TYPE_READ) ? POLLIN : 0) |
+				  ((source->conf.type & C_UTILS_EVENT_SOURCE_TYPE_WRITE) ? POLLOUT : 0)
 
 			};
 
 		poll_fds(loop, fds, index);
 	}
 
-	c_utils_list_clear(loop->sources, finished_with_source);
+	c_utils_list_delete_all(loop->sources);
 }
 
