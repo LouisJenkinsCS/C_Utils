@@ -110,6 +110,11 @@ enum c_utils_event_flags {
 	C_UTILS_EVENT_FLAGS_READ_DONE = 1 << 4
 };
 
+struct c_utils_event_loop_fd_conf {
+	/// Where tracing information are logged to.
+	struct c_utils_logger *logger;
+};
+
 /*
 	Defaults:
 		name:

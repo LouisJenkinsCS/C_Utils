@@ -58,7 +58,7 @@ bool c_utils_queue_enqueue(struct c_utils_queue *queue, void *data) {
 			continue;
 		}
 		
-		next = tail->_single.next;
+		next = tail->next;
 		// Sanity check.
 		if (tail != queue->tail) {
 			pthread_yield();
@@ -74,7 +74,7 @@ bool c_utils_queue_enqueue(struct c_utils_queue *queue, void *data) {
 		}
 
 		// Append the node to the tail.
-		if (__sync_bool_compare_and_swap(&tail->_single.next, NULL, node)) 
+		if (__sync_bool_compare_and_swap(&tail->next, NULL, node)) 
 			break;
 
 		pthread_yield();
@@ -101,7 +101,7 @@ void *c_utils_queue_dequeue(struct c_utils_queue *queue) {
 		}
 		
 		tail = queue->tail;
-		next = head->_single.next;
+		next = head->next;
 		c_utils_hazard_acquire(1, next);
 		// Sanity check.
 		if (head != queue->head) {
@@ -143,7 +143,7 @@ bool c_utils_queue_destroy(struct c_utils_queue *queue, c_utils_delete_cb del) {
 	c_utils_hazard_release_all(false);
 	
 	struct c_utils_node *prev_node = NULL, *node;
-	for (node = queue->head; node; node = node->_single.next) {
+	for (node = queue->head; node; node = node->next) {
 		free(prev_node);
 		if (del) 
 			del(node->item);

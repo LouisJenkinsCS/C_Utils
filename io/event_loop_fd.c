@@ -32,13 +32,11 @@ struct c_utils_event_loop_fd {
 	struct c_utils_list *remove_sources;
 	/// Synchronized list of sources currently polling on.
 	struct c_utils_list *sources;
+	/// Configuration
+	struct c_utils_event_loop_fd_conf conf;
 };
 
-static struct c_utils_logger *logger;
-
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./io/logs/event_loop_fd.log", "w", C_UTILS_LOG_LEVEL_ALL);
-
-static bool socket_to_non_blocking(int fd) {
+static bool socket_to_non_blocking(int fd, struct c_utils_logger *logger) {
 	int flags = fcntl(fd, F_GETFL, 0);
 	if(flags == -1) {
 		C_UTILS_LOG_ERROR(logger, "fctnl { F_GETFL } : \"%s\"", strerror(errno));
@@ -94,7 +92,7 @@ static inline bool is_invalid(struct pollfd *fd) {
 }
 
 /*
-	Handles dispatching the source passed source. If there is an error or if dispatcher returns
+	Handles dispatching the passed source. If there is an error or if dispatcher returns
 	true, then the event is consumed as well and is set to be removed from the list.
 */
 static bool handled_dispatch(struct c_utils_event_source_fd *source, int flags) {
@@ -105,11 +103,11 @@ static bool handled_dispatch(struct c_utils_event_source_fd *source, int flags) 
 		int bytes_read = read(source->fd, buf, BUFSIZ);
 		if(bytes_read <= 0) {
 			if(bytes_read == -1) {
-				C_UTILS_LOG_ERROR(logger, "Error occuring while reading from event name: \"%s\"'s file descriptor: \"%s\"", source->conf.name,  strerror(errno));
+				C_UTILS_LOG_ERROR(source->conf.logger, "Error occuring while reading from event name: \"%s\"'s file descriptor: \"%s\"", source->conf.name,  strerror(errno));
 				return true;
 			}
 			else {
-				C_UTILS_LOG_VERBOSE(logger, "Event name: \"%s\" returned EOF!", source->conf.name);
+				C_UTILS_LOG_VERBOSE(source->conf.logger, "Event name: \"%s\" returned EOF!", source->conf.name);
 				source->conf.type &= ~C_UTILS_EVENT_SOURCE_TYPE_READ;
 				source->conf.type |= C_UTILS_EVENT_SOURCE_TYPE_EOF;
 				return false;
@@ -144,12 +142,13 @@ static inline bool is_bad_fd(struct c_utils_logger *logger, struct pollfd *fd, c
 	Where we poll the pollfd array, check them when woken to see any are ready, and if they are,
 	dispatch them through their dispatcher callback.
 */
-static bool poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int size) {
+static void poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int size) {
 	int retval;
 	C_UTILS_TEMP_FAILURE_RETRY(retval, poll(fds, size, -1));
 	if (retval == -1) {
 		C_UTILS_LOG_ERROR(loop->conf.logger, "poll: \"%s\"", strerror(errno));
-		return false;
+		loop->running = false;
+		return;
 	}
 
 	// Since we poll indefinitely without timeout, it would be REALLY strange if it returned 0, but just in case.
@@ -159,8 +158,8 @@ static bool poll_fds(struct c_utils_event_loop_fd *loop, struct pollfd *fds, int
 	if (has_input(fds)) {
 		// Decrement size, and if it is 0, there are no others ready.
 		if(!--retval) {
-			C_UTILS_LOG_TRACE(logger, "Woken up prematurely, returning from poll early...");
-			return true;
+			C_UTILS_LOG_TRACE(loop->conf.logger, "Woken up prematurely, returning from poll early...");
+			return;
 		}
 	}
 
@@ -215,10 +214,6 @@ static void update_loop_sources(struct c_utils_event_loop_fd *loop) {
 	c_utils_list_delete_all(loop->remove_sources);
 }
 
-static void create_pollfd_from_sources(struct c_utils_event_loop_fd *loop, struct pollfd **fds, int *size) {
-
-}
-
 /*
 	The main event loop, which handles adding and removing sources, creating pollfd's from sources,
 	flushing the wake_fd, and finally polling on all pollfd's until any is ready.
@@ -227,11 +222,15 @@ static void start_loop(struct c_utils_event_loop_fd *loop) {
 	if(!loop)
 		return;
 
-	while(loop->running) {
+	while(true) {
 		// In the case that we were woken up, we clear the data on the FD.
 		flush_wake_fd(loop);
 
 		update_loop_sources(loop);
+
+		// Since we need to ensure all sources are properly deleted, we add them first then break if no longer running.
+		if(!loop->running)
+			break;
 
 		/*
 			We add the wake_fd first to guarantee ease of retrieval when we are polling. The wake_fd is used
@@ -251,7 +250,7 @@ static void start_loop(struct c_utils_event_loop_fd *loop) {
 		C_UTILS_LIST_FOR_EACH(source, loop->sources)
 			fds[index++] = (struct pollfd) {
 				.fd =source->fd,
-				.events = 
+				.events =
 					((source->conf.type & C_UTILS_EVENT_SOURCE_TYPE_READ) ? POLLIN : 0) |
 				  ((source->conf.type & C_UTILS_EVENT_SOURCE_TYPE_WRITE) ? POLLOUT : 0)
 

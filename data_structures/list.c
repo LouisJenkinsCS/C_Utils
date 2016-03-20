@@ -721,13 +721,10 @@ static void *next(void *instance, void *pos) {
 			return get_item(next);
 		}
 
-		if (p->curr->is_valid) {
+		if (p->curr->is_valid)
 			next = p->curr->next;
-		} else if (p->next && p->next->is_valid) {
+		else if (p->next && p->next->is_valid)
 			next = p->next;
-		} else if (p->prev && p->prev->is_valid) {
-			next = p->prev->next;
-		}
 
 		update_pos(p, next);
 		
@@ -759,8 +756,6 @@ static void *prev(void *instance, void *pos) {
 			prev = p->curr->prev;
 		else if (p->prev && p->prev->is_valid)
 			prev = p->prev;
-		else if (p->next && p->next->is_valid)
-			prev = p->next->prev;
 
 		update_pos(p, prev);
 

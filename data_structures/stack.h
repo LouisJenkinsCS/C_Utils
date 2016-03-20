@@ -6,13 +6,19 @@
 #include "helpers.h"
 
 /*
-	A mostly lock-free implementation of a stack. It is guaranteed to be wait-free, and supports basic
-	stack manipulations. 
-
-	It is "mostly" lock-free as the lock-free memory allocator is not currently implemented, hence
-	malloc/calloc use its own internal lock for it's heap. Otherwise, it is lock-free.
+	A stack implementation with the possibility of being lock-free. By toggling lock_free flag in the
+	configuration object passed to it, it will cause push and pop to be atomic.
 */
 struct c_utils_stack;
+
+struct c_utils_stack_conf {
+	/// If the stack acts as a lock-free one.
+	bool lock_free;
+	/// Called on each item after stack is destroyed if it isn't empty.
+	c_utils_delete_cb del;
+	/// Logger
+	struct c_utils_logger *logger;
+};
 
 /*
 	No typedef for stack, as it is taken in POSIX standard.
@@ -34,6 +40,8 @@ struct c_utils_stack;
 
 struct c_utils_stack *c_utils_stack_create(void);
 
+struct c_utils_stack *c_utils_stack_create_conf(struct c_utils_stack_conf *conf);
+
 /*
 	Push the item down on the stack. Returns true unless there is an
 	allocation failure.
@@ -50,6 +58,6 @@ void *c_utils_stack_pop(struct c_utils_stack *stack);
 	Destroys the stack, as well as all nodes, and optionally each node's item
 	if the callback del is declared.
 */
-bool c_utils_stack_destroy(struct c_utils_stack *stack, c_utils_delete_cb del);
+bool c_utils_stack_destroy(struct c_utils_stack *stack);
 
 #endif /* endif C_UTILS_STACK_H */
