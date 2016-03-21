@@ -85,20 +85,47 @@ struct c_utils_map_conf {
 	bool concurrent;
 	/// Default number of buckets
 	size_t num_buckets;
-	/// If we are reference counted.
-	bool ref_counted;
+	/// Reference Counting
+	struct {
+		/// Should we treat the key as if it is reference counted.
+		bool key;
+		/// Should we treat the value as if it is reference counted?
+		bool value;
+		/// Should we reference count this instance?
+		bool instance;
+	} rc;
+	/// Callbacks
+	struct {
+		/// Destructors
+		struct {
+			/// Key destructor
+			void (*key)(void *);
+			/// Value destructor
+			void (*value)(void *);
+		} dtor;
+		/// Hash function
+		uint32_t (*hash_fnc)(const void *key, size_t len);
+		/// Comparator for values used to deep-search
+		int (*value_cmp)(const void *first, const void *second, size_t obj_len);
+	} cb;
+	struct {
+		/// What ratio should we grow at?
+		double ratio;
+		/// When should we trigger?
+		double trigger;
+	} growth;
+	struct {
+		/// Should we ever shrink?
+		bool enabled;
+		/// If so, at what rate?
+		double ratio;
+		/// And when?
+		double trigger;
+	} shrink;
 	/// If we should delete all elements on destruction
 	bool del_on_free;
 	/// The size of the object being hashed. Should always be specified.
 	size_t obj_len;
-	/// Hash function
-	uint32_t (*hash_fnc)(const void *key, size_t len);
-	/// Key Destructor
-	void (*key_destructor)(void *key);
-	/// Value Destructor
-	void (*value_destructor)(void *key);
-	/// Comparator for values used to deep-search
-	void (*value_cmp)(const void *first, const void *second, size_t obj_len);
 	/// Logger
 	struct c_utils_logger *logger;
 };

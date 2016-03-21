@@ -5,6 +5,14 @@
 #include <stddef.h>
 #include <string.h>
 
+/*
+	Idea:
+		Think about making it so that you can define a preprocessor macro, where, if it is
+		defined, it will start a thread at the beginning which is an event-loop thread. This
+		thread will handle any and all asynchronous work when asked, I.E reading from a file,
+		iterating a list, reading/writing to a socket, etc.
+*/
+
 #define C_UTILS_EVENT_LOOP_NAME_MAX_LEN 64
 
 /*
@@ -195,7 +203,7 @@ do { \
 	Note that the flags are not modifiable nor configurable. This is because pipes offer unidirectional streams of
 	data, and hence we the event source can only read from the socket, while the returned_fd is always the writing end.
 */
-#define C_UTILS_EVENT_SOURCE_LOCAL(src, returned_fd, event_name, user_data, dispatcher, finalizer) \
+#define C_UTILS_EVENT_SOURCE_LOCAL(src, returned_fd, dispatcher, conf) \
 do { \
 	int fds[2]; \
 	\
@@ -204,7 +212,8 @@ do { \
 		goto err; \
 	\
 	returned_fd = fds[1]; \
-	src = c_utils_event_source_fd_create(event_name, fds[0], user_data, dispatcher, finalizer, C_UTILS_EVENT_SOURCE_TYPE_READ); \
+	conf.type = C_UTILS_EVENT_SOURCE_TYPE_READ; \
+	src = c_utils_event_source_fd_create_conf(fds[0], dispatcher, conf); \
 	if(!src) \
 		goto err; \
 	\
@@ -255,8 +264,9 @@ bool c_utils_event_loop_fd_add(struct c_utils_event_source_fd *source);
 
 bool c_utils_event_loop_fd_remove(struct c_utils_event_source_fd *source);
 
-struct c_utils_event_source_fd *c_utils_event_source_fd_create(char *event_name, int fd, void *user_data,
-	c_utils_dispatch dispatcher, c_utils_finalize finalizer, enum c_utils_event_source_type flags);
+struct c_utils_event_source_fd *c_utils_event_source_fd_create(int fd, c_utils_dispatch dispatcher);
+
+struct c_utils_event_source_fd *c_utils_event_source_fd_create_conf(int fd, c_utils_dispatch dispatcher, struct c_utils_event_source_fd_conf conf);
 
 void c_utils_event_source_fd_destroy(struct c_utils_event_source_fd *source);
 
