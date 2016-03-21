@@ -25,23 +25,25 @@ struct c_utils_map {
 	size_t amount_of_buckets;
 	/// RWLock to enforce thread-safety.
 	struct c_utils_scoped_lock *lock;
+	/// Configuration
+	struct c_utils_map_conf conf;
 };
 
-static struct c_utils_logger *logger = NULL;
+/// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
+static uint32_t hash_key(const void *key) {
+	const char *k = key;
+	uint32_t hash = 0;
 
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/map.log", "w", C_UTILS_LOG_LEVEL_ALL);
-
-/// Very simple and straight forward hash function. Bob Jenkin's hash.
-static uint32_t hash_key(const char *key) {
-	uint32_t hash = 0, i = 0;
-	for (;i < strlen(key); ++i) {
-		hash += key[i];
+	for (uint32_t i = 0;i < strlen(k); ++i) {
+		hash += k[i];
 		hash += (hash << 10);
 		hash ^= (hash >> 6);
 	}
+
 	hash += (hash << 3);
 	hash ^= (hash >> 11);
 	hash += (hash << 15);
+
 	return hash;
 }
 
@@ -96,7 +98,7 @@ static void *get_value_from_bucket(struct c_utils_bucket *bucket, const char *ke
 		return NULL;
 
 	do {
-		if (!bucket->in_use) 
+		if (!bucket->in_use)
 			continue;
 		
 		if (strncmp(bucket->key, key, C_UTILS_HASH_MAP_KEY_SIZE) == 0)
