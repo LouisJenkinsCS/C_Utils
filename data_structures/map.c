@@ -55,11 +55,11 @@ static uint32_t hash_key(const void *key, size_t len) {
 }
 
 static void configure(struct c_utils_map_conf *conf) {
-	if(!conf->cb.hash_fnc)
-		conf->cb.hash_fnc = hash_key;
+	if(!conf->callbacks.hash_function)
+		conf->callbacks.hash_function = hash_key;
 
-	if(!conf->cb.value_cmp)
-		conf->cb.value_cmp = memcmp;
+	if(!conf->callbacks.value_comparator)
+		conf->callbacks.value_comparator = memcmp;
 
 	if(!conf->num_buckets)
 		conf->num_buckets = default_buckets;
@@ -70,7 +70,7 @@ static void configure(struct c_utils_map_conf *conf) {
 	if(!conf->growth.trigger <= 0)
 		conf->growth.trigger = default_growth_trigger;
 
-	if(conf->shrink.enabled) {
+	if(conf->flags & C_UTILS_MAP_SHRINK_ON_TRIGGER) {
 		if(conf->shrink.ratio <= 0)
 			conf->shrink.ratio = default_shrink_rate;
 
@@ -105,7 +105,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	configure(conf);
 
 	struct c_utils_map *map;
-	if(conf->rc.instance)
+	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
 		map = c_utils_ref_create(sizeof(*map));
 	else
 		map = malloc(sizeof(*map));
@@ -119,7 +119,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->amount_of_buckets)
 		goto err_buckets;
 	
-	map->lock = conf->concurrent ? c_utils_scoped_lock_rwlock(NULL, conf->logger) : c_utils_scoped_lock_no_op();
+	map->lock = conf->flags & C_UTILS_MAP_CONCURRENT ? c_utils_scoped_lock_rwlock(NULL, conf->logger) : c_utils_scoped_lock_no_op();
 	if(!map->lock) {
 		C_UTILS_LOG_ERROR(conf->logger, "Was unable to create the scoped_lock!");
 		goto err_lock;
@@ -131,7 +131,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		free(map->buckets);
 		map->buckets = NULL;
 	err_buckets:
-		if(conf->rc.instance)
+		if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
 			C_UTILS_REF_DEC(map);
 		else
 			free(map);

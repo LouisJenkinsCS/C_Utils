@@ -1,2 +1,2 @@
-05:11:17 PM [ERROR](./string/string_buffer.c:172) c_utils_string_buffer_delete(): 
+05:35:53 PM [ERROR](./string/string_buffer.c:172) c_utils_string_buffer_delete(): 
 "Start index is out of bounds!"

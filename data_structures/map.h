@@ -18,6 +18,12 @@ struct c_utils_map;
 
 #define C_UTILS_MAP_FOR_EACH_PAIR(key, value, map)
 
+#define C_UTILS_MAP_CONCURRENT 1 << 0
+#define C_UTILS_MAP_RC_INSTANCE 1 << 1
+#define C_UTILS_MAP_RC_KEY 1 << 2
+#define C_UTILS_MAP_RC_VALUE 1 << 3
+#define C_UTILS_MAP_DELETE_ON_DESTROY 1 << 4
+#define C_UTILS_MAP_SHRINK_ON_TRIGGER 1 << 5
 
 /*
 	concurrent:
@@ -81,19 +87,10 @@ struct c_utils_map;
 			If specified, any and all trace logs and warnings/errors are logged to it. Otherwise they are silently ignored.
 */
 struct c_utils_map_conf {
-	/// If should be made thread-safe for concurrent access
-	bool concurrent;
+	/// Configuration flags
+	int flags;
 	/// Default number of buckets
 	size_t num_buckets;
-	/// Reference Counting
-	struct {
-		/// Should we treat the key as if it is reference counted.
-		bool key;
-		/// Should we treat the value as if it is reference counted?
-		bool value;
-		/// Should we reference count this instance?
-		bool instance;
-	} rc;
 	/// Callbacks
 	struct {
 		/// Destructors
@@ -102,12 +99,12 @@ struct c_utils_map_conf {
 			void (*key)(void *);
 			/// Value destructor
 			void (*value)(void *);
-		} dtor;
+		} destructors;
 		/// Hash function
-		uint32_t (*hash_fnc)(const void *key, size_t len);
+		uint32_t (*hash_function)(const void *key, size_t len);
 		/// Comparator for values used to deep-search
-		int (*value_cmp)(const void *first, const void *second, size_t obj_len);
-	} cb;
+		int (*value_comparator)(const void *first, const void *second, size_t obj_len);
+	} callbacks;
 	struct {
 		/// What ratio should we grow at?
 		double ratio;
@@ -115,20 +112,48 @@ struct c_utils_map_conf {
 		double trigger;
 	} growth;
 	struct {
-		/// Should we ever shrink?
-		bool enabled;
 		/// If so, at what rate?
 		double ratio;
 		/// And when?
 		double trigger;
 	} shrink;
-	/// If we should delete all elements on destruction
-	bool del_on_free;
 	/// The size of the object being hashed. Should always be specified.
 	size_t obj_len;
 	/// Logger
 	struct c_utils_logger *logger;
 };
+
+/*
+	Example of configuration object...
+
+	map_conf_t conf =
+	{
+		.flags = MAP_CONCURRENT | MAP_RC_INSTANCE | MAP_SHRINK_ON_TRIGGER | MAP_DELETE_ON_DESTROY,
+		.num_buckets = 128,
+		.callbacks = 
+		{
+			.destructors = 
+			{
+				.key = free,
+				.value = destroy_value
+			},
+			.hash_function = my_custom_hash,
+			.value_comparator = my_custom_comparator
+		},
+		.growth = 
+		{
+			.ratio = 1.5,
+			.trigger = .75
+		},
+		.shrink = 
+		{
+			.ratio = .75,
+			.trigger = .1
+		},
+		.obj_len = sizeof(struct my_obj),
+		.logger = my_logger
+	};
+*/
 
 #ifdef NO_C_UTILS_PREFIX
 /*
