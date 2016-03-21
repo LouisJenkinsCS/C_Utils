@@ -71,18 +71,44 @@ This new way is simulator to the Configuration Object pattern, or well, it prett
 ~~~c
 
 /*
-    The below configuration object routes all logging to my_logger;
-    Sorts and searches for elements with my_comparator;
-    Deletes all items with my_destructor;
-    Utilizes reader-writer locks for thread-safe concurrent access;
-    Uses reference counting wrapper, ./memory/ref_count.h, for lifetime management.
+    The below elegantly demonstrates the importance of the configuration 
+    object. As can be seen, the object allows an almost JSON-like appearence to
+    configuring the specifics of the structure. This allows an fine-tuned 
+    data structure to fit the needs of the user. Unlike preprocessor macros,
+    these are evaluated at run-time, meaning you can have different configured
+    objects of the same type (which with preprocessor #define blocks would
+    only allow one). This comes with the trade-off of more memory for each,
+    as the underlying data structure must keep track of each field 
+    independently. 
 */
-list_conf_t conf = { .logger = my_logger, .cmp = my_comparator, .del = my_destructor, .concurrent = true, .ref_counted = true };
-list_t *list = list_create_conf(&conf);
-/*
-    Creates a vanilla and minimal default list.
-*/
-list_t *vanilla_list = list_create();
+
+map_conf_t conf =
+{
+    .flags = MAP_CONCURRENT | MAP_RC_INSTANCE | MAP_SHRINK_ON_TRIGGER | MAP_DELETE_ON_DESTROY,
+    .num_buckets = 128,
+    .callbacks = 
+    {
+        .destructors = 
+        {
+            .key = free,
+            .value = destroy_value
+        },
+        .hash_function = my_custom_hash,
+        .value_comparator = my_custom_comparator
+    },
+    .growth = 
+    {
+        .ratio = 1.5,
+        .trigger = .75
+    },
+    .shrink =
+    {
+        .ratio = .75,
+        .trigger = .1
+    },
+    .obj_len = sizeof(struct my_obj),
+    .logger = my_logger
+};
 
 ~~~
 
