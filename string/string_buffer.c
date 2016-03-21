@@ -57,7 +57,7 @@ struct c_utils_string_buffer *c_utils_string_buffer_create(char *str, bool synch
 	if(str)
 		snprintf(buf->data, len, "%s", str);
 
-	buf->used = str ? strlen(str) : 1;
+	buf->used = str ? len : 1;
 	buf->allocated = len;
 
 	buf->lock = synchronized ? c_utils_scoped_lock_spinlock(0, logger) : c_utils_scoped_lock_no_op();
