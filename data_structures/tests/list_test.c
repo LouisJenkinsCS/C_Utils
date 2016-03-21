@@ -44,7 +44,16 @@ static void print_all(list_t *list) {
 int main(void) {
 	srand(time(NULL));
 
-	list_conf_t conf = { .logger = logger, .cmp = inverse_compare_ints, .ref_counted = true, .del = free};
+	list_conf_t conf =
+	{
+		.logger = logger,
+		.flags = LIST_RC_INSTANCE,
+		.callbacks =
+		{
+			.comparator = inverse_compare_ints,
+			.destructor = free
+		},
+	};
 	void **array = malloc(sizeof(int *) * runs);
 	list_t *list = list_create(&conf);
 
@@ -93,8 +102,8 @@ int main(void) {
 	ASSERT(list_size(list) == 0, logger, "List's size was not properly managed!");
 
 	LOG_INFO(logger, "Creating a list from the array and sorting!\n");
-	conf.del_items_on_free = true;
-	conf.cmp = compare_ints;
+	conf.flags |= LIST_DELETE_ON_DESTROY;
+	conf.callbacks.comparator = compare_ints;
 	list_t *list_two = list_from_conf(array, runs, &conf);
 
 	iterator_destroy(it);

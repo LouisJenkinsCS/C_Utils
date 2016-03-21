@@ -75,7 +75,7 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 //  																				//
 //////////////////////////////////////////////////////////////////////////////////////
 
-static struct c_utils_node *create_node(void *item);
+static struct c_utils_node *create_node(void *item, bool ref_item);
 
 static void invalidate_node(struct c_utils_node *node);
 
@@ -98,7 +98,7 @@ static void destroy_list(void *instance);
 
 static inline void *get_item(struct c_utils_node *node);
 
-static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node);
+static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node, bool ref_item);
 
 static void *head(void *instance, void *pos);
 
@@ -134,7 +134,7 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
 
 	struct c_utils_list *list;
 
-	if(conf->ref_counted) {
+	if(conf->flags & C_UTILS_LIST_RC_INSTANCE) {
 		struct c_utils_ref_count_conf rc_conf = { .logger = conf->logger, .destructor = destroy_list };
 		list = c_utils_ref_create_conf(sizeof(*list), &rc_conf);
 	}
@@ -148,7 +148,7 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
 	list->head = list->tail = NULL;
 	list->size = 0;
 
-	if (conf->concurrent)
+	if (conf->flags & C_UTILS_LIST_CONCURRENT)
 		list->lock = c_utils_scoped_lock_rwlock(NULL, conf->logger);
 	else
 		list->lock = c_utils_scoped_lock_no_op();
@@ -198,14 +198,14 @@ void c_utils_list_delete_all(struct c_utils_list *list) {
 	
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) 
-		delete_all_nodes(list, list->conf.del);
+		delete_all_nodes(list, list->conf.callbacks.destructor);
 }
 
 void c_utils_list_destroy(struct c_utils_list *list) {
 	if(!list)
 		return;
 
-	if(list->conf.ref_counted) {
+	if(list->conf.flags & C_UTILS_LIST_RC_INSTANCE) {
 		C_UTILS_REF_DEC(list);
 		return;
 	}
@@ -222,19 +222,19 @@ bool c_utils_list_add(struct c_utils_list *list, void *item) {
 		return false;
 	}
 	
-	struct c_utils_node *node = create_node(item);
+	struct c_utils_node *node = create_node(item, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 	if(!node) {
 		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: \"Failed to create reference counted node!\"");
 		return false;
 	}
-	
+
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (!list->size)
 			return add_as_only(list, node);
 
-		if (list->conf.cmp)
-			return add_sorted(list, node, list->conf.cmp);
+		if (list->conf.callbacks.comparator)
+			return add_sorted(list, node, list->conf.callbacks.comparator);
 		else
 			return add_unsorted(list, node);
 	} // Release Writer Lock
@@ -329,7 +329,7 @@ void *c_utils_list_get(struct c_utils_list *list, unsigned int index) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-void **c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
+void *c_utils_list_as_array(struct c_utils_list *list, size_t *size) {
 	if(!list)
 		return NULL;
 
@@ -376,7 +376,7 @@ struct c_utils_iterator *c_utils_list_iterator(struct c_utils_list *list) {
 	it->finalize = finalize;
 
 	// Increment reference count for iterator.
-	if(list->conf.ref_counted) {
+	if(list->conf.flags & C_UTILS_LIST_RC_INSTANCE) {
 		C_UTILS_REF_INC(list);
 		it->conf.ref_counted = true;
 	}
@@ -474,8 +474,11 @@ static inline int remove_only(struct c_utils_list *list, struct c_utils_node *no
 	list->head = NULL;
 	list->tail = NULL;
 	
-	if (del)
+	if (list->conf.flags & C_UTILS_LIST_RC_ITEM)
+		C_UTILS_REF_DEC(node->item);
+	else if (del)
 		del(node->item);
+
 	invalidate_node(node);
 	list->size--;
 	
@@ -486,8 +489,11 @@ static inline int remove_head(struct c_utils_list *list, struct c_utils_node *no
 	list->head->next->prev = NULL;
 	list->head = list->head->next;
 
-	if (del)
+	if (list->conf.flags & C_UTILS_LIST_RC_ITEM)
+		C_UTILS_REF_DEC(node->item);
+	else if (del)
 		del(node->item);
+
 	invalidate_node(node);
 	list->size--;
 	
@@ -498,8 +504,11 @@ static inline int remove_tail(struct c_utils_list *list, struct c_utils_node *no
 	list->tail = list->tail->prev;
 	list->tail->next = NULL;
 	
-	if (del)
+	if (list->conf.flags & C_UTILS_LIST_RC_ITEM)
+		C_UTILS_REF_DEC(node->item);
+	else if (del)
 		del(node->item);
+
 	invalidate_node(node);
 	list->size--;
 	
@@ -510,8 +519,11 @@ static inline int remove_normal(struct c_utils_list *list, struct c_utils_node *
 	node->next->prev = node->prev;
 	node->prev->next = node->next;
 	
-	if (del)
+	if (list->conf.flags & C_UTILS_LIST_RC_ITEM)
+		C_UTILS_REF_DEC(node->item);
+	else if (del)
 		del(node->item);
+
 	invalidate_node(node);
 	list->size--;
 	
@@ -536,7 +548,7 @@ static void *remove_at(struct c_utils_list *list, unsigned int index, bool delet
 		
 		if (temp_node) {
 			void *item = temp_node->item;
-			remove_node(list, temp_node, delete_item ? list->conf.del : NULL);
+			remove_node(list, temp_node, delete_item ? list->conf.callbacks.destructor : NULL);
 			return item;
 		} else {
 			C_UTILS_LOG_WARNING(list->conf.logger, "The node returned from Index_To_Node was NULL!\n");
@@ -552,13 +564,13 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		struct c_utils_node *node = item_to_node(list, item);
 
-		remove_node(list, node, delete_item ? list->conf.del : NULL);
+		remove_node(list, node, delete_item ? list->conf.callbacks.destructor : NULL);
 	} // Release Writer Lock
 }
 
 
 
-static struct c_utils_node *create_node(void *item) {
+static struct c_utils_node *create_node(void *item, bool ref_item) {
 	struct c_utils_ref_count_conf conf = { .destructor = free };
 	struct c_utils_node *node = c_utils_ref_create_conf(sizeof(*node), &conf);
 	if(!node)
@@ -637,7 +649,7 @@ static void for_each_item(struct c_utils_list *list, void (*callback)(void *item
 
 static void destroy_list(void *instance) {
 	struct c_utils_list *list = instance;
-	delete_all_nodes(list, list->conf.del_items_on_free ? list->conf.del : NULL);
+	delete_all_nodes(list, list->conf.flags & C_UTILS_LIST_DELETE_ON_DESTROY ? list->conf.callbacks.destructor : NULL);
 
 	c_utils_scoped_lock_destroy(list->lock);
 	free(list);
@@ -649,18 +661,27 @@ static inline void *get_item(struct c_utils_node *node) {
 	return node ? node->item : NULL;
 }
 
-static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node) {
-	// Decrement reference counts of old nodes.
-	if(pos->curr)
+static void update_pos(struct c_utils_list_iterator_position *pos, struct c_utils_node *node, bool ref_item) {
+	// Decrement reference counts of old nodes (and current item if applicable.)
+	if(pos->curr) {
+		if(ref_item)
+			C_UTILS_REF_DEC(pos->curr->item);
+
 		C_UTILS_REF_DEC(pos->curr);
-	if(pos->next)
+	}
+	if(pos->next) {
 		C_UTILS_REF_DEC(pos->next);
-	if(pos->prev)
+	}
+	if(pos->prev) {
 		C_UTILS_REF_DEC(pos->prev);
+	}
 
 	// Acquire reference count to new nodes.
 	if(node) {
 		C_UTILS_REF_INC(node);
+
+		if(ref_item)
+			C_UTILS_REF_INC(node->item);
 
 		if(node->next)
 			C_UTILS_REF_INC(node->next);
@@ -682,7 +703,7 @@ static void *head(void *instance, void *pos) {
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		head = list->head;
-		update_pos(pos, head);
+		update_pos(pos, head, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 		return get_item(head);
 	} // Release Reader Lock
 
@@ -696,7 +717,7 @@ static void *tail(void *instance, void *pos) {
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		tail = list->tail;
-		update_pos(pos, tail);
+		update_pos(pos, tail, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 		return get_item(tail);
 	} // Release Reader Lock
 
@@ -711,13 +732,13 @@ static void *next(void *instance, void *pos) {
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		if (!list->size) {
-			update_pos(pos, NULL);
+			update_pos(pos, NULL, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return NULL;
 		}
 
 		if (!p->curr) {
 			next = list->head;
-			update_pos(p, next);
+			update_pos(p, next, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return get_item(next);
 		}
 
@@ -726,7 +747,7 @@ static void *next(void *instance, void *pos) {
 		else if (p->next && p->next->is_valid)
 			next = p->next;
 
-		update_pos(p, next);
+		update_pos(p, next, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 		
 		return get_item(next);
 	} // Release Reader Lock
@@ -742,13 +763,13 @@ static void *prev(void *instance, void *pos) {
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_RDLOCK(list->lock) {
 		if (list->size == 0) {
-			update_pos(pos, NULL);
+			update_pos(pos, NULL, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return NULL;
 		}
 
 		if (!p->curr) {
 			prev = list->tail;
-			update_pos(p, prev);
+			update_pos(p, prev, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return get_item(prev);;
 		}
 
@@ -757,7 +778,7 @@ static void *prev(void *instance, void *pos) {
 		else if (p->prev && p->prev->is_valid)
 			prev = p->prev;
 
-		update_pos(p, prev);
+		update_pos(p, prev, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 
 		return get_item(prev);
 	} // Release Reader Lock
@@ -773,10 +794,10 @@ static bool append(void *instance, void *pos, void *item) {
 	struct c_utils_list_iterator_position *p = pos;
 
 	// We cannot append to the list and violate sorted order.
-	if(list->conf.cmp)
+	if(list->conf.callbacks.comparator)
 		return false;
 
-	struct c_utils_node *node = create_node(item);
+	struct c_utils_node *node = create_node(item, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 	if (!node) {
 		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: 'Was unable to create a reference counted node!'");
 		return false;
@@ -789,14 +810,14 @@ static bool append(void *instance, void *pos, void *item) {
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
-			update_pos(p, node);
+			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return true;
 		}
 
 		// If current is NULL, we append it to the end.
 		if (!p->curr) {
 			add_as_tail(list, node);
-			update_pos(p, node);
+			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return true;
 		}
 
@@ -819,7 +840,7 @@ static bool append(void *instance, void *pos, void *item) {
 			add_as_tail(list, node);
 		}
 
-		update_pos(p, node);
+		update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 
 		return true;
 	} // Release Writer Lock
@@ -835,10 +856,10 @@ static bool prepend(void *instance, void *pos, void *item) {
 	struct c_utils_list_iterator_position *p = pos;
 
 	// We cannot prepend an element if it will violate the sorted principle.
-	if(list->conf.cmp)
+	if(list->conf.callbacks.comparator)
 		return false;
 
-	struct c_utils_node *node = create_node(item);
+	struct c_utils_node *node = create_node(item, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 	if (!node) {
 		C_UTILS_LOG_ASSERT(list->conf.logger, "create_node: 'Was unable to create a reference counted node!'");
 		return false;
@@ -851,14 +872,14 @@ static bool prepend(void *instance, void *pos, void *item) {
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		if (list->size == 0) {
 			add_as_only(list, node);
-			update_pos(p, node);
+			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return true; 
 		}
 
 		// If current is NULL, we prepend to the beginning.
 		if (!p->curr) {
 			add_as_tail(list, node);
-			update_pos(p, node);
+			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 			return true;
 		}
 
@@ -881,7 +902,7 @@ static bool prepend(void *instance, void *pos, void *item) {
 			add_as_head(list, node);
 		}
 
-		update_pos(p, node);
+		update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
 
 		return true;
 	} // Release Writer Lock
@@ -899,7 +920,7 @@ static bool del(void *instance, void *pos) {
 			return false;
 
 		if (p->curr->is_valid)
-			remove_node(list, p->curr, list->conf.del);
+			remove_node(list, p->curr, list->conf.callbacks.destructor);
 
 		return true;
 	}
@@ -940,6 +961,6 @@ static void *curr(void *instance, void *pos) {
 }
 
 static void finalize(void *instance, void *pos) {
-	update_pos(pos, NULL);
+	update_pos(pos, NULL, ((struct c_utils_list *)instance)->conf.flags & C_UTILS_LIST_RC_ITEM);
 	free(pos);
 }

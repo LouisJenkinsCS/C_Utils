@@ -9,6 +9,11 @@
 #include "helpers.h"
 #include "../io/logger.h"
 
+#define C_UTILS_LIST_CONCURRENT 1 << 0
+#define C_UTILS_LIST_RC_INSTANCE 1 << 1
+#define C_UTILS_LIST_RC_ITEM 1 << 2
+#define C_UTILS_LIST_DELETE_ON_DESTROY 1 << 3
+
 /*
 	A double linked-list implementation, which can used as a generic data structure. 
 
@@ -80,16 +85,14 @@
 struct c_utils_list;
 
 struct c_utils_list_conf {
-	/// Determines if reader-writer locks are used for concurrent access.
-	bool concurrent;
-	/// Determines if this list should be reference counted.
-	bool ref_counted;
-	/// Determines if the list's items should be del'd on destroy
-	bool del_items_on_free;
-	/// Used to sort the list of items when mutated.
-	c_utils_comparator_cb cmp;
-	/// Used to delete the item in the list. Defaults to free()
-	c_utils_delete_cb del;
+	/// Additional flags used to configure and tune the list.
+	int flags;
+	/// Grouping of callback functions
+	struct {
+		int (*comparator)(const void *, const void *);
+		/// Used to delete the item in the list. Defaults to free()
+		void (*destructor)(void *);
+	} callbacks;
 	/// Used to log any errors or trace information to.
 	struct c_utils_logger *logger;
 };
@@ -112,6 +115,14 @@ typedef struct c_utils_list_conf list_conf_t;
 */
 #define LIST_FOR_EACH(...) C_UTILS_LIST_FOR_EACH(__VA_ARGS__)
 #define LIST_FOR_EACH_REV(...) C_UTILS_LIST_FOR_EACH_REV(__VA_ARGS__)
+
+/*
+	Constants
+*/
+#define LIST_CONCURRENT C_UTILS_LIST_CONCURRENT
+#define LIST_RC_INSTANCE C_UTILS_LIST_RC_INSTANCE
+#define LIST_RC_ITEM C_UTILS_LIST_RC_ITEM
+#define LIST_DELETE_ON_DESTROY C_UTILS_LIST_DELETE_ON_DESTROY
 
 /*
 	Functions
@@ -225,7 +236,7 @@ bool c_utils_list_add(struct c_utils_list *list, void *item);
  * @param array_size Used to return the size of the array.
  * @return Array of items, or NULL if list or array_size is NULL.
  */
-void **c_utils_list_as_array(struct c_utils_list *list, size_t *array_size);
+void *c_utils_list_as_array(struct c_utils_list *list, size_t *array_size);
 
 /**
  * Calls the passed callback on all items in the linked list.
