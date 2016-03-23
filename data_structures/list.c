@@ -159,6 +159,9 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
 		return NULL;
 	}
 
+	if(!conf->destructor)
+		conf->destructor = free;
+
 	list->conf = *conf;
 
 	return list;

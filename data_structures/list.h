@@ -9,9 +9,29 @@
 #include "helpers.h"
 #include "../io/logger.h"
 
+/*
+	Will use a Reader-Writer lock to allow concurrent access to the list. The writer lock, of course, will be
+	used whenever a mutating operation goes on, and a concurrent reader-locked used otherwise to allow parallel
+	access to the list.
+*/
 #define C_UTILS_LIST_CONCURRENT 1 << 0
+
+/* 
+	This will create the list with a reference count with the appropriate destructor for this type.
+	This allows an iterator to remain valid even after all other users relinquish their count.
+*/
 #define C_UTILS_LIST_RC_INSTANCE 1 << 1
+
+/*
+	This REQUIRES that the item has been created WITH a reference count. This is used to increment the reference
+	count when used by the list, or held by the iterator, and decrement when it is finished.
+*/
 #define C_UTILS_LIST_RC_ITEM 1 << 2
+
+/*
+	Marks the list to call it's destructor on each item when it is destroyed. Hence, you MUST know ahead of time if you are going
+	to have this functionality. Of course, you can first remove_all/delete_all and then destroy the list without this if need be.
+*/
 #define C_UTILS_LIST_DELETE_ON_DESTROY 1 << 3
 
 /*
@@ -84,6 +104,32 @@
 
 struct c_utils_list;
 
+/**
+ *	flags:
+ *		defaults:
+ *			0
+ *		notes:
+ *			Used to toggle certain functionality on and off.
+ *	callbacks:
+ *		comparator:
+ *			defaults:
+ *				NULL
+ *			notes:
+ *				When specified, the list will become an ordered list. This functionality disables the append and prepend
+ *				features of the iterator for this given instance, as it will tamper with the order of the list.
+ *		destructor
+ *			defaults:
+ *				free
+ *			notes:
+ *				When specified, the list will call this when delete is called (instead of remove). Note that, this will ultimately
+ *				not be used if flag LIST_RC_ITEM is specified as it will instead unreference the item instead, in both remove and delete.
+ *	logger:
+ *		defaults:
+ *			NULL
+ *		notes:
+ *			Can be used to allow tracing and debugging information. This logger will also be passed to the reference counter meta data if the
+ *			flag LIST_RC_INSTANCE.
+ */
 struct c_utils_list_conf {
 	/// Additional flags used to configure and tune the list.
 	int flags;
@@ -97,9 +143,25 @@ struct c_utils_list_conf {
 	struct c_utils_logger *logger;
 };
 
+/*
+	Used to iterate through the list using an automatic iterator (requires GCC and Clang) and is optimized for concurrent access.
+	The iterator, of course, always be valid so long as the correct flags are passed, I.E LIST_RC_INSTANCE to maintain a reference
+	count to the list, and LIST_RC_ITEM to keep a reference count to the item. The former being obvious, but the latter coming extremely
+	in handy when you have other threads removing items from the list while iterating (hence, even though when it was retrieved the item
+	was valid, it is possible that after, when we relinquish the lock, it gets destroyed). The alternative to this is the internal
+	list_for_each function relying on callbacks, which would prevent such things.
+*/
 #define C_UTILS_LIST_FOR_EACH(item, list) \
 	for(C_UTILS_AUTO_ITERATOR _this_iterator = c_utils_list_iterator(list); (item = c_utils_iterator_next(_this_iterator));)
 
+/*
+	Used to iterate backwards through the list using an automatic iterator (requires GCC and Clang) and is optimized for concurrent access.
+	The iterator, of course, always be valid so long as the correct flags are passed, I.E LIST_RC_INSTANCE to maintain a reference
+	count to the list, and LIST_RC_ITEM to keep a reference count to the item. The former being obvious, but the latter coming extremely
+	in handy when you have other threads removing items from the list while iterating (hence, even though when it was retrieved the item
+	was valid, it is possible that after, when we relinquish the lock, it gets destroyed). The alternative to this is the internal
+	list_for_each function relying on callbacks, which would prevent such things.
+*/
 #define C_UTILS_LIST_FOR_EACH_REV(item, list) \
 	for(C_UTILS_AUTO_ITERATOR _this_iterator = c_utils_list_iterator(list); (item = c_utils_iterator_prev(_this_iterator));)
 
@@ -209,10 +271,50 @@ void c_utils_list_delete_at(struct c_utils_list *list, unsigned int index);
 void *c_utils_list_remove_at(struct c_utils_list *list, unsigned int index);
 
 /**
- * Will create a properly configured and initialized iterator. The iterator is entirely thread safe, and supports
- * parallel/concurrent access for non-mutating calls (next, prev, current, etc.) Mutating calls (I.E append and prepend)
- * acquire the writer lock. If the list is reference counted, the iterator will also maintain reference to the list to prevent
- * invalidation while it is in use.
+ *	Head:
+ *		Concurrent:
+ *			Yes
+ *		Complexity:
+ *			O(1)
+ *		Notes:
+ *			Advances the iterator to the head of the list.
+ *	Tail:
+ *		Concurrent:
+ *			Yes
+ *		Complexity:
+ *			O(1)
+ *		Notes:
+ *			Advances the iterator to the tail of the list.
+ *	Next:
+ *		Concurrent:
+ *			Yes
+ *		Complexity:
+ *			O(1)
+ *		Notes:
+ *			If the current node is invalidated, it will first check if next is valid, and then if prev is valid.
+ *			If next is valid, it will just advance to next, which would have been the next item in the list had
+ *			it not been invalidated anyway. If prev is valid, it will jump to prev->next to attempt to bridge
+ *			the gap. If neither are valid, the iterator is in an invalidated state and the current position is
+ *			reset and it will return a failure.
+ *	Prev:
+ *		Concurrent:
+ *			Yes
+ *		Complexity:
+ *			O(1)
+ *		Notes:
+ *			If the current node is invalidated, it will first check if prev is valid, and then if next is valid.
+ *			If prev is valid, it will just advance to prev, which would have been the previous item in the list had
+ *			it not been invalidated anyway. If next is invalid, it will jump to next->prev to attempt to bridge
+ *			the gap. If neither are valid, the iterator is in an invalidated state and the current position is
+ *			reset and it will return a failure.
+ *	Curr:
+ *		Concurrent:
+ *			Yes
+ *		Complexity:
+ *			O(1)
+ *		Notes:
+ *			Obtains the last item the iterator has iterated over if it is still valid.
+ *		
  *
  * @param list Instance of the list.
  * @return A new instance of an iterator, or NULL if list is NULL or if there were problems allocating memory for one. 
@@ -253,8 +355,6 @@ bool c_utils_list_for_each(struct c_utils_list *list, c_utils_general_cb callbac
  * @return 1 if it does contain the item, 0 if the list is NULL or it doesn't exist in the list.
  */
 bool c_utils_list_contains(struct c_utils_list *list, void *item);
-
-bool c_utils_list_clear(struct c_utils_list *list);
 
 void c_utils_list_remove_all(struct c_utils_list *list);
 
