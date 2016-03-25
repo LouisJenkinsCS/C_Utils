@@ -7,23 +7,23 @@
 #include "../memory/ref_count.h"
 
 struct c_utils_bucket {
+	/// Hash.
+	uint32_t hash;
 	/// Key
 	void *key;
 	/// Value
 	void *value;
 	/// Determines whether or not the bucket is in use, to allow for "caching".
-	volatile unsigned char in_use;
-	/// In case of collision, it will chain to the next. There is no limit.
-	struct c_utils_bucket *next;
+	volatile bool in_use;
 };
 
 struct c_utils_map {
 	/// Array of all bucket head nodes.
-	struct c_utils_bucket **buckets;
+	struct c_utils_bucket *buckets;
 	/// The size of the hash map.
 	size_t size;
 	/// Maximum amount of buckets.
-	size_t amount_of_buckets;
+	size_t num_buckets;
 	/// RWLock to enforce thread-safety.
 	struct c_utils_scoped_lock *lock;
 	/// Configuration
@@ -36,9 +36,15 @@ static const double default_growth_trigger = .5;
 static const double default_shrink_rate = .5;
 static const double default_shrink_trigger = .1;
 
+static bool expand_map(struct c_utils_map *map);
+
+static bool shrink_map(struct c_utils_map *map);
+
+static void *value_to_key(struct c_utils_map *map, const void *key);
+
 /// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
 static uint32_t hash_key(const void *key, size_t len) {
-	const char *k = key;
+	const unsigned char *k = key;
 	uint32_t hash = 0;
 
 	for (uint32_t i = 0;i < len; ++i) {
@@ -57,9 +63,6 @@ static uint32_t hash_key(const void *key, size_t len) {
 static void configure(struct c_utils_map_conf *conf) {
 	if(!conf->callbacks.hash_function)
 		conf->callbacks.hash_function = hash_key;
-
-	if(!conf->callbacks.value_comparator)
-		conf->callbacks.value_comparator = memcmp;
 
 	if(!conf->num_buckets)
 		conf->num_buckets = default_buckets;
@@ -80,6 +83,64 @@ static void configure(struct c_utils_map_conf *conf) {
 
 }
 
+/*
+	If the comparator for the key is specified, we use it to determine if the keys are
+	in deed the same. This is useful because we use linear probing with this map, and hence
+	need to determine if this is the exact one needed.
+
+	If a comparator has not been specified, we instead need to provide a more generic
+	comparator, by using memcmp to check each byte to determine if they are equal.
+*/
+static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
+	if(map->conf.callbacks.comparators.key)
+		return map->conf.callbacks.comparators.key(first, second) == 0;
+	else
+		return memcmp(first, second, first_len > second_len ? second_len : first_len);
+}
+
+static size_t get_key_size(const struct c_utils_map *map, const void *key) {
+	return map->conf.key_len ? map->conf.key_len : strlen(key);
+}
+
+static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key) {
+	size_t key_len = get_key_size(map, key);
+	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	size_t index = hash % map->num_buckets;
+
+	size_t iterations = 0;
+	struct c_utils_bucket *bucket;
+	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use && bucket->hash == hash) {
+		size_t bucket_key_len = get_key_size(map, bucket->key);
+
+		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+			return bucket;
+	}
+
+	return NULL;
+}
+
+
+static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, const void *key) {
+	if(map->size == map->num_buckets)
+		return false;
+
+	size_t key_len = get_key_size(map, key);
+	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	size_t index = hash % map->num_buckets;
+
+	size_t iterations = 0;
+	struct c_utils_bucket *bucket;
+	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use) {
+		size_t bucket_key_len = get_key_size(map, bucket->key);
+
+		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+			return NULL;
+	}
+
+	bucket->hash = hash;
+	return bucket;
+}
+
 static void map_destroy(void *map) {
 	struct c_utils_map *m = map;
 
@@ -92,7 +153,6 @@ static void map_destroy(void *map) {
 	free(m);
 }
 
-/// Create a hash map with the requested amount of buckets, the bounds if applicable, and whether to initialize and use rwlocks.
 struct c_utils_map *c_utils_map_create() {
 	struct c_utils_map_conf conf = {};
 	return c_utils_map_create_conf(&conf);
@@ -114,9 +174,9 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		goto err;
 	}
 
-	map->amount_of_buckets = conf->num_buckets;
+	map->num_buckets = conf->num_buckets;
 	
-	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->amount_of_buckets)
+	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->num_buckets)
 		goto err_buckets;
 	
 	map->lock = conf->flags & C_UTILS_MAP_CONCURRENT ? c_utils_scoped_lock_rwlock(NULL, conf->logger) : c_utils_scoped_lock_no_op();
@@ -153,176 +213,219 @@ bool c_utils_map_add(struct c_utils_map *map, void *key, void *value) {
 	}
 
 	C_UTILS_SCOPED_WRLOCK(map->lock) {
-		// Pick up here! Reminder: Linear Probing!
-	} // Release writer lock.
+		struct c_utils_bucket *bucket = get_empty_bucket(map, key);
+		if(!bucket)
+			return false;
 
-	return true;
-}
+		bucket->key = key;
+		bucket->value = value;
+		bucket->in_use = true;
 
-/// Obtains the value from the key provided.
-void *c_utils_map_get(struct c_utils_map *map, const char *key) {
-	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->size, map && map->buckets, key);
-	
-	C_UTILS_SCOPED_LOCK1(map->lock) {
-		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
-		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
+		if((double)(++map->size / map->num_buckets) >= map->conf.growth.trigger)
+			expand_map(map);
 
-		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
-		return bucket_is_valid(bucket) ? get_value_from_bucket(bucket, key) : NULL;
-	} // Release reader lock.
+		return true;
+	}
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-/// Return and remove the value at the key provided, deleting it if the deletion callback is not NULL.
-void *c_utils_map_remove(struct c_utils_map *map, const char *key, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size, key);
+void *c_utils_map_get(struct c_utils_map *map, const void *key) {
+	if(!map || !map->size)
+		return false;
 
-	C_UTILS_SCOPED_LOCK0(map->lock) {
-		char trunc_key[C_UTILS_HASH_MAP_KEY_SIZE + 1];
-		snprintf(trunc_key, C_UTILS_HASH_MAP_KEY_SIZE + 1, "%s", key);
-
-		struct c_utils_bucket *bucket = get_bucket(map->buckets, map->amount_of_buckets, trunc_key);
-		if (!bucket_is_valid(bucket))
+	if(!key) {
+		C_UTILS_LOG_ERROR(map->conf.logger, "This map does not support NULL keys!");
+		return false;
+	}
+	
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		struct c_utils_bucket *bucket = get_existing_bucket(map, key);
+		if(!bucket)
 			return NULL;
 
-		void *item = get_value_from_bucket(bucket, trunc_key);
-		bucket->in_use = 0;
-		map->size--;
-		
-		return item;
-	} // Release writer lock.
+		void *value = bucket->value;
+
+		/*
+			The caller is acquiring a new reference to the value. This is because
+			the map still contains it's own reference, and this ensures that the value
+			remains valid, even after we release the reader lock.
+		*/
+		if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
+			C_UTILS_REF_INC(value);
+
+		return value;
+	}
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-/// Determines whether or not the item exists within the map. If the comparator is NULL, it is a pointer-comparison, otherwise it will be based om cmp.
-const char *c_utils_map_contains(struct c_utils_map *map, const void *value, c_utils_comparator_cb cmp) {
-	C_UTILS_ARG_CHECK(logger, NULL, map, map && map->buckets, map && map->size);
+void *c_utils_map_remove(struct c_utils_map *map, const void *key) {
+	if(!map || !map->size)
+		return false;
 
-	C_UTILS_SCOPED_LOCK1(map->lock) {
-		size_t i = 0, total_buckets = map->amount_of_buckets;
-		// O(N) complexity.
-		for (; i < total_buckets; i++) {
-			char *key = NULL;
-			struct c_utils_bucket *bucket = map->buckets[i];
-			if ((key = get_key_if_match(bucket, value, cmp)))
-				return key;
+	if(!key) {
+		C_UTILS_LOG_ERROR(map->conf.logger, "This map does not support NULL keys!");
+		return false;
+	}
+
+	C_UTILS_SCOPED_WRLOCK(map->lock) {
+		struct c_utils_bucket *bucket = get_existing_bucket(map, key);
+		if(!bucket)
+			return NULL;
+
+		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
+			C_UTILS_REF_DEC(bucket->key);
+
+		bucket->in_use = false;
+		map->size--;
+
+		return bucket->value;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+void c_utils_map_remove_all(struct c_utils_map *map) {
+	if(!map || !map->size)
+		return;
+
+	C_UTILS_SCOPED_WRLOCK(map->lock) {
+		for(size_t i = 0; i < map->num_buckets; i++) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				if(map->conf.flags & C_UTILS_MAP_RC_KEY)
+					C_UTILS_REF_DEC(bucket->key);
+
+				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
+					C_UTILS_REF_DEC(bucket->value);
+
+				bucket->in_use = false;
+				map->size--;
+			}
 		}
-	} // Release reader lock.
+	}
+}
 
-	return NULL;
+bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
+	if(!map || !map->size)
+		return false;
+
+	if(!key) {
+		C_UTILS_LOG_ERROR(map->conf.logger, "This map does not support NULL keys!");
+		return false;
+	}
+
+	C_UTILS_SCOPED_WRLOCK(map->lock) {
+		struct c_utils_bucket *bucket = get_existing_bucket(map, key);
+		if(!bucket)
+			return false;
+
+		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
+			C_UTILS_REF_DEC(bucket->key);
+
+		if(!map->conf.flags & C_UTILS_MAP_RC_VALUE)
+			C_UTILS_REF_DEC(bucket->value);
+		else if (map->conf.callbacks.destructors.value)
+			map->conf.callbacks.destructors.value(bucket->value);
+
+		bucket->in_use = false;
+		map->size--;
+
+		return true;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+void c_utils_map_delete_all(struct c_utils_map *map) {
+	if(!map || !map->size)
+		return;
+
+	C_UTILS_SCOPED_WRLOCK(map->lock) {
+		for(size_t i = 0; i < map->num_buckets; i++) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				if(map->conf.flags & C_UTILS_MAP_RC_KEY)
+					C_UTILS_REF_DEC(bucket->key);
+				else if(map->conf.callbacks.destructors.key)
+					map->conf.callbacks.destructors.key(bucket->key);
+
+				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
+					C_UTILS_REF_DEC(bucket->value);
+				else if(map->conf.callbacks.destructors.value)
+					map->conf.callbacks.destructors.value(bucket->value);
+
+				bucket->in_use = false;
+				map->size--;
+			}
+		}
+	}
+}
+
+const void *c_utils_map_contains(struct c_utils_map *map, const void *value) {
+	if(!map || !map->size)
+		return false;
+
+	if(!value) {
+		C_UTILS_LOG_ERROR(map->conf.logger, "This map does not support NULL values!");
+		return false;
+	}
+
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		void *key = value_to_key(map, value);
+		if(!key)
+			return NULL;
+
+		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
+			C_UTILS_REF_INC(key);
+
+		return key;
+	}
+
+	C_UTILS_UNACCESSIBLE;
 }
 
 /// Uses said callback on all elements inside of the map based on the general callback supplied.
-bool c_utils_map_for_each(struct c_utils_map *map, c_utils_general_cb callback_function) {
-	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size, callback_function);
+bool c_utils_map_for_each(struct c_utils_map *map, void (*callback)(const void *key, const void *value)) {
+	if(!map || !map->size)
+		return false;
 
-	C_UTILS_SCOPED_LOCK1(map->lock) {
-		size_t i = 0, total_buckets = map->amount_of_buckets;
-		for (; i < total_buckets; i++)
-			for_each_bucket(map->buckets[i], callback_function, 0);
-	} // Release reader lock.
-	return true;
-}
+	if(!callback) {
+		C_UTILS_LOG_ERROR(map->conf.logger, "Callback cannot be NULL!");
+		return false;
+	}
 
-/// Will clear the map of all elements, calling the deletion callback on each element if it is not NULL.
-bool c_utils_map_clear(struct c_utils_map *map, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false, map, map && map->buckets, map && map->size);
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		for(size_t i = 0; i < map->num_buckets; i++) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use)
+				callback(bucket->key, bucket->value);
+		}
+
+		return true;
+	}
 	
-	C_UTILS_SCOPED_LOCK0(map->lock) 
-		return clear_map(map, del);
-
 	C_UTILS_UNACCESSIBLE;
 }
 
 /// Determines the size at the time this function is called.
 size_t c_utils_map_size(struct c_utils_map *map) {
-	C_UTILS_ARG_CHECK(logger, 0, map, map && map->buckets, map && map->size);
+	if(!map)
+		return 0;
 
-	C_UTILS_SCOPED_LOCK1(map->lock) 
+	C_UTILS_SCOPED_RDLOCK(map->lock)
 		return map->size;
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, c_utils_to_string_cb to_string) {
-	C_UTILS_ARG_CHECK(logger, (*size = 0, NULL), map, size);
+void c_utils_map_destroy(struct c_utils_map *map) {
+	if(!map)
+		return;
 
-	/*
-		Note here: We wrap the goto inside of the scoped_lock block, because if it were outside of it,
-		all variables would be removed from the stack and would leak the original array. Since the goto
-		and still in-scope, there should not be an issue.
-	*/
-	const size_t buf_size = 256;
-	C_UTILS_SCOPED_LOCK1(map->lock) {
-		char **arr = NULL;
-		
-		size_t arr_size = map->size, str_allocated = 0;
-		if (!arr_size) {
-			C_UTILS_LOG_WARNING(logger, "The hash map is empty!");
-			goto error;
-		}
+	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE)
+		C_UTILS_REF_DEC(map);
 
-		arr = malloc(sizeof(char *) * arr_size);
-		if (!arr) {
-			C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-			goto error;
-		}
-
-		size_t i = 0;
-		for (; i < map->amount_of_buckets; i++) {
-			struct c_utils_bucket *bucket = map->buckets[i];
-			if (!bucket) 
-				continue;
-			
-			do {
-				if (!bucket->in_use) 
-					continue;
-				
-				char *buf = malloc(buf_size);
-				if (!buf) {
-					C_UTILS_LOG_ASSERT(logger, "malloc: '%s'", strerror(errno));
-					goto error;
-				}
-				
-				snprintf(buf, buf_size + 1, "%s%s%s%s%s", key_prefix ? key_prefix : "", bucket->key,
-					delimiter ? delimiter : "", to_string ? to_string(bucket->value) : (char *)bucket->value, val_suffix ? val_suffix : "");
-				
-				arr[str_allocated++] = buf;
-			} while ((bucket = bucket->next));
-		}
-		
-		*size = str_allocated;
-		return arr;
-
-		error:
-			if (arr) {
-				size_t i = 0;
-				for (; i < str_allocated; i++)
-					free(arr[i]);
-				free(arr);
-			}
-			*size = 0;
-			return NULL;
-	} // Release reader lock
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-bool c_utils_map_destroy(struct c_utils_map *map, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false, map);
-
-	C_UTILS_SCOPED_LOCK0(map->lock) {
-		delete_all_buckets(map->buckets, map->amount_of_buckets, del);
-
-		map->amount_of_buckets = 0;
-		map->size = 0;
-		map->buckets = NULL;
-	} // Release writer lock.
-
-	c_utils_scoped_lock_destroy(map->lock);
-	free(map);
-
-	return true;
+	map_destroy(map);
 }

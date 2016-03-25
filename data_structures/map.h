@@ -100,10 +100,15 @@ struct c_utils_map_conf {
 			/// Value destructor
 			void (*value)(void *);
 		} destructors;
+		/// Comparators used for deep searching.
+		struct {
+			/// Key comparator
+			int (*key)(const void *, const void *);
+			/// Value comparator
+			int (*value)(const void *, const void *);
+		} comparators;
 		/// Hash function
 		uint32_t (*hash_function)(const void *key, size_t len);
-		/// Comparator for values used to deep-search
-		int (*value_comparator)(const void *first, const void *second, size_t obj_len);
 	} callbacks;
 	struct {
 		/// What ratio should we grow at?
@@ -117,8 +122,10 @@ struct c_utils_map_conf {
 		/// And when?
 		double trigger;
 	} shrink;
-	/// The size of the object being hashed. Should always be specified.
-	size_t obj_len;
+	/// The size of the key being hashed. Should always be specified if not a string.
+	size_t key_len;
+	/// The size of the values being added. Should be specified if plan on searching without specifying value comparator.
+	size_t value_len;
 	/// Logger
 	struct c_utils_logger *logger;
 };
@@ -228,7 +235,7 @@ void *c_utils_map_remove(struct c_utils_map *map, const void *key);
 
 void c_utils_map_remove_all(struct c_utils_map *map);
 
-void *c_utils_map_delete(struct c_utils_map *map, const void *key);
+bool c_utils_map_delete(struct c_utils_map *map, const void *key);
 
 void c_utils_map_delete_all(struct c_utils_map *map);
 
@@ -242,24 +249,7 @@ void c_utils_map_delete_all(struct c_utils_map *map);
  * @param cmp Comparator.
  * @return The key which is associated with it, or null if not found.
  */
-void *c_utils_map_contains(struct c_utils_map *map, const void *value);
-
-/**
- * Calls the to_string callback on each item in the map, obtaining it's stringified representation. Then, it will
- * apply key_prefix before each key, a delimiter after each key, and val_suffix after each value. As this returns
- * an array of strings, one string for each key-value pair, size must be a valid pointer to a size_t variable, as
- * it is used to return the size of the array.
- *
- * Reader-Lock: Concurrent operation.
- * @param map Instance
- * @param key_prefix Prefix ("" if left null)
- * @param delimiter Delimiter ("" if left null)
- * @param val_suffix Suffix ("" if left null)
- * @param size Pointer used to return array size.
- * @param to_string Callback to turn each value into a string.
- * @return An array of strings for each key-value pair, with it's size returned through size.
- */
-char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_prefix, const char *delimiter, const char *val_suffix, size_t *size, c_utils_to_string_cb to_string);
+const void *c_utils_map_contains(struct c_utils_map *map, const void *value);
 
 /**
  * Calls cb on each item in the list.
@@ -269,17 +259,7 @@ char **c_utils_map_key_value_to_string(struct c_utils_map *map, const char *key_
  * @param cb Callback
  * @return True if map and cb are not null.
  */
-bool c_utils_map_for_each(struct c_utils_map *map, c_utils_general_cb cb);
-
-/**
- * Clears the hash map of all items, calling del on each if declared.
- *
- * Writer-Lock: Not Concurrent, Is Thread Safe.
- * @param map Instance.
- * @param del Deletion callback.
- * @return True if map is not null.
- */
-bool c_utils_map_clear(struct c_utils_map *map, c_utils_delete_cb del);
+bool c_utils_map_for_each(struct c_utils_map *map, void (*callback)(const void *key, const void *value));
 
 /**
  * Returns the amount of items contained in this Hash Map
@@ -297,4 +277,4 @@ size_t c_utils_map_size(struct c_utils_map *map);
  * @param del Deletion callback, called on each item.
  * @return True if map is not null.
  */
-bool c_utils_map_destroy(struct c_utils_map *map);
+void c_utils_map_destroy(struct c_utils_map *map);
