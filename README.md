@@ -10,6 +10,10 @@ As of now, this project will be continued to be worked on and expanded on as I d
 
 It should be noted once again, while this project is my "personal playground" does not mean it will be unusable to others.
 
+##Slate Documentation
+
+See [here](http://theif519.github.io/slate/).
+
 ##Development Stages
 
 [<b>Unimplemented</b>] - I have not begun to implement this yet, but I do plan on doing so at a later date.
