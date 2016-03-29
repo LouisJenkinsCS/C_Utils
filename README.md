@@ -13,9 +13,3 @@ It should be noted once again, while this project is my "personal playground" do
 ##<center>Documentation</center>
 
 The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://theif519.github.io/slate/).
-
-##<center>Stable vs Development Branch</center>
-
-The stable branch is extremely outdated, and it is suggested that you instead view the development branch, linked below.
-
-https://github.com/theif519/C_Utils/tree/development
