@@ -1,6 +1,6 @@
 # Utilities Package for the C Programming Language
 
-##Summary
+#<center>Summary</center>
 
 Utilities Package for the C Programming Language, dubbed C_Utils, contains a plethora of varying, but very useful abstractions for the modern day C programmer. It is designed to be easy to use and easy to read, and very newbie-friendly. As the C standard library is extremely minimal, I decided to create my own abstractions and package them to share them with others who may desire to use them. 
 
@@ -10,11 +10,11 @@ As of now, this project will be continued to be worked on and expanded on as I d
 
 It should be noted once again, while this project is my "personal playground" does not mean it will be unusable to others.
 
-#Documentation
+##<center>Documentation</center>
 
 The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://theif519.github.io/slate/).
 
-#Stable vs Development Branch
+##<center>Stable vs Development Branch</center>
 
 The stable branch is extremely outdated, and it is suggested that you instead view the development branch, linked below.
 
