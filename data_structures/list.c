@@ -296,7 +296,7 @@ bool c_utils_list_for_each(struct c_utils_list *list, void (*callback)(void *ite
 	// Acquire Reader Lock
 	C_UTILS_SCOPED_RDLOCK(list->lock)
 		for_each_item(list, callback);
-		
+
 	return true;
 }
 
