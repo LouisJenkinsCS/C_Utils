@@ -13,3 +13,5 @@ It should be noted once again, while this project is my "personal playground" do
 ##<center>Documentation</center>
 
 The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://theif519.github.io/slate/).
+
+It should be noted, that not all things have been implemented yet. The documentation contains ideas and features I plan to implement in the future.

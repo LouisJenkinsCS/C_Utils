@@ -148,7 +148,26 @@ static void map_destroy(void *map) {
 	if(!m->buckets)
 		return;
 
-	// Clean up resources!!!
+	for(size_t i = 0; m->size && i < m->num_buckets; i++) {
+		struct c_utils_bucket bucket = m->buckets[i];
+		if(bucket.in_use) {
+			if(m->conf.flags & C_UTILS_MAP_RC_KEY)
+				C_UTILS_REF_DEC(bucket.key);
+			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY && m->conf.callbacks.destructors.key)
+				m->conf.callbacks.destructors.key(bucket.key);
+
+			if(m->conf.flags & C_UTILS_MAP_RC_VALUE)
+				C_UTILS_REF_DEC(bucket.value);
+			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY && m->conf.callbacks.destructors.value)
+				m->conf.callbacks.destructors.value(bucket.value);
+
+			m->size--;
+		}
+	}
+
+	free(m->buckets);
+
+	c_utils_scoped_lock_destroy(m->lock);
 
 	free(m);
 }
@@ -165,6 +184,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	configure(conf);
 
 	struct c_utils_map *map;
+	// Zero the ref_count data plz.
 	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
 		map = c_utils_ref_create(sizeof(*map));
 	else
