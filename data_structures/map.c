@@ -64,7 +64,7 @@ static bool keys_equal(const struct c_utils_map *map, const void *first, size_t 
 
 static uint32_t hash_key(const void *key, size_t len);
 
-static void *value_to_key(struct c_utils_map *map, const void *key);
+static void *value_to_key(struct c_utils_map *map, const void *value);
 
 
 
@@ -370,116 +370,6 @@ void c_utils_map_destroy(struct c_utils_map *map) {
 
 
 
-static bool resize_map(struct c_utils_map *map, size_t size) {
-	C_UTILS_SCOPED_WRLOCK(map->lock){
-		if(map->num_buckets == map->conf.size.initial)
-			return true;
-
-		if(size < map->conf.size.initial)
-			return true;
-
-		size_t used = map->size, index = 0;
-		void *keys[used];
-		void *values[used];
-
-		// Keep track of key-value pairs
-		for(size_t i = 0;i < map->num_buckets;) {
-			struct c_utils_bucket *bucket = map->buckets + i;
-			if(bucket->in_use) {
-				keys[index] = bucket->key;
-				values[index++] = bucket->value;
-			}
-
-			bucket->in_use = false;
-		}
-
-		C_UTILS_ON_BAD_REALLOC(&map->buckets, map->conf.logger, size * sizeof(struct c_utils_bucket))
-			return false;
-
-		map->num_buckets = size;
-
-		// Re-hash
-		for(size_t i = 0; i < used; i++) {
-			struct c_utils_bucket *bucket = get_empty_bucket(map, keys[i]);
-			C_UTILS_ASSERT(bucket, map->conf.logger, "Duplicate key found in list!");
-
-			bucket->key = keys[i];
-			bucket->value = values[i];
-			bucket->in_use = true;
-		}
-
-		return true;
-	}
-
-	C_UTILS_UNACCESSIBLE;
-}
-
-/// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
-static uint32_t hash_key(const void *key, size_t len) {
-	const unsigned char *k = key;
-	uint32_t hash = 0;
-
-	for (uint32_t i = 0;i < len; ++i) {
-		hash += k[i];
-		hash += (hash << 10);
-		hash ^= (hash >> 6);
-	}
-
-	hash += (hash << 3);
-	hash ^= (hash >> 11);
-	hash += (hash << 15);
-
-	return hash;
-}
-
-static void configure(struct c_utils_map_conf *conf) {
-	if(!conf->callbacks.hash_function)
-		conf->callbacks.hash_function = hash_key;
-
-	if(!conf->size.initial)
-		conf->size.initial = default_initial;
-
-	if(!conf->size.min)
-		conf->size.min = default_min;
-
-	if(!conf->size.max)
-		conf->size.max = default_max;
-
-	if(!conf->growth.ratio <= 0)
-		conf->growth.ratio = default_growth_rate;
-
-	if(!conf->growth.trigger <= 0)
-		conf->growth.trigger = default_growth_trigger;
-
-	if(conf->flags & C_UTILS_MAP_SHRINK_ON_TRIGGER) {
-		if(conf->shrink.ratio <= 0)
-			conf->shrink.ratio = default_shrink_rate;
-
-		if(conf->shrink.trigger <= 0)
-			conf->shrink.trigger = default_shrink_trigger;
-	}
-
-}
-
-/*
-	If the comparator for the key is specified, we use it to determine if the keys are
-	in deed the same. This is useful because we use linear probing with this map, and hence
-	need to determine if this is the exact one needed.
-
-	If a comparator has not been specified, we instead need to provide a more generic
-	comparator, by using memcmp to check each byte to determine if they are equal.
-*/
-static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
-	if(map->conf.callbacks.comparators.key)
-		return map->conf.callbacks.comparators.key(first, second) == 0;
-	else
-		return memcmp(first, second, first_len > second_len ? second_len : first_len);
-}
-
-static size_t get_key_size(const struct c_utils_map *map, const void *key) {
-	return map->conf.key_len ? map->conf.key_len : strlen(key);
-}
-
 static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key) {
 	size_t key_len = get_key_size(map, key);
 	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
@@ -518,6 +408,160 @@ static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, co
 	bucket->hash = hash;
 	return bucket;
 }
+
+
+
+static size_t get_key_size(const struct c_utils_map *map, const void *key) {
+	return map->conf.key_len ? map->conf.key_len : strlen(key);
+}
+
+/*
+	If the comparator for the key is specified, we use it to determine if the keys are
+	in deed the same. This is useful because we use linear probing with this map, and hence
+	need to determine if this is the exact one needed.
+
+	If a comparator has not been specified, we instead need to provide a more generic
+	comparator, by using memcmp to check each byte to determine if they are equal.
+*/
+static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
+	if(map->conf.callbacks.comparators.key)
+		return map->conf.callbacks.comparators.key(first, second) == 0;
+	else
+		return memcmp(first, second, first_len > second_len ? second_len : first_len);
+}
+
+/// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
+static uint32_t hash_key(const void *key, size_t len) {
+	const unsigned char *k = key;
+	uint32_t hash = 0;
+
+	for (uint32_t i = 0;i < len; ++i) {
+		hash += k[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return hash;
+}
+
+static void *value_to_key(struct c_utils_map *map, const void *value) {
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		size_t search = map->size;
+		for(size_t i = 0; search && i < map->num_buckets; i++) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				/*
+					As the map is very configurable, we must check below how we wish to
+					compare the two values. There are three ways to compare a value:
+
+					1) Via a direct comparator
+					2) By checking each byte up to it's length
+					3) By pointer address
+
+					Hence this is why we must have extensive checks like this below.
+				*/
+				if(map->conf.callbacks.comparators.value) {
+					if(map->conf.callbacks.comparators.value(value, bucket->value) == 0)
+						return bucket->key;
+				} else if(map->conf.value_len) {
+					if(memcmp(value, bucket->value, map->conf.value_len) == 0)
+						return bucket->key;
+				} else {
+					if(value == bucket->value)
+						return bucket->key;
+				}
+
+				search--;
+			}
+		}
+
+		return NULL;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+
+
+static bool resize_map(struct c_utils_map *map, size_t size) {
+	C_UTILS_SCOPED_WRLOCK(map->lock){
+		if(map->num_buckets == map->conf.size.initial)
+			return true;
+
+		if(size < map->conf.size.initial)
+			return true;
+
+		size_t used = map->size, index = 0;
+		void *keys[used];
+		void *values[used];
+
+		// Keep track of key-value pairs
+		for(size_t i = 0;i < map->num_buckets;) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				keys[index] = bucket->key;
+				values[index++] = bucket->value;
+			}
+
+			bucket->in_use = false;
+		}
+
+		size_t new_size = size * sizeof(struct c_utils_bucket);
+		C_UTILS_ON_BAD_REALLOC(&map->buckets, map->conf.logger, new_size)
+			return false;
+
+		memset(&map->buckets, 0, new_size);
+		map->num_buckets = size;
+
+		// Re-hash
+		for(size_t i = 0; i < used; i++) {
+			struct c_utils_bucket *bucket = get_empty_bucket(map, keys[i]);
+			C_UTILS_ASSERT(bucket, map->conf.logger, "Duplicate key found in list!");
+
+			bucket->key = keys[i];
+			bucket->value = values[i];
+			bucket->in_use = true;
+		}
+
+		return true;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static void configure(struct c_utils_map_conf *conf) {
+	if(!conf->callbacks.hash_function)
+		conf->callbacks.hash_function = hash_key;
+
+	if(!conf->size.initial)
+		conf->size.initial = default_initial;
+
+	if(!conf->size.min)
+		conf->size.min = default_min;
+
+	if(!conf->size.max)
+		conf->size.max = default_max;
+
+	if(!conf->growth.ratio <= 0)
+		conf->growth.ratio = default_growth_rate;
+
+	if(!conf->growth.trigger <= 0)
+		conf->growth.trigger = default_growth_trigger;
+
+	if(conf->flags & C_UTILS_MAP_SHRINK_ON_TRIGGER) {
+		if(conf->shrink.ratio <= 0)
+			conf->shrink.ratio = default_shrink_rate;
+
+		if(conf->shrink.trigger <= 0)
+			conf->shrink.trigger = default_shrink_trigger;
+	}
+
+}
+
 
 static void map_destroy(void *map) {
 	struct c_utils_map *m = map;
