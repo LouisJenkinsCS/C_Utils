@@ -204,7 +204,7 @@ void *c_utils_map_remove(struct c_utils_map *map, const void *key) {
 		if(!bucket)
 			return NULL;
 
-		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
+		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 			C_UTILS_REF_DEC(bucket->key);
 
 		bucket->in_use = false;
@@ -260,7 +260,7 @@ bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
 
 		if(!map->conf.flags & C_UTILS_MAP_RC_VALUE)
 			C_UTILS_REF_DEC(bucket->value);
-		else if (map->conf.callbacks.destructors.value)
+		else
 			map->conf.callbacks.destructors.value(bucket->value);
 
 		bucket->in_use = false;
@@ -291,7 +291,7 @@ void c_utils_map_delete_all(struct c_utils_map *map) {
 
 				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 					C_UTILS_REF_DEC(bucket->value);
-				else if(map->conf.callbacks.destructors.value)
+				else
 					map->conf.callbacks.destructors.value(bucket->value);
 
 				bucket->in_use = false;
@@ -362,8 +362,10 @@ void c_utils_map_destroy(struct c_utils_map *map) {
 	if(!map)
 		return;
 
-	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE)
+	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE) {
 		C_UTILS_REF_DEC(map);
+		return;
+	}
 
 	map_destroy(map);
 }
@@ -560,6 +562,9 @@ static void configure(struct c_utils_map_conf *conf) {
 			conf->shrink.trigger = default_shrink_trigger;
 	}
 
+	if(!conf->callbacks.destructors.value)
+		conf->callbacks.destructors.value = free;
+
 }
 
 
@@ -580,7 +585,7 @@ static void map_destroy(void *map) {
 
 			if(m->conf.flags & C_UTILS_MAP_RC_VALUE)
 				C_UTILS_REF_DEC(bucket->value);
-			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY && m->conf.callbacks.destructors.value)
+			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY)
 				m->conf.callbacks.destructors.value(bucket->value);
 
 			m->size--;
