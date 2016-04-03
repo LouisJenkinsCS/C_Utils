@@ -30,128 +30,57 @@ struct c_utils_map {
 	struct c_utils_map_conf conf;
 };
 
-static const int default_buckets = 64;
+static const int default_initial = 64;
+static const int default_min = 32;
+static const int default_max = 1024;
 static const double default_growth_rate = 2;
 static const double default_growth_trigger = .5;
 static const double default_shrink_rate = .5;
 static const double default_shrink_trigger = .1;
 
-static bool expand_map(struct c_utils_map *map);
-
-static bool shrink_map(struct c_utils_map *map);
-
-static void *value_to_key(struct c_utils_map *map, const void *key);
-
-/// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
-static uint32_t hash_key(const void *key, size_t len) {
-	const unsigned char *k = key;
-	uint32_t hash = 0;
-
-	for (uint32_t i = 0;i < len; ++i) {
-		hash += k[i];
-		hash += (hash << 10);
-		hash ^= (hash >> 6);
-	}
-
-	hash += (hash << 3);
-	hash ^= (hash >> 11);
-	hash += (hash << 15);
-
-	return hash;
-}
-
-static void configure(struct c_utils_map_conf *conf) {
-	if(!conf->callbacks.hash_function)
-		conf->callbacks.hash_function = hash_key;
-
-	if(!conf->num_buckets)
-		conf->num_buckets = default_buckets;
-
-	if(!conf->growth.ratio <= 0)
-		conf->growth.ratio = default_growth_rate;
-
-	if(!conf->growth.trigger <= 0)
-		conf->growth.trigger = default_growth_trigger;
-
-	if(conf->flags & C_UTILS_MAP_SHRINK_ON_TRIGGER) {
-		if(conf->shrink.ratio <= 0)
-			conf->shrink.ratio = default_shrink_rate;
-
-		if(conf->shrink.trigger <= 0)
-			conf->shrink.trigger = default_shrink_trigger;
-	}
-
-}
-
-/*
-	If the comparator for the key is specified, we use it to determine if the keys are
-	in deed the same. This is useful because we use linear probing with this map, and hence
-	need to determine if this is the exact one needed.
-
-	If a comparator has not been specified, we instead need to provide a more generic
-	comparator, by using memcmp to check each byte to determine if they are equal.
-*/
-static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
-	if(map->conf.callbacks.comparators.key)
-		return map->conf.callbacks.comparators.key(first, second) == 0;
-	else
-		return memcmp(first, second, first_len > second_len ? second_len : first_len);
-}
-
-static size_t get_key_size(const struct c_utils_map *map, const void *key) {
-	return map->conf.key_len ? map->conf.key_len : strlen(key);
-}
-
-static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key) {
-	size_t key_len = get_key_size(map, key);
-	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
-	size_t index = hash % map->num_buckets;
-
-	size_t iterations = 0;
-	struct c_utils_bucket *bucket;
-	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use && bucket->hash == hash) {
-		size_t bucket_key_len = get_key_size(map, bucket->key);
-
-		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
-			return bucket;
-	}
-
-	return NULL;
-}
 
 
-static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, const void *key) {
-	if(map->size == map->num_buckets)
-		return false;
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						Map Retrieval Helper Functions                              //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
 
-	size_t key_len = get_key_size(map, key);
-	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
-	size_t index = hash % map->num_buckets;
+static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key);
 
-	size_t iterations = 0;
-	struct c_utils_bucket *bucket;
-	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use) {
-		size_t bucket_key_len = get_key_size(map, bucket->key);
+static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, const void *key);
 
-		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
-			return NULL;
-	}
 
-	bucket->hash = hash;
-	return bucket;
-}
 
-static void map_destroy(void *map) {
-	struct c_utils_map *m = map;
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						Map Key-Value Helper Functions                              //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
 
-	// If map->buckets is NULL, it signifies we failed during allocation.
-	if(!m->buckets)
-		return;
+static size_t get_key_size(const struct c_utils_map *map, const void *key);
 
-	// Clean up resources!!!
+static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len);
 
-	free(m);
-}
+static uint32_t hash_key(const void *key, size_t len);
+
+static void *value_to_key(struct c_utils_map *map, const void *value);
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						Map Misc. Helper Functions                                  //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
+static bool resize_map(struct c_utils_map *map, size_t size);
+
+static void configure(struct c_utils_map_conf *conf);
+
+static void map_destroy(void *map);
+
+
 
 struct c_utils_map *c_utils_map_create() {
 	struct c_utils_map_conf conf = {};
@@ -165,6 +94,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	configure(conf);
 
 	struct c_utils_map *map;
+	// Zero the ref_count data plz.
 	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
 		map = c_utils_ref_create(sizeof(*map));
 	else
@@ -174,7 +104,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		goto err;
 	}
 
-	map->num_buckets = conf->num_buckets;
+	map->num_buckets = conf->size.initial;
 	
 	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->num_buckets)
 		goto err_buckets;
@@ -221,8 +151,8 @@ bool c_utils_map_add(struct c_utils_map *map, void *key, void *value) {
 		bucket->value = value;
 		bucket->in_use = true;
 
-		if((double)(++map->size / map->num_buckets) >= map->conf.growth.trigger)
-			expand_map(map);
+		if((++map->size / (double)map->num_buckets) >= map->conf.growth.trigger)
+			resize_map(map, map->num_buckets * map->conf.growth.ratio);
 
 		return true;
 	}
@@ -274,11 +204,15 @@ void *c_utils_map_remove(struct c_utils_map *map, const void *key) {
 		if(!bucket)
 			return NULL;
 
-		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
+		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 			C_UTILS_REF_DEC(bucket->key);
 
 		bucket->in_use = false;
 		map->size--;
+
+		if(map->conf.flags & C_UTILS_MAP_SHRINK_ON_TRIGGER)
+			if((map->size / (double)map->num_buckets) <= map->conf.shrink.trigger)
+				resize_map(map, map->size * map->conf.shrink.ratio);
 
 		return bucket->value;
 	}
@@ -326,11 +260,15 @@ bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
 
 		if(!map->conf.flags & C_UTILS_MAP_RC_VALUE)
 			C_UTILS_REF_DEC(bucket->value);
-		else if (map->conf.callbacks.destructors.value)
+		else
 			map->conf.callbacks.destructors.value(bucket->value);
 
 		bucket->in_use = false;
 		map->size--;
+
+		if(map->conf.flags & C_UTILS_MAP_SHRINK_ON_TRIGGER)
+			if((map->size / (double)map->num_buckets) <= map->conf.shrink.trigger)
+				resize_map(map, map->size * map->conf.shrink.ratio);
 
 		return true;
 	}
@@ -353,7 +291,7 @@ void c_utils_map_delete_all(struct c_utils_map *map) {
 
 				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 					C_UTILS_REF_DEC(bucket->value);
-				else if(map->conf.callbacks.destructors.value)
+				else
 					map->conf.callbacks.destructors.value(bucket->value);
 
 				bucket->in_use = false;
@@ -424,8 +362,239 @@ void c_utils_map_destroy(struct c_utils_map *map) {
 	if(!map)
 		return;
 
-	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE)
+	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE) {
 		C_UTILS_REF_DEC(map);
+		return;
+	}
 
 	map_destroy(map);
+}
+
+
+
+static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key) {
+	size_t key_len = get_key_size(map, key);
+	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	size_t index = hash % map->num_buckets;
+
+	size_t iterations = 0;
+	struct c_utils_bucket *bucket;
+	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use && bucket->hash == hash) {
+		size_t bucket_key_len = get_key_size(map, bucket->key);
+
+		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+			return bucket;
+	}
+
+	return NULL;
+}
+
+
+static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, const void *key) {
+	if(map->size == map->num_buckets)
+		return false;
+
+	size_t key_len = get_key_size(map, key);
+	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	size_t index = hash % map->num_buckets;
+
+	size_t iterations = 0;
+	struct c_utils_bucket *bucket;
+	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use) {
+		size_t bucket_key_len = get_key_size(map, bucket->key);
+
+		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+			return NULL;
+	}
+
+	bucket->hash = hash;
+	return bucket;
+}
+
+
+
+static size_t get_key_size(const struct c_utils_map *map, const void *key) {
+	return map->conf.key_len ? map->conf.key_len : strlen(key);
+}
+
+/*
+	If the comparator for the key is specified, we use it to determine if the keys are
+	in deed the same. This is useful because we use linear probing with this map, and hence
+	need to determine if this is the exact one needed.
+
+	If a comparator has not been specified, we instead need to provide a more generic
+	comparator, by using memcmp to check each byte to determine if they are equal.
+*/
+static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
+	if(map->conf.callbacks.comparators.key)
+		return map->conf.callbacks.comparators.key(first, second) == 0;
+	else
+		return memcmp(first, second, first_len > second_len ? second_len : first_len);
+}
+
+/// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
+static uint32_t hash_key(const void *key, size_t len) {
+	const unsigned char *k = key;
+	uint32_t hash = 0;
+
+	for (uint32_t i = 0;i < len; ++i) {
+		hash += k[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return hash;
+}
+
+static void *value_to_key(struct c_utils_map *map, const void *value) {
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		size_t search = map->size;
+		for(size_t i = 0; search && i < map->num_buckets; i++) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				/*
+					As the map is very configurable, we must check below how we wish to
+					compare the two values. There are three ways to compare a value:
+
+					1) Via a direct comparator
+					2) By checking each byte up to it's length
+					3) By pointer address
+
+					Hence this is why we must have extensive checks like this below.
+				*/
+				if(map->conf.callbacks.comparators.value) {
+					if(map->conf.callbacks.comparators.value(value, bucket->value) == 0)
+						return bucket->key;
+				} else if(map->conf.value_len) {
+					if(memcmp(value, bucket->value, map->conf.value_len) == 0)
+						return bucket->key;
+				} else {
+					if(value == bucket->value)
+						return bucket->key;
+				}
+
+				search--;
+			}
+		}
+
+		return NULL;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+
+
+static bool resize_map(struct c_utils_map *map, size_t size) {
+	C_UTILS_SCOPED_WRLOCK(map->lock){
+		if(map->num_buckets == map->conf.size.initial)
+			return true;
+
+		if(size < map->conf.size.initial)
+			return true;
+
+		size_t used = map->size, index = 0;
+		void *keys[used];
+		void *values[used];
+
+		// Keep track of key-value pairs
+		for(size_t i = 0;i < map->num_buckets;) {
+			struct c_utils_bucket *bucket = map->buckets + i;
+			if(bucket->in_use) {
+				keys[index] = bucket->key;
+				values[index++] = bucket->value;
+			}
+
+			bucket->in_use = false;
+		}
+
+		size_t new_size = size * sizeof(struct c_utils_bucket);
+		C_UTILS_ON_BAD_REALLOC(&map->buckets, map->conf.logger, new_size)
+			return false;
+
+		memset(&map->buckets, 0, new_size);
+		map->num_buckets = size;
+
+		// Re-hash
+		for(size_t i = 0; i < used; i++) {
+			struct c_utils_bucket *bucket = get_empty_bucket(map, keys[i]);
+			C_UTILS_ASSERT(bucket, map->conf.logger, "Duplicate key found in list!");
+
+			bucket->key = keys[i];
+			bucket->value = values[i];
+			bucket->in_use = true;
+		}
+
+		return true;
+	}
+
+	C_UTILS_UNACCESSIBLE;
+}
+
+static void configure(struct c_utils_map_conf *conf) {
+	if(!conf->callbacks.hash_function)
+		conf->callbacks.hash_function = hash_key;
+
+	if(!conf->size.initial)
+		conf->size.initial = default_initial;
+
+	if(!conf->size.min)
+		conf->size.min = default_min;
+
+	if(!conf->size.max)
+		conf->size.max = default_max;
+
+	if(!conf->growth.ratio <= 0)
+		conf->growth.ratio = default_growth_rate;
+
+	if(!conf->growth.trigger <= 0)
+		conf->growth.trigger = default_growth_trigger;
+
+	if(conf->flags & C_UTILS_MAP_SHRINK_ON_TRIGGER) {
+		if(conf->shrink.ratio <= 0)
+			conf->shrink.ratio = default_shrink_rate;
+
+		if(conf->shrink.trigger <= 0)
+			conf->shrink.trigger = default_shrink_trigger;
+	}
+
+	if(!conf->callbacks.destructors.value)
+		conf->callbacks.destructors.value = free;
+
+}
+
+
+static void map_destroy(void *map) {
+	struct c_utils_map *m = map;
+
+	// If map->buckets is NULL, it signifies we failed during allocation.
+	if(!m->buckets)
+		return;
+
+	for(size_t i = 0; m->size && i < m->num_buckets; i++) {
+		struct c_utils_bucket *bucket = m->buckets + i;
+		if(bucket->in_use) {
+			if(m->conf.flags & C_UTILS_MAP_RC_KEY)
+				C_UTILS_REF_DEC(bucket->key);
+			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY && m->conf.callbacks.destructors.key)
+				m->conf.callbacks.destructors.key(bucket->key);
+
+			if(m->conf.flags & C_UTILS_MAP_RC_VALUE)
+				C_UTILS_REF_DEC(bucket->value);
+			else if(m->conf.flags & C_UTILS_MAP_DELETE_ON_DESTROY)
+				m->conf.callbacks.destructors.value(bucket->value);
+
+			m->size--;
+		}
+	}
+
+	free(m->buckets);
+
+	c_utils_scoped_lock_destroy(m->lock);
+
+	free(m);
 }

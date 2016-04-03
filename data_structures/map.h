@@ -89,8 +89,6 @@ struct c_utils_map;
 struct c_utils_map_conf {
 	/// Configuration flags
 	int flags;
-	/// Default number of buckets
-	size_t num_buckets;
 	/// Callbacks
 	struct {
 		/// Destructors
@@ -122,6 +120,14 @@ struct c_utils_map_conf {
 		/// And when?
 		double trigger;
 	} shrink;
+	struct {
+		/// The amount of buckets created on creation
+		size_t initial;
+		/// The minimum amount of buckets. Relavent only when MAP_SHRINK_ON_TRIGGER flagged.
+		size_t min;
+		/// The maximum amount of buckets the map can grow to.
+		size_t max;
+	} size;
 	/// The size of the key being hashed. Should always be specified if not a string.
 	size_t key_len;
 	/// The size of the values being added. Should be specified if plan on searching without specifying value comparator.
