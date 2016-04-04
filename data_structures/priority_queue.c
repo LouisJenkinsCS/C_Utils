@@ -6,7 +6,7 @@
 #include "../misc/argument_check.h"
 #include "../misc/alloc_check.h"
 
-struct c_utils_priority_queue {
+struct c_utils_blocking_queue {
 	/// A pointer to the head node.
 	struct c_utils_node *head;
 	/// A pointer to the tail node.
@@ -31,12 +31,12 @@ struct c_utils_priority_queue {
 
 static struct c_utils_logger *logger = NULL;
 
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/priority_queue.log", "w", C_UTILS_LOG_LEVEL_ALL);
+C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/blocking_queue.log", "w", C_UTILS_LOG_LEVEL_ALL);
 
 /* Static functions */
 
-static inline bool add_as_head(struct c_utils_priority_queue *queue, struct c_utils_node *node) {
-	node->_single.next = queue->head;
+static inline bool add_as_head(struct c_utils_blocking_queue *queue, struct c_utils_node *node) {
+	node->next = queue->head;
 	queue->head = node;
 
 	atomic_fetch_add(&queue->size, 1);
@@ -44,18 +44,18 @@ static inline bool add_as_head(struct c_utils_priority_queue *queue, struct c_ut
 	return true;
 }
 
-static inline bool add_as_tail(struct c_utils_priority_queue *queue, struct c_utils_node *node) {
-	queue->tail->_single.next = node;
+static inline bool add_as_tail(struct c_utils_blocking_queue *queue, struct c_utils_node *node) {
+	queue->tail->next = node;
 	queue->tail = node;
-	node->_single.next = NULL;
+	node->next = NULL;
 
 	atomic_fetch_add(&queue->size, 1);
 
 	return true;
 }
 
-static inline bool add_as_only(struct c_utils_priority_queue *queue, struct c_utils_node *node) {
-	node->_single.next = NULL;
+static inline bool add_as_only(struct c_utils_blocking_queue *queue, struct c_utils_node *node) {
+	node->next = NULL;
 	queue->head = queue->tail = node;
 	
 	atomic_fetch_add(&queue->size, 1);
@@ -63,16 +63,16 @@ static inline bool add_as_only(struct c_utils_priority_queue *queue, struct c_ut
 	return true;
 }
 
-static inline bool add_after(struct c_utils_priority_queue *queue, struct c_utils_node *this_node, struct c_utils_node *prev) {
-	this_node->_single.next = prev->_single.next;
-	prev->_single.next = this_node;
+static inline bool add_after(struct c_utils_blocking_queue *queue, struct c_utils_node *this_node, struct c_utils_node *prev) {
+	this_node->next = prev->next;
+	prev->next = this_node;
 	
 	atomic_fetch_add(&queue->size, 1);
 
 	return true;
 }
 
-static bool add_item(struct c_utils_priority_queue *queue, void *item) {
+static bool add_item(struct c_utils_blocking_queue *queue, void *item) {
 	struct c_utils_node *node;
 	C_UTILS_ON_BAD_MALLOC(node, logger, sizeof(*node))
 		return false;
@@ -94,22 +94,22 @@ static bool add_item(struct c_utils_priority_queue *queue, void *item) {
 	else if (queue->compare(item, queue->tail->item) <= 0)
 		return add_as_tail(queue, node);
 	else
-		for (struct c_utils_node *curr = queue->head, *prev = curr; curr; prev = curr, curr = curr->_single.next)
+		for (struct c_utils_node *curr = queue->head, *prev = curr; curr; prev = curr, curr = curr->next)
 			if (queue->compare(item, curr->item) > 0)
 				return add_after(queue, node, prev);
-			else if (!curr->_single.next)
+			else if (!curr->next)
 				return add_as_tail(queue, node);
 
 	return true;
 }
 
-static void *take_item(struct c_utils_priority_queue *queue) {
+static void *take_item(struct c_utils_blocking_queue *queue) {
 	struct c_utils_node *node = queue->head;
 	if (!node) 
 		return NULL;
 	
 	void *item = queue->head->item;
-	queue->head = queue->head->_single.next;
+	queue->head = queue->head->next;
 	
 	free(node);
 	atomic_fetch_sub(&queue->size, 1);
@@ -120,8 +120,8 @@ static void *take_item(struct c_utils_priority_queue *queue) {
 /* End static functions */
 
 /// Returns an initialized bounded queue of max size max_elements.
-struct c_utils_priority_queue *c_utils_priority_queue_create(size_t max_elements, c_utils_comparator_cb compare) {	
-	struct c_utils_priority_queue *queue;
+struct c_utils_blocking_queue *c_utils_blocking_queue_create(size_t max_elements, c_utils_comparator_cb compare) {	
+	struct c_utils_blocking_queue *queue;
 	C_UTILS_ON_BAD_CALLOC(queue, logger, sizeof(*queue))
 		goto err;
 
@@ -180,7 +180,7 @@ struct c_utils_priority_queue *c_utils_priority_queue_create(size_t max_elements
 }
 
 /// Blocks until either another element can be inserted or the time ellapses.
-bool c_utils_priority_queue_enqueue(struct c_utils_priority_queue *queue, void *item, long long int timeout) {
+bool c_utils_blocking_queue_enqueue(struct c_utils_blocking_queue *queue, void *item, long long int timeout) {
 	C_UTILS_ARG_CHECK(logger, false, queue);
 
 	atomic_fetch_add(&queue->threads_waiting, 1);
@@ -225,7 +225,7 @@ bool c_utils_priority_queue_enqueue(struct c_utils_priority_queue *queue, void *
 }
 
 /// Blocks until a new element is available or the amount of the time ellapses.
-void *c_utils_priority_queue_dequeue(struct c_utils_priority_queue *queue, long long int timeout) {
+void *c_utils_blocking_queue_dequeue(struct c_utils_blocking_queue *queue, long long int timeout) {
 	C_UTILS_ARG_CHECK(logger, NULL, queue);
 	
 	atomic_fetch_add(&queue->threads_waiting, 1);
@@ -263,7 +263,7 @@ void *c_utils_priority_queue_dequeue(struct c_utils_priority_queue *queue, long 
 }
 
 /// Clear the queue, and optionally execute a callback on every item currently in the queue. I.E allows you to delete them.
-bool c_utils_priority_queue_clear(struct c_utils_priority_queue *queue, c_utils_delete_cb del) {
+bool c_utils_blocking_queue_clear(struct c_utils_blocking_queue *queue, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false, queue);
 	
 	atomic_fetch_add(&queue->threads_waiting, 1);
@@ -273,7 +273,7 @@ bool c_utils_priority_queue_clear(struct c_utils_priority_queue *queue, c_utils_
 		if (del)
 			del(curr->item);
 
-		queue->head = curr->_single.next;
+		queue->head = curr->next;
 		
 		free(curr);
 		
@@ -288,17 +288,17 @@ bool c_utils_priority_queue_clear(struct c_utils_priority_queue *queue, c_utils_
 	return true;
 }
 
-size_t c_utils_priority_queue_size(struct c_utils_priority_queue *queue) {
+size_t c_utils_blocking_queue_size(struct c_utils_blocking_queue *queue) {
 	C_UTILS_ARG_CHECK(logger, 0, queue);
 	
 	return atomic_load(&queue->size);
 }
 
 /// Clears the queue then destroys the queue. Will execute a callback on every item in the queue if not null.
-bool c_utils_priority_queue_destroy(struct c_utils_priority_queue *queue, c_utils_delete_cb del) {
+bool c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *queue, c_utils_delete_cb del) {
 	C_UTILS_ARG_CHECK(logger, false, queue);
 	
-	c_utils_priority_queue_clear(queue, del);
+	c_utils_blocking_queue_clear(queue, del);
 	
 	pthread_mutex_lock(queue->lock);
 	atomic_store(&queue->shutting_down, true);
