@@ -30,8 +30,18 @@ C_Utils' thread safety prefers security and generality/versatility of performanc
 
 As of yet, the massive changes have left the utilities package currently unusable, and with the unfortunate disparity between Stable and Development, and the overall need to make necessary changes, the package will probably not be usable for a long while.
 
+###Why isn't the "working" code in Stable?
+
+Because Stable holds the previous, actually working version of C_Utils, of which I will dub as C_Utils 1.0, and it is more or less archived. Why did I not create a separate branch once this has gotten stable? Well, it never was stable after all of the rapid changes. C_Utils 2.0 will be much more glorious, and it is also better formatted and elegantly designed, also above all else, configurable. Right now the project is more on "display". Once there is a stable version of C_Utils 2.0, I will create a separate branch for it and move it to stable, and C_Utils 1.0 to another branch (probably called "Archive").
+
 #Documentation
 
 The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://theif519.github.io/slate/).
 
 It should be noted, that not all things have been implemented yet. The documentation contains ideas and features I plan to implement in the future. Once again, please note, not all of this has been implemented.
+
+#About the Author
+
+Skip if not interested. The author is an ambitious computer science undergraduate who is SUPPOSED to be a senior, but was crazy enough to wait until Junior year to decide a major (and then begin and promptly drop a Math minor by Senior year) who, instead of waiting for god knows how long to learn all of this (if I ever would be taught this in undergraduate school), to teach myself. This project has had over 800 hours invested in it, and doubles as both a tool for learning as well as a valid tool for helping spur along development (once it is finished... if it ever is).
+
+As this package is my personal playground, where I implement, reverse engineer, or "reinvent the wheel" to my heart's content, I may literally never finish this, as there are vastly infinite amount of things to learn. I hope to at least stabalize the utilities package so others may use, but when... well that's another question.
