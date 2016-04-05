@@ -1,5 +1,5 @@
-#ifndef C_UTILS_PRIORITY_QUEUE
-#define C_UTILS_PRIORITY_QUEUE
+#ifndef C_UTILS_BLOCKING_QUEUE_H
+#define C_UTILS_BLOCKING_QUEUE_H
 
 #include "helpers.h"
 
@@ -119,4 +119,4 @@ size_t c_utils_blocking_queue_size(struct c_utils_blocking_queue *queue);
  */
 bool c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *queue);
 
-#endif /* C_UTILS_PRIORITY_QUEUE */
+#endif /* C_UTILS_BLOCKING_QUEUE_H */
