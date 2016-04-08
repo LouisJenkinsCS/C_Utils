@@ -63,4 +63,6 @@ void _c_utils_ref_inc(void *data, struct c_utils_location log_info);
 
 void _c_utils_ref_dec(void *data, struct c_utils_location log_info);
 
+void c_utils_ref_destroy(void *data);
+
 #endif /* C_UTILS_REF_COUNT_H */

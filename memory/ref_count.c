@@ -96,3 +96,12 @@ void _c_utils_ref_dec(void *ptr, struct c_utils_location log_info) {
 		free(rc);
 	}
 }
+
+void c_utils_ref_destroy(void *ptr) {
+	assert(ptr);
+
+	struct c_utils_ref_count *rc = get_ref_count_from(ptr);
+	assert(rc->data == ptr);
+
+	free(rc);
+}
