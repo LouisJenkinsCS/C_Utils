@@ -159,8 +159,8 @@ struct c_utils_list *c_utils_list_create_conf(struct c_utils_list_conf *conf) {
 		return NULL;
 	}
 
-	if(!conf->callbacks.destructor)
-		conf->callbacks.destructor = free;
+	if(!conf->callbacks.destructors.item)
+		conf->callbacks.destructors.item = free;
 
 	list->conf = *conf;
 
@@ -201,7 +201,7 @@ void c_utils_list_delete_all(struct c_utils_list *list) {
 	
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) 
-		delete_all_nodes(list, list->conf.callbacks.destructor);
+		delete_all_nodes(list, list->conf.callbacks.destructors.item);
 }
 
 void c_utils_list_destroy(struct c_utils_list *list) {
@@ -233,11 +233,14 @@ bool c_utils_list_add(struct c_utils_list *list, void *item) {
 
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
+		if(list->conf.size.max && list->conf.size.max == list->size)
+			return false;
+
 		if (!list->size)
 			return add_as_only(list, node);
 
-		if (list->conf.callbacks.comparator)
-			return add_sorted(list, node, list->conf.callbacks.comparator);
+		if (list->conf.callbacks.comparators.item)
+			return add_sorted(list, node, list->conf.callbacks.comparators.item);
 		else
 			return add_unsorted(list, node);
 	} // Release Writer Lock
@@ -551,7 +554,7 @@ static void *remove_at(struct c_utils_list *list, unsigned int index, bool delet
 		
 		if (temp_node) {
 			void *item = temp_node->item;
-			remove_node(list, temp_node, delete_item ? list->conf.callbacks.destructor : NULL);
+			remove_node(list, temp_node, delete_item ? list->conf.callbacks.destructors.item : NULL);
 			return item;
 		} else {
 			C_UTILS_LOG_WARNING(list->conf.logger, "The node returned from Index_To_Node was NULL!\n");
@@ -567,7 +570,7 @@ static void remove_item(struct c_utils_list *list, void *item, bool delete_item)
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
 		struct c_utils_node *node = item_to_node(list, item);
 
-		remove_node(list, node, delete_item ? list->conf.callbacks.destructor : NULL);
+		remove_node(list, node, delete_item ? list->conf.callbacks.destructors.item : NULL);
 	} // Release Writer Lock
 }
 
@@ -652,7 +655,7 @@ static void for_each_item(struct c_utils_list *list, void (*callback)(void *item
 
 static void destroy_list(void *instance) {
 	struct c_utils_list *list = instance;
-	delete_all_nodes(list, list->conf.flags & C_UTILS_LIST_DELETE_ON_DESTROY ? list->conf.callbacks.destructor : NULL);
+	delete_all_nodes(list, list->conf.flags & C_UTILS_LIST_DELETE_ON_DESTROY ? list->conf.callbacks.destructors.item : NULL);
 
 	c_utils_scoped_lock_destroy(list->lock);
 	free(list);
@@ -797,7 +800,7 @@ static bool append(void *instance, void *pos, void *item) {
 	struct c_utils_list_iterator_position *p = pos;
 
 	// We cannot append to the list and violate sorted order.
-	if(list->conf.callbacks.comparator)
+	if(list->conf.callbacks.comparators.item)
 		return false;
 
 	struct c_utils_node *node = create_node(item, list->conf.flags & C_UTILS_LIST_RC_ITEM);
@@ -811,6 +814,10 @@ static bool append(void *instance, void *pos, void *item) {
 
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
+		if(list->conf.size.max && list->conf.size.max == list->size)
+			c_utils_ref_destroy(node);
+			return false;
+
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
@@ -859,7 +866,7 @@ static bool prepend(void *instance, void *pos, void *item) {
 	struct c_utils_list_iterator_position *p = pos;
 
 	// We cannot prepend an element if it will violate the sorted principle.
-	if(list->conf.callbacks.comparator)
+	if(list->conf.callbacks.comparators.item)
 		return false;
 
 	struct c_utils_node *node = create_node(item, list->conf.flags & C_UTILS_LIST_RC_ITEM);
@@ -873,6 +880,11 @@ static bool prepend(void *instance, void *pos, void *item) {
 
 	// Acquire Writer Lock
 	C_UTILS_SCOPED_WRLOCK(list->lock) {
+		if(list->conf.size.max && list->conf.size.max == list->size) {
+			c_utils_ref_destroy(node);
+			return false;
+		}
+
 		if (list->size == 0) {
 			add_as_only(list, node);
 			update_pos(p, node, list->conf.flags & C_UTILS_LIST_RC_ITEM);
@@ -923,7 +935,7 @@ static bool del(void *instance, void *pos) {
 			return false;
 
 		if (p->curr->is_valid)
-			remove_node(list, p->curr, list->conf.callbacks.destructor);
+			remove_node(list, p->curr, list->conf.callbacks.destructors.item);
 
 		return true;
 	}

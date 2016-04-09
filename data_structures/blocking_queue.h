@@ -9,7 +9,7 @@
 
 #define C_UTILS_BLOCKING_QUEUE_DESTROY_ON_DELETE 1 << 2
 
-#define C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT 1 << 3
+#define C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT -1
 
 /*
 	c_utils_blocking_queue is a minimal blocking queue which features not only a way to
@@ -38,6 +38,7 @@ struct c_utils_blocking_queue_conf {
 		} destructors;
 	} callbacks;
 	struct {
+		size_t initial;
 		size_t max;
 	} size;
 	struct c_utils_logger *logger;

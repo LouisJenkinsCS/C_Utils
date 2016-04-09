@@ -14,8 +14,6 @@ struct c_utils_heap {
 
 static size_t default_initial = 64;
 
-static size_t default_max = 1024;
-
 static double default_growth_rate = 2;
 
 static double default_growth_trigger = .75;
@@ -123,7 +121,7 @@ struct c_utils_heap *c_utils_heap_create_from_conf(int (*comparator)(const void 
 	if(len > conf->size.initial)
 		conf->size.initial = len;
 
-	if(len > conf->size.max)
+	if(conf->size.max && len > conf->size.max)
 		conf->size.max = len;
 
 	struct c_utils_heap *heap = c_utils_heap_create_conf(comparator, conf);
@@ -152,6 +150,9 @@ bool c_utils_heap_insert(struct c_utils_heap *heap, void *item) {
 	}
 
 	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(heap->conf.size.max && heap->conf.size.max == heap->used)
+			return false;
+
 		heap->data[++heap->used] = item;
 
 		if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
@@ -173,7 +174,7 @@ bool c_utils_heap_insert(struct c_utils_heap *heap, void *item) {
 size_t c_utils_heap_size(struct c_utils_heap *heap) {
 	if(!heap)
 		return 0;
-	
+
 	return heap->used;
 }
 
@@ -353,10 +354,16 @@ static void shift_down(struct c_utils_heap *heap, size_t index) {
 }
 
 static bool resize(struct c_utils_heap *heap, size_t size) {
-	if(heap->size == heap->conf.size.max)
+	if(heap->conf.size.max && heap->size == heap->conf.size.max)
 		return false;
 
-	size_t new_size = (heap->conf.size.max < size) ? heap->conf.size.max : size;
+	size_t new_size;
+
+	if(heap->conf.size.max)
+		new_size = (heap->conf.size.max < size) ? heap->conf.size.max : size;
+	else
+		new_size = size;
+
 	C_UTILS_ON_BAD_REALLOC(&heap->data, heap->conf.logger, sizeof(void *) * new_size)
 		return false;
 
@@ -388,9 +395,6 @@ static void configure(struct c_utils_heap_conf *conf) {
 
 	if(!conf->size.initial)
 		conf->size.initial = default_initial;
-
-	if(!conf->size.max)
-		conf->size.max = default_max;
 
 	if(!conf->callbacks.destructors.item)
 		conf->callbacks.destructors.item = free;

@@ -2,21 +2,18 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
+#include "../memory/ref_count.h"
 #include "blocking_queue.h"
 #include "../misc/argument_check.h"
 #include "../misc/alloc_check.h"
+#include "heap.h"
+#include "list.h"
 
 struct c_utils_blocking_queue {
-	/// A pointer to the head node.
-	struct c_utils_node *head;
-	/// A pointer to the tail node.
-	struct c_utils_node *tail;
-	/// To compare elements to determine priority.
-	c_utils_comparator_cb compare;
-	/// Size of the current queue, meaning amount of elements currently in the queue.
-	volatile size_t size;
-	/// The maximum size of the queue if it is bounded. If it is unbounded it is 0.
-	size_t max_size;
+	union {
+		struct c_utils_list *list;
+		struct c_utils_heap *heap;
+	} data;
 	/// A new element may be added to the PBQueue.
 	pthread_cond_t removed;
 	/// A element has been added and may be removed from the PBQueue.
@@ -27,226 +24,208 @@ struct c_utils_blocking_queue {
 	_Atomic size_t blocked;
 	/// Atomic flag for if it's being destroyed.
 	_Atomic bool shutdown;
+	/// Configuration
+	struct c_utils_blocking_queue_conf conf;
 };
 
-static struct c_utils_logger *logger = NULL;
-
-C_UTILS_LOGGER_AUTO_CREATE(logger, "./data_structures/logs/blocking_queue.log", "w", C_UTILS_LOG_LEVEL_ALL);
-
-/* Static functions */
-
-static inline bool add_as_head(struct c_utils_blocking_queue *bq, struct c_utils_node *node) {
-	node->next = bq->head;
-	bq->head = node;
-
-	bq->size++;
-
-	return true;
-}
-
-static inline bool add_as_tail(struct c_utils_blocking_queue *bq, struct c_utils_node *node) {
-	bq->tail->next = node;
-	bq->tail = node;
-	node->next = NULL;
-
-	bq->size++;
-
-	return true;
-}
-
-static inline bool add_as_only(struct c_utils_blocking_queue *bq, struct c_utils_node *node) {
-	node->next = NULL;
-	bq->head = bq->tail = node;
-	
-	bq->size++;
-
-	return true;
-}
-
-static inline bool add_after(struct c_utils_blocking_queue *bq, struct c_utils_node *this_node, struct c_utils_node *prev) {
-	this_node->next = prev->next;
-	prev->next = this_node;
-
-	bq->size++;
-
-	return true;
-}
-
 static bool add_item(struct c_utils_blocking_queue *bq, void *item) {
-	struct c_utils_node *node;
-	C_UTILS_ON_BAD_MALLOC(node, logger, sizeof(*node))
-		return false;
-	node->item = item;
-
-	if (!bq->compare)
-		return add_as_tail(bq, node);
-
-	if (!bq->size)
-		return add_as_only(bq, node);
-	else if (bq->size == 1)
-		// Checks to see if the item is of greater priority than the head of the queue.
-		if (bq->compare(item, bq->head->item) > 0)
-			return add_as_head(bq, node);
-		else
-			return add_as_tail(bq, node);
-	else if (bq->compare(item, bq->head->item) > 0)
-		return add_as_head(bq, node);
-	else if (bq->compare(item, bq->tail->item) <= 0)
-		return add_as_tail(bq, node);
+	if(bq->conf.callbacks.comparators.item)
+		return c_utils_heap_insert(bq->data.heap, item);
 	else
-		for (struct c_utils_node *curr = bq->head, *prev = curr; curr; prev = curr, curr = curr->next)
-			if (bq->compare(item, curr->item) > 0)
-				return add_after(bq, node, prev);
-			else if (!curr->next)
-				return add_as_tail(bq, node);
-
-	return true;
+		return c_utils_list_add(bq->data.list, item);
 }
 
 static void *take_item(struct c_utils_blocking_queue *bq) {
-	struct c_utils_node *node = bq->head;
-	if (!node) 
-		return NULL;
-	
-	void *item = bq->head->item;
-	bq->head = bq->head->next;
-	
-	free(node);
-	bq->size--;
-	
-	return item;
+	if(bq->conf.callbacks.comparators.item)
+		return c_utils_heap_remove(bq->data.heap);
+	else
+		return c_utils_list_remove_at(bq->data.list, 0);
 }
 
 /* End static functions */
 
-/// Returns an initialized bounded queue of max size max_elements.
-struct c_utils_blocking_queue *c_utils_blocking_queue_create(size_t max_elements, c_utils_comparator_cb compare) {
-	struct c_utils_blocking_queue *bq;
-	C_UTILS_ON_BAD_CALLOC(bq, logger, sizeof(*bq))
-		goto err;
+struct c_utils_blocking_queue *c_utils_blocking_queue_create() {
+	struct c_utils_blocking_queue_conf conf = {};
+	return c_utils_blocking_queue_create_conf(&conf);
+}
 
-	/// max_elements of 0 means unbounded.
-	bq->max_size = max_elements;
-	bq->head = bq->tail = NULL;
+struct c_utils_blocking_queue *c_utils_blocking_queue_create_conf(struct c_utils_blocking_queue_conf *conf) {
+	if(!conf)
+		return NULL;
+
+	struct c_utils_blocking_queue *bq;
+
+	if(conf->flags & C_UTILS_BLOCKING_QUEUE_RC_INSTANCE) {
+		struct c_utils_ref_count_conf rc_conf =
+		{
+			.logger = conf->logger
+		};
+
+		bq = c_utils_ref_create_conf(sizeof(*bq), &rc_conf);
+	} else {
+		bq = malloc(sizeof(*bq));
+	}
+
+	if(!bq) {
+		C_UTILS_LOG_ERROR(conf->logger, "Failed to allocate the blocking queue!");
+		goto err;
+	}
 
 	int failure = pthread_mutex_init(&bq->lock, NULL);
 	if (failure) {
-		C_UTILS_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(failure));
+		C_UTILS_LOG_ERROR(conf->logger, "pthread_mutex_init: '%s'", strerror(failure));
 		goto err_lock;
 	}
 
 	failure = pthread_cond_init(&bq->removed, NULL);
 	if (failure) {
-		C_UTILS_LOG_ERROR(logger, "pthread_cond_init: '%s'", strerror(failure));
+		C_UTILS_LOG_ERROR(conf->logger, "pthread_cond_init: '%s'", strerror(failure));
 		goto err_removed;
 	}
 
 	failure = pthread_cond_init(&bq->added, NULL);
 	if (failure) {
-		C_UTILS_LOG_ERROR(logger, "pthread_cond_init: '%s'", strerror(failure));
+		C_UTILS_LOG_ERROR(conf->logger, "pthread_cond_init: '%s'", strerror(failure));
 		goto err_added;
 	}
 
-	bq->compare = compare;
+	/*
+		Note here, depending on if we use a comparator depends on what type of data structure we use.
+		If the user provides a comparator for a priority blocking queue, then it is treated as such 
+		and uses a binary heap. Otherwise, a normal list is used.
+	*/
+	if(conf->callbacks.comparators.item) {
+		struct c_utils_heap_conf heap_conf =
+		{
+			.logger = conf->logger,
+			.size =
+			{
+				.max = conf->size.max,
+				.initial = conf->size.initial
+			},
+			.callbacks.destructors.item = conf->callbacks.destructors.item,
+		};
+
+		bq->data.heap = c_utils_heap_create_conf(conf->callbacks.comparators.item, &heap_conf);
+	} else {
+		struct c_utils_list_conf list_conf =
+		{
+			.logger = conf->logger,
+			.callbacks.destructors.item = conf->callbacks.destructors.item,
+			.size.max = conf->size.max
+		};
+
+		bq->data.list = c_utils_list_create_conf(&list_conf);
+	}
+
+	if(!bq->data.list || !bq->data.heap) {
+		C_UTILS_LOG_ERROR(conf->logger, "Failed while attempting to create heap or list...");
+		goto err_data;
+	}
+
 	bq->shutdown = ATOMIC_VAR_INIT(false);
 	bq->blocked = ATOMIC_VAR_INIT(0);
-	bq->size = ATOMIC_VAR_INIT(0);
-	
+	bq->conf = *conf;
+
 	return bq;
 
+	err_data:
+		pthread_cond_destroy(&bq->added);
 	err_added:
 		pthread_cond_destroy(&bq->removed);
 	err_removed:
 		pthread_mutex_destroy(&bq->lock);
 	err_lock:
-		free(bq);
+		if(conf->flags & C_UTILS_BLOCKING_QUEUE_RC_INSTANCE)
+			c_utils_ref_destroy(bq);
+		else
+			free(bq);
 	err:
 		return NULL;
 }
 
-/// Blocks until either another element can be inserted or the time ellapses.
 bool c_utils_blocking_queue_enqueue(struct c_utils_blocking_queue *bq, void *item, long long int timeout) {
 	if(!bq)
 		return false;
 
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-	ts.tv_sec += timeout;
-	bool retval = false;
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	end = start;
+
+	if(timeout != C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT) {
+		end.tv_sec += timeout / 1000;
+		end.tv_nsec += (timeout % 1000) * 1000000L;
+	}
 
 	atomic_fetch_add(&bq->blocked, 1);
 
 	pthread_mutex_lock(&bq->lock);
-	if (bq->max_size) {
-		while (!atomic_load(&bq->shutdown) && bq->size == bq->max_size) {
-			int errcode;
-			if (timeout < 0) 
-				errcode = pthread_cond_wait(&bq->removed, &bq->lock);
-			else
-				errcode = pthread_cond_timedwait(&bq->removed, &bq->lock, &ts);
 
-			if (errcode) {
-				if (errcode != ETIMEDOUT)
-					C_UTILS_LOG_ERROR(logger, "%s: '%s'", timeout < 0 ? "pthread_cond_wait" : "pthread_cond_timedwait", strerror(errno));
+	while(!atomic_load(&bq->shutdown) && !add_item(bq, item)) {
+		int errcode;
 
-				pthread_mutex_unlock(&bq->lock);
-				atomic_fetch_sub(&bq->blocked, 1);
+		if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
+			errcode = pthread_cond_wait(&bq->removed, &bq->lock);
+		else
+			errcode = pthread_cond_timedwait(&bq->removed, &bq->lock, &end);
 
-				return false;
-			}
+		if (errcode) {
+			if (errcode != ETIMEDOUT)
+				C_UTILS_LOG_ERROR(bq->conf.logger, "%s: '%s'", timeout < 0 ? "pthread_cond_wait" : "pthread_cond_timedwait", strerror(errno));
+
+			pthread_mutex_unlock(&bq->lock);
+			atomic_fetch_sub(&bq->blocked, 1);
+
+			return false;
 		}
 	}
 
-	if (!atomic_load(&bq->shutdown)) {
-		add_item(bq, item);
-		pthread_cond_signal(&bq->added);
-		
-		retval = true;
-	}
-	
-	
+	pthread_cond_signal(&bq->added);
 	pthread_mutex_unlock(&bq->lock);
 	atomic_fetch_sub(&bq->blocked, 1);
-	
-	return retval;
+
+	return true;
 }
 
 /// Blocks until a new element is available or the amount of the time ellapses.
 void *c_utils_blocking_queue_dequeue(struct c_utils_blocking_queue *bq, long long int timeout) {
 	if(!bq)
 		return NULL;
-	
+
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	end = start;
+
+	if(timeout != C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT) {
+		end.tv_sec += timeout / 1000;
+		end.tv_nsec += (timeout % 1000) * 1000000L;
+	}
+
 	atomic_fetch_add(&bq->blocked, 1);
-	
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-	ts.tv_sec += timeout;
-	void *item = NULL;
-	
+
 	pthread_mutex_lock(&bq->lock);
-	while (atomic_load(&bq->shutdown) == false && !bq->size) {
+
+	void *item;
+	while(!atomic_load(&bq->shutdown) && !(item = take_item(bq))) {
 		int errcode;
-		if (timeout < 0)
+
+		if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
 			errcode = pthread_cond_wait(&bq->added, &bq->lock);
 		else
-			errcode = pthread_cond_timedwait(&bq->added, &bq->lock, &ts);
+			errcode = pthread_cond_timedwait(&bq->added, &bq->lock, &end);
 
 		if (errcode) {
 			if (errcode != ETIMEDOUT)
-				C_UTILS_LOG_ERROR(logger, "%s: '%s'", timeout < 0 ? "pthread_cond_wait" : "pthread_cond_timedwait", strerror(errno));
+				C_UTILS_LOG_ERROR(bq->conf.logger, "%s: '%s'", timeout < 0 ? "pthread_cond_wait" : "pthread_cond_timedwait", strerror(errno));
 
 			pthread_mutex_unlock(&bq->lock);
 			atomic_fetch_sub(&bq->blocked, 1);
 
-			return NULL;
+			return false;
 		}
 	}
 
-	if(!atomic_load(&bq->shutdown)) {
-		item = take_item(bq);
-		pthread_cond_signal(&bq->removed);
-	}
-
+	pthread_cond_signal(&bq->removed);
 	pthread_mutex_unlock(&bq->lock);
 	atomic_fetch_sub(&bq->blocked, 1);
 
@@ -264,8 +243,9 @@ bool c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *bq) {
 }
 
 /// Clear the queue, and optionally execute a callback on every item currently in the queue. I.E allows you to delete them.
-bool c_utils_blocking_queue_clear(struct c_utils_blocking_queue *bq, c_utils_delete_cb del) {
-	C_UTILS_ARG_CHECK(logger, false, bq);
+bool c_utils_blocking_queue_clear(struct c_utils_blocking_queue *bq) {
+	if(!bq)
+		return false;
 	
 	atomic_fetch_add(&bq->blocked, 1);
 	

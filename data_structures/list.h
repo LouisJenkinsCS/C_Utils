@@ -135,10 +135,16 @@ struct c_utils_list_conf {
 	int flags;
 	/// Grouping of callback functions
 	struct {
-		int (*comparator)(const void *, const void *);
-		/// Used to delete the item in the list. Defaults to free()
-		void (*destructor)(void *);
+		struct {
+			int (*item)(const void *, const void *);
+		} comparators;
+		struct {
+			void (*item)(void *);
+		} destructors;
 	} callbacks;
+	struct {
+		size_t max;
+	} size;
 	/// Used to log any errors or trace information to.
 	struct c_utils_logger *logger;
 };

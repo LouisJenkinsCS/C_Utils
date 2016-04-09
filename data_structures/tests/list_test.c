@@ -50,8 +50,8 @@ int main(void) {
 		.flags = LIST_RC_INSTANCE,
 		.callbacks =
 		{
-			.comparator = inverse_compare_ints,
-			.destructor = free
+			.comparators.item = inverse_compare_ints,
+			.destructors.item = free
 		},
 	};
 	void **array = malloc(sizeof(int *) * runs);
@@ -103,7 +103,7 @@ int main(void) {
 
 	LOG_INFO(logger, "Creating a list from the array and sorting!\n");
 	conf.flags |= LIST_DELETE_ON_DESTROY;
-	conf.callbacks.comparator = compare_ints;
+	conf.callbacks.comparators.item = compare_ints;
 	list_t *list_two = list_from_conf(array, runs, &conf);
 
 	iterator_destroy(it);
