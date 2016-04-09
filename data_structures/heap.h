@@ -33,7 +33,7 @@ struct c_utils_heap_conf {
 	struct c_utils_logger *logger;
 };
 
-#ifdef C_UTILS_NO_PREFIX
+#ifdef NO_C_UTILS_PREFIX
 /*
 	Typedefs
 */

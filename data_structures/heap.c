@@ -4,7 +4,7 @@
 #include "../misc/alloc_check.h"
 
 struct c_utils_heap {
-	void **heap;
+	void **data;
 	int (*cmp)(const void *, const void *);
 	size_t size;
 	size_t used;
@@ -16,9 +16,9 @@ static size_t default_initial = 64;
 
 static size_t default_max = 1024;
 
-static size_t default_growth_rate = 2;
+static double default_growth_rate = 2;
 
-static size_t default_growth_trigger = .75;
+static double default_growth_trigger = .75;
 
 static size_t left(size_t parent);
 
@@ -38,7 +38,7 @@ static void shift_down(struct c_utils_heap *heap, size_t index);
 
 static bool resize(struct c_utils_heap *heap, size_t size);
 
-static void destroy_heap(struct c_utils_heap *heap);
+static void destroy_heap(void *heap);
 
 static void configure(struct c_utils_heap_conf *conf);
 
@@ -73,9 +73,10 @@ struct c_utils_heap *c_utils_heap_create_conf(int (*comparator)(const void *, co
 		heap = malloc(sizeof(*heap));
 	}
 
-	if(!heap)
+	if(!heap) {
 		C_UTILS_LOG_ERROR(conf->logger, "Failed during creation of the heap!");
 		goto err;
+	}
 
 	if(conf->flags & C_UTILS_HEAP_CONCURRENT)
 		heap->lock = c_utils_scoped_lock_mutex(NULL, NULL);
@@ -93,6 +94,7 @@ struct c_utils_heap *c_utils_heap_create_conf(int (*comparator)(const void *, co
 		goto err_heap;
 	}
 
+	heap->size = conf->size.initial;
 	heap->cmp = comparator;
 	heap->conf = *conf;
 
@@ -134,7 +136,7 @@ struct c_utils_heap *c_utils_heap_create_from_conf(int (*comparator)(const void 
 		heap->data[i] = arr[i];
 
 	for(size_t i = len / 2; i >= 1; i--) {
-		shift_down(i);
+		shift_down(heap, i);
 	}
 
 	return heap;
@@ -164,6 +166,8 @@ bool c_utils_heap_insert(struct c_utils_heap *heap, void *item) {
 		if(((double)heap->used / heap->size) > heap->conf.growth.trigger)
 			resize(heap, heap->size * heap->conf.growth.rate);
 	}
+
+	return true;
 }
 
 size_t c_utils_heap_size(struct c_utils_heap *heap) {
@@ -207,11 +211,11 @@ void *c_utils_heap_remove(struct c_utils_heap *heap) {
 
 void c_utils_heap_remove_all(struct c_utils_heap *heap) {
 	if(!heap)
-		return NULL;
+		return;
 
 	C_UTILS_SCOPED_LOCK(heap->lock) {
 		if(!heap->used)
-			return NULL;
+			return;
 
 		for(size_t i = 1; i <= heap->used; i++) {
 			void *item = heap->data[i];
@@ -221,8 +225,6 @@ void c_utils_heap_remove_all(struct c_utils_heap *heap) {
 
 		heap->used = 0;
 	}
-
-	C_UTILS_UNACCESSIBLE;
 }
 
 bool c_utils_heap_delete(struct c_utils_heap *heap) {
@@ -248,11 +250,11 @@ bool c_utils_heap_delete(struct c_utils_heap *heap) {
 
 void c_utils_heap_delete_all(struct c_utils_heap *heap) {
 	if(!heap)
-		return NULL;
+		return;
 
 	C_UTILS_SCOPED_LOCK(heap->lock) {
 		if(!heap->used)
-			return NULL;
+			return;
 
 		for(size_t i = 1; i <= heap->used; i++) {
 			void *item = heap->data[i];
@@ -264,8 +266,6 @@ void c_utils_heap_delete_all(struct c_utils_heap *heap) {
 
 		heap->used = 0;
 	}
-
-	C_UTILS_UNACCESSIBLE;
 }
 
 void c_utils_heap_destroy(struct c_utils_heap *heap) {
@@ -305,6 +305,8 @@ static void *extract_max(struct c_utils_heap *heap) {
 	heap->data[1] = heap->data[heap->used--];
 
 	heapify_down(heap);
+
+	return item;
 }
 
 static void heapify_up(struct c_utils_heap *heap) {
@@ -317,16 +319,22 @@ static void heapify_up(struct c_utils_heap *heap) {
 }
 
 static void heapify_down(struct c_utils_heap *heap) {
+	// If the root node is less than it's children, correct it here.
 	for(size_t i = 1; i <= heap->used;) {
-		if(heap->cmp(heap->data[left(i)], heap->data[i]) > 0) {
-			swap(heap, left(i), i);
-			i = left(i);
-		} else if(heap->cmp(heap->data[right(i)], heap->data[i]) > 0) {
-			swap(heap, right(i), i);
-			i = right(i);
-		} else {
+		size_t largest = i;
+
+		if(left(i) <= heap->used && heap->cmp(heap->data[left(i)], heap->data[largest]) > 0)
+			largest = left(i);
+		
+		if(right(i) <= heap->used && heap->cmp(heap->data[right(i)], heap->data[largest]) > 0)
+			largest = right(i);
+
+		// No change?
+		if(largest == i)
 			break;
-		}
+
+		swap(heap, largest, i);
+		i = largest;
 	}
 }
 
@@ -349,18 +357,19 @@ static bool resize(struct c_utils_heap *heap, size_t size) {
 		return false;
 
 	size_t new_size = (heap->conf.size.max < size) ? heap->conf.size.max : size;
-	C_UTILS_ON_BAD_REALLOC(&heap->data, heap->conf.logger, new_size)
+	C_UTILS_ON_BAD_REALLOC(&heap->data, heap->conf.logger, sizeof(void *) * new_size)
 		return false;
 
 	heap->size = new_size;
 	return true;
 }
 
-static void destroy_heap(struct c_utils_heap *heap) {
+static void destroy_heap(void *instance) {
+	struct c_utils_heap *heap = instance;
 	if(!heap)
 		return;
 
-	if(conf->flags & C_UTILS_HEAP_DELETE_ON_DESTROY)
+	if(heap->conf.flags & C_UTILS_HEAP_DELETE_ON_DESTROY)
 		c_utils_heap_delete_all(heap);
 	else
 		c_utils_heap_remove_all(heap);

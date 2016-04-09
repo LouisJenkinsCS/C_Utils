@@ -9,17 +9,17 @@
 #include "../io/logger.h"
 
 void *c_utils_logged_malloc(size_t size, struct c_utils_logger *logger, const char *var_name,
-	const char *line, const char *function, const char *file);
+	struct c_utils_location);
 
 void *c_utils_logged_calloc(size_t size, struct c_utils_logger *logger, const char *var_name,
-	const char *line, const char *function, const char *file);
+	struct c_utils_location);
 
 /*
 	Wrapper function to realloc; Logs on error, otherwise it will replace the underlying pointer
 	with the newly reallocated one.
 */
 void *c_utils_logged_realloc(void *data_ptr, size_t size, struct c_utils_logger *logger,
-	const char *var_name, const char *line, const char *function, const char *file);
+	const char *var_name, struct c_utils_location);
 
 
 /*
@@ -54,17 +54,14 @@ void *c_utils_logged_realloc(void *data_ptr, size_t size, struct c_utils_logger 
 */
 #define C_UTILS_ON_BAD_MALLOC(var, logger, size) \
 	for(void *_tester = var = c_utils_logged_malloc(size, logger, \
-		C_UTILS_STRINGIFY(var), C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, \
-		__FILE__); !_tester; _tester++)
+		C_UTILS_STRINGIFY(var), C_UTILS_LOCATION); !_tester; _tester++)
 
 #define C_UTILS_ON_BAD_CALLOC(var, logger, size) \
 	for(void *_tester = var = c_utils_logged_calloc(size, logger, \
-		C_UTILS_STRINGIFY(var), C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, \
-		__FILE__); !_tester; _tester++)
+		C_UTILS_STRINGIFY(var), C_UTILS_LOCATION); !_tester; _tester++)
 
 #define C_UTILS_ON_BAD_REALLOC(var_ptr, logger, size) \
 	for(void *_tester = c_utils_logged_realloc(var_ptr, size, logger, \
-		C_UTILS_STRINGIFY(var), C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, \
-		__FILE__); !_tester; _tester++)
+		C_UTILS_STRINGIFY(var_ptr), C_UTILS_LOCATION); !_tester; _tester++)
 
 #endif /* C_UTILS_ALLOC_CHECK_H */

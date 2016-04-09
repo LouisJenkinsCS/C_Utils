@@ -7,7 +7,7 @@ SOURCES=heap.c heap_test.c scoped_lock.c logger.c ref_count.c alloc_check.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=heap_test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./misc/ ./data_structures/ ./data_structures/tests ./threading/ ./io/
+VPATH=./misc/ ./memory/ ./data_structures/ ./data_structures/tests ./threading/ ./io/
 
 all: $(TARGET)
 
