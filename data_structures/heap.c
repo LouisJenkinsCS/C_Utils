@@ -1,6 +1,7 @@
 #include "heap.h"
 #include "../threading/scoped_lock.h"
 #include "../memory/ref_count.h"
+#include "../misc/alloc_check.h"
 
 struct c_utils_heap {
 	void **heap;
@@ -15,23 +16,29 @@ static size_t default_initial = 64;
 
 static size_t default_max = 1024;
 
+static size_t default_growth_rate = 2;
+
+static size_t default_growth_trigger = .75;
+
 static size_t left(size_t parent);
 
 static size_t right(size_t parent);
 
 static size_t parent(size_t child);
 
-static void swap(struct c_utils_heap *tree, size_t first, size_t second);
+static void swap(struct c_utils_heap *heap, size_t first, size_t second);
 
-static void *extract_max(struct c_utils_heap *tree);
+static void *extract_max(struct c_utils_heap *heap);
 
-static void heapify_up(struct c_utils_heap *tree);
+static void heapify_up(struct c_utils_heap *heap);
 
-static void heapify_down(struct c_utils_heap *tree);
+static void heapify_down(struct c_utils_heap *heap);
 
-static bool resize(struct c_utils_heap *tree, size_t size);
+static void shift_down(struct c_utils_heap *heap, size_t index);
 
-static void destroy_heap(struct c_utils_heap *tree);
+static bool resize(struct c_utils_heap *heap, size_t size);
+
+static void destroy_heap(struct c_utils_heap *heap);
 
 static void configure(struct c_utils_heap_conf *conf);
 
@@ -39,6 +46,11 @@ static void configure(struct c_utils_heap_conf *conf);
 struct c_utils_heap *c_utils_heap_create(int (*comparator)(const void *, const void *)) {
 	struct c_utils_heap_conf conf = {};
 	return c_utils_heap_create_conf(comparator, &conf);
+}
+
+struct c_utils_heap *c_utils_heap_create_from(int (*comparator)(const void *, const void *), void **arr, size_t len) {
+	struct c_utils_heap_conf conf = {};
+	return c_utils_heap_create_from_conf(comparator, arr, len, &conf);
 }
 
 struct c_utils_heap *c_utils_heap_create_conf(int (*comparator)(const void *, const void *), struct c_utils_heap_conf *conf) {
@@ -75,8 +87,8 @@ struct c_utils_heap *c_utils_heap_create_conf(int (*comparator)(const void *, co
 		goto err_lock;
 	}
 
-	heap->heap = malloc(sizeof(void *) * conf->size.initial);
-	if(!heap->heap) {
+	heap->data = malloc(sizeof(void *) * conf->size.initial);
+	if(!heap->data) {
 		C_UTILS_LOG_ERROR(conf->logger, "Failed during creation of the heap container!");
 		goto err_heap;
 	}
@@ -97,52 +109,80 @@ struct c_utils_heap *c_utils_heap_create_conf(int (*comparator)(const void *, co
 		return NULL;
 }
 
-bool c_utils_heap_insert(struct c_utils_heap *tree, void *item) {
-	if(!tree)
+struct c_utils_heap *c_utils_heap_create_from_conf(int (*comparator)(const void *, const void *), void **arr, size_t len, struct c_utils_heap_conf *conf) {
+	if(!comparator || !conf)
+		return NULL;
+
+	if(!arr || !len) {
+		C_UTILS_LOG_TRACE(conf->logger, "NULL array or length of 0 passed, creating a standard heap!");
+		return c_utils_heap_create_conf(comparator, conf);
+	}
+
+	if(len > conf->size.initial)
+		conf->size.initial = len;
+
+	if(len > conf->size.max)
+		conf->size.max = len;
+
+	struct c_utils_heap *heap = c_utils_heap_create_conf(comparator, conf);
+	if(!heap) {
+		C_UTILS_LOG_ERROR(conf->logger, "Failed during creation of base heap!");
+		return NULL;
+	}
+
+	for(size_t i = 0; i < len; i++)
+		heap->data[i] = arr[i];
+
+	for(size_t i = len / 2; i >= 1; i--) {
+		shift_down(i);
+	}
+
+	return heap;
+}
+
+bool c_utils_heap_insert(struct c_utils_heap *heap, void *item) {
+	if(!heap)
 		return false;
 
 	if(!item) {
-		C_UTILS_LOG_WARNING(tree->conf.logger, "This tree does not support NULL values!");
+		C_UTILS_LOG_WARNING(heap->conf.logger, "This heap does not support NULL values!");
 		return false;
 	}
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
-			tree->used++;
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		heap->data[++heap->used] = item;
 
-		tree->heap[tree->used++] = item;
-
-		if(tree->conf.flags & C_UTILS_HEAP_RC_ITEM)
+		if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
 			C_UTILS_REF_INC(item);
 
 		/*
-			After inserting an item into the tree, we must move the recently
+			After inserting an item into the heap, we must move the recently
 			added value to it's correct place if necessary.
 		*/
-		heapify_up(tree);
+		heapify_up(heap);
 
-		if(((double)tree->used / tree->size) > tree->conf.growth.trigger)
-			resize(tree, tree->size * tree->conf.growth.rate);
+		if(((double)heap->used / heap->size) > heap->conf.growth.trigger)
+			resize(heap, heap->size * heap->conf.growth.rate);
 	}
 }
 
-size_t c_utils_heap_size(struct c_utils_heap *tree) {
-	if(!tree)
+size_t c_utils_heap_size(struct c_utils_heap *heap) {
+	if(!heap)
 		return 0;
 	
-	return tree->used;
+	return heap->used;
 }
 
-void *c_utils_heap_get(struct c_utils_heap *tree) {
-	if(!tree)
+void *c_utils_heap_get(struct c_utils_heap *heap) {
+	if(!heap)
 		return NULL;
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(!heap->used)
 			return NULL;
 
-		void *item = tree->heap[1];
-		if(tree->conf.flags & C_UTILS_HEAP_RC_ITEM)
+		void *item = heap->data[1];
+		if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
 			C_UTILS_REF_INC(item);
 
 		return item;
@@ -151,51 +191,54 @@ void *c_utils_heap_get(struct c_utils_heap *tree) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-void *c_utils_heap_remove(struct c_utils_heap *tree) {
-	if(!tree)
+void *c_utils_heap_remove(struct c_utils_heap *heap) {
+	if(!heap)
 		return NULL;
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(!heap->used)
 			return NULL;
 
-		return extract_max(tree);
+		return extract_max(heap);
 	}
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-void c_utils_heap_remove_all(struct c_utils_heap *tree) {
-	if(!tree)
+void c_utils_heap_remove_all(struct c_utils_heap *heap) {
+	if(!heap)
 		return NULL;
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(!heap->used)
 			return NULL;
 
-		void *item = extract_max(tree);
-		
-		if(tree->conf.flags & C_UTILS_HEAP_RC_ITEM)
-			C_UTILS_REF_DEC(item);
+		for(size_t i = 1; i <= heap->used; i++) {
+			void *item = heap->data[i];
+			if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
+				C_UTILS_REF_DEC(item);
+		}
+
+		heap->used = 0;
 	}
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-bool c_utils_heap_delete(struct c_utils_heap *tree) {
-	if(!tree)
+bool c_utils_heap_delete(struct c_utils_heap *heap) {
+	if(!heap)
 		return false;
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(!heap->used)
 			return false;
 
-		void *item = extract_max(tree);
+		void *item = extract_max(heap);
 
-		if(tree->conf.flags & C_UTILS_HEAP_RC_ITEM)
+		if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
 			C_UTILS_REF_DEC(item);
 		else
-			tree->conf.callbacks.destructors.item(tree);
+			heap->conf.callbacks.destructors.item(heap);
 
 		return true;
 	}
@@ -203,35 +246,38 @@ bool c_utils_heap_delete(struct c_utils_heap *tree) {
 	C_UTILS_UNACCESSIBLE;
 }
 
-void c_utils_heap_delete_all(struct c_utils_heap *tree) {
-	if(!tree)
+void c_utils_heap_delete_all(struct c_utils_heap *heap) {
+	if(!heap)
 		return NULL;
 
-	C_UTILS_SCOPED_LOCK(tree->lock) {
-		if(!tree->used)
+	C_UTILS_SCOPED_LOCK(heap->lock) {
+		if(!heap->used)
 			return NULL;
 
-		void *item = extract_max(tree);
-		
-		if(tree->conf.flags & C_UTILS_HEAP_RC_ITEM)
-			C_UTILS_REF_DEC(item);
-		else
-			tree->conf.callbacks.destructors.item(tree);
+		for(size_t i = 1; i <= heap->used; i++) {
+			void *item = heap->data[i];
+			if(heap->conf.flags & C_UTILS_HEAP_RC_ITEM)
+				C_UTILS_REF_DEC(item);
+			else
+				heap->conf.callbacks.destructors.item(heap);
+		}
+
+		heap->used = 0;
 	}
 
 	C_UTILS_UNACCESSIBLE;
 }
 
-void c_utils_heap_destroy(struct c_utils_heap *tree) {
-	if(!tree)
+void c_utils_heap_destroy(struct c_utils_heap *heap) {
+	if(!heap)
 		return;
 
-	if(tree->conf.flags & C_UTILS_HEAP_RC_INSTANCE) {
-		C_UTILS_REF_DEC(tree);
+	if(heap->conf.flags & C_UTILS_HEAP_RC_INSTANCE) {
+		C_UTILS_REF_DEC(heap);
 		return;
 	}
 
-	destroy_heap(tree);
+	destroy_heap(heap);
 }
 
 
@@ -248,25 +294,95 @@ static size_t parent(size_t child) {
 	return child / 2;
 }
 
-static void swap(struct c_utils_heap *tree, size_t first, size_t second) {
-	void *item = tree->heap[first];
-	tree->heap[first] = tree->heap[second];
-	tree->heap[second] = item;
+static void swap(struct c_utils_heap *heap, size_t first, size_t second) {
+	void *item = heap->data[first];
+	heap->data[first] = heap->data[second];
+	heap->data[second] = item;
 }
 
-static void *extract_max(struct c_utils_heap *tree) {
+static void *extract_max(struct c_utils_heap *heap) {
+	void *item = heap->data[1];
+	heap->data[1] = heap->data[heap->used--];
 
+	heapify_down(heap);
 }
 
-static void heapify_up(struct c_utils_heap *tree) {
-	for(size_t i = tree->used - 1; i > 1; i = parent(i)) {
-		if(tree->cmp(tree->heap[i], tree->heap[parent(i)]) > 0)
-			swap(tree, i, parent(i));
+static void heapify_up(struct c_utils_heap *heap) {
+	for(size_t i = heap->used; i > 1; i = parent(i)) {
+		if(heap->cmp(heap->data[i], heap->data[parent(i)]) > 0)
+			swap(heap, i, parent(i));
 		else
 			break;
 	}
 }
 
-static void heapify_down(struct c_utils_heap *tree) {
+static void heapify_down(struct c_utils_heap *heap) {
+	for(size_t i = 1; i <= heap->used;) {
+		if(heap->cmp(heap->data[left(i)], heap->data[i]) > 0) {
+			swap(heap, left(i), i);
+			i = left(i);
+		} else if(heap->cmp(heap->data[right(i)], heap->data[i]) > 0) {
+			swap(heap, right(i), i);
+			i = right(i);
+		} else {
+			break;
+		}
+	}
+}
 
+static void shift_down(struct c_utils_heap *heap, size_t index) {
+	for(size_t i = index; i <= heap->used;) {
+		if(heap->cmp(heap->data[left(i)], heap->data[i]) > 0) {
+			swap(heap, left(i), i);
+			i = left(i);
+		} else if(heap->cmp(heap->data[right(i)], heap->data[i]) > 0) {
+			swap(heap, right(i), i);
+			i = right(i);
+		} else {
+			break;
+		}
+	}
+}
+
+static bool resize(struct c_utils_heap *heap, size_t size) {
+	if(heap->size == heap->conf.size.max)
+		return false;
+
+	size_t new_size = (heap->conf.size.max < size) ? heap->conf.size.max : size;
+	C_UTILS_ON_BAD_REALLOC(&heap->data, heap->conf.logger, new_size)
+		return false;
+
+	heap->size = new_size;
+	return true;
+}
+
+static void destroy_heap(struct c_utils_heap *heap) {
+	if(!heap)
+		return;
+
+	if(conf->flags & C_UTILS_HEAP_DELETE_ON_DESTROY)
+		c_utils_heap_delete_all(heap);
+	else
+		c_utils_heap_remove_all(heap);
+
+	c_utils_scoped_lock_destroy(heap->lock);
+
+	free(heap->data);
+}
+
+static void configure(struct c_utils_heap_conf *conf) {
+	if(!conf->growth.rate)
+		conf->growth.rate = default_growth_rate;
+
+	if(!conf->growth.trigger)
+		conf->growth.trigger = default_growth_trigger;
+
+	if(!conf->size.initial)
+		conf->size.initial = default_initial;
+
+	if(!conf->size.max)
+		conf->size.max = default_max;
+
+	if(!conf->callbacks.destructors.item)
+		conf->callbacks.destructors.item = free;
 }
