@@ -1,54 +1,54 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-/*
- *  A simple, yet powerful Thread Pool implementation.
- * 
- * This thread pool differs from other's in the fact that not only does it use a 
- * priority queue for tasks, it also allows you to the obtain the result from an operation
- * if desired and wait on them through my own implementations of Win32 Events.
- * 
- * It also uses bit flag passing with the bit-wise OR operator (|), to fine-tune
- * the usage of the thread pool.
- * 
- * For example, if you wanted to add a task of above average (high) priority, but you
- * do want the result, you simply pass the flag HIGH_PRIORITY. However, lets say you 
- * do not want the result but still want it to be high priority, then it's as simple
- * as HIGH_PRIORITY | NO_RESULT. 
- * 
- * Now, lets say you don't want to deal with prioritized tasks and want the result, which
- * is the default, you can simply pass 0 for flags.
- * 
- * Finally it has the ability to pause and resume the thread pool, or even pause
- * the thread pool for a specified amount of time. Trivial, yet useful in certain situations.
- * You can even wait on the thread pool, with the option of a timeout, allowing you to
- * finetune whether you want to block indefinitely or poll.
- * 
- * The default behavior for the thread pool is the following...
- * - A c_utils_result object is returned
- * - The task is added with a normal/medium priority
- * - You MUST free the c_utils_result object when finished.
- */
-
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef void *(*c_utils_task)(void *);
+#include "../io/logger.h"
 
 struct c_utils_result;
 
+/*
+	thread_pool_t allows the user to submit a plethora of tasks to a queue of workers. Not only do these
+	tasks get processed asynchronously in the background, they can also be prioritized to determine which
+	tasks get processed before others. Tasks submitted can also optionally return the result from the given
+	task asynchronously, for the caller to block on until the task has finished being processed.
+*/
+
 struct c_utils_thread_pool;
 
-/// Will not return a Result upon submitting a task.
-#define C_UTILS_NO_RESULT 1 << 1
-/// Flags the task as lowest priority.
-#define C_UTILS_LOWEST_PRIORITY 1 << 2
-/// Flags the task as low priority.
-#define C_UTILS_LOW_PRIORITY 1 << 3
-/// Flags the task as high priority.
-#define C_UTILS_HIGH_PRIORITY 1 << 4
-/// Flags the task as highest priority.
-#define C_UTILS_HIGHEST_PRIORITY 1 << 5
+struct c_utils_thread_pool_conf {
+	int flags;
+	size_t num_threads;
+	struct c_utils_logger *logger;
+};
+
+#define C_UTILS_THREAD_POOL_RC_INSTANCE 1 << 0
+
+/*
+	Priorities work by directly associating it's priority to the amount of milliseconds it subtracts
+	off of it's priority (Contrary to what intuition yields, the highest priority tasks will actually
+	be seen to have the lowest priority), hence a task of HIGHEST priority WILL jump in front of a LOWEST
+	priority task that's been submitted less than exactly 1000 milliseconds, or 1 entire second, ago. And,
+	this prevents starvation as a task of LOWEST priority will wait no longer than 1 whole second to wait
+	until it gets to be processed fairly.
+
+	This can be circumvented for certain tasks by submitting them as IMMEDIATE, meaning that this wil jump
+	ahead of another task regardless of it's priority, even if it is an IMMEDIATE task itself. This allows
+	the caller to inject urgent tasks.
+*/
+
+#define C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE -1
+
+#define C_UTILS_THREAD_POOL_PRIORITY_HIGHEST 1000
+
+#define C_UTILS_THREAD_POOL_PRIORITY_HIGH 750
+
+#define C_UTILS_THREAD_POOL_PRIORITY_MEDIUM 500
+
+#define C_UTILS_THREAD_POOL_PRIORITY_LOW 250
+
+#define C_UTILS_THREAD_POOL_PRIORITY_LOWEST 0
 
 #ifdef NO_C_UTILS_PREFIX
 /*
@@ -80,12 +80,16 @@ typedef struct c_utils_result result_t;
 #define result_destroy(...) c_utils_result_destroy(__VA_ARGS__)
 #endif
 
+
+
+struct c_utils_thread_pool *c_utils_thread_pool_create();
+
 /**
  * Returns a newly allocated thread pool with pool_size worker threads.
  * @param pool_size Number of worker threads, minimum of 1.
  * @return The thread pool instance, or NULL on allocation error or initialization error.
  */
-struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size);
+struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_thread_pool_conf *conf);
 
 /**
  * Adds a task to the thread pool. While it requires a void *(*callback)(void *args)
@@ -96,14 +100,16 @@ struct c_utils_thread_pool *c_utils_thread_pool_create(size_t pool_size);
  * @param flags LOWEST_PRIORITY | LOW_PRIORITY | HIGH_PRIORITY | HIGHEST_PRIORITY | NO_RESULT.
  * @return The result from the task to be obtained later or NULL if NO_RESULT.
  */
-struct c_utils_result *c_utils_thread_pool_add(struct c_utils_thread_pool *tp, c_utils_task task, void *args, int flags);
+void c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority);
+
+struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority);
 
 /**
  * Destroys the Result from a task.
  * @param result Result to be destroyed.
  * @return true on success, false if not.
  */
-bool c_utils_result_destroy(struct c_utils_result *result);
+void c_utils_result_destroy(struct c_utils_result *result);
 
 /**
 * Clears the thread pool of all tasks.
