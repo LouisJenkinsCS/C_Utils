@@ -7,24 +7,25 @@
 
 #define C_UTILS_BLOCKING_QUEUE_RC_ITEM 1 << 1
 
-#define C_UTILS_BLOCKING_QUEUE_DESTROY_ON_DELETE 1 << 2
+#define C_UTILS_BLOCKING_QUEUE_DELETE_ON_DESTROY 1 << 2
 
 #define C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT -1
 
 /*
-	c_utils_blocking_queue is a minimal blocking queue which features not only a way to
-	create a bounded or unbounded queue, but also can be used as a prioritized blocking queue
-	if a comparator is specified.
+	blocking_queue_t is a configurable blocking queue, with the ability to serve as a 
+	prioritized blocking queue. It supports the ability shutdown the blocking queue and
+	wake up threads, as well as prevent more threads from attempting to block on it. The
+	heap is also optimized to treat non prioritized items vs prioritized items, whereas
+	non prioritized use a standard list, and prioritized uses a binary heap.
 
-	If it is a normal blocking queue, all insertions will be appended to the tail as a normal queue, and
-	the caller will block up to the specified timeout or until there is room to insert (only applicable if
-	the queue is bounded). If instead it is a prioritized blocking queue, then insertions will be done
-	using the comparator to add
-	Items inserted are inserted in a sorted order using the passed comparator, and if there is none,
-	it will be appened to the tail of the queue. This queue supports blocking and non-blocking operations,
-	which can be configured using the timeout parameter. A timeout of -1 specifies an infinite length of time
-	to wait, and a timeout of 0 will immediately fail or succeed if the queue's operation is available.
-*/	
+	The priority queue provides an abstraction on top of both data structures to allow
+	for blocking operations ideal for producer/consumer scenarios, and in the future there
+	likely will be support for user-defined data structures which both consume and produce
+	items.
+
+	The blocking queue can also, to an extent, function as a normal queue or priority queue
+	by inducing 0-millisecond timeouts.
+*/
 struct c_utils_blocking_queue;
 
 struct c_utils_blocking_queue_conf {
@@ -55,10 +56,14 @@ typedef struct c_utils_blocking_queue_conf blocking_queue_conf_t;
 	Functions
 */
 #define blocking_queue_create(...) c_utils_blocking_queue_create(__VA_ARGS__)
+#define blocking_queue_create_conf(...) c_utils_blocking_queue_create_conf(__VA_ARGS__)
 #define blocking_queue_enqueue(...) c_utils_blocking_queue_enqueue(__VA_ARGS__)
 #define blocking_queue_dequeue(...) c_utils_blocking_queue_dequeue(__VA_ARGS__)
-#define blocking_queue_clear(...) c_utils_blocking_queue_clear(__VA_ARGS__)
+#define blocking_queue_remove_all(...) c_utils_blocking_queue_remove_all(__VA_ARGS__)
+#define blocking_queue_delete_all(...) c_utils_blocking_queue_delete_all(__VA_ARGS__)
 #define blocking_queue_size(...) c_utils_blocking_queue_size(__VA_ARGS__)
+#define blocking_queue_activate(...) c_utils_blocking_queue_activate(__VA_ARGS__)
+#define blocking_queue_shutdown(...) c_utils_blocking_queue_shutdown(__VA_ARGS__)
 #define blocking_queue_destroy(...) c_utils_blocking_queue_destroy(__VA_ARGS__)
 #endif
 
@@ -100,9 +105,9 @@ void *c_utils_blocking_queue_dequeue(struct c_utils_blocking_queue *queue, long 
  * @param del Deletion callback to be called on each item if specified.
  * @return true if successful, or false if queue is NULL.
  */
-bool c_utils_blocking_queue_remove_all(struct c_utils_blocking_queue *queue);
+void c_utils_blocking_queue_remove_all(struct c_utils_blocking_queue *queue);
 
-bool c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *queue);
+void c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *queue);
 
 /**
  * Returns the size of the queue.
@@ -111,6 +116,10 @@ bool c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *queue);
  */
 size_t c_utils_blocking_queue_size(struct c_utils_blocking_queue *queue);
 
+void c_utils_blocking_queue_shutdown(struct c_utils_blocking_queue *queue);
+
+void c_utils_blocking_queue_activate(struct c_utils_blocking_queue *queue);
+
 /**
  * Destroys the instance of the queue, waking up all threads waiting for to enqueue/dequeue.
  * If the del deletion callback is specified, it is called on each item in the list.
@@ -118,6 +127,6 @@ size_t c_utils_blocking_queue_size(struct c_utils_blocking_queue *queue);
  * @param del Deletion callback to be called on each item if specified.
  * @return true if successful, false if queue is NULL.
  */
-bool c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *queue);
+void c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *queue);
 
 #endif /* C_UTILS_BLOCKING_QUEUE_H */

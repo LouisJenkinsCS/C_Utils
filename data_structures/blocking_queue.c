@@ -42,6 +42,27 @@ static void *take_item(struct c_utils_blocking_queue *bq) {
 		return c_utils_list_remove_at(bq->data.list, 0);
 }
 
+static void destroy_blocking_queue(void *instance) {
+	struct c_utils_blocking_queue *bq = instance;
+
+	c_utils_blocking_queue_shutdown(bq);
+
+	// Yield until all threads wake up. Busy waiting...
+	while (atomic_load(&bq->blocked) > 0)
+		pthread_yield();
+
+	pthread_cond_destroy(&bq->removed);
+	pthread_cond_destroy(&bq->added);
+	pthread_mutex_destroy(&bq->lock);
+
+	if(bq->conf.callbacks.comparators.item)
+		c_utils_heap_destroy(bq->data.heap);
+	else
+		c_utils_list_destroy(bq->data.list);
+
+	free(bq);
+}
+
 /* End static functions */
 
 struct c_utils_blocking_queue *c_utils_blocking_queue_create() {
@@ -91,7 +112,7 @@ struct c_utils_blocking_queue *c_utils_blocking_queue_create_conf(struct c_utils
 
 	/*
 		Note here, depending on if we use a comparator depends on what type of data structure we use.
-		If the user provides a comparator for a priority blocking queue, then it is treated as such 
+		If the user provides a comparator for a priority blocking queue, then it is treated as such
 		and uses a binary heap. Otherwise, a normal list is used.
 	*/
 	if(conf->callbacks.comparators.item) {
@@ -104,6 +125,8 @@ struct c_utils_blocking_queue *c_utils_blocking_queue_create_conf(struct c_utils
 				.initial = conf->size.initial
 			},
 			.callbacks.destructors.item = conf->callbacks.destructors.item,
+			.flags = (conf->flags & C_UTILS_BLOCKING_QUEUE_RC_ITEM ? C_UTILS_HEAP_RC_ITEM : 0)
+				| (conf->flags & C_UTILS_BLOCKING_QUEUE_DELETE_ON_DESTROY ? C_UTILS_HEAP_DELETE_ON_DESTROY : 0)
 		};
 
 		bq->data.heap = c_utils_heap_create_conf(conf->callbacks.comparators.item, &heap_conf);
@@ -112,7 +135,9 @@ struct c_utils_blocking_queue *c_utils_blocking_queue_create_conf(struct c_utils
 		{
 			.logger = conf->logger,
 			.callbacks.destructors.item = conf->callbacks.destructors.item,
-			.size.max = conf->size.max
+			.size.max = conf->size.max,
+			.flags = (conf->flags & C_UTILS_BLOCKING_QUEUE_RC_ITEM ? C_UTILS_LIST_RC_ITEM : 0)
+				| (conf->flags & C_UTILS_BLOCKING_QUEUE_DELETE_ON_DESTROY ? C_UTILS_LIST_DELETE_ON_DESTROY : 0)
 		};
 
 		bq->data.list = c_utils_list_create_conf(&list_conf);
@@ -232,52 +257,54 @@ void *c_utils_blocking_queue_dequeue(struct c_utils_blocking_queue *bq, long lon
 	return item;
 }
 
-bool c_utils_blocking_queue_remove_all(struct c_utils_blocking_queue *bq) {
-	// TODO
-	return false;
-}
-
-bool c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *bq) {
-	// TODO
-	return false;
-}
-
-/// Clear the queue, and optionally execute a callback on every item currently in the queue. I.E allows you to delete them.
-bool c_utils_blocking_queue_clear(struct c_utils_blocking_queue *bq) {
+void c_utils_blocking_queue_remove_all(struct c_utils_blocking_queue *bq) {
 	if(!bq)
-		return false;
-	
-	atomic_fetch_add(&bq->blocked, 1);
-	
-	pthread_mutex_lock(&bq->lock);
-	for (struct c_utils_node *curr = bq->head; curr; curr = bq->head) {
-		if (del)
-			del(curr->item);
+		return;
 
-		bq->head = curr->next;
-		
-		free(curr);
-		
-		bq->size--;
-	}
-	
-	bq->tail = NULL;
-	
+	pthread_mutex_lock(&bq->lock);
+
+	if(bq->conf.callbacks.comparators.item)
+		c_utils_heap_remove_all(bq->data.heap);
+	else
+		c_utils_list_remove_all(bq->data.list);
+
 	pthread_mutex_unlock(&bq->lock);
-	atomic_fetch_sub(&bq->blocked, 1);
-	
-	return true;
+}
+
+void c_utils_blocking_queue_delete_all(struct c_utils_blocking_queue *bq) {
+	if(!bq)
+		return;
+
+	pthread_mutex_lock(&bq->lock);
+
+	if(bq->conf.callbacks.comparators.item)
+		c_utils_heap_delete_all(bq->data.heap);
+	else
+		c_utils_list_delete_all(bq->data.list);
+
+	pthread_mutex_unlock(&bq->lock);
 }
 
 size_t c_utils_blocking_queue_size(struct c_utils_blocking_queue *bq) {
-	C_UTILS_ARG_CHECK(logger, 0, bq);
-	
-	return bq->size;
+	if(!bq)
+		return 0;
+
+	if(bq->conf.callbacks.comparators.item)
+		return c_utils_heap_size(bq->data.heap);
+	else
+		return c_utils_list_size(bq->data.list);
 }
 
-/// Clears the queue then destroys the queue. Will execute a callback on every item in the queue if not null.
-bool c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *bq) {
-	C_UTILS_ARG_CHECK(logger, false, bq);
+void c_utils_blocking_queue_activate(struct c_utils_blocking_queue *bq) {
+	if(!bq)
+		return;
+
+	atomic_store(&bq->shutdown, false);
+}
+
+void c_utils_blocking_queue_shutdown(struct c_utils_blocking_queue *bq) {
+	if(!bq)
+		return;
 
 	pthread_mutex_lock(&bq->lock);
 	atomic_store(&bq->shutdown, true);
@@ -286,15 +313,16 @@ bool c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *bq) {
 	pthread_cond_broadcast(&bq->added);
 
 	pthread_mutex_unlock(&bq->lock);
+}
 
-	while (atomic_load(&bq->blocked) > 0)
-		pthread_yield();
+void c_utils_blocking_queue_destroy(struct c_utils_blocking_queue *bq) {
+	if(!bq)
+		return;
 
-	pthread_cond_destroy(&bq->removed);
-	pthread_cond_destroy(&bq->added);
-	pthread_mutex_destroy(&bq->lock);
+	if(bq->conf.flags & C_UTILS_BLOCKING_QUEUE_RC_INSTANCE) {
+		C_UTILS_REF_DEC(bq);
+		return;
+	}
 
-	free(bq);
-
-	return true;
+	destroy_blocking_queue(bq);
 }
