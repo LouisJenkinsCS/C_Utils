@@ -189,7 +189,9 @@ bool c_utils_blocking_queue_enqueue(struct c_utils_blocking_queue *bq, void *ite
 	while(!atomic_load(&bq->shutdown) && !add_item(bq, item)) {
 		int errcode;
 
-		if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
+		if(!timeout)
+			break;
+		else if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
 			errcode = pthread_cond_wait(&bq->removed, &bq->lock);
 		else
 			errcode = pthread_cond_timedwait(&bq->removed, &bq->lock, &end);
@@ -234,7 +236,9 @@ void *c_utils_blocking_queue_dequeue(struct c_utils_blocking_queue *bq, long lon
 	while(!atomic_load(&bq->shutdown) && !(item = take_item(bq))) {
 		int errcode;
 
-		if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
+		if(!timeout)
+			break;
+		else if (timeout == C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT)
 			errcode = pthread_cond_wait(&bq->added, &bq->lock);
 		else
 			errcode = pthread_cond_timedwait(&bq->added, &bq->lock, &end);

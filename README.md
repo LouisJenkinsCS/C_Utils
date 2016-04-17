@@ -1,5 +1,10 @@
 # Utilities Package for the C Programming Language
 
+<a href="https://scan.coverity.com/projects/theif519-c_utils">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/8594/badge.svg"/>
+</a>
+
 #Summary
 
 ##What is C_Utils
