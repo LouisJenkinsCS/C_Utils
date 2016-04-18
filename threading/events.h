@@ -4,11 +4,24 @@
 #include "../io/logger.h"
 #include "../misc/flags.h"
 
+#define C_UTILS_EVENT_MAX_NAME_LEN 64
+
 /*
 	Simple implementation for Win32 events using conditional variables and mutexes. Allows you to 
 	wait on certain events, signal events, reset them, etc. Also is configurable by passing certain flags.
 */
 struct c_utils_event;
+
+struct c_utils_event_conf {
+	int flags;
+	struct c_utils_logger *logger;
+	const char *name;
+	struct {
+		struct {
+			void (*name)(void *);
+		} destructors;
+	} callbacks;
+};
 
 /// When the signal times out, signal and broadcast the event.
 #define C_UTILS_EVENT_SIGNAL_ON_TIMEOUT 1 << 0
@@ -22,14 +35,14 @@ struct c_utils_event;
 /// Like EVENT_AUTO_RESET, execpt it will only flag the event as being non-signaled by the last thread to exit.
 #define C_UTILS_EVENT_AUTO_RESET_ON_LAST 1 << 3
 
-#define C_UTILS_EVENT_MAX_NAME_LEN 64
-
+#define C_UTILS_EVENT_RC_INSTANCE 1 << 4
 
 #ifdef NO_C_UTILS_PREFIX
 /*
 	Typedef
 */
 typedef struct c_utils_event event_t;
+typedef struct c_utils_event_conf event_conf_t;
 
 /*
 	Macros
@@ -38,6 +51,7 @@ typedef struct c_utils_event event_t;
 #define EVENT_SIGNALED_BY_DEFAULT C_UTILS_EVENT_SIGNALED_BY_DEFAULT
 #define EVENT_AUTO_RESET C_UTILS_EVENT_AUTO_RESET
 #define EVENT_AUTO_RESET_ON_LAST C_UTILS_EVENT_AUTO_RESET_ON_LAST
+#define EVENT_RC_INSTANCE C_UTILS_EVENT_RC_INSTANCE
 
 /*
 	Functions
@@ -56,7 +70,9 @@ typedef struct c_utils_event event_t;
  * @param flags Internal flags.
  * @return Configured event.
  */
-struct c_utils_event *c_utils_event_create(const char *event_name, struct c_utils_logger *logger, unsigned int flags);
+struct c_utils_event *c_utils_event_create();
+
+struct c_utils_event *c_utils_event_create_conf(struct c_utils_event_conf *conf);
 
 /**
  * Resets the event flag to false, meaning it will no longer act as if it had been signaled.
@@ -64,7 +80,7 @@ struct c_utils_event *c_utils_event_create(const char *event_name, struct c_util
  * @param thread_id Debugging information.
  * @return True or false if event is null.
  */
-bool c_utils_event_reset(struct c_utils_event *event, unsigned int thread_id);
+void c_utils_event_reset(struct c_utils_event *event);
 
 /**
  * Waits on the event unless it is already signaled up to the defined timeout, or indefinite
@@ -74,7 +90,9 @@ bool c_utils_event_reset(struct c_utils_event *event, unsigned int thread_id);
  * @param thread_id Debugging Information.
  * @return True if event is not null.
  */
-bool c_utils_event_wait(struct c_utils_event *event, long long int timeout, unsigned int thread_id);
+bool c_utils_event_wait_for(struct c_utils_event *event, long long int timeout);
+
+bool c_utils_event_wait_until(struct c_utils_event *event, struct timeval timeout);
 
 /**
  * Signals to any threads waiting on the event to wake up, and will remain signaled unless
@@ -83,7 +101,7 @@ bool c_utils_event_wait(struct c_utils_event *event, long long int timeout, unsi
  * @param thread_id Debugging Information.
  * @return True if event !null.
  */
-bool c_utils_event_signal(struct c_utils_event *event, unsigned int thread_id);
+void c_utils_event_signal(struct c_utils_event *event);
 
 /**
  * Destroys the event, first waking up any threads waiting on this event, and allowing
@@ -92,6 +110,6 @@ bool c_utils_event_signal(struct c_utils_event *event, unsigned int thread_id);
  * @param thread_id Debugging information.
  * @return If event !null.
  */
-bool c_utils_event_destroy(struct c_utils_event *event, unsigned int thread_id);
+void c_utils_event_destroy(struct c_utils_event *event);
 
 #endif /* endif C_UTILS_EVENTS_H */

@@ -29,7 +29,9 @@ struct c_utils_thread_pool {
 	/// Flags used to keep track of internal state.
 	volatile int flags;
 	/// Used for timed pauses.
-	volatile unsigned int seconds_to_pause;
+	volatile struct timeval pause_time;
+	/// Used to synchronize changes to pause_time and flags
+	pthread_spinlock_t plock;
 	/// Event for pause/resume.
 	struct c_utils_event *resume;
 	/// Event for if the thread pool is finished at the moment.
@@ -67,6 +69,7 @@ static const char *result_event_name = "Result Ready";
 static const int KEEP_ALIVE = 1 << 0;
 static const int INIT_ERR = 1 << 1;
 static const int SHUTDOWN = 1 << 2;
+static const int PAUSED = 1 << 3;
 
 /* Begin Static, Private functions */
 
@@ -82,7 +85,7 @@ static void destroy_task(struct c_utils_thread_task *task) {
 		return;
 	
 	if (task->result) {
-		c_utils_event_destroy(task->result->is_ready, 0);
+		c_utils_event_destroy(task->result->is_ready);
 		free(task->result);
 	}
 
@@ -121,30 +124,34 @@ static void *get_tasks(void *args) {
 		struct c_utils_thread_task *task = NULL;
 		task = c_utils_blocking_queue_dequeue(tp->queue, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
 
-		if (!(tp->flags & KEEP_ALIVE))  
-			break;
-		
-
-		// Note that the paused event is only waited upon if it the event interally is flagged.
-		c_utils_event_wait(tp->resume, tp->seconds_to_pause);
-
-		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
 		if (!(tp->flags & KEEP_ALIVE))
 			break;
 		
+		pthread_spin_lock(&tp->plock);
+		bool is_paused = tp->flags & PAUSED;
+		struct timeval timeout = tp->pause_time;
+		pthread_spin_unlock(&tp->plock);
+
+		if(is_paused)
+			c_utils_event_wait(tp->resume, &timeout);
+
+		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
+		if (!(tp->flags & KEEP_ALIVE)) {
+			free(task);
+			break;
+		}
 
 		atomic_fetch_add(&tp->active_threads, 1);
-		C_UTILS_LOG_VERBOSE(tp->conf.logger, "Thread #%d: received a task!", self->thread_id);
 		process_task(task, self->thread_id);
-		C_UTILS_LOG_VERBOSE(tp->conf.logger, "Thread #%d: finished a task!", self->thread_id);
 		atomic_fetch_sub(&tp->active_threads, 1);
 
 		// Close as we are going to get testing if the queue is fully empty. 
 		if (c_utils_blocking_queue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0)  
-			c_utils_event_signal(tp->finished, self->thread_id);
+			c_utils_event_signal(tp->finished);
 	}
+
 	atomic_fetch_sub(&tp->thread_count, 1);
-	C_UTILS_LOG_VERBOSE(tp->conf.logger, "Thread #%d: Exited!\n", self->thread_id);
+	C_UTILS_LOG_VERBOSE(tp->conf.logger, "A thread exited!\n");
 
 	return NULL;
 }
@@ -234,10 +241,16 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		goto err_resume;
 	}
 
-	tp->finished = c_utils_event_create(finished_event_name, conf->logger, 0);
+	tp->finished = c_utils_event_create(finished_event_name, conf->logger);
 	if (!tp->finished) {
 		C_UTILS_LOG_ERROR(conf->logger, "c_utils_event_create: 'Was unable to create event: %s!'", finished_event_name);
 		goto err_finished;
+	}
+
+	int init_err = pthread_spin_init(&tp->plock, 0);
+	if(init_err) {
+		C_UTILS_LOG_ERROR(conf->logger, "pthread_spin_init: \"%s\"", strerror(init_err));
+		goto err_plock;
 	}
 
 	C_UTILS_ON_BAD_MALLOC(tp->workers, conf->logger, sizeof(*tp->workers) * conf->num_threads)
@@ -272,9 +285,11 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		while (atomic_load(&tp->thread_count))
 					pthread_yield();
 	err_workers:
-		c_utils_event_destroy(tp->finished, 0);
+		pthread_spin_destroy(&tp->plock);
+	err_plock:
+		c_utils_event_destroy(tp->finished);
 	err_finished:
-		c_utils_event_destroy(tp->resume, 0);
+		c_utils_event_destroy(tp->resume);
 	err_resume:
 		c_utils_blocking_queue_destroy(tp->queue);
 	err_queue:
@@ -307,7 +322,7 @@ void c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void 
 	thread_task->args = args;
 	thread_task->priority = priority;
 
-	c_utils_event_reset(tp->finished, 0);
+	c_utils_event_reset(tp->finished);
 	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
 	if (!enqueued) {
 		C_UTILS_LOG_ERROR(tp->conf.logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
@@ -383,78 +398,95 @@ struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_
 bool c_utils_thread_pool_clear(struct c_utils_thread_pool *tp) {
 	C_UTILS_ARG_CHECK(tp->conf.logger, false, tp);
 
-	C_UTILS_LOG_VERBOSE(tp->conf.logger, "Clearing all tasks from Thread Pool!");
+	C_UTILS_LOG_VERBOSE(tp->conf.logger, "Clearing all tasks!");
 	
 	c_utils_blocking_queue_delete_all(tp->queue);
 
 	return true;
 }
 
-/// Will destroy the result and associated event.
 void c_utils_result_destroy(struct c_utils_result *result) {
 	if(!result)
 		return;
 
-	c_utils_event_destroy(result->is_ready, 0);
+	c_utils_event_destroy(result->is_ready);
 	free(result);
 }
-/// Will block until result is ready.
+
 void *c_utils_result_get(struct c_utils_result *result, long long int timeout) {
 	if(!result)
 		return NULL;
-
-	bool is_ready = c_utils_event_wait(result->is_ready, timeout, 0);
 	
-	return is_ready ? result->retval : NULL;
+	return c_utils_event_wait_for(result->is_ready, timeout) ? result->retval : NULL;
 }
 
-/// Will block until all tasks are finished.
-bool c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int timeout) {
-	C_UTILS_ARG_CHECK(tp->conf.logger, false, tp);
+bool c_utils_thread_pool_wait_for(struct c_utils_thread_pool *tp, long long int timeout) {
+	if(!tp)
+		return false;
 
-	bool is_finished = c_utils_event_wait(tp->finished, timeout, 0);
-	
-	return is_finished;
+	return c_utils_event_wait_for(tp->finished, timeout);
 }
 
-bool c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp) {
-	C_UTILS_ARG_CHECK(tp->conf.logger, false, tp);
+void c_utils_thread_pool_wait_until(struct c_utils_thread_pool *tp, struct timeval *timeout) {
+	if(!tp)
+		return;
 
-	tp->keep_alive = false;
-	size_t old_thread_count = tp->thread_count;
+	c_utils_event_wait_until(tp->finished, timeout);
+}
+
+void c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp) {
+	if(!tp)
+		return;
+
+	if(tp->conf.flags & C_UTILS_THREAD_POOL_RC_INSTANCE) {
+		C_UTILS_REF_DEC(tp);
+		return;
+	}
+
+	destroy_thread_pool(tp);
+}
+
+void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int timeout) {
+	if(!tp)
+		return;
+
+	c_utils_event_wait_for(tp->resume, timeout);
+}
+
+void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timeval *timeout) {
+	if(!tp)
+		return;
+
+	c_utils_event_wait_until(tp->resume, timeout);
+}
+
+void c_utils_thread_pool_resume(struct c_utils_thread_pool *tp) {
+	if(!tp)
+		return;
+
+	return c_utils_event_signal(tp->resume);
+}
+
+
+
+static void destroy_thread_pool(void *instance) {
+	struct c_utils_thread_pool *tp = instance;
+
+	tp->conf.flags &= ~KEEP_ALIVE;
+	size_t old_thread_count = atomic_load(&tp->thread_count);
 
 	// By destroying the PBQueue, it signals to threads waiting to wake up.
 	c_utils_blocking_queue_destroy(tp->queue);
 	// Then by destroying the resume event, anything waiting on a paused thread pool wakes up.
-	c_utils_event_destroy(tp->resume, 0);
+	c_utils_event_destroy(tp->resume);
 	// Then we wait for all threads to that wake up to exit gracefully.
-	c_utils_thread_pool_wait(tp, -1);
+	c_utils_thread_pool_wait(tp, C_UTILS_THREAD_POOL_NO_TIMEOUT);
 	// Finally, any threads waiting on the thread pool to finish will wake up.
-	c_utils_event_destroy(tp->finished, 0);
+	c_utils_event_destroy(tp->finished);
 
 	while (atomic_load(&tp->active_threads))   
 		pthread_yield();
 	
-	for (int i = 0; i < old_thread_count; i++)   
-		destroy_worker(tp->worker_threads[i]);
-	
-	free(tp->worker_threads);
+	free(tp->workers);
 	free(tp);
-	
-	C_UTILS_LOG_VERBOSE(tp->conf.logger, "Thread pool has been properly destroyed!\n");
-	return true;
-}
-
-bool c_utils_thread_pool_pause(struct c_utils_thread_pool *tp, long long int timeout) {
-	C_UTILS_ARG_CHECK(tp->conf.logger, false, tp);
-	
-	tp->seconds_to_pause = timeout;
-	
-	return c_utils_event_reset(tp->resume, 0);
-}
-
-bool c_utils_thread_pool_resume(struct c_utils_thread_pool *tp) {
-	C_UTILS_ARG_CHECK(tp->conf.logger, false, tp);
-
-	return c_utils_event_signal(tp->resume, 0);
 }

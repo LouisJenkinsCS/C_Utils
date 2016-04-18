@@ -23,6 +23,8 @@ struct c_utils_thread_pool_conf {
 	struct c_utils_logger *logger;
 };
 
+#define C_UTILS_THREAD_POOL_NO_TIMEOUT -1
+
 #define C_UTILS_THREAD_POOL_RC_INSTANCE 1 << 0
 
 /*
@@ -122,7 +124,7 @@ bool c_utils_thread_pool_clear(struct c_utils_thread_pool *tp);
  * Destroys the current thread pool, waiting for the current tasks to be finished.
  * @return 1 on success.
  */
-bool c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp);
+void c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp);
 
 /**
  * Obtain the result from the task, blocking until it is ready or until the time 
@@ -139,7 +141,7 @@ void *c_utils_result_get(struct c_utils_result *result, long long int timeout);
  * @param timeout The max amount of time to block for, infinite if -1.
  * @return true if the thread pool is finished, false if not.
  */
-bool c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int timeout);
+void c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int timeout);
 
 /**
  * Pause the thread pool, and prevent worker threads from working. It does not stop threads from executing
@@ -148,13 +150,15 @@ bool c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int time
  * @param timeout The max amount of time to block for, infinite if -1.
  * @return true if paused, false if not.
  */
-bool c_utils_thread_pool_pause(struct c_utils_thread_pool *tp, long long int timeout);
+void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int timeout);
+
+void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timeval *timeout);
 
 /**
  * Resume all worker threads that are paused.
  * @param tp Thread pool instance.
  * @return true on success, false if not.
  */
-bool c_utils_thread_pool_resume(struct c_utils_thread_pool *tp);
+void c_utils_thread_pool_resume(struct c_utils_thread_pool *tp);
 
 #endif /* END THREAD_POOL_H */

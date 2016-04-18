@@ -4,192 +4,217 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
-#include "../misc/flags.h"
-#include "../misc/alloc_check.h"
-
 struct c_utils_event {
 	/// The lock associated with an event's condition variable.
-	pthread_mutex_t *lock;
+	pthread_mutex_t lock;
 	/// The condition variable used to wait on an event.
-	pthread_cond_t *signal;
-	/// Bitmask flags for certain conditions.
-	unsigned int flags;
+	pthread_cond_t signal;
 	/// An atomic flag signaling whether or not an event is set to be waited on or not.
 	atomic_bool signaled;
 	/// The amount of threads waiting on this event.
 	atomic_int waiting_threads;
-	/// The name of the event.
-	char name[C_UTILS_EVENT_MAX_NAME_LEN + 1];
-	/// The logger used to log events.
-	struct c_utils_logger *logger;
+	/// Configuration
+	struct c_utils_event_conf conf;
 };
 
-static const char *format = "Thread #%u: '%s'";
+static void configure(struct c_utils_event_conf *conf);
 
-static void auto_reset_handler(struct c_utils_event *event, unsigned int thread_id) {
-	if (C_UTILS_FLAG_GET(event->flags, C_UTILS_EVENT_AUTO_RESET_ON_LAST)) {
+static void destroy_event(void *instance);
 
-		// Last one out hits the lights. (If we are the last thread, reset event!)
-		if (atomic_load(&event->waiting_threads) == 1) {
-			atomic_store(&event->signaled, false);
-			C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal As Last Thread...");
-		}
-	} else if (C_UTILS_FLAG_GET(event->flags, C_UTILS_EVENT_AUTO_RESET)) {
+static void auto_reset_handler(struct c_utils_event *event, unsigned int thread_id);
 
-		// Difference between this at ON_LAST is that this will reset the event when any thread leaves.
-		atomic_store(&event->signaled, false);
-		C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal...");
-	}
+
+
+struct c_utils_event *c_utils_event_create() {
+	struct c_utils_event_conf conf = {0};
+	return c_utils_event_create_conf(&conf);
 }
 
-struct c_utils_event *c_utils_event_create(const char *event_name, struct c_utils_logger *logger, unsigned int flags) {
+struct c_utils_event *c_utils_event_create_conf(struct c_utils_event_conf *conf) {
+	if(!conf)
+		return NULL;
+
+	configure(conf);
+
 	struct c_utils_event *event;
-	C_UTILS_ON_BAD_CALLOC(event, logger, sizeof(*event))
+	if(conf->flags & C_UTILS_EVENT_RC_INSTANCE) {
+		struct c_utils_ref_count_conf rc_conf =
+		{
+			.logger = conf->logger,
+			.destructor = destroy_event
+		};
+
+		event = c_utils_ref_create_conf(sizeof(*event), &rc_conf);
+	} else {
+		event = malloc(sizeof(*event));
+	}
+
+	if(!event) {
+		C_UTILS_LOG_ERROR(conf->logger, "Failed during creation of event!");
 		goto err;
-	
-	C_UTILS_ON_BAD_MALLOC(event->lock, logger, sizeof(*event->lock))
-		goto err_lock;
+	}
 	
 	int init_failed = pthread_mutex_init(event->lock, NULL);
 	if (init_failed) {
 		C_UTILS_LOG_ERROR(logger, "pthread_mutex_init: '%s'", strerror(errno));
-		goto err_lock_init;
+		goto err_lock;
 	}
-
-	C_UTILS_ON_BAD_MALLOC(event->signal, logger, sizeof(*event->signal))
-		goto err_signal;
 	
 	init_failed = pthread_cond_init(event->signal, NULL);
 	if (init_failed) {
 		C_UTILS_LOG_ERROR(logger, "pthread_cond_init: '%s'", strerror(init_failed));
-		goto err_signal_init;
+		goto err_signal;
 	}
 		
-	event->signaled = ATOMIC_VAR_INIT(C_UTILS_FLAG_GET(flags, C_UTILS_EVENT_SIGNALED_BY_DEFAULT));
+	event->signaled = ATOMIC_VAR_INIT(conf->flags & C_UTILS_EVENT_SIGNALED_BY_DEFAULT);
 	event->waiting_threads = ATOMIC_VAR_INIT(0);
+	event->conf = *conf;
 	
-	if (event_name)  
-		snprintf(event->name, C_UTILS_EVENT_MAX_NAME_LEN, "%s", event_name);
-	
-	event->logger = logger;
-	event->flags = flags;
-	
-	C_UTILS_LOG_EVENT(event->logger, event->name, "Event created!");
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Created!");
 	
 	return event;
 
-	err_signal_init:
-		free(event->signal);
 	err_signal:
 		pthread_mutex_destroy(event->lock);
-	err_lock_init:
-		free(event->lock);
 	err_lock:
 		free(event);
 	err:
 		return NULL;
 }
 
-bool c_utils_event_reset(struct c_utils_event *event, unsigned int thread_id) {
+void c_utils_event_reset(struct c_utils_event *event) {
 	if (!event) 
-		return false;
+		return;
 
-	if (atomic_load(&event->signaled) == true) {
-		atomic_store(&event->signaled, false);
-		C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id,  "Reset Event Flag...");
-	}
-
-	return true;
+	atomci_store(&event->signaled, true);
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Reset!");
 }
 
-bool c_utils_event_wait(struct c_utils_event *event, long long int timeout, unsigned int thread_id) {
-	if (!event) 
+bool c_utils_event_wait_for(struct c_utils_event *event, long long int timeout) {
+	struct timeval tv;
+
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	tv.tv_sec += timeout / 1000;
+	tv.tv_nsec += (timeout % 1000) * 1000000L;
+
+	return c_utils_event_wait_until(event, timeout > 0 ? &tv : NULL);
+}
+
+bool c_utils_event_wait_until(struct c_utils_event *event, struct timeval *timeout) {
+	if(!event)
 		return false;
 
 	atomic_fetch_add(&event->waiting_threads, 1);
 
 	if (atomic_load(&event->signaled) == true) {
-		auto_reset_handler(event, thread_id);
+		auto_reset_handler(event);
 		atomic_fetch_sub(&event->waiting_threads, 1);
 		return true;
 	}
 
-	C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Waiting For Event Signal...");
-	pthread_mutex_lock(event->lock);
-
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-	ts.tv_sec += timeout;
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Waiting for signal...");
+	pthread_mutex_lock(&event->lock);
 
 	while (atomic_load(&event->signaled) == false) {
 		int errcode;
-		if (timeout < 0)  
-			errcode = pthread_cond_wait(event->signal, event->lock);
+		if (timeout)
+			errcode = pthread_cond_timedwait(&event->signal, &event->lock, timeout);
 		 else   
-			errcode = pthread_cond_timedwait(event->signal, event->lock, &ts);
-		
+			errcode = pthread_cond_wait(&event->signal, &event->lock);
 		
 		if (errcode) {
 			bool retval = false;
-			if (errcode != ETIMEDOUT)  
+			if (errcode != ETIMEDOUT) {
 				C_UTILS_LOG_ERROR(event->logger, "pthread_cond_wait: '%s'", strerror(errcode));
-			 else {
-				if (C_UTILS_FLAG_GET(event->flags, C_UTILS_EVENT_SIGNAL_ON_TIMEOUT)) {
+			} else if (event->conf.flags & C_UTILS_EVENT_SIGNAL_ON_TIMEOUT) {
 					atomic_store(&event->signaled, true);
-					pthread_cond_broadcast(event->signal);
+					pthread_cond_broadcast(&event->signal);
 					retval = true;
-					C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Timed Out, Signaling Other Threads...");
+					C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Timed out, broadcasting to other threads...");
 				}
-			}
 			
-			pthread_mutex_unlock(event->lock);
+			pthread_mutex_unlock(&event->lock);
 			atomic_fetch_sub(&event->waiting_threads, 1);
 			return retval;
 		}
 	}
+
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Received signal!");
 	
-	C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Received Event Signal...");
-	auto_reset_handler(event, thread_id);
-	pthread_mutex_unlock(event->lock);
+	auto_reset_handler(event);
+	pthread_mutex_unlock(&event->lock);
 	atomic_fetch_sub(&event->waiting_threads, 1);
 	
 	return true;
 }
 
-bool c_utils_event_signal(struct c_utils_event *event, unsigned int thread_id) {
+bool c_utils_event_signal(struct c_utils_event *event) {
 	if (!event) 
 		return false;
 	
-	if (atomic_load(&event->signaled) == true)  
+	if (atomic_load(&event->signaled) == true)
 		return true;
 	
 	
-	pthread_mutex_lock(event->lock);
+	pthread_mutex_lock(&event->lock);
 	atomic_store(&event->signaled, true);
-	pthread_cond_broadcast(event->signal);
-	pthread_mutex_unlock(event->lock);
-	C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Event Signaled...");
+	pthread_cond_broadcast(&event->signal);
+	pthread_mutex_unlock(&event->lock);
+
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Sent signal...");
 	
 	return true;
 }
 
-bool c_utils_event_destroy(struct c_utils_event *event, unsigned int thread_id) {
+void c_utils_event_destroy(struct c_utils_event *event) {
 	if (!event) 
-		return false;
+		return;
+
+	if(event->conf.flags & C_UTILS_EVENT_RC_INSTANCE) {
+		C_UTILS_REF_DEC(event);
+		return;
+	}
+
+	destroy_event(event);
+}
+
+
+
+static void configure(struct c_utils_event_conf *conf) {
+	if(!conf->name) {
+		if(conf->callbacks.destructors.name)
+			conf->callbacks.destructors.name = NULL;
+
+		conf->name = "NONE";
+	}
+}
+
+static void destroy_event(void *instance) {
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Destroying event, unblocking threads...");
 	
-	C_UTILS_LOG_EVENT(event->logger, event->name, "Broadcasting Event Signal...");
 	c_utils_event_signal(event, thread_id);
-	while (atomic_load(&event->waiting_threads) > 0)  
+	
+	while (atomic_load(&event->waiting_threads) > 0)
 		pthread_yield();
+		
+	pthread_mutex_destroy(&event->lock);
+	pthread_cond_destroy(&event->signal);
 	
-	
-	pthread_mutex_destroy(event->lock);
-	pthread_cond_destroy(event->signal);
-	free(event->lock);
-	free(event->signal);
-	
-	C_UTILS_LOG_EVENT(event->logger, event->name, "Destroying Event...");
+	C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Finished...");
+
 	free(event);
-	
-	return true;
+}
+
+static void auto_reset_handler(struct c_utils_event *event, unsigned int thread_id) {
+	if (event->conf.flags & C_UTILS_EVENT_AUTO_RESET_ON_LAST) {
+		// Last one out hits the lights. (If we are the last thread, reset event!)
+		if (atomic_load(&event->waiting_threads) == 1) {
+			atomic_store(&event->signaled, false);
+			C_UTILS_LOG_EVENT(event->conf.logger, event->conf.name, "Resetting signal as last thread exitted");
+		}
+	} else if (event->conf.flags & C_UTILS_EVENT_AUTO_RESET) {
+		// Difference between this and AUTO_RESET_ON_LAST is that this will reset the event when any thread leaves.
+		atomic_store(&event->signaled, false);
+		C_UTILS_LOG_EVENT(event->logger, event->name, format, thread_id, "Auto-Reset Event Signal...");
+	}
 }
