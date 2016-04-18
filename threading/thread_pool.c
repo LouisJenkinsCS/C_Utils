@@ -17,28 +17,19 @@
 #include "../data_structures/blocking_queue.h"
 #include "../memory/ref_count.h"
 
-struct c_utils_thread_worker {
-	/// The worker thread that does the work.
-	pthread_t *thread;
-	/// The worker thread id.
-	unsigned int thread_id;
-};
-
 struct c_utils_thread_pool {
 	/// Array of threads.
-	struct c_utils_thread_worker **worker_threads;
+	struct pthread_t *workers;
 	/// The queue with all jobs assigned to it.
 	struct c_utils_blocking_queue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
 	_Atomic size_t thread_count;
 	/// Amount of threads currently active.
 	_Atomic size_t active_threads;
-	/// Flag to keep all threads alive.
-	volatile bool keep_alive;
+	/// Flags used to keep track of internal state.
+	volatile int flags;
 	/// Used for timed pauses.
 	volatile unsigned int seconds_to_pause;
-	/// Used to signal an error occured during initialization
-	volatile bool init_error;
 	/// Event for pause/resume.
 	struct c_utils_event *resume;
 	/// Event for if the thread pool is finished at the moment.
@@ -61,6 +52,10 @@ struct c_utils_thread_task {
 	void *args;
 	/// c_utils_result from the Task.
 	struct c_utils_result *result;
+	/// Pre-Computed time was added in seconds.
+	long added_sec;
+	/// Pre-Computed time was added in milliseconds.
+	long added_msec;
 	/// c_utils_priority of task.
 	int priority;
 };
@@ -68,6 +63,10 @@ struct c_utils_thread_task {
 static const char *pause_event_name = "Resume";
 static const char *finished_event_name = "Finished";
 static const char *result_event_name = "Result Ready";
+
+static const int KEEP_ALIVE = 1 << 0;
+static const int INIT_ERR = 1 << 1;
+static const int SHUTDOWN = 1 << 2;
 
 /* Begin Static, Private functions */
 
@@ -90,37 +89,14 @@ static void destroy_task(struct c_utils_thread_task *task) {
 	free(task);
 }
 
-static void destroy_worker(struct c_utils_thread_worker *worker) {
-	if (!worker) 
-		return;
-
-	free(worker->thread);
-	free(worker);
-}
-
-/// Return the thread_worker associated with the calling thread.
-static struct c_utils_thread_worker *get_self(struct c_utils_thread_pool *tp) {
-	pthread_t self = pthread_self();
-	int thread_count = tp->thread_count;
-
-	for (int i = 0;i<thread_count;i++)
-		if (pthread_equal(*(tp->worker_threads[i]->thread), self))  
-			return tp->worker_threads[i];
-
-	C_UTILS_LOG_ERROR(tp->conf.logger, "A worker thread could not be identified from pthread_self!");
-	
-	return NULL;
-}
-
-
-static void process_task(struct c_utils_thread_task *task, unsigned int thread_id) {
+static void process_task(struct c_utils_thread_task *task) {
 	if (!task) 
 		return;
 
 	void *retval = task->callback(task->args);
 	if (task->result) {
 		task->result->retval = retval;
-		c_utils_event_signal(task->result->is_ready, thread_id);
+		c_utils_event_signal(task->result->is_ready);
 	}
 
 	free(task);
@@ -131,30 +107,29 @@ static void *get_tasks(void *args) {
 	struct c_utils_thread_pool *tp = args;
 
 	// keep_alive thread is initialized to 0 meaning it isn't setup, but set to 1 after it is, so it is dual-purpose.
-	while (!tp->init_error && !tp->keep_alive)  
+	while (!(tp->flags & KEEP_ALIVE) && !(tp->flags & INIT_ERR))  
 		pthread_yield();
 	
-	if (tp->init_error) {
+	if (tp->flags & INIT_ERR) {
 		// If there is an initialization error, we need to abort ASAP as the thread actually gets freed, so we can't risk dereferencing self.
 		atomic_fetch_sub(&tp->thread_count, 1);
 		pthread_exit(NULL);
 	}
 
-	struct c_utils_thread_worker *self = get_self(tp);
 	// Note that this while loop checks for keep_alive to be true, rather than false. 
-	while (tp->keep_alive) {
+	while (tp->flags & KEEP_ALIVE) {
 		struct c_utils_thread_task *task = NULL;
 		task = c_utils_blocking_queue_dequeue(tp->queue, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
 
-		if (!tp->keep_alive)  
+		if (!(tp->flags & KEEP_ALIVE))  
 			break;
 		
 
 		// Note that the paused event is only waited upon if it the event interally is flagged.
-		c_utils_event_wait(tp->resume, tp->seconds_to_pause, self->thread_id);
+		c_utils_event_wait(tp->resume, tp->seconds_to_pause);
 
 		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
-		if (!tp->keep_alive)
+		if (!(tp->flags & KEEP_ALIVE))
 			break;
 		
 
@@ -176,7 +151,32 @@ static void *get_tasks(void *args) {
 
 /// Simple comparator to compare two task priorities.
 static int compare_task_priority(const void *task_one, const void *task_two) {
-	return ((struct c_utils_thread_task *)task_one)->priority - ((struct c_utils_thread_task *)task_two)->priority;
+	struct c_utils_thread_task *first = task_one, *second = task_two;
+	const int FIRST_GREATER = 1, SECOND_GREATER = -1;
+
+	/*
+		The thread listed with the priority of IMMEDIATE will jump in front of all other tasks... UNLESS the other thread
+		also is of THREAD_POOL_IMMEDIATE priority, upon which the one added first will get to go first.
+	*/
+	if(first->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && second->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
+		return FIRST_GREATER;
+
+	if(second->priority == THREAD_POOL_IMMEDIATE && first->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
+		return SECOND_GREATER;
+
+	/*
+		If both are are IMMEDIATE or neither are IMMEDIATE, we go based on time added and priority. Time for each is aged according to
+		both the priority. Note that since two IMMEDIATE priority tasks have the same priority value, it doesn't matter much in the
+		below calculations.
+	*/
+
+	long first_aged_sec = first->added_sec - (first->priority / 1000), second_aged_sec = second->added_sec - (second->priority / 1000);
+	long first_aged_msec = first->added_msec - (first->priority % 1000) * 1000000L, second_aged_msec = second->added_msec - (second->priority % 1000) * 1000000L;
+
+	if((first_aged_sec < second_aged_sec) || (first_aged_sec == second_aged_sec && first_aged_msec < second_aged_msec))
+		return FIRST_GREATER;
+	else
+		return SECOND_GREATER;
 }
 
 static void destroy_thread_pool(void *instance);
@@ -240,55 +240,37 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		goto err_finished;
 	}
 
-	C_UTILS_ON_BAD_MALLOC(tp->worker_threads, conf->logger, sizeof(*tp->worker_threads) * conf->num_threads)
+	C_UTILS_ON_BAD_MALLOC(tp->workers, conf->logger, sizeof(*tp->workers) * conf->num_threads)
 		goto err_workers;
 
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
-	for (size_t i = 0;i < conf->num_threads; i++) {
-		struct c_utils_thread_worker *worker;
-		C_UTILS_ON_BAD_CALLOC(worker, conf->logger, sizeof(*worker))
-			goto err_worker_alloc;
-
-		workers_allocated++;
-		
-		C_UTILS_ON_BAD_MALLOC(worker->thread, conf->logger, sizeof(*worker->thread))
-			goto err_worker_alloc;
-
-		worker->thread_id = i+1;
-		
-		int create_error = pthread_create(worker->thread, &attr, get_tasks, tp);
+	for (size_t i = 0; i < conf->num_threads; i++) {
+		int create_error = pthread_create(worker + i, &attr, get_tasks, tp);
 		if (create_error) {
 			C_UTILS_LOG_ERROR(conf->logger, "pthread_create: '%s'", strerror(create_error));
 			goto err_worker_alloc;
 		}
 		
-		tp->worker_threads[i] = worker;
 		tp->thread_count++;
 	}
 
 	pthread_attr_destroy(&attr);
-	tp->keep_alive = true;
+	tp->flags = KEEP_ALIVE;
 
 	return tp;
 
 	err_worker_alloc:
 		// Since the threads are polling until keep_alive is true, this informs them that they should exit.
-		tp->init_error = true;
+		tp->flags |= INIT_ERR;
 
-		for(size_t i = 0; i < workers_allocated; i++) {
-			struct c_utils_thread_worker *worker = tp->worker_threads[i];
-			free(worker->thread);
-			free(worker);
-		}
+		free(tp->workers);
 
 		// Wait for all threads to exit
 		while (atomic_load(&tp->thread_count))
 					pthread_yield();
-
-		free(tp->worker_threads);
 	err_workers:
 		c_utils_event_destroy(tp->finished, 0);
 	err_finished:
