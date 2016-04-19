@@ -19,7 +19,7 @@
 
 struct c_utils_thread_pool {
 	/// Array of threads.
-	struct pthread_t *workers;
+	pthread_t *workers;
 	/// The queue with all jobs assigned to it.
 	struct c_utils_blocking_queue *queue;
 	/// Amount of threads currently created, A.K.A Max amount.
@@ -29,7 +29,7 @@ struct c_utils_thread_pool {
 	/// Flags used to keep track of internal state.
 	volatile int flags;
 	/// Used for timed pauses.
-	volatile struct timeval pause_time;
+	volatile struct timespec pause_time;
 	/// Used to synchronize changes to pause_time and flags
 	pthread_spinlock_t plock;
 	/// Event for pause/resume.
@@ -79,19 +79,6 @@ static void configure(struct c_utils_thread_pool_conf *conf) {
 	}
 }
 
-/// Destructor for a task.
-static void destroy_task(struct c_utils_thread_task *task) {
-	if (!task)
-		return;
-	
-	if (task->result) {
-		c_utils_event_destroy(task->result->is_ready);
-		free(task->result);
-	}
-
-	free(task);
-}
-
 static void process_task(struct c_utils_thread_task *task) {
 	if (!task) 
 		return;
@@ -129,11 +116,11 @@ static void *get_tasks(void *args) {
 		
 		pthread_spin_lock(&tp->plock);
 		bool is_paused = tp->flags & PAUSED;
-		struct timeval timeout = tp->pause_time;
+		struct timespec timeout = tp->pause_time;
 		pthread_spin_unlock(&tp->plock);
 
 		if(is_paused)
-			c_utils_event_wait(tp->resume, &timeout);
+			c_utils_event_wait_until(tp->resume, &timeout);
 
 		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
 		if (!(tp->flags & KEEP_ALIVE)) {
@@ -142,7 +129,7 @@ static void *get_tasks(void *args) {
 		}
 
 		atomic_fetch_add(&tp->active_threads, 1);
-		process_task(task, self->thread_id);
+		process_task(task);
 		atomic_fetch_sub(&tp->active_threads, 1);
 
 		// Close as we are going to get testing if the queue is fully empty. 
@@ -158,7 +145,7 @@ static void *get_tasks(void *args) {
 
 /// Simple comparator to compare two task priorities.
 static int compare_task_priority(const void *task_one, const void *task_two) {
-	struct c_utils_thread_task *first = task_one, *second = task_two;
+	const struct c_utils_thread_task *first = task_one, *second = task_two;
 	const int FIRST_GREATER = 1, SECOND_GREATER = -1;
 
 	/*
@@ -168,7 +155,7 @@ static int compare_task_priority(const void *task_one, const void *task_two) {
 	if(first->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && second->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
 		return FIRST_GREATER;
 
-	if(second->priority == THREAD_POOL_IMMEDIATE && first->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
+	if(second->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && first->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
 		return SECOND_GREATER;
 
 	/*
@@ -198,8 +185,6 @@ struct c_utils_thread_pool *c_utils_thread_pool_create() {
 struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_thread_pool_conf *conf) {
 	if(!conf)
 		return NULL;
-
-	size_t workers_allocated = 0;
 
 	configure(conf);
 
@@ -261,7 +246,7 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
 	for (size_t i = 0; i < conf->num_threads; i++) {
-		int create_error = pthread_create(worker + i, &attr, get_tasks, tp);
+		int create_error = pthread_create(tp->workers + i, &attr, get_tasks, tp);
 		if (create_error) {
 			C_UTILS_LOG_ERROR(conf->logger, "pthread_create: '%s'", strerror(create_error));
 			goto err_worker_alloc;
@@ -325,7 +310,7 @@ void c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void 
 	c_utils_event_reset(tp->finished);
 	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
 	if (!enqueued) {
-		C_UTILS_LOG_ERROR(tp->conf.logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
+		C_UTILS_LOG_ERROR(tp->conf.logger, "blocking_queue_nqueue: 'Was unable to enqueue a thread_task!'");
 		goto err_enqueue;
 	}
 
@@ -372,8 +357,8 @@ struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_
 	thread_task->priority = priority;
 	thread_task->result = result;
 
-	c_utils_event_reset(tp->finished, 0);
-	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, -1);
+	c_utils_event_reset(tp->finished);
+	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
 	if (!enqueued) {
 		C_UTILS_LOG_ERROR(tp->conf.logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
 		goto err_enqueue;
@@ -388,7 +373,7 @@ struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_
 	err_result:
 		if(result)
 			if(result->is_ready)
-				c_utils_event_destroy(result->is_ready, 0);
+				c_utils_event_destroy(result->is_ready);
 
 		free(result);
 
@@ -427,7 +412,7 @@ bool c_utils_thread_pool_wait_for(struct c_utils_thread_pool *tp, long long int 
 	return c_utils_event_wait_for(tp->finished, timeout);
 }
 
-void c_utils_thread_pool_wait_until(struct c_utils_thread_pool *tp, struct timeval *timeout) {
+void c_utils_thread_pool_wait_until(struct c_utils_thread_pool *tp, struct timespec *timeout) {
 	if(!tp)
 		return;
 
@@ -453,7 +438,7 @@ void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int
 	c_utils_event_wait_for(tp->resume, timeout);
 }
 
-void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timeval *timeout) {
+void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timespec *timeout) {
 	if(!tp)
 		return;
 
@@ -473,7 +458,6 @@ static void destroy_thread_pool(void *instance) {
 	struct c_utils_thread_pool *tp = instance;
 
 	tp->conf.flags &= ~KEEP_ALIVE;
-	size_t old_thread_count = atomic_load(&tp->thread_count);
 
 	// By destroying the PBQueue, it signals to threads waiting to wake up.
 	c_utils_blocking_queue_destroy(tp->queue);

@@ -92,7 +92,7 @@ void c_utils_event_reset(struct c_utils_event *event);
  */
 bool c_utils_event_wait_for(struct c_utils_event *event, long long int timeout);
 
-bool c_utils_event_wait_until(struct c_utils_event *event, struct timeval timeout);
+bool c_utils_event_wait_until(struct c_utils_event *event, struct timespec *timeout);
 
 /**
  * Signals to any threads waiting on the event to wake up, and will remain signaled unless

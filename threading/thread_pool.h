@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <time.h>
 
 #include "../io/logger.h"
 
@@ -152,7 +153,7 @@ void c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int time
  */
 void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int timeout);
 
-void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timeval *timeout);
+void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timespec *timeout);
 
 /**
  * Resume all worker threads that are paused.
