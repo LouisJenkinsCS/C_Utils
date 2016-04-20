@@ -16,6 +16,7 @@
 #include "thread_pool.h"
 #include "../data_structures/blocking_queue.h"
 #include "../memory/ref_count.h"
+#include "scoped_lock.h"
 
 struct c_utils_thread_pool {
 	/// Array of threads.
@@ -31,7 +32,7 @@ struct c_utils_thread_pool {
 	/// Used for timed pauses.
 	volatile struct timespec pause_time;
 	/// Used to synchronize changes to pause_time and flags
-	pthread_spinlock_t plock;
+	struct c_utils_scoped_lock *plock;
 	/// Event for pause/resume.
 	struct c_utils_event *resume;
 	/// Event for if the thread pool is finished at the moment.
@@ -114,13 +115,15 @@ static void *get_tasks(void *args) {
 		if (!(tp->flags & KEEP_ALIVE))
 			break;
 		
-		pthread_spin_lock(&tp->plock);
-		bool is_paused = tp->flags & PAUSED;
-		struct timespec timeout = tp->pause_time;
-		pthread_spin_unlock(&tp->plock);
+		struct timespec timeout;
+		bool is_paused;
+		C_UTILS_SCOPED_LOCK(tp->plock) {
+			is_paused = tp->flags & PAUSED;
+			timeout = tp->pause_time;
+		}
 
 		if(is_paused)
-			c_utils_event_wait_until(tp->resume, &timeout);
+			c_utils_event_wait_until(tp->resume, is_infinite_timeout(&timeout) ? NULL : &timeout);
 
 		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
 		if (!(tp->flags & KEEP_ALIVE)) {
@@ -174,6 +177,10 @@ static int compare_task_priority(const void *task_one, const void *task_two) {
 }
 
 static void destroy_thread_pool(void *instance);
+
+static bool is_infinite_timeout(struct timespec *timeout);
+
+static void make_timeout_infinite(struct timespec *timeout);
 
 /* End Static, Private functions. */
 
@@ -232,9 +239,9 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		goto err_finished;
 	}
 
-	int init_err = pthread_spin_init(&tp->plock, 0);
-	if(init_err) {
-		C_UTILS_LOG_ERROR(conf->logger, "pthread_spin_init: \"%s\"", strerror(init_err));
+	tp->plock = c_utils_scoped_lock_spinlock(0, conf->logger);
+	if(!tp->plock) {
+		C_UTILS_LOG_ERROR(conf->logger, "Failed in creation of the scoped_lock!");
 		goto err_plock;
 	}
 
@@ -270,7 +277,7 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		while (atomic_load(&tp->thread_count))
 					pthread_yield();
 	err_workers:
-		pthread_spin_destroy(&tp->plock);
+		c_utils_scoped_lock_destroy(tp->plock);
 	err_plock:
 		c_utils_event_destroy(tp->finished);
 	err_finished:
@@ -283,44 +290,50 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
 		return NULL;
 }
 
-void c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority) {
+bool c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority) {
 	if(!tp)
-		return;
+		return false;
 
 	if(!task) {
 		C_UTILS_LOG_ERROR(tp->conf.logger, "Thread Pool cannot process a NULL task.");
-		return;
+		return false;
 	}
 
 	if(priority < -1) {
 		C_UTILS_LOG_ERROR(tp->conf.logger, "Bad Thread Pool priority, requires range of -1 to 1000, received %d", priority);
-		return;
+		return false;
 	}
 
-	struct c_utils_result *result = NULL;
 	struct c_utils_thread_task *thread_task = NULL;
 
 	C_UTILS_ON_BAD_CALLOC(thread_task, tp->conf.logger, sizeof(*thread_task))
-		goto err_task;
+		goto err;
 
 	thread_task->callback = task;
 	thread_task->args = args;
 	thread_task->priority = priority;
 
-	c_utils_event_reset(tp->finished);
-	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
-	if (!enqueued) {
-		C_UTILS_LOG_ERROR(tp->conf.logger, "blocking_queue_nqueue: 'Was unable to enqueue a thread_task!'");
-		goto err_enqueue;
+	// Do not accept new tasks if shutdown.
+	C_UTILS_SCOPED_LOCK(tp->plock) {
+		if(tp->flags & SHUTDOWN)
+			goto err_shutdown;
+
+		c_utils_event_reset(tp->finished);
+		bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
+		if (!enqueued) {
+			C_UTILS_LOG_ERROR(tp->conf.logger, "blocking_queue_nqueue: 'Was unable to enqueue a thread_task!'");
+			goto err_enqueue;
+		}
 	}
 
 	C_UTILS_LOG_VERBOSE(tp->conf.logger, "A task of priority %d has been added to the task_queue!", priority);
-	return;
+	return true;
 
+	err_shutdown:
 	err_enqueue:
 		free(task);
-	err_task:
-		free(result);
+	err:
+		return false;
 }
 
 struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority) {
@@ -346,7 +359,7 @@ struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_
 	result->is_ready = c_utils_event_create(result_event_name, tp->conf.logger, 0);
 	if (!result->is_ready) {
 		C_UTILS_LOG_ERROR(tp->conf.logger, "c_utils_event_create: 'Was unable to create event: %s!'", result_event_name);
-		goto err_result;
+		goto err_result_ready;
 	}
 
 	C_UTILS_ON_BAD_CALLOC(thread_task, tp->conf.logger, sizeof(*thread_task))
@@ -357,26 +370,29 @@ struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_
 	thread_task->priority = priority;
 	thread_task->result = result;
 
-	c_utils_event_reset(tp->finished);
-	bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
-	if (!enqueued) {
-		C_UTILS_LOG_ERROR(tp->conf.logger, "PBQueue_Enqueue: 'Was unable to enqueue a thread_task!'");
-		goto err_enqueue;
+	C_UTILS_SCOPED_LOCK(tp->plock) {
+		if(tp->flags & SHUTDOWN)
+			goto err_shutdown;
+
+		c_utils_event_reset(tp->finished);
+		bool enqueued = c_utils_blocking_queue_enqueue(tp->queue, thread_task, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
+		if (!enqueued) {
+			C_UTILS_LOG_ERROR(tp->conf.logger, "blocking_queue_nqueue: 'Was unable to enqueue a thread_task!'");
+			goto err_enqueue;
+		}
 	}
 
 	C_UTILS_LOG_VERBOSE(tp->conf.logger, "A task of %d priority has been added to the task_queue!", priority);
 	return result;
 
+	err_shutdown:
 	err_enqueue:
 		free(task);
 	err_task:
-	err_result:
-		if(result)
-			if(result->is_ready)
-				c_utils_event_destroy(result->is_ready);
-
+		c_utils_event_destroy(result->is_ready);
+	err_result_ready:
 		free(result);
-
+	err_result:
 		return NULL;
 }
 
@@ -435,21 +451,53 @@ void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int
 	if(!tp)
 		return;
 
-	c_utils_event_wait_for(tp->resume, timeout);
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+
+	/*
+		As we are dealing with a physical struct here, we cannot reliably set it to NULL, so we
+		just either fill out the timespec if it's greater than 0, or zero the struct to allow for
+		a more 
+	*/
+	if(timeout > 0) {
+		tv.tv_sec += timeout / 1000;
+		tv.tv_nsec += (timeout % 1000) * 1000000L;
+	}
+
+	c_utils_thread_pool_pause_until(tp, timeout != C_UTILS_THREAD_POOL_NO_TIMEOUT ? &tv : NULL);
 }
 
 void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timespec *timeout) {
 	if(!tp)
 		return;
 
-	c_utils_event_wait_until(tp->resume, timeout);
+	C_UTILS_SCOPED_LOCK(tp->plock) {
+		tp->flags |= PAUSED;
+		if(!timeout)
+			make_timeout_infinite(tp->pause_time);
+		else
+			tp->pause_time = *timeout;
+	}
 }
 
 void c_utils_thread_pool_resume(struct c_utils_thread_pool *tp) {
 	if(!tp)
 		return;
 
+	C_UTILS_SCOPED_LOCK(tp->plock)
+		tp->flags &= ~PAUSED;
+
 	return c_utils_event_signal(tp->resume);
+}
+
+void c_utils_thread_pool_shutdown(struct c_utils_thread_pool *tp) {
+	if(!tp)
+		return;
+
+	C_UTILS_SCOPED_LOCK(tp->plock) {
+		tp->flags |= SHUTDOWN;
+
+	}
 }
 
 
@@ -457,7 +505,7 @@ void c_utils_thread_pool_resume(struct c_utils_thread_pool *tp) {
 static void destroy_thread_pool(void *instance) {
 	struct c_utils_thread_pool *tp = instance;
 
-	tp->conf.flags &= ~KEEP_ALIVE;
+	tp->flags &= ~KEEP_ALIVE;
 
 	// By destroying the PBQueue, it signals to threads waiting to wake up.
 	c_utils_blocking_queue_destroy(tp->queue);
@@ -473,4 +521,13 @@ static void destroy_thread_pool(void *instance) {
 	
 	free(tp->workers);
 	free(tp);
+}
+
+static void make_timeout_infinite(struct timespec *timeout) {
+	timeout->tv_sec = 0;
+	timeout->tv_nsec = 0;
+}
+
+static bool is_infinite_timeout(struct timespec *timeout) {
+	return timeout->tv_sec == 0 && timeout->tv_nsec = 0;
 }

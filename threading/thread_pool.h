@@ -136,30 +136,36 @@ void c_utils_thread_pool_destroy(struct c_utils_thread_pool *tp);
  */
 void *c_utils_result_get(struct c_utils_result *result, long long int timeout);
 
-/**
- * Block until all tasks are finished or timeout ellapses.
- * @param tp Thread pool instance.
- * @param timeout The max amount of time to block for, infinite if -1.
- * @return true if the thread pool is finished, false if not.
- */
-void c_utils_thread_pool_wait(struct c_utils_thread_pool *tp, long long int timeout);
+bool c_utils_thread_pool_wait_for(struct c_utils_thread_pool *tp, long long int timeout);
 
-/**
- * Pause the thread pool, and prevent worker threads from working. It does not stop threads from executing
- * their current tasks.
- * @param tp Thread pool instance.
- * @param timeout The max amount of time to block for, infinite if -1.
- * @return true if paused, false if not.
- */
+/*
+	Wait until the thread pool has finished up to the specified timeout. If timeout passed is
+	NULL, it will wait indefinitely until the thread pool is finished.
+*/
+void c_utils_thread_pool_wait_until(struct c_utils_thread_pool *tp, struct timespec *timeout);
+
+/*
+	Helper for thread_pool_pause_until which if timeout is THREAD_POOL_NO_TIMEOUT it will pass
+	NULL as timeout, otherwise will create a monotonic timespec forwarded by the passed timeout
+	in milliseconds.
+*/
 void c_utils_thread_pool_pause_for(struct c_utils_thread_pool *tp, long long int timeout);
 
+/*
+	Pauses the thread pool until the passed timeout or until a signal is sent to resume. If timeout
+	is NULL, it will wait without timeout.
+*/
 void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct timespec *timeout);
 
-/**
- * Resume all worker threads that are paused.
- * @param tp Thread pool instance.
- * @return true on success, false if not.
- */
+/*
+	Shutdown the thread pool until a call has been sent explicitly tp thread_pool_resume. No new
+	tasks will be accepted to the thread pool while it is shutdown.
+*/
+void c_utils_thread_pool_shutdown(struct c_utils_thread_pool *tp);
+
+/*
+	Resumes the thread pool if it is shutdown or paused.
+*/
 void c_utils_thread_pool_resume(struct c_utils_thread_pool *tp);
 
 #endif /* END THREAD_POOL_H */
