@@ -30,7 +30,7 @@ struct c_utils_thread_pool {
 	/// Flags used to keep track of internal state.
 	volatile int flags;
 	/// Used for timed pauses.
-	volatile struct timespec pause_time;
+	struct timespec pause_time;
 	/// Used to synchronize changes to pause_time and flags
 	struct c_utils_scoped_lock *plock;
 	/// Event for pause/resume.
@@ -74,107 +74,13 @@ static const int PAUSED = 1 << 3;
 
 /* Begin Static, Private functions */
 
-static void configure(struct c_utils_thread_pool_conf *conf) {
-	if(!conf->num_threads) {
-		conf->num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-	}
-}
+static void configure(struct c_utils_thread_pool_conf *conf);
 
-static void process_task(struct c_utils_thread_task *task) {
-	if (!task) 
-		return;
+static void process_task(struct c_utils_thread_task *task);
 
-	void *retval = task->callback(task->args);
-	if (task->result) {
-		task->result->retval = retval;
-		c_utils_event_signal(task->result->is_ready);
-	}
+static void *get_tasks(void *args);
 
-	free(task);
-}
-
-/// The main thread loop to obtain tasks from the task queue.
-static void *get_tasks(void *args) {
-	struct c_utils_thread_pool *tp = args;
-
-	// keep_alive thread is initialized to 0 meaning it isn't setup, but set to 1 after it is, so it is dual-purpose.
-	while (!(tp->flags & KEEP_ALIVE) && !(tp->flags & INIT_ERR))  
-		pthread_yield();
-	
-	if (tp->flags & INIT_ERR) {
-		// If there is an initialization error, we need to abort ASAP as the thread actually gets freed, so we can't risk dereferencing self.
-		atomic_fetch_sub(&tp->thread_count, 1);
-		pthread_exit(NULL);
-	}
-
-	// Note that this while loop checks for keep_alive to be true, rather than false. 
-	while (tp->flags & KEEP_ALIVE) {
-		struct c_utils_thread_task *task = NULL;
-		task = c_utils_blocking_queue_dequeue(tp->queue, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
-
-		if (!(tp->flags & KEEP_ALIVE))
-			break;
-		
-		struct timespec timeout;
-		bool is_paused;
-		C_UTILS_SCOPED_LOCK(tp->plock) {
-			is_paused = tp->flags & PAUSED;
-			timeout = tp->pause_time;
-		}
-
-		if(is_paused)
-			c_utils_event_wait_until(tp->resume, is_infinite_timeout(&timeout) ? NULL : &timeout);
-
-		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
-		if (!(tp->flags & KEEP_ALIVE)) {
-			free(task);
-			break;
-		}
-
-		atomic_fetch_add(&tp->active_threads, 1);
-		process_task(task);
-		atomic_fetch_sub(&tp->active_threads, 1);
-
-		// Close as we are going to get testing if the queue is fully empty. 
-		if (c_utils_blocking_queue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0)  
-			c_utils_event_signal(tp->finished);
-	}
-
-	atomic_fetch_sub(&tp->thread_count, 1);
-	C_UTILS_LOG_VERBOSE(tp->conf.logger, "A thread exited!\n");
-
-	return NULL;
-}
-
-/// Simple comparator to compare two task priorities.
-static int compare_task_priority(const void *task_one, const void *task_two) {
-	const struct c_utils_thread_task *first = task_one, *second = task_two;
-	const int FIRST_GREATER = 1, SECOND_GREATER = -1;
-
-	/*
-		The thread listed with the priority of IMMEDIATE will jump in front of all other tasks... UNLESS the other thread
-		also is of THREAD_POOL_IMMEDIATE priority, upon which the one added first will get to go first.
-	*/
-	if(first->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && second->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
-		return FIRST_GREATER;
-
-	if(second->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && first->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
-		return SECOND_GREATER;
-
-	/*
-		If both are are IMMEDIATE or neither are IMMEDIATE, we go based on time added and priority. Time for each is aged according to
-		both the priority. Note that since two IMMEDIATE priority tasks have the same priority value, it doesn't matter much in the
-		below calculations.
-	*/
-
-	long first_aged_sec = first->added_sec - (first->priority / 1000), second_aged_sec = second->added_sec - (second->priority / 1000);
-	long first_aged_msec = first->added_msec - (first->priority % 1000) * 1000000L, second_aged_msec = second->added_msec - (second->priority % 1000) * 1000000L;
-
-	if((first_aged_sec < second_aged_sec) || (first_aged_sec == second_aged_sec && first_aged_msec < second_aged_msec))
-		return FIRST_GREATER;
-	else
-		return SECOND_GREATER;
-}
+static int compare_task_priority(const void *task_one, const void *task_two);
 
 static void destroy_thread_pool(void *instance);
 
@@ -474,7 +380,7 @@ void c_utils_thread_pool_pause_until(struct c_utils_thread_pool *tp, struct time
 	C_UTILS_SCOPED_LOCK(tp->plock) {
 		tp->flags |= PAUSED;
 		if(!timeout)
-			make_timeout_infinite(tp->pause_time);
+			make_timeout_infinite(&tp->pause_time);
 		else
 			tp->pause_time = *timeout;
 	}
@@ -512,7 +418,7 @@ static void destroy_thread_pool(void *instance) {
 	// Then by destroying the resume event, anything waiting on a paused thread pool wakes up.
 	c_utils_event_destroy(tp->resume);
 	// Then we wait for all threads to that wake up to exit gracefully.
-	c_utils_thread_pool_wait(tp, C_UTILS_THREAD_POOL_NO_TIMEOUT);
+	c_utils_thread_pool_wait_for(tp, C_UTILS_THREAD_POOL_NO_TIMEOUT);
 	// Finally, any threads waiting on the thread pool to finish will wake up.
 	c_utils_event_destroy(tp->finished);
 
@@ -529,5 +435,105 @@ static void make_timeout_infinite(struct timespec *timeout) {
 }
 
 static bool is_infinite_timeout(struct timespec *timeout) {
-	return timeout->tv_sec == 0 && timeout->tv_nsec = 0;
+	return timeout->tv_sec == 0 && timeout->tv_nsec == 0;
+}
+
+static int compare_task_priority(const void *task_one, const void *task_two) {
+	const struct c_utils_thread_task *first = task_one, *second = task_two;
+	const int FIRST_GREATER = 1, SECOND_GREATER = -1;
+
+	/*
+		The thread listed with the priority of IMMEDIATE will jump in front of all other tasks... UNLESS the other thread
+		also is of THREAD_POOL_IMMEDIATE priority, upon which the one added first will get to go first.
+	*/
+	if(first->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && second->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
+		return FIRST_GREATER;
+
+	if(second->priority == C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE && first->priority != C_UTILS_THREAD_POOL_PRIORITY_IMMEDIATE)
+		return SECOND_GREATER;
+
+	/*
+		If both are are IMMEDIATE or neither are IMMEDIATE, we go based on time added and priority. Time for each is aged according to
+		both the priority. Note that since two IMMEDIATE priority tasks have the same priority value, it doesn't matter much in the
+		below calculations.
+	*/
+
+	long first_aged_sec = first->added_sec - (first->priority / 1000), second_aged_sec = second->added_sec - (second->priority / 1000);
+	long first_aged_msec = first->added_msec - (first->priority % 1000) * 1000000L, second_aged_msec = second->added_msec - (second->priority % 1000) * 1000000L;
+
+	if((first_aged_sec < second_aged_sec) || (first_aged_sec == second_aged_sec && first_aged_msec < second_aged_msec))
+		return FIRST_GREATER;
+	else
+		return SECOND_GREATER;
+}
+
+static void *get_tasks(void *args) {
+	struct c_utils_thread_pool *tp = args;
+
+	// keep_alive thread is initialized to 0 meaning it isn't setup, but set to 1 after it is, so it is dual-purpose.
+	while (!(tp->flags & KEEP_ALIVE) && !(tp->flags & INIT_ERR))  
+		pthread_yield();
+	
+	if (tp->flags & INIT_ERR) {
+		// If there is an initialization error, we need to abort ASAP as the thread actually gets freed, so we can't risk dereferencing self.
+		atomic_fetch_sub(&tp->thread_count, 1);
+		pthread_exit(NULL);
+	}
+
+	// Note that this while loop checks for keep_alive to be true, rather than false. 
+	while (tp->flags & KEEP_ALIVE) {
+		struct c_utils_thread_task *task = NULL;
+		task = c_utils_blocking_queue_dequeue(tp->queue, C_UTILS_BLOCKING_QUEUE_NO_TIMEOUT);
+
+		if (!(tp->flags & KEEP_ALIVE))
+			break;
+		
+		struct timespec timeout;
+		bool is_paused;
+		C_UTILS_SCOPED_LOCK(tp->plock) {
+			is_paused = tp->flags & PAUSED;
+			timeout = tp->pause_time;
+		}
+
+		if(is_paused)
+			c_utils_event_wait_until(tp->resume, is_infinite_timeout(&timeout) ? NULL : &timeout);
+
+		// Also note that if we do wait for a period of time, the thread pool could be set to shut down.
+		if (!(tp->flags & KEEP_ALIVE)) {
+			free(task);
+			break;
+		}
+
+		atomic_fetch_add(&tp->active_threads, 1);
+		process_task(task);
+		atomic_fetch_sub(&tp->active_threads, 1);
+
+		// Close as we are going to get testing if the queue is fully empty. 
+		if (c_utils_blocking_queue_size(tp->queue) == 0 && atomic_load(&tp->active_threads) == 0)  
+			c_utils_event_signal(tp->finished);
+	}
+
+	atomic_fetch_sub(&tp->thread_count, 1);
+	C_UTILS_LOG_VERBOSE(tp->conf.logger, "A thread exited!\n");
+
+	return NULL;
+}
+
+static void configure(struct c_utils_thread_pool_conf *conf) {
+	if(!conf->num_threads) {
+		conf->num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+	}
+}
+
+static void process_task(struct c_utils_thread_task *task) {
+	if (!task) 
+		return;
+
+	void *retval = task->callback(task->args);
+	if (task->result) {
+		task->result->retval = retval;
+		c_utils_event_signal(task->result->is_ready);
+	}
+
+	free(task);
 }

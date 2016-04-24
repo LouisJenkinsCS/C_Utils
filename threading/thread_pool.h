@@ -103,7 +103,7 @@ struct c_utils_thread_pool *c_utils_thread_pool_create_conf(struct c_utils_threa
  * @param flags LOWEST_PRIORITY | LOW_PRIORITY | HIGH_PRIORITY | HIGHEST_PRIORITY | NO_RESULT.
  * @return The result from the task to be obtained later or NULL if NO_RESULT.
  */
-void c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority);
+bool c_utils_thread_pool_add(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority);
 
 struct c_utils_result *c_utils_thread_pool_add_for_result(struct c_utils_thread_pool *tp, void *(*task)(void *), void *args, int priority);
 
