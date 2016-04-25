@@ -70,6 +70,30 @@ static void *value_to_key(struct c_utils_map *map, const void *value);
 
 //////////////////////////////////////////////////////////////////////////////////////
 //	 																				//
+//						Map Iterator Functions                                      //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
+static void *head(void *instance, void *pos);
+
+static void *tail(void *instance, void *pos);
+
+static void *next(void *instance, void *pos);
+
+static void *prev(void *instance, void *pos);
+
+static void *curr(void *instance, void *pos);
+
+static bool del(void *instance, void *pos);
+
+static bool rem(void *instance, void *pos);
+
+static void finalize(void *instance, void *pos);
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
 //						Map Misc. Helper Functions                                  //
 //  																				//
 //////////////////////////////////////////////////////////////////////////////////////
@@ -94,11 +118,18 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	configure(conf);
 
 	struct c_utils_map *map;
-	// Zero the ref_count data plz.
-	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
-		map = c_utils_ref_create(sizeof(*map));
-	else
+	if(conf->flags & C_UTILS_MAP_RC_INSTANCE) {
+		struct c_utils_ref_count_conf rc_conf =
+		{
+			.destructor = map_destroy,
+			.logger = conf->logger
+		};
+
+		map = c_utils_ref_create_conf(sizeof(*map), &rc_conf);
+	} else {
 		map = malloc(sizeof(*map));
+	}
+
 	if(!map) {
 		C_UTILS_LOG_ASSERT(conf->logger, "Failed to create map!");
 		goto err;
@@ -106,8 +137,15 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 
 	map->num_buckets = conf->size.initial;
 	
-	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->num_buckets)
+	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
+		map->buckets = c_utils_ref_create(sizeof(struct c_utils_bucket) * map->num_buckets);
+	else
+		map->buckets = malloc(sizeof(struct c_utils_bucket) * map->num_buckets);
+
+	if(!map->buckets) {
+		C_UTILS_LOG_ERROR("Failed to create map buckets!");
 		goto err_buckets;
+	}
 	
 	map->lock = conf->flags & C_UTILS_MAP_CONCURRENT ? c_utils_scoped_lock_rwlock(NULL, conf->logger) : c_utils_scoped_lock_no_op();
 	if(!map->lock) {
@@ -118,11 +156,13 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	return map;
 
 	err_lock:
-		free(map->buckets);
-		map->buckets = NULL;
+		if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
+			c_utils_ref_destroy(map->buckets);
+		else
+			free(map->buckets);
 	err_buckets:
 		if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
-			C_UTILS_REF_DEC(map);
+			c_utils_ref_destroy(map);
 		else
 			free(map);
 	err:
@@ -356,6 +396,54 @@ size_t c_utils_map_size(struct c_utils_map *map) {
 		return map->size;
 
 	C_UTILS_UNACCESSIBLE;
+}
+
+struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
+	if(!map)
+		return NULL;
+
+	struct c_utils_iterator *it;
+	C_UTILS_ON_BAD_CALLOC(it, map->conf.logger, sizeof(*it))
+		goto err;
+
+	struct c_utils_list_iterator_position *pos;
+	C_UTILS_ON_BAD_CALLOC(pos, list->conf.logger, sizeof(*pos)) {
+		goto err_pos;
+	}
+
+	C_UTILS_SCOPED_RDLOCK(map->lock) {
+		pos->data_copy = malloc(sizeof(struct c_utils_bucket) * map->num_buckets);
+		if(!pos->data_copy)
+			goto err_pos_data;
+
+		memcpy(pos->data_copy, map->buckets, sizeof(struct c_utils_bucket) * map->num_buckets);
+	}
+
+	it->handle = map;
+	it->pos = pos;
+	it->head = head;
+	it->tail = tail;
+	it->next = next;
+	it->prev = prev;
+	it->curr = curr;
+	it->rem = rem;
+	it->del = del;
+	it->finalize = finalize;
+
+	// Iterator now holds a reference to this map.
+	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE) {
+		it->conf.ref_counted = true;
+		C_UTILS_REF_INC(map);
+	}
+
+	return it;
+
+	err_pos_data:
+		free(pos);
+	err_pos:
+		free(it);
+	err:
+		return NULL;
 }
 
 void c_utils_map_destroy(struct c_utils_map *map) {
@@ -592,9 +680,50 @@ static void map_destroy(void *map) {
 		}
 	}
 
-	free(m->buckets);
-
 	c_utils_scoped_lock_destroy(m->lock);
 
+	free(m->buckets);
 	free(m);
+}
+
+
+
+static void *head(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static void *tail(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static void *next(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static void *prev(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static void *curr(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static bool del(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static bool rem(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
+}
+
+static void finalize(void *instance, void *pos) {
+	// TODO: Implement
+	return NULL;
 }

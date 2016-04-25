@@ -26,6 +26,8 @@ struct c_utils_thread_pool_conf {
 
 #define C_UTILS_THREAD_POOL_NO_TIMEOUT -1
 
+#define C_UTILS_THREAD_POOL_SECOND 1000
+
 #define C_UTILS_THREAD_POOL_RC_INSTANCE 1 << 0
 
 /*

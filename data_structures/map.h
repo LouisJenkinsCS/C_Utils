@@ -1,7 +1,9 @@
 #include "helpers.h"
 #include "../io/logger.h"
+#include "iterator.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 
 /*
 	A simple hash map implementation which can be made thread-safe by passing true for synchronized on construction.
@@ -12,11 +14,27 @@
 */
 struct c_utils_map;
 
-#define C_UTILS_MAP_FOR_EACH_KEY(key, map)
+struct _c_utils_map_iterator_position {
+	/// Copy of the data at time of creation.
+	void *data_copy;
+	void *key;
+	void *value;
+	/// Our current position in our data.
+	size_t index;
+};
 
-#define C_UTILS_MAP_FOR_EACH_VALUE(value, map)
+#define C_UTILS_MAP_FOR_EACH_KEY(key, map) \
+	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key);)
 
-#define C_UTILS_MAP_FOR_EACH_PAIR(key, value, map)
+#define C_UTILS_MAP_FOR_EACH_VALUE(value, map) \
+	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (value = ((_c_utils_map_iterator_position)_this_it->pos)->value);)
+
+#define C_UTILS_MAP_FOR_EACH_PAIR(key, value, map) \
+	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key)
+		&& (value = ((_c_utils_map_iterator_position)_this_it->pos)->value);)
 
 #define C_UTILS_MAP_CONCURRENT 1 << 0
 #define C_UTILS_MAP_RC_INSTANCE 1 << 1
@@ -275,6 +293,8 @@ bool c_utils_map_for_each(struct c_utils_map *map, void (*callback)(const void *
  * @return Number of items.
  */
 size_t c_utils_map_size(struct c_utils_map *map);
+
+struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map);
 
 /**
  * Destroys the hash map, optionally calling the passed deletion callback on

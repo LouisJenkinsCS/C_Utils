@@ -59,7 +59,7 @@ int main(void) {
 	const int runs = 10;
 
 	LOG_INFO(logger, "Pausing thread pool to add all tasks...");
-	thread_pool_pause(tp, -1);
+	thread_pool_pause_for(tp, C_UTILS_THREAD_POOL_NO_TIMEOUT);
 	
 	LOG_INFO(logger, "Thread  Pool Paused to add tasks...");
 	for (int i = 0;i<num_tasks ;i++)
@@ -72,7 +72,7 @@ int main(void) {
 	
 	LOG_INFO(logger, "Pausing for 5 seconds...");
 	DEBUG("Pausing for 5 seconds...");
-	thread_pool_pause(tp, 5);
+	thread_pool_pause_for(tp, 5 * C_UTILS_THREAD_POOL_SECOND);
 	
 	LOG_INFO(logger, "Injecting a high priority task...");
 	result_t *result = thread_pool_add(tp, (void *)high_priority_print, "I'm so much better than you...", HIGH_PRIORITY);
@@ -80,7 +80,7 @@ int main(void) {
 	ASSERT((retval == 5), logger, "Bad results from result_t struct, obtained %d, but expected %d...", retval, 5);
 	
 	result_destroy(result);
-	thread_pool_wait(tp, -1);
+	thread_pool_wait_for(tp, C_UTILS_THREAD_POOL_NO_TIMEOUT);
 	LOG_INFO(logger, "Total iterations %d; Should be %d; %s\n", atomic_load(&iterations), num_tasks * runs
 		,iterations == runs * num_tasks ? "True" : "False");
 	
