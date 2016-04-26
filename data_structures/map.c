@@ -143,7 +143,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		map->buckets = malloc(sizeof(struct c_utils_bucket) * map->num_buckets);
 
 	if(!map->buckets) {
-		C_UTILS_LOG_ERROR("Failed to create map buckets!");
+		C_UTILS_LOG_ERROR(conf->logger, "Failed to create map buckets!");
 		goto err_buckets;
 	}
 	
@@ -152,6 +152,8 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		C_UTILS_LOG_ERROR(conf->logger, "Was unable to create the scoped_lock!");
 		goto err_lock;
 	}
+
+	map->conf = *conf;
 
 	return map;
 
@@ -406,19 +408,44 @@ struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
 	C_UTILS_ON_BAD_CALLOC(it, map->conf.logger, sizeof(*it))
 		goto err;
 
-	struct c_utils_list_iterator_position *pos;
-	C_UTILS_ON_BAD_CALLOC(pos, list->conf.logger, sizeof(*pos)) {
+	struct _c_utils_map_iterator_position *pos;
+	C_UTILS_ON_BAD_CALLOC(pos, map->conf.logger, sizeof(*pos)) {
 		goto err_pos;
 	}
 
 	C_UTILS_SCOPED_RDLOCK(map->lock) {
-		pos->data_copy = malloc(sizeof(struct c_utils_bucket) * map->num_buckets);
+		size_t occupied_buckets = map->size;
+
+		pos->data_copy = malloc(sizeof(struct c_utils_bucket) * occupied_buckets);
 		if(!pos->data_copy)
 			goto err_pos_data;
 
-		memcpy(pos->data_copy, map->buckets, sizeof(struct c_utils_bucket) * map->num_buckets);
+		struct c_utils_bucket *bucket_copies = pos->data_copy;
+
+		/*
+			Copy each key-value pair into the iterator's data_copy, incrementing the reference
+			count of the key-value pair if needed.
+		*/
+		for(size_t i = 0; occupied_buckets &&  i < map->num_buckets; i++) {
+			if(!map->buckets[i].in_use)
+				continue;
+
+			if(map->conf.flags & C_UTILS_MAP_RC_KEY && map->buckets[i].in_use)
+				C_UTILS_REF_INC(map->buckets[i].key);
+
+			if(map->conf.flags & C_UTILS_MAP_RC_VALUE && map->buckets[i].in_use)
+				C_UTILS_REF_INC(map->buckets[i].value);
+
+			bucket_copies[i].key = map->buckets[i].key;
+			bucket_copies[i].value = map->buckets[i].value;
+			bucket_copies[i].in_use = map->buckets[i].in_use;
+			bucket_copies[i].hash = map->buckets[i].hash;
+
+			occupied_buckets--;
+		}
 	}
 
+	// Set up callback functions
 	it->handle = map;
 	it->pos = pos;
 	it->head = head;
@@ -689,7 +716,7 @@ static void map_destroy(void *map) {
 
 
 static void *head(void *instance, void *pos) {
-	// TODO: Implement
+	
 	return NULL;
 }
 
@@ -724,6 +751,16 @@ static bool rem(void *instance, void *pos) {
 }
 
 static void finalize(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
+	struct c_utils_map *map = instance;
+	struct _c_utils_map_iterator_position *position = pos;
+
+	free(position->data_copy);
+	
+	if(map->conf.flags & C_UTILS_MAP_RC_KEY && position->key)
+		C_UTILS_REF_DEC(position->key);
+
+	if(map->conf.flags & C_UTILS_MAP_RC_VALUE && position->value)
+		C_UTILS_REF_DEC(position->value);
+
+	C_UTILS_REF_DEC(map);
 }

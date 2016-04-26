@@ -33,7 +33,7 @@ struct _c_utils_map_iterator_position {
 
 #define C_UTILS_MAP_FOR_EACH_PAIR(key, value, map) \
 	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
-		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key)
+		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key) \
 		&& (value = ((_c_utils_map_iterator_position)_this_it->pos)->value);)
 
 #define C_UTILS_MAP_CONCURRENT 1 << 0
