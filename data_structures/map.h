@@ -15,26 +15,32 @@
 struct c_utils_map;
 
 struct _c_utils_map_iterator_position {
-	/// Copy of the data at time of creation.
-	void *data_copy;
-	void *key;
-	void *value;
 	/// Our current position in our data.
 	size_t index;
+	/// The size of the data_copy
+	size_t size;
+	/// Copy of the data at time of creation.
+	struct {
+		void *key;
+		void *value;
+	} data[];
 };
 
+#define _C_UTILS_MAP_GET_KEY(it) ((struct _c_utils_map_iterator_position *)it->pos)->data[((struct _c_utils_map_iterator_position *)it->pos)->index].key
+
+#define _C_UTILS_MAP_GET_VALUE(it) ((struct _c_utils_map_iterator_position *)it->pos)->data[((struct _c_utils_map_iterator_position *)it->pos)->index].value
+
 #define C_UTILS_MAP_FOR_EACH_KEY(key, map) \
-	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
-		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key);)
+	for(C_UTILS_AUTO_ITERATOR _this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (key = _C_UTILS_MAP_GET_KEY(_this_it));)
 
 #define C_UTILS_MAP_FOR_EACH_VALUE(value, map) \
-	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
-		c_utils_iterator_next(_this_it) && (value = ((_c_utils_map_iterator_position)_this_it->pos)->value);)
+	for(C_UTILS_AUTO_ITERATOR _this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (value = _C_UTILS_MAP_GET_VALUE(_this_it));)
 
 #define C_UTILS_MAP_FOR_EACH_PAIR(key, value, map) \
-	for(C_UTILS_AUTO_ITERATOR *_this_it = c_utils_map_iterator(map); \
-		c_utils_iterator_next(_this_it) && (key = ((_c_utils_map_iterator_position)_this_it->pos)->key) \
-		&& (value = ((_c_utils_map_iterator_position)_this_it->pos)->value);)
+	for(C_UTILS_AUTO_ITERATOR _this_it = c_utils_map_iterator(map); \
+		c_utils_iterator_next(_this_it) && (key = _C_UTILS_MAP_GET_KEY(_this_it)) && (value = _C_UTILS_MAP_GET_VALUE(_this_it));)
 
 #define C_UTILS_MAP_CONCURRENT 1 << 0
 #define C_UTILS_MAP_RC_INSTANCE 1 << 1
@@ -124,7 +130,7 @@ struct c_utils_map_conf {
 			int (*value)(const void *, const void *);
 		} comparators;
 		/// Hash function
-		uint32_t (*hash_function)(const void *key, size_t len);
+		uint32_t (*hash_function)(const void *key);
 	} callbacks;
 	struct {
 		/// What ratio should we grow at?
@@ -146,10 +152,11 @@ struct c_utils_map_conf {
 		/// The maximum amount of buckets the map can grow to.
 		size_t max;
 	} size;
-	/// The size of the key being hashed. Should always be specified if not a string.
-	size_t key_len;
-	/// The size of the values being added. Should be specified if plan on searching without specifying value comparator.
-	size_t value_len;
+	/// The respective sizes of the key-value pair, used for comparison and default hash function.
+	struct {
+		size_t key;
+		size_t value;
+	} length;
 	/// Logger
 	struct c_utils_logger *logger;
 };
@@ -191,6 +198,7 @@ struct c_utils_map_conf {
 	Typedefs
 */
 typedef struct c_utils_map map_t;
+typedef struct c_utils_map_conf map_conf_t;
 
 /*
 	Functions

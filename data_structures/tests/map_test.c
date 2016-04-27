@@ -34,7 +34,6 @@ int main(void) {
 		"PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120"
 	};
 
-	DEBUG("C_UTILS_HASH_MAP_KEY_SIZE: %d", C_UTILS_HASH_MAP_KEY_SIZE);
 	LOG_VERBOSE(logger, "Logging all Key-Value pairs!");
 	
 	string_buffer_t *buf = string_buffer_create("{ \n", false);
@@ -47,7 +46,19 @@ int main(void) {
 	free(str);
 
 	LOG_INFO(logger, "Creating Hash Map...");
-	map_t *map = map_create(buckets, synchronized);
+	map_conf_t conf =
+	{
+		.logger = logger,
+		.callbacks =
+		{
+			.comparators =
+			{
+				.value = (void *)strcmp
+			}
+		}
+	};
+
+	map_t *map = map_create_conf(&conf);
 	ASSERT(map, logger, "c_utils_map_create: \"Was unable to allocate hash map!\"");
 	
 	LOG_INFO(logger, "Adding all key-value pairs to hash map...");
@@ -57,16 +68,12 @@ int main(void) {
 	}
 	
 	LOG_INFO(logger, "Printing all Key-Value pairs from hash map!");
-	size_t size;
-	char **arr = map_key_value_to_string(map, NULL, ": ", NULL, &size, NULL);
-	for (size_t i = 0; i < size; i++) {
-		DEBUG("%s", arr[i]);
-		free(arr[i]);
-	}
-	free(arr);
+	char *key, *value;
+	C_UTILS_MAP_FOR_EACH_PAIR(key, value, map)
+		DEBUG("%s: %s", key, value);
 	
 	LOG_INFO(logger, "Retrieivng all values from keys from hash map...");
-	for (size_t i = size - 1; i > 0; i--) {
+	for (size_t i = 8 - 1; i > 0; i--) {
 		char *value_retrieved = map_get(map, keys[i]);
 		ASSERT(value_retrieved && strcmp(value_retrieved, values[i]) == 0, logger,
 			"c_utils_map_get: \"Was unable to retrieve the right value from key: \"%s\";Expected: \"%s\", but received \"%s\"!\"",
@@ -74,7 +81,7 @@ int main(void) {
 	}
 
 	LOG_INFO(logger, "Removing Key-Value pair (\"%s\" : \"%s\")...", keys[3], values[3]);
-	ASSERT(map_remove(map, keys[3], NULL), logger, "c_utils_map_remove: \"Was unable to remove key: \"%s\"!\"", keys[3]);
+	ASSERT(map_remove(map, keys[3]), logger, "c_utils_map_remove: \"Was unable to remove key: \"%s\"!\"", keys[3]);
 	
 	LOG_INFO(logger, "Testing for removal of Key-Value pair...");
 	void *was_found = map_get(map, keys[3]);
@@ -85,10 +92,9 @@ int main(void) {
 		keys[2], values[2]);
 	
 	LOG_INFO(logger, "Testing retrieval of key by value...");
-	ASSERT(strcmp(keys[1], c_utils_map_contains(map, values[1], (void *)strcmp)) == 0, logger, "c_utils_map_contains: \"Was unable to find value inside of map!\"");
+	ASSERT(strcmp(keys[1], c_utils_map_contains(map, values[1])) == 0, logger, "c_utils_map_contains: \"Was unable to find value inside of map!\"");
 	
 	LOG_INFO(logger, "Destroy Hash Map...");
-	ASSERT(map_destroy(map, NULL), logger, "c_utils_map_destroy: \"Was unable to destroy map!\"");
 	
 	LOG_INFO(logger, "Success!");
 	logger_destroy(logger);

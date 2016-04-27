@@ -101,7 +101,7 @@ typedef struct c_utils_logger logger_t;
 /// An assertion which prints to stderr, the logfile and also shows the file and line that triggered it as well as timestamp.
 #define C_UTILS_ASSERT(condition, logger, message, ...) \
 	!condition ? c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, C_UTILS_STRINGIFY(condition), \
-		__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false;
+		__FILE__, C_UTILS_STRINGIFY(__LINE__), __FUNCTION__, ##__VA_ARGS__), exit(EXIT_FAILURE) : false
 
 #define C_UTILS_ASSERT_AT(condition, logger, log_info, message, ...) \
 	!condition ? c_utils_logger_log(logger, C_UTILS_LOG_LEVEL_ASSERTION, NULL, message, C_UTILS_STRINGIFY(condition), \

@@ -60,8 +60,6 @@ static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, co
 
 static size_t get_key_size(const struct c_utils_map *map, const void *key);
 
-static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len);
-
 static uint32_t hash_key(const void *key, size_t len);
 
 static void *value_to_key(struct c_utils_map *map, const void *value);
@@ -84,10 +82,6 @@ static void *prev(void *instance, void *pos);
 
 static void *curr(void *instance, void *pos);
 
-static bool del(void *instance, void *pos);
-
-static bool rem(void *instance, void *pos);
-
 static void finalize(void *instance, void *pos);
 
 
@@ -100,9 +94,21 @@ static void finalize(void *instance, void *pos);
 
 static bool resize_map(struct c_utils_map *map, size_t size);
 
+static void map_destroy(void *map);
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+//	 																				//
+//						Map Configuration Helper Functions                          //
+//  																				//
+//////////////////////////////////////////////////////////////////////////////////////
+
 static void configure(struct c_utils_map_conf *conf);
 
-static void map_destroy(void *map);
+static int key_cmp(const struct c_utils_map *map, const void *a, const void *b);
+
+static int value_cmp(const struct c_utils_map *map, const void *a, const void *b);
 
 
 
@@ -136,17 +142,10 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	}
 
 	map->num_buckets = conf->size.initial;
-	
-	if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
-		map->buckets = c_utils_ref_create(sizeof(struct c_utils_bucket) * map->num_buckets);
-	else
-		map->buckets = malloc(sizeof(struct c_utils_bucket) * map->num_buckets);
 
-	if(!map->buckets) {
-		C_UTILS_LOG_ERROR(conf->logger, "Failed to create map buckets!");
+	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->num_buckets)
 		goto err_buckets;
-	}
-	
+
 	map->lock = conf->flags & C_UTILS_MAP_CONCURRENT ? c_utils_scoped_lock_rwlock(NULL, conf->logger) : c_utils_scoped_lock_no_op();
 	if(!map->lock) {
 		C_UTILS_LOG_ERROR(conf->logger, "Was unable to create the scoped_lock!");
@@ -158,10 +157,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	return map;
 
 	err_lock:
-		if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
-			c_utils_ref_destroy(map->buckets);
-		else
-			free(map->buckets);
+		free(map->buckets);
 	err_buckets:
 		if(conf->flags & C_UTILS_MAP_RC_INSTANCE)
 			c_utils_ref_destroy(map);
@@ -171,7 +167,6 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 		return NULL;
 }
 
-/// Add a key-value pair to a hash map.
 bool c_utils_map_add(struct c_utils_map *map, void *key, void *value) {
 	if(!map)
 		return false;
@@ -193,6 +188,7 @@ bool c_utils_map_add(struct c_utils_map *map, void *key, void *value) {
 		bucket->value = value;
 		bucket->in_use = true;
 
+		// Have we added enough to trigger a growth?
 		if((++map->size / (double)map->num_buckets) >= map->conf.growth.trigger)
 			resize_map(map, map->num_buckets * map->conf.growth.ratio);
 
@@ -210,7 +206,7 @@ void *c_utils_map_get(struct c_utils_map *map, const void *key) {
 		C_UTILS_LOG_ERROR(map->conf.logger, "This map does not support NULL keys!");
 		return false;
 	}
-	
+
 	C_UTILS_SCOPED_RDLOCK(map->lock) {
 		struct c_utils_bucket *bucket = get_existing_bucket(map, key);
 		if(!bucket)
@@ -218,11 +214,7 @@ void *c_utils_map_get(struct c_utils_map *map, const void *key) {
 
 		void *value = bucket->value;
 
-		/*
-			The caller is acquiring a new reference to the value. This is because
-			the map still contains it's own reference, and this ensures that the value
-			remains valid, even after we release the reader lock.
-		*/
+		// The caller is obtaining a copy of the value, hence they gain a reference to it.
 		if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 			C_UTILS_REF_INC(value);
 
@@ -246,16 +238,19 @@ void *c_utils_map_remove(struct c_utils_map *map, const void *key) {
 		if(!bucket)
 			return NULL;
 
+		// If we have a reference to the bucket's key, release it.
 		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 			C_UTILS_REF_DEC(bucket->key);
 
 		bucket->in_use = false;
 		map->size--;
 
+		// Is shrinking enabled? Do we have enough free space to trigger shrinking?
 		if(map->conf.flags & C_UTILS_MAP_SHRINK_ON_TRIGGER)
 			if((map->size / (double)map->num_buckets) <= map->conf.shrink.trigger)
 				resize_map(map, map->size * map->conf.shrink.ratio);
 
+		// Note that the caller steals our reference to the value.
 		return bucket->value;
 	}
 
@@ -270,9 +265,11 @@ void c_utils_map_remove_all(struct c_utils_map *map) {
 		for(size_t i = 0; i < map->num_buckets; i++) {
 			struct c_utils_bucket *bucket = map->buckets + i;
 			if(bucket->in_use) {
+				// If we have a reference to the key, release it.
 				if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 					C_UTILS_REF_DEC(bucket->key);
 
+				// If we have a reference to the value, release it.
 				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 					C_UTILS_REF_DEC(bucket->value);
 
@@ -297,9 +294,11 @@ bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
 		if(!bucket)
 			return false;
 
+		// If we have a reference to the key, release it.
 		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
 			C_UTILS_REF_DEC(bucket->key);
 
+		// If we have a reference to the value, release it. Otherwise, invoke destructor.
 		if(!map->conf.flags & C_UTILS_MAP_RC_VALUE)
 			C_UTILS_REF_DEC(bucket->value);
 		else
@@ -308,6 +307,7 @@ bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
 		bucket->in_use = false;
 		map->size--;
 
+		// Is shrinking enabled? Do we have enough free space to trigger shrinking?
 		if(map->conf.flags & C_UTILS_MAP_SHRINK_ON_TRIGGER)
 			if((map->size / (double)map->num_buckets) <= map->conf.shrink.trigger)
 				resize_map(map, map->size * map->conf.shrink.ratio);
@@ -326,11 +326,13 @@ void c_utils_map_delete_all(struct c_utils_map *map) {
 		for(size_t i = 0; i < map->num_buckets; i++) {
 			struct c_utils_bucket *bucket = map->buckets + i;
 			if(bucket->in_use) {
+				// If we have a reference to the key, release it. Otherwise, invoke destructor
 				if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 					C_UTILS_REF_DEC(bucket->key);
 				else if(map->conf.callbacks.destructors.key)
 					map->conf.callbacks.destructors.key(bucket->key);
 
+				// If we have a reference to the value, release it. Otherwise, invoke destructor.
 				if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 					C_UTILS_REF_DEC(bucket->value);
 				else
@@ -357,6 +359,7 @@ const void *c_utils_map_contains(struct c_utils_map *map, const void *value) {
 		if(!key)
 			return NULL;
 
+		// As the caller is receiving a copy, they now also gain a reference to it.
 		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 			C_UTILS_REF_INC(key);
 
@@ -405,42 +408,38 @@ struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
 		return NULL;
 
 	struct c_utils_iterator *it;
+	struct _c_utils_map_iterator_position *pos;
 	C_UTILS_ON_BAD_CALLOC(it, map->conf.logger, sizeof(*it))
 		goto err;
-
-	struct _c_utils_map_iterator_position *pos;
-	C_UTILS_ON_BAD_CALLOC(pos, map->conf.logger, sizeof(*pos)) {
-		goto err_pos;
-	}
 
 	C_UTILS_SCOPED_RDLOCK(map->lock) {
 		size_t occupied_buckets = map->size;
 
-		pos->data_copy = malloc(sizeof(struct c_utils_bucket) * occupied_buckets);
-		if(!pos->data_copy)
-			goto err_pos_data;
+		C_UTILS_ON_BAD_CALLOC(pos, map->conf.logger, sizeof(*pos) + sizeof(*pos->data) * occupied_buckets)
+			goto err_pos;
 
-		struct c_utils_bucket *bucket_copies = pos->data_copy;
+		pos->size = occupied_buckets;
 
 		/*
-			Copy each key-value pair into the iterator's data_copy, incrementing the reference
+			Copy each key-value pair into the iterator position's data, incrementing the reference
 			count of the key-value pair if needed.
 		*/
-		for(size_t i = 0; occupied_buckets &&  i < map->num_buckets; i++) {
+		for(size_t i = 0, j = 0; occupied_buckets &&  i < map->num_buckets; i++) {
 			if(!map->buckets[i].in_use)
 				continue;
 
-			if(map->conf.flags & C_UTILS_MAP_RC_KEY && map->buckets[i].in_use)
+			// We gain a reference to key
+			if(map->conf.flags & C_UTILS_MAP_RC_KEY)
 				C_UTILS_REF_INC(map->buckets[i].key);
 
-			if(map->conf.flags & C_UTILS_MAP_RC_VALUE && map->buckets[i].in_use)
+			// We gain a reference to the value
+			if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
 				C_UTILS_REF_INC(map->buckets[i].value);
 
-			bucket_copies[i].key = map->buckets[i].key;
-			bucket_copies[i].value = map->buckets[i].value;
-			bucket_copies[i].in_use = map->buckets[i].in_use;
-			bucket_copies[i].hash = map->buckets[i].hash;
+			pos->data[j].key = map->buckets[i].key;
+			pos->data[j].value = map->buckets[i].value;
 
+			j++;
 			occupied_buckets--;
 		}
 	}
@@ -453,8 +452,6 @@ struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
 	it->next = next;
 	it->prev = prev;
 	it->curr = curr;
-	it->rem = rem;
-	it->del = del;
 	it->finalize = finalize;
 
 	// Iterator now holds a reference to this map.
@@ -465,8 +462,6 @@ struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
 
 	return it;
 
-	err_pos_data:
-		free(pos);
 	err_pos:
 		free(it);
 	err:
@@ -477,27 +472,35 @@ void c_utils_map_destroy(struct c_utils_map *map) {
 	if(!map)
 		return;
 
+	// If reference counted, just release our reference to it.
 	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE) {
 		C_UTILS_REF_DEC(map);
 		return;
 	}
 
+	// Otherwise call destructor directly.
 	map_destroy(map);
 }
 
 
 
 static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map, const void *key) {
-	size_t key_len = get_key_size(map, key);
-	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	if(!map->size)
+		return NULL;
+
+	// Hash key, falling back on default if no hash function given.
+	uint32_t hash;
+	if(map->conf.callbacks.hash_function)
+		hash = map->conf.callbacks.hash_function(key);
+	else
+		hash = hash_key(key, get_key_size(map, key));
+
 	size_t index = hash % map->num_buckets;
 
 	size_t iterations = 0;
 	struct c_utils_bucket *bucket;
 	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use && bucket->hash == hash) {
-		size_t bucket_key_len = get_key_size(map, bucket->key);
-
-		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+		if(key_cmp(map, key, bucket->key) == 0)
 			return bucket;
 	}
 
@@ -507,18 +510,22 @@ static struct c_utils_bucket *get_existing_bucket(const struct c_utils_map *map,
 
 static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, const void *key) {
 	if(map->size == map->num_buckets)
-		return false;
+		return NULL;
 
-	size_t key_len = get_key_size(map, key);
-	uint32_t hash = map->conf.callbacks.hash_function(key, key_len);
+	// Hash key, falling back on default if no hash function given.
+	uint32_t hash;
+	if(map->conf.callbacks.hash_function)
+		hash = map->conf.callbacks.hash_function(key);
+	else
+		hash = hash_key(key, get_key_size(map, key));
+
 	size_t index = hash % map->num_buckets;
 
 	size_t iterations = 0;
 	struct c_utils_bucket *bucket;
 	while(iterations++ < map->num_buckets && (bucket = map->buckets + (index++ % map->num_buckets))->in_use) {
-		size_t bucket_key_len = get_key_size(map, bucket->key);
-
-		if(keys_equal(map, key, key_len, bucket->key, bucket_key_len))
+		// If the key is found, then that means it already exists.
+		if(key_cmp(map, key, bucket->key) == 0)
 			return NULL;
 	}
 
@@ -529,22 +536,7 @@ static struct c_utils_bucket *get_empty_bucket(const struct c_utils_map *map, co
 
 
 static size_t get_key_size(const struct c_utils_map *map, const void *key) {
-	return map->conf.key_len ? map->conf.key_len : strlen(key);
-}
-
-/*
-	If the comparator for the key is specified, we use it to determine if the keys are
-	in deed the same. This is useful because we use linear probing with this map, and hence
-	need to determine if this is the exact one needed.
-
-	If a comparator has not been specified, we instead need to provide a more generic
-	comparator, by using memcmp to check each byte to determine if they are equal.
-*/
-static bool keys_equal(const struct c_utils_map *map, const void *first, size_t first_len, const void *second, size_t second_len) {
-	if(map->conf.callbacks.comparators.key)
-		return map->conf.callbacks.comparators.key(first, second) == 0;
-	else
-		return memcmp(first, second, first_len > second_len ? second_len : first_len);
+	return map->conf.length.key ? map->conf.length.key : strlen(key);
 }
 
 /// Very simple and straight forward hash function. Bob Jenkin's hash. Default hash if none supplied.
@@ -571,26 +563,8 @@ static void *value_to_key(struct c_utils_map *map, const void *value) {
 		for(size_t i = 0; search && i < map->num_buckets; i++) {
 			struct c_utils_bucket *bucket = map->buckets + i;
 			if(bucket->in_use) {
-				/*
-					As the map is very configurable, we must check below how we wish to
-					compare the two values. There are three ways to compare a value:
-
-					1) Via a direct comparator
-					2) By checking each byte up to it's length
-					3) By pointer address
-
-					Hence this is why we must have extensive checks like this below.
-				*/
-				if(map->conf.callbacks.comparators.value) {
-					if(map->conf.callbacks.comparators.value(value, bucket->value) == 0)
-						return bucket->key;
-				} else if(map->conf.value_len) {
-					if(memcmp(value, bucket->value, map->conf.value_len) == 0)
-						return bucket->key;
-				} else {
-					if(value == bucket->value)
-						return bucket->key;
-				}
+				if(value_cmp(map, value, bucket->value) == 0)
+					return bucket->key;
 
 				search--;
 			}
@@ -634,7 +608,7 @@ static bool resize_map(struct c_utils_map *map, size_t size) {
 		memset(&map->buckets, 0, new_size);
 		map->num_buckets = size;
 
-		// Re-hash
+		// Re-hash all key-value pairs
 		for(size_t i = 0; i < used; i++) {
 			struct c_utils_bucket *bucket = get_empty_bucket(map, keys[i]);
 			C_UTILS_ASSERT(bucket, map->conf.logger, "Duplicate key found in list!");
@@ -651,9 +625,6 @@ static bool resize_map(struct c_utils_map *map, size_t size) {
 }
 
 static void configure(struct c_utils_map_conf *conf) {
-	if(!conf->callbacks.hash_function)
-		conf->callbacks.hash_function = hash_key;
-
 	if(!conf->size.initial)
 		conf->size.initial = default_initial;
 
@@ -686,12 +657,14 @@ static void configure(struct c_utils_map_conf *conf) {
 static void map_destroy(void *map) {
 	struct c_utils_map *m = map;
 
-	// If map->buckets is NULL, it signifies we failed during allocation.
-	if(!m->buckets)
-		return;
-
 	for(size_t i = 0; m->size && i < m->num_buckets; i++) {
 		struct c_utils_bucket *bucket = m->buckets + i;
+
+		/*
+			If the bucket is in use, then that means that the key and value pairs need to be
+			cleaned up as well. In the case that they are reference counted, we release our reference
+			to it. If instead there is a destructor, it will invoke that instead.
+		*/
 		if(bucket->in_use) {
 			if(m->conf.flags & C_UTILS_MAP_RC_KEY)
 				C_UTILS_REF_DEC(bucket->key);
@@ -715,52 +688,117 @@ static void map_destroy(void *map) {
 
 
 
+/*
+	As the map is very configurable, we must check below to determine how we will
+	compare keys in this instance of the map. There are three ways to compare a key
+	in this map:
+
+	1) Via a direct comparator
+	2) By checking each byte up to it's length
+	3) Assuming it is a string and using strcmp
+
+	It should be noted that if the creator did not specify a length nor a callback,
+	then this invoked undefined behavior. However, by default this allows string keys
+	to work.
+*/
+static int key_cmp(const struct c_utils_map *map, const void *a, const void *b) {
+	if(map->conf.callbacks.comparators.key) {
+		return map->conf.callbacks.comparators.key(a, b);
+	} else {
+		if(map->conf.length.key)
+			return memcmp(a, b, map->conf.length.key);
+		else
+			return strcmp(a, b);
+	}
+}
+
+/*
+	As the map is very configurable, we must check below how we wish to
+	compare the two values. There are three ways to compare a value:
+
+	1) Via a direct comparator
+	2) By checking each byte up to it's length
+	3) By pointer address
+
+	Hence this is why we must have extensive checks like this below.
+*/
+static int value_cmp(const struct c_utils_map *map, const void *a, const void *b) {
+	if(map->conf.callbacks.comparators.value)
+		return map->conf.callbacks.comparators.value(a, b);
+	else if(map->conf.length.value)
+		return memcmp(a, b, map->conf.length.value);
+	else
+		return a != b;
+}
+
+
+
 static void *head(void *instance, void *pos) {
-	
-	return NULL;
+	struct _c_utils_map_iterator_position *position = pos;
+
+	if(!position->size)
+		return NULL;
+
+	return position->data[(position->index = 0)].value;
 }
 
 static void *tail(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
+	struct _c_utils_map_iterator_position *position = pos;
+
+	if(!position->size)
+		return NULL;
+
+	return position->data[(position->index = position->size - 1)].value;
 }
 
 static void *next(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
+	struct _c_utils_map_iterator_position *position = pos;
+
+	// If index is on last position, we cannot go further.
+	if(position->index + 1 >= position->size)
+		return NULL;
+
+	return position->data[++position->index].value;
 }
 
 static void *prev(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
+	struct _c_utils_map_iterator_position *position = pos;
+
+	// If we are on the zero'th position, we cannot go back anymore without overflowing
+	if(!position->index)
+		return NULL;
+
+	return position->data[--position->index].value;
 }
 
 static void *curr(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
-}
+	struct _c_utils_map_iterator_position *position = pos;
 
-static bool del(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
-}
+	if(!position->size)
+		return NULL;
 
-static bool rem(void *instance, void *pos) {
-	// TODO: Implement
-	return NULL;
+	return position->data[position->index].value;
 }
 
 static void finalize(void *instance, void *pos) {
 	struct c_utils_map *map = instance;
 	struct _c_utils_map_iterator_position *position = pos;
-
-	free(position->data_copy);
 	
-	if(map->conf.flags & C_UTILS_MAP_RC_KEY && position->key)
-		C_UTILS_REF_DEC(position->key);
+	/*
+		As the iterator will maintain a reference to the copied data (key-value pairs),
+		during finalization we must relinquish that reference as well. Of course, we also
+		relinquish the reference over the instance of the map itself too.
+	*/
+	for(size_t i = 0; i < position->size; i++) {
+		if(map->conf.flags & C_UTILS_MAP_RC_KEY)
+			C_UTILS_REF_DEC(position->data[i].key);
 
-	if(map->conf.flags & C_UTILS_MAP_RC_VALUE && position->value)
-		C_UTILS_REF_DEC(position->value);
+		if(map->conf.flags & C_UTILS_MAP_RC_VALUE)
+			C_UTILS_REF_DEC(position->data[i].value);
+	}
 
-	C_UTILS_REF_DEC(map);
+	if(map->conf.flags & C_UTILS_MAP_RC_INSTANCE)
+		C_UTILS_REF_DEC(map);
+
+	free(pos);
 }
