@@ -1,0 +1,21 @@
+04:20:53 PM [VERBOSE](./data_structures/tests/map_test.c:37) main(): 
+"Logging all Key-Value pairs!"
+04:20:53 PM [VERBOSE](./data_structures/tests/map_test.c:45) main(): 
+"{ 
+Host: net.tutsplus.com
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko
+Cache-Control: no-cache
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/
+Accept-Language: en-us,en;q=0.5
+Keep-Alive: 300
+Connection: keep-alive
+Cookie: PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120
+}"
+04:20:53 PM [INFO](./data_structures/tests/map_test.c:48) main(): 
+"Creating Hash Map..."
+04:20:53 PM [INFO](./data_structures/tests/map_test.c:64) main(): 
+"Adding all key-value pairs to hash map..."
+04:20:53 PM [INFO](./data_structures/tests/map_test.c:70) main(): 
+"Printing all Key-Value pairs from hash map!"
+04:20:53 PM [INFO](./data_structures/tests/map_test.c:75) main(): 
+"Retrieivng all values from keys from hash map..."

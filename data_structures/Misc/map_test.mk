@@ -3,11 +3,11 @@ PRESENT_DIRECTORY = $(filter %/, $(wildcard ./*/))
 CFLAGS=-g -D_GNU_SOURCE -Wall -std=c11
 LDFLAGS=-pthread
 FLAGS=$(CFLAGS) $(LDFLAGS)
-SOURCES=logger.c argument_check.c scoped_lock.c alloc_check.c map.c map_test.c string_buffer.c
+SOURCES=logger.c argument_check.c scoped_lock.c alloc_check.c map.c map_test.c string_buffer.c ref_count.c iterator.c
 OBJECTS=$(notdir $(SOURCES:.c=.o))
 TARGET=map_test
 DEPS=$(addprefix -I, $(PRESENT_DIRECTORY))
-VPATH=./misc/ ./io/  ./data_structures/ ./data_structures/tests ./threading/ ./string/
+VPATH=./misc/ ./io/  ./data_structures/ ./data_structures/tests ./threading/ ./string/ ./memory/
 
 all: $(TARGET)
 

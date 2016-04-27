@@ -142,6 +142,7 @@ struct c_utils_map *c_utils_map_create_conf(struct c_utils_map_conf *conf) {
 	}
 
 	map->num_buckets = conf->size.initial;
+	map->size = 0;
 
 	C_UTILS_ON_BAD_CALLOC(map->buckets, conf->logger, sizeof(struct c_utils_bucket) * map->num_buckets)
 		goto err_buckets;
@@ -295,11 +296,11 @@ bool c_utils_map_delete(struct c_utils_map *map, const void *key) {
 			return false;
 
 		// If we have a reference to the key, release it.
-		if(!map->conf.flags & C_UTILS_MAP_RC_KEY)
+		if(!(map->conf.flags & C_UTILS_MAP_RC_KEY))
 			C_UTILS_REF_DEC(bucket->key);
 
 		// If we have a reference to the value, release it. Otherwise, invoke destructor.
-		if(!map->conf.flags & C_UTILS_MAP_RC_VALUE)
+		if(!(map->conf.flags & C_UTILS_MAP_RC_VALUE))
 			C_UTILS_REF_DEC(bucket->value);
 		else
 			map->conf.callbacks.destructors.value(bucket->value);
@@ -415,7 +416,7 @@ struct c_utils_iterator *c_utils_map_iterator(struct c_utils_map *map) {
 	C_UTILS_SCOPED_RDLOCK(map->lock) {
 		size_t occupied_buckets = map->size;
 
-		C_UTILS_ON_BAD_CALLOC(pos, map->conf.logger, sizeof(*pos) + sizeof(*pos->data) * occupied_buckets)
+		C_UTILS_ON_BAD_CALLOC(pos, map->conf.logger, sizeof(*pos) + sizeof(struct _c_utils_map_data) * occupied_buckets)
 			goto err_pos;
 
 		pos->size = occupied_buckets;

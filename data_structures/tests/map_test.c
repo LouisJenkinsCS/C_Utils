@@ -37,7 +37,7 @@ int main(void) {
 	LOG_VERBOSE(logger, "Logging all Key-Value pairs!");
 	
 	string_buffer_t *buf = string_buffer_create("{ \n", false);
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 8; i++)
 		STRING_BUFFER_APPEND_FORMAT(buf, "%s: %s\n", keys[i], values[i]);
 	string_buffer_append(buf, "}");
 
@@ -62,7 +62,7 @@ int main(void) {
 	ASSERT(map, logger, "c_utils_map_create: \"Was unable to allocate hash map!\"");
 	
 	LOG_INFO(logger, "Adding all key-value pairs to hash map...");
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 8; i++) {
 		int was_added = map_add(map, keys[i], values[i]);
 		ASSERT(was_added, logger, "c_utils_map_add: \"Was unable to add key: \"%s\" with value: \"%s\"!\"", keys[i], values[i]);
 	}

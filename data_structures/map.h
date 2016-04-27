@@ -20,7 +20,7 @@ struct _c_utils_map_iterator_position {
 	/// The size of the data_copy
 	size_t size;
 	/// Copy of the data at time of creation.
-	struct {
+	struct _c_utils_map_data {
 		void *key;
 		void *value;
 	} data[];
