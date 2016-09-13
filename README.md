@@ -41,7 +41,7 @@ Because Stable holds the previous, actually working version of C_Utils, of which
 
 #Documentation
 
-The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://theif519.github.io/slate/).
+The README.md has been significantly shortened, as it will later be used to specify how to install it once it is finished. The documentation can be found [here](http://LouisJenkinsCS.github.io/slate/).
 
 It should be noted, that not all things have been implemented yet. The documentation contains ideas and features I plan to implement in the future. Once again, please note, not all of this has been implemented.
 
